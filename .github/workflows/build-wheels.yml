@@ -25,15 +25,21 @@ jobs:
       env:
         # CIBW_BUILD: 'cp39-* cp310-* cp311-* cp312-*'
         CIBW_SKIP: '*win32 *i686'   # Don't build for 32-bit
-        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15 for c++17 support
+        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15+ for c++17 support
     
     - name: Upload wheels
       uses: actions/upload-artifact@v3
       with:
         name: wheels
         path: ./wheelhouse/*.whl
-    
+
     - name: Publish to PyPI
-      run: |
-        python -m pip install twine
-        twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
+      uses: pypa/gh-action-pypi-publish@v1
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_TOKEN }}    
+
+#    - name: Publish to PyPI
+#      run: |
+#        python -m pip install twine
+#        twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
