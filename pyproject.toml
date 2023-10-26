@@ -6,3 +6,31 @@ build-backend = "setuptools.build_meta"
 build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 # We're excluding musllinux for now...
 # build = "cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
+
+[project]
+name = "geodesk"
+keywords = ["gis", "openstreetmap", "geospatial", "database" ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    ""License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: Unix",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Database :: Database Engines/Servers",
+]
+requires-python = ">=3.6"
+
+[project.urls]
+Homepage = "https://www.geodesk.com"
+Documentation = "https://docs.geodesk.com/python"
+Repository = "https://github.com/clarisma/geodesk-py.git"

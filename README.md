@@ -1,8 +1,7 @@
 <img src="https://docs.geodesk.com/img/github-header.png">
 
-*This is a pre-release alpha version. The API is subject to change, and you will likely encounter bugs and missing functionality. We expect to ship an early-access release in Q4 of 2023.*
-
-GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data.
+GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
+Also available [for Java](http://www.github.com/clarisma/geodesk).
 
 ## Why GeoDesk?
 
@@ -22,10 +21,26 @@ GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap da
  
 ## Get Started
 
+### Requirements
+
+- Python 3.6 or above
+- Java 16 or above (for the GOL Tool)
+ 
 ### Download
 
 ```
 pip install geodesk
+```
+
+### Create a GOL
+
+Create a Geographic Object Library based on any `.osm.pbf` file, using the 
+[GOL Tool](https://www.geodesk.com/download) (Requires Java 16+).
+
+For example:
+
+```
+gol build switzerland switzerland-latest.osm.pbf
 ```
 
 ### Example Application
@@ -35,12 +50,8 @@ Find all the pubs in Zurich (Switzerland) and print their names:
 ```python
 from geodesk import *
 
-# Create a Geographic Object Library in the current folder, which will 
-# be populated with data from the Switzerland example tileset
-features = Features("example.gol", "https://data.geodesk.com/switzerland")      
-
-# Automatically download tiles as they are needed
-features.auto_load()
+# Open switzerland.gol
+features = Features("switzerland")      
 
 # Get the feature that represents the area of the city of Zurich
 zurich = features("a[boundary=adminstrative][admin_level=8][name:en=Zurich]").one
@@ -80,7 +91,7 @@ numberOfEntrances = building.nodes("[entrance]").count
 
 ## Documentation
 
-[GeoDesk Developer's Guide](https://docs.geodesk.com/)
+[GeoDesk Developer's Guide](https://docs.geodesk.com/python)
 
 ## Related Repositories
 
