@@ -22,7 +22,7 @@ public:
 		int maxItemsPerNode, Box totalBounds)
 	{
 		return RTree<IT>(
-			reinterpret_cast<const RTree<IT>::Node*>(
+			reinterpret_cast<const typename RTree<IT>::Node*>(
 				buildNodes(items, itemCount, maxItemsPerNode, totalBounds)));
 	}
 
