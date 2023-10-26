@@ -1,0 +1,57 @@
+%{
+// Keywords
+#include <assert.h>
+#include <cstdint>
+#include "python/filter/filters.h"
+#include "PyFeatures.h"
+#include "python/util/util.h"
+
+%}
+struct PyFeaturesAttribute { const char *name; Python::AttrRef attr; };
+%%
+area, ATTR_PROPERTY(PyFeatures::area)
+count, ATTR_PROPERTY(PyFeatures::count)
+first, ATTR_PROPERTY(PyFeatures::first)
+geojson, ATTR_PROPERTY(PyFormatter::geojson)
+geojsonl, ATTR_PROPERTY(PyFormatter::geojsonl)
+guid, ATTR_PROPERTY(PyFeatures::guid)
+indexed_keys, ATTR_PROPERTY(PyFeatures::indexed_keys)
+length, ATTR_PROPERTY(PyFeatures::length)
+list, ATTR_PROPERTY(PyFeatures::list)
+map, ATTR_PROPERTY(PyFeatures::map)
+nodes, ATTR_PROPERTY(PyFeatures::nodes)
+one, ATTR_PROPERTY(PyFeatures::one)
+properties, ATTR_PROPERTY(PyFeatures::properties)
+refcount, ATTR_PROPERTY(PyFeatures::refcount)
+relations, ATTR_PROPERTY(PyFeatures::relations)
+revision, ATTR_PROPERTY(PyFeatures::revision)
+shape, ATTR_PROPERTY(PyFeatures::shape)
+strings, ATTR_PROPERTY(PyFeatures::strings)
+tiles, ATTR_PROPERTY(PyFeatures::tiles)
+timestamp, ATTR_PROPERTY(PyFeatures::timestamp)
+ways, ATTR_PROPERTY(PyFeatures::ways)
+wkt, ATTR_PROPERTY(PyFormatter::wkt)
+auto_load,         ATTR_METHOD(PyFeatures::auto_load)
+load,              ATTR_METHOD(PyFeatures::load)
+update,            ATTR_METHOD(PyFeatures::update)
+ancestors_of,      ATTR_METHOD(filters::ancestors_of)
+around,            ATTR_METHOD(filters::around)
+connected_to,      ATTR_METHOD(filters::connected_to)
+contains,          ATTR_METHOD(filters::contains)
+contained_by,      ATTR_METHOD(filters::contained_by)
+descendants_of,    ATTR_METHOD(filters::descendants_of)
+disjoint,          ATTR_METHOD(filters::disjoint)
+intersects,        ATTR_METHOD(filters::intersects)
+max_area,          ATTR_METHOD(filters::max_area)
+max_length,        ATTR_METHOD(filters::max_length)
+max_meters_from,   ATTR_METHOD(filters::max_meters_from)
+min_area,          ATTR_METHOD(filters::min_area)
+members_of,        ATTR_METHOD(filters::members_of)
+min_length,        ATTR_METHOD(filters::min_length)
+nearest_to,        ATTR_METHOD(filters::nearest_to)
+nodes_of,          ATTR_METHOD(filters::nodes_of)
+overlaps,          ATTR_METHOD(filters::overlaps)
+parents_of,        ATTR_METHOD(filters::parents_of)
+touches,           ATTR_METHOD(filters::touches)
+with_role,         ATTR_METHOD(filters::with_role)
+within,            ATTR_METHOD(filters::within)

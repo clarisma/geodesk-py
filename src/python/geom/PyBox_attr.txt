@@ -1,0 +1,35 @@
+%{
+// Keywords
+#include <assert.h>
+
+// Bit 0:	0 = GeoDesk Mercator, 1 = WGS-84 
+// Bit 1:	0 = single value,     1 = copy min value to max
+// Bits 8/9	0 = minX, 1= minY, 2 = maxX, 3 = maxY
+
+%}
+struct Attribute { const char *name; int index; };
+%%
+bottom, (1 << 8) | 0
+e, (2 << 8) | 1
+east, (2 << 8) | 1
+lat, (1 << 8) | 3
+left, (0 << 8) | 0
+lon, (0 << 8) | 3
+maxlat, (3 << 8) | 1
+maxlon, (2 << 8) | 1
+maxx, (2 << 8) | 0
+maxy, (3 << 8) | 0
+minlat, (1 << 8) | 1
+minlon, (0 << 8) | 1
+minx, (0 << 8) | 0
+miny, (1 << 8) | 0
+n, (3 << 8) | 1
+north, (3 << 8) | 1
+right, (2 << 8) | 0
+s, (1 << 8) | 1
+south, (1 << 8) | 1
+top, (3 << 8) | 0
+w, (0 << 8) | 1
+west, (0 << 8) | 1
+x, (0 << 8) | 2
+y, (1 << 8) | 2

@@ -1,0 +1,16 @@
+include geodesk.pyd
+include geodesk.so
+exclude *.lib
+exclude *.a
+prune include
+prune lib
+prune bin/
+prune include/
+prune lib64/
+prune build/bin/
+prune build/include/
+prune build/lib64/
+recursive-exclude * *.h
+recursive-exclude * *.a
+recursive-exclude * *.lib
+

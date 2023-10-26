@@ -1,0 +1,48 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.out
+*.app
+*.pyc
+
+# Local directories
+.vs/
+build/
+out/
+_skbuild/
+dist/
+third-party/
+.idea/
+cmake-build-*/
+geodesk.egg-info/
+src/geodesk.egg-info/
+wheelhouse/
+
+*.pyc
+.~lock*

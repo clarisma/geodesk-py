@@ -1,0 +1,8 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "cibuildwheel", "scikit-build", "ninja"]
+build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
+# We're excluding musllinux for now...
+# build = "cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"

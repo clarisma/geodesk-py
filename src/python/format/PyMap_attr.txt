@@ -1,0 +1,36 @@
+%{
+// Keywords
+#include <assert.h>
+
+%}
+struct Attr { const char *name; int index; };
+%%
+attribution, PyMap::ATTRIBUTION
+basemap, PyMap::BASEMAP
+classname, PyMap::CLASSNAME
+color, PyMap::COLOR
+dashArray, PyMap::DASHARRAY
+dash_array, PyMap::DASHARRAY
+dashOffset, PyMap::DASHOFFSET
+dash_offset, PyMap::DASHOFFSET
+fill, PyMap::FILL
+fillColor, PyMap::FILLCOLOR
+fill_color, PyMap::FILLCOLOR
+fillOpacity, PyMap::FILLOPACITY
+fill_opacity, PyMap::FILLOPACITY
+fillRule, PyMap::FILLRULE
+fill_rule, PyMap::FILLRULE
+leaflet_stylesheet_url, PyMap::LEAFLET_STYLESHEET_URL
+leaflet_url, PyMap::LEAFLET_URL
+leaflet_version, PyMap::LEAFLET_VERSION
+lineCap, PyMap::LINECAP
+line_cap, PyMap::LINECAP
+lineJoin, PyMap::LINEJOIN
+line_join, PyMap::LINEJOIN
+link, PyMap::LINK
+max_zoom, PyMap::MAX_ZOOM
+min_zoom, PyMap::MIN_ZOOM
+opacity, PyMap::OPACITY
+stroke, PyMap::STROKE
+tooltip, PyMap::TOOLTIP
+weight, PyMap::WEIGHT
