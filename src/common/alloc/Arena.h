@@ -13,7 +13,7 @@
 // (defer until actual objects are alloc'ed); this makes it easier to use in 
 // constructors
 
-static_assert(reinterpret_cast<uintptr_t>(nullptr) == 0, "nullptr is not represented as 0!");
+static_assert(nullptr == 0, "nullptr is not represented as 0!");
 
 class Arena
 {
