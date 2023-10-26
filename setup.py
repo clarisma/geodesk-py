@@ -8,7 +8,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="geodesk",
-    version="0.0.6",
+    # version="0.0.6",  # already defined in pyproject.toml
     description='Python port of GeoDesk, a fast and space-efficient spatial database engine for OpenStreetMap features',
     long_description=long_description,
     long_description_content_type='text/markdown',

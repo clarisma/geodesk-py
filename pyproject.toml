@@ -9,6 +9,7 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 
 [project]
 name = "geodesk"
+version = "0.0.6"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
 classifiers = [
     "Development Status :: 4 - Beta",
