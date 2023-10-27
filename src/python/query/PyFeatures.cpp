@@ -4,6 +4,7 @@
 #include "PyFeatures.h"
 #include "feature/GeometryBuilder.h"
 #include "filter/ComboFilter.h"
+#include "filter/IntersectsFilter.h"
 #include "geom/Area.h"
 #include "geom/Length.h"
 #include "python/Environment.h"
@@ -11,6 +12,7 @@
 #include "python/format/PyFormatter.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"
+#include "python/geom/PyCoordinate.h"
 #include "python/util/PyFastMethod.h"
 #include "PyQuery.h"
 #include <common/util/Parser.h>
@@ -210,6 +212,34 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         {
             return (PyObject*)self->withOther((PyFeatures*)arg);
         }
+        if (type == &PyFeature::TYPE)
+        {
+            PyFeature* feature = (PyFeature*)arg;
+            IntersectsFilterFactory filterFactory;
+            // TODO: check if factory throws or returns null?
+            return self->withFilter(filterFactory.forFeature(
+                feature->store, feature->feature));
+        }
+        if (type->tp_name[0] != 'g')    
+        {
+            // cheap check for potential "shapely" class (i.e. not in "geodesk"
+            // module -- unfortunately can't check if name starts with "shapely"
+            // because Shapely's geometry classes are regular Python classes,
+            // whose name does not include the module prefix
+            // TODO: Is there a better way? 
+
+            GEOSGeometry* geom;
+            if (Environment::get().getGeosGeometry(arg, &geom))
+            {
+                GEOSContextHandle_t context = Environment::get().getGeosContext();
+                IntersectsFilterFactory filterFactory;
+                // TODO: check if factory throws or returns null?
+                return self->withFilter(filterFactory.forGeometry(context, geom));
+            }
+        }
+        
+        // TODO: if (type == &PyCoordinate::TYPE)
+        
         if (arg == (PyObject*)Py_None) return getEmpty();
 
         PyErr_Format(PyExc_TypeError, "%s is not a valid argument", type->tp_name);
