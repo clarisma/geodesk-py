@@ -33,8 +33,14 @@ jobs:
         name: wheels
         path: ./wheelhouse/*.whl
 
+    - name: Set up Python for twine
+      if: runner.os == 'macOS'   # Only needed on MacOS
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
     - name: Publish to PyPI
-      if: runner.os != 'macOS'   # This does not work on MacOS yet
+      # if: runner.os != 'macOS'   # This does not work on MacOS yet
       run: |
         python -m pip install twine
         twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
