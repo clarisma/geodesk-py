@@ -10,7 +10,7 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 [project]
 name = "geodesk"
 version = "0.0.7"
-license = "LGPL-3.0-only"
+license = { file = "LICENSE" }
 readme = "README.md"
 repository = "https://github.com/clarisma/geodesk-py"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
