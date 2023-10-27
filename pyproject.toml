@@ -9,7 +9,10 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 
 [project]
 name = "geodesk"
-version = "0.0.6"
+version = "0.0.7"
+license = "LGPL-3.0-only"
+readme = "README.md"
+repository = "https://github.com/clarisma/geodesk-py"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -20,6 +23,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: C++",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -29,9 +33,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: GIS",
     "Topic :: Database :: Database Engines/Servers",
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.5"
 
 [project.urls]
 Homepage = "https://www.geodesk.com"
 Documentation = "https://docs.geodesk.com/python"
 Repository = "https://github.com/clarisma/geodesk-py.git"
+"Bug Tracker" = "https://github.com/clarisma/geodesk-py/issues"
