@@ -220,8 +220,14 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
             return self->withFilter(filterFactory.forFeature(
                 feature->store, feature->feature));
         }
-        if (type->tp_name[0] == 's')    // cheap check for potential "shapely" class
+        if (type->tp_name[0] != 'g')    
         {
+            // cheap check for potential "shapely" class (i.e. not in "geodesk"
+            // module -- unfortunately can't check if name starts with "shapely"
+            // because Shapely's geometry classes are regular Python classes,
+            // whose name does not include the module prefix
+            // TODO: Is there a better way? 
+
             GEOSGeometry* geom;
             if (Environment::get().getGeosGeometry(arg, &geom))
             {
