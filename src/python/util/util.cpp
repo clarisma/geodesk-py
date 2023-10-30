@@ -36,6 +36,29 @@ PyObject* Python::createSet(const char** strings)
     return set;
 }
 
+
+PyObject* Python::createList(const char** strings, size_t count)
+{
+    PyObject* list = PyList_New(count);
+    if (!list) return NULL;
+
+    for (size_t i = 0; i < count; i++) 
+    {
+        // Convert C-string to Python unicode string
+        PyObject* str = PyUnicode_FromString(strings[i]);
+        if (!str)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        // Note: PyList_SetItem steals a reference, so we don't need to DECREF pyString.
+        PyList_SetItem(list, i, str);
+    }
+    return list;
+}
+
+
+
 // TODO: works only if object implements the mapping protocol
 PyObject* Python::formatString(PyObject* templateString, PyObject* object)
 {

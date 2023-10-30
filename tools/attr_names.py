@@ -2,6 +2,8 @@
 # creates a C++ source file with these attributes as a list of strings
 # (This is the basis for __dir__)
 
+import sys
+
 def extract_attributes(filename):
     with open(filename, 'r') as file:
         lines = file.readlines()
@@ -34,5 +36,5 @@ def write_to_output(attributes, output_filename):
         file.write('\n'.join(content))
 
 if __name__ == "__main__":
-    keywords = extract_keywords(sys.argv[1])
-    write_to_output(keywords, sys.argv[2])
+    attributes = extract_attributes(sys.argv[1])
+    write_to_output(attributes, sys.argv[2])

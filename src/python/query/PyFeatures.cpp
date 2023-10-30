@@ -18,6 +18,7 @@
 #include <common/util/Parser.h>
 
 #include "PyFeatures_attr.cxx"
+#include "PyFeatures_lookup.cxx"
 
 // steals the refs to matcher and filter
 PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
@@ -162,7 +163,7 @@ void PyFeatures::dealloc(PyFeatures* self)
 
 PyObject* PyFeatures::dir(PyFeatures* self)
 {
-    Py_RETURN_NONE;     // TODO
+    return Python::createList(ATTR_NAMES, ATTR_COUNT);
 }
 
 PyObject* PyFeatures::iter(PyFeatures* self)
