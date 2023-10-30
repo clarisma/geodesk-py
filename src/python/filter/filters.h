@@ -13,6 +13,7 @@ namespace filters
 	extern PyFeatures* connected_to(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* contains(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* contained_by(PyFeatures* self, PyObject* args, PyObject* kwargs);
+	extern PyFeatures* crosses(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* descendants_of(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* disjoint(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* intersects(PyFeatures* self, PyObject* args, PyObject* kwargs);

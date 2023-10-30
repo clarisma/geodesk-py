@@ -44,7 +44,7 @@ bool IntersectsPolygonFilter::accept(FeatureStore* store, FeatureRef feature, Fa
 
 bool IntersectsLinealFilter::acceptWay(WayRef way) const
 {
-	return wayIntersectsPolygon(way);
+	return anySegmentsCross(way);
 }
 
 bool IntersectsLinealFilter::acceptNode(NodeRef node) const

@@ -23,6 +23,11 @@ protected:
 	virtual const Filter* forPolygonal() { return nullptr; };
 	virtual const Filter* forLineal() { return nullptr; };
 	virtual const Filter* forPuntal() { return nullptr; };
+
+	// TODO: Does this require parameters?
+	// By default, the PreparedFilterFactory indexes all ways of a relation
+	// But for filters like "intersects" to work, we need *two* indexes:
+	// one for areas and one for lineal features
 	virtual const Filter* forNonAreaRelation(FeatureStore* store, RelationRef feature)
 	{
 		return nullptr;

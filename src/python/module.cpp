@@ -93,6 +93,8 @@ extern "C" PyMODINIT_FUNC PyInit_geodesk()
     if (createPrivateType(module, &PyFormatter::TYPE) < 0) return nullptr;
     // if (createPrivateType(module, &PyRTreeQuery::TYPE) < 0) return nullptr;
 
+    Python::createDirMethod(&PyFeatures::TYPE, (PyCFunctionWithKeywords)&PyFeatures::dir);
+
     PyObject* exc = PyErr_NewException("geodesk.QueryError", NULL, NULL);
     if (!exc)
     {

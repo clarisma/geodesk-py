@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "util.h"
-
 #include <stdexcept>
-#include <Python.h>
+#include "PyFastMethod.h"
 
 
 PyObject* Python::createSet(const char** strings) 
@@ -35,6 +34,29 @@ PyObject* Python::createSet(const char** strings)
     }
     return set;
 }
+
+
+PyObject* Python::createList(const char** strings, size_t count)
+{
+    PyObject* list = PyList_New(count);
+    if (!list) return NULL;
+
+    for (size_t i = 0; i < count; i++) 
+    {
+        // Convert C-string to Python unicode string
+        PyObject* str = PyUnicode_FromString(strings[i]);
+        if (!str)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        // Note: PyList_SetItem steals a reference, so we don't need to DECREF pyString.
+        PyList_SetItem(list, i, str);
+    }
+    return list;
+}
+
+
 
 // TODO: works only if object implements the mapping protocol
 PyObject* Python::formatString(PyObject* templateString, PyObject* object)
@@ -124,4 +146,16 @@ PyObject* Python::checkSingleArg(PyObject* args, PyObject* kwargs, PyTypeObject*
         }
     }
     return obj;
+}
+
+
+void Python::createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc)
+{
+    PyObject* method = (PyObject*)PyFastMethod::create((PyObject*)type, dirFunc);
+    if (method) 
+    {
+        // Note: PyDict_SetItem does NOT steal ref
+        PyDict_SetItemString(type->tp_dict, "__dir__", method);
+        Py_DECREF(method);
+    }
 }

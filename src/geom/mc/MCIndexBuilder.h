@@ -19,6 +19,7 @@ public:
 	void segmentizeCoords(GEOSContextHandle_t context, const GEOSCoordSequence* coords);
 	void segmentizePolygon(GEOSContextHandle_t context, const GEOSGeometry* polygon);
 	void segmentizeAreaRelation(FeatureStore* store, RelationRef rel);
+	void segmentizeMembers(FeatureStore* store, RelationRef rel, RecursionGuard& guard);
 	MCIndex build(Box bounds);
 	static MCIndex buildFromAreaRelation(FeatureStore* store, RelationRef rel)
 	{

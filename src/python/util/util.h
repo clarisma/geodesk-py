@@ -9,9 +9,12 @@
 namespace Python
 {
 	extern PyObject* createSet(const char** strings);
+	extern PyObject* createList(const char** strings, size_t count);
 	extern PyObject* formatString(PyObject* templateString, PyObject* object);
 	extern std::string_view stringAsStringView(PyObject* str);
 	extern std::string_view objectAsStringView(PyObject* str);
+
+	extern void createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc);
 
 	/**
 	 * Checks if args/kwargs contain a single argument.
