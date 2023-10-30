@@ -112,11 +112,16 @@ NodeRef FeatureNodeIterator::next()
 
         if(matcher_->mainMatcher().accept(feature.ptr()))
         {
+            // LOG("Node matched");
             if (filter_ == nullptr || filter_->accept(store_, feature, FastFilterHint()))
             {
                 // Feature accepted by matcher_ and filter_
                 return feature;
             }
+        }
+        else
+        {
+            // LOG("Node NOT matched");
         }
     }
     return NodeRef(nullptr);

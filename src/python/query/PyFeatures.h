@@ -236,6 +236,10 @@ public:
     WayCoordinateIterator coordsIter;
     FeatureNodeIterator featureIter;
     NodeRef nextNode;
+    bool featureNodesOnly;      
+        // TODO: We could move this flag into WayCoordinateIterator in
+        // order to make the field layout more compact (but it has
+        // no impact on the WCI)
 
     static PyTypeObject TYPE;
 
