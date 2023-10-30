@@ -73,8 +73,8 @@ bool ComboFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint
     {
         FastFilterHint fastChild = fast;
         fastChild.turboFlags &= 1;      // mask of the turbo flag for this child
-        if ((*it)->accept(store, feature, fastChild)) return true;
+        if (!(*it)->accept(store, feature, fastChild)) return false;
         fast.turboFlags >>= 1;          // bring the next turbo flag to bit position 0
     }
-    return false;
+    return true;
 }

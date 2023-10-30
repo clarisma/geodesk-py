@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "filter/CrossesFilter.h"
+#include "filter/IntersectsFilter.h"
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
 
-PyFeatures* filters::crosses(PyFeatures* self, PyObject* args, PyObject* kwargs)
+PyFeatures* filters::intersects(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
-	CrossesFilterFactory factory;
+	IntersectsFilterFactory factory;
 	return filter(self, args, kwargs, factory);
 }

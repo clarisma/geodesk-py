@@ -6,6 +6,7 @@
 #include "CoordSequenceSlicer.h"
 #include "feature/FeatureStore.h"
 #include "feature/MemberIterator.h"
+#include "feature/FastMemberIterator.h"
 #include "geom/rtree/HilbertTreeBuilder.h"
 
 MCIndexBuilder::MCIndexBuilder() :
@@ -48,6 +49,30 @@ void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel
 		FeatureRef member = iter.next();
 		if (member.isNull()) break;
 		segmentizeWay(WayRef(member));
+	}
+}
+
+
+void MCIndexBuilder::segmentizeMembers(FeatureStore* store, RelationRef rel, RecursionGuard& guard)
+{
+	FastMemberIterator iter(store, rel);
+	for (;;)
+	{
+		FeatureRef member = iter.next();
+		if (member.isNull()) break;
+		int memberType = member.typeCode();
+		if (memberType == 1)
+		{
+			WayRef memberWay(member);
+			if (memberWay.isPlaceholder()) continue;
+			segmentizeWay(memberWay);
+		}
+		else if(memberType == 2)
+		{
+			RelationRef childRel(member);
+			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
+			segmentizeMembers(store, childRel, guard);
+		}
 	}
 }
 

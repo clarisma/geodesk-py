@@ -43,4 +43,10 @@ public:
 		return new CrossesFilter(FeatureTypes::ALL & ~FeatureTypes::NODES,
 			bounds(), buildIndex());
 	}
+
+	const Filter* forNonAreaRelation(FeatureStore* store, RelationRef rel) override
+	{
+		return forLineal();
+	}
+
 };

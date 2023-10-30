@@ -28,6 +28,9 @@ const Filter* PreparedFilterFactory::forFeature(FeatureStore* store, FeatureRef 
 	if (feature.isRelation())
 	{
 		RelationRef relation(feature);
+		RecursionGuard guard(relation);
+		bounds_ = relation.bounds();
+		indexBuilder_.segmentizeMembers(store, relation, guard);
 		return forNonAreaRelation(store, relation);
 	}
 	assert(feature.isWay());
