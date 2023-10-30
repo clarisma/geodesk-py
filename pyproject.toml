@@ -9,7 +9,7 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 
 [project]
 name = "geodesk"
-version = "0.0.7"
+version = "0.0.8"
 license = { text = "LGPL-3.0-only" }
 readme = "README.md"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
