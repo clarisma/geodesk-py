@@ -108,6 +108,7 @@ public:
     }
 
     static void dealloc(PyFeatures* self);
+    static PyObject* dir(PyFeatures* self);
     static PyObject* call(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* getattr(PyFeatures* self, PyObject* name);
     static PyObject* iter(PyFeatures* self);
