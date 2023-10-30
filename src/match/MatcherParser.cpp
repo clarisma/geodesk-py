@@ -14,7 +14,7 @@ MatcherParser::MatcherParser(FeatureStore* store, const char* pInput) :
 
 Selector* MatcherParser::parse()
 {
-	assert(_CrtCheckMemory());
+	// assert(_CrtCheckMemory());
 	Selector* firstSel = nullptr;
 	Selector** pNextSel = &firstSel;
 	for (;;)
@@ -184,6 +184,7 @@ FeatureTypes MatcherParser::matchTypes()
 	}
 	else
 	{
+		/*
 		static const char typeChars[] = "nwar";
 		static const FeatureTypes typeMasks[] =
 		{
@@ -193,15 +194,34 @@ FeatureTypes MatcherParser::matchTypes()
 			FeatureTypes::NONAREA_RELATIONS,
 		};
 		int found = 0;
+		*/
 		for (;;)
 		{
-			const char* found = std::strchr(typeChars, *pNext_);
-			if (!found) break;
-			int pos = static_cast<int>(found - typeChars);
-			FeatureTypes t = typeMasks[pos];
+			char ch = *pNext_;
+			FeatureTypes t = 0;
+			if (ch == 'n')
+			{
+				t = FeatureTypes::NODES;
+			}
+			else if (ch == 'w')
+			{
+				t = FeatureTypes::NONAREA_WAYS;
+			}
+			else if (ch == 'a')
+			{
+				t = FeatureTypes::AREAS;
+			}
+			else if (ch == 'r')
+			{
+				t = FeatureTypes::NONAREA_RELATIONS;
+			}
+			else
+			{
+				break;
+			}
 			if (types & t)
 			{
-				error("Type '%c' specified more than once", *pNext_);
+				error("Type '%c' specified more than once", ch);
 				return 0;
 			}
 			types |= t;

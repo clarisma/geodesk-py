@@ -61,6 +61,7 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
     PyWayNodeIterator* self = (PyWayNodeIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
+        self->featureNodesOnly = features->flags & SelectionFlags::USES_MATCHER;
         self->target = Python::newRef(features);
         new(&self->featureIter)FeatureNodeIterator(features->store);
         if (flags & FeatureFlags::WAYNODE)
@@ -82,13 +83,14 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
 PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
 {
     FeatureRef way = wayObj->feature;
-    LOG("Iterating way/%ld", way.id());
+    // LOG("Iterating way/%ld", way.id());
     int flags = way.flags();
     pointer pBody = way.bodyptr();
     PyWayNodeIterator* self = (PyWayNodeIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
         self->target = Python::newRef(wayObj);
+        self->featureNodesOnly = false;
         new(&self->featureIter)FeatureNodeIterator(wayObj->store);
         if (flags & FeatureFlags::WAYNODE)
         {
@@ -112,6 +114,15 @@ void PyWayNodeIterator::dealloc(PyWayNodeIterator* self)
 
 PyObject* PyWayNodeIterator::next(PyWayNodeIterator* self)
 {
+    // TODO: improve this control flow
+
+    if (self->featureNodesOnly)
+    {
+        NodeRef nextNode = self->nextNode;
+        if (nextNode.isNull()) return NULL;
+        self->nextNode = self->featureIter.next();
+        return PyFeature::create(self->featureIter.store(), nextNode, Py_None);
+    }
     Coordinate c = self->coordsIter.next();
     if (c.isNull()) return NULL;
     NodeRef nextNode = self->nextNode;

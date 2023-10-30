@@ -25,8 +25,8 @@ bool CrossesFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation
 
 bool CrossesFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
 {
-	// if (fast.turboFlags) return true;	
-		// TODO: fast-reject single-tile features
+	// "crosses" has no turbo-mode; only tiles that interact with segments
+	// are examined, all others are rejected
 	return acceptFeature(store, feature);
 }
 

@@ -30,8 +30,8 @@ def test_waynode_match(features):
         road_count += 1
     print(f"Found {total_bump_count} speed bumps in {road_count} roads.")
 
-    speed_bumps = features("n[]")
-    for street in streets[:1000]:
+    speed_bumps = features("n")
+    for street in roads[:1000]:
         bounds = Box()
         node_count = 0
         for node in street.nodes:
