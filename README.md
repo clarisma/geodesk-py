@@ -17,13 +17,13 @@ Also available [for Java](http://www.github.com/clarisma/geodesk).
 
 - **Seamless integration with Shapely** for advanced geometric operations, such as buffer, union, simplify, convex and concave hulls, Voronoi diagrams, and much more.
 
-- **Modest hardware requirements** &mdash; If it can run a 64-bit Python, it'll run GeoDesk.
+- **Modest hardware requirements** &mdash; If it can run 64-bit Python, it'll run GeoDesk.
  
 ## Get Started
 
 ### Requirements
 
-- Python 3.6 or above
+- Python 3.7 or above
 - Java 16 or above (for the GOL Tool)
  
 ### Download
