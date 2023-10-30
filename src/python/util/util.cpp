@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "util.h"
-
 #include <stdexcept>
-#include <Python.h>
+#include "PyFastMethod.h"
 
 
 PyObject* Python::createSet(const char** strings) 
@@ -147,4 +146,16 @@ PyObject* Python::checkSingleArg(PyObject* args, PyObject* kwargs, PyTypeObject*
         }
     }
     return obj;
+}
+
+
+void Python::createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc)
+{
+    PyObject* method = (PyObject*)PyFastMethod::create((PyObject*)type, dirFunc);
+    if (method) 
+    {
+        // Note: PyDict_SetItem does NOT steal ref
+        PyDict_SetItemString(type->tp_dict, "__dir__", method);
+        Py_DECREF(method);
+    }
 }

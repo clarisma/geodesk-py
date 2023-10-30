@@ -161,7 +161,7 @@ void PyFeatures::dealloc(PyFeatures* self)
     Py_TYPE(self)->tp_free(self);
 }
 
-PyObject* PyFeatures::dir(PyFeatures* self)
+PyObject* PyFeatures::dir(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
     return Python::createList(ATTR_NAMES, ATTR_COUNT);
 }

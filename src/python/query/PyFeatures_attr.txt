@@ -9,7 +9,6 @@
 %}
 struct PyFeaturesAttribute { const char *name; Python::AttrRef attr; };
 %%
-__dir__, ATTR_PROPERTY(PyFeatures::dir)
 area, ATTR_PROPERTY(PyFeatures::area)
 count, ATTR_PROPERTY(PyFeatures::count)
 first, ATTR_PROPERTY(PyFeatures::first)

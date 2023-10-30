@@ -1,7 +1,6 @@
-static const int ATTR_COUNT = 48;
+static const int ATTR_COUNT = 47;
 static const char* ATTR_NAMES[] =
 {
-    "__dir__",
     "area",
     "count",
     "first",
