@@ -24,6 +24,7 @@ struct SelectionType
     PyObject* (*iter)(PyFeatures*);
     PyObject* (*count)(PyFeatures*);      
     int (*isEmpty)(PyFeatures*);    
+    PyObject* (*getTiles)(PyFeatures*);
 };
 
 enum SelectionFlags
@@ -169,6 +170,7 @@ public:
     PyObject* getFirst(bool mustHaveOne, bool mayHaveMore);
     PyObject* getList(Py_ssize_t maxLen);
     static int isTrue(PyFeatures* self);
+    static PyObject* getTiles(PyFeatures*);
 
     /**
      * Checks whether this feature set is only constrained by type (i.e. it
@@ -201,6 +203,7 @@ public:
     static SelectionType SUBTYPE;
     static PyObject* iterFeatures(PyFeatures*);
     static PyObject* countFeatures(PyFeatures*);
+    static PyObject* getTiles(PyFeatures*);
 };
 
 class PyFeatures::WayNodes : public PyFeatures
@@ -219,6 +222,7 @@ public:
     static SelectionType SUBTYPE;
     static PyObject* iterFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
+    static PyObject* getTiles(PyFeatures*);
 };
 
 class PyFeatures::Parents : public PyFeatures

@@ -66,7 +66,7 @@ public:
 
 	int bottomY() const
 	{
-		return std::numeric_limits<int32_t>::min() - (int)((long)(row() + 1) << (32 - zoom()));
+		return std::numeric_limits<int32_t>::min() - (int)((int64_t)(row() + 1) << (32 - zoom()));
 		// << 32 wraps around for int, that's why we cast to long
 	}
 
@@ -82,7 +82,7 @@ public:
 		int z = zoom();
 		int minX = leftX();
 		int minY = bottomY();
-		long extent = 1L << (32 - z);
+		int64_t extent = 1LL << (32 - z);
 		return Box(minX, minY, (int)(minX + extent - 1), (int)(minY + extent - 1));
 	}
 

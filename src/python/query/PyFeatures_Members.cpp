@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
+#include <unordered_set>
 #include "python/feature/PyFeature.h"
-
+#include "query/TileIndexWalker.h"
+#include "PyTile.h"
 
 
 PyObject* PyFeatures::Members::iterFeatures(PyFeatures* features)
@@ -17,11 +19,60 @@ int PyFeatures::Members::isEmpty(PyFeatures* features)
     return PyFeatures::isEmpty(features);
 }
 
+PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
+{
+    std::unordered_set<uint32_t> tips;
+    FeatureStore* store = self->store;
+    RelationRef relation(self->relatedFeature);
+    MemberIterator iter(store, relation.bodyptr(),
+        self->acceptedTypes, self->matcher, self->filter);
+    for(;;)
+    {
+        FeatureRef member = iter.next();
+        if (member.isNull()) break;
+        if (iter.isCurrentForeign()) tips.insert(iter.currentTip());
+    }
+
+    PyObject* list = PyList_New(0);
+    if (list)
+    {
+        FeatureStore* store = self->store;
+
+        // We have to use a TIW in order to obtain tile numbers from the set
+        // of tips; we constrain the walker to the bbox of the relation, since
+        // by definition member tiles cannot lie outside of the relation's
+        // bounds (TODO: non-spatial members?)
+
+        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), relation.bounds());
+            // TODO: could calculate tighter bounds based on accepted members
+        while (tiw.next())
+        {
+            Tip tip = tiw.currentTip();
+            if (tips.find(tip) == tips.end()) continue;
+            PyTile* tile = PyTile::create(store, tiw.currentTile(), tip);
+            if (tile)
+            {
+                if (PyList_Append(list, tile) == 0)
+                {
+                    Py_DECREF(tile);
+                    continue;
+                }
+                Py_DECREF(tile);
+            }
+            Py_DECREF(list);
+            return NULL;
+        }
+    }
+    return list;
+}
+
+
 SelectionType PyFeatures::Members::SUBTYPE =
 {
     iterFeatures,
     countFeatures,
-    isEmpty
+    isEmpty,
+    getTiles
 };
 
 

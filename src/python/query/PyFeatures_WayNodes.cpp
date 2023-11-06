@@ -50,7 +50,8 @@ SelectionType PyFeatures::WayNodes::SUBTYPE =
 {
     iterFeatures,
     countFeatures,
-    isEmpty
+    isEmpty,
+    getTiles
 };
 
 PyObject* PyWayNodeIterator::create(PyFeatures* features)

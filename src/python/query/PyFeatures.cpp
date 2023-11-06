@@ -177,6 +177,34 @@ PyObject* PyFeatures::World::iterFeatures(PyFeatures* self)
     return PyQuery::create(self);
 }
 
+PyObject* PyFeatures::World::getTiles(PyFeatures* self)
+{
+    PyObject* list = PyList_New(0);
+    if (list)
+    {
+        FeatureStore* store = self->store;
+        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds);
+        // TODO: pass filter to TIW
+        while (tiw.next())
+        {
+            PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
+            if (tile)
+            {
+                if (PyList_Append(list, tile) == 0)
+                {
+                    Py_DECREF(tile);
+                    continue;
+                }
+                Py_DECREF(tile);
+            }
+            Py_DECREF(list);
+            return NULL;
+        }
+    }
+    return list;
+}
+
+
 
 PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
@@ -675,7 +703,8 @@ SelectionType PyFeatures::World::SUBTYPE =
 {
     iterFeatures,
     countFeatures,
-    isEmpty
+    isEmpty,
+    getTiles
 };
 
 
@@ -720,7 +749,8 @@ SelectionType PyFeatures::Empty::SUBTYPE =
 {
     iterFeatures,
     countFeatures,
-    isEmpty
+    isEmpty,
+    getTiles
 };
 
 // === Properties ===
@@ -871,35 +901,16 @@ PyObject* PyFeatures::strings(PyFeatures* self)
     Py_RETURN_NONE;
 }
 
+PyObject* PyFeatures::getTiles(PyFeatures* self)
+{
+    return PyList_New(0);
+}
+
 PyObject* PyFeatures::tiles(PyFeatures* self)
 {
-    PyObject* list = PyList_New(0);
-    if (list)
-    {
-        if (self->selectionType == &PyFeatures::World::SUBTYPE)
-        {
-            FeatureStore* store = self->store;
-            TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds);
-            // TODO: pass filter to TIW
-            while (tiw.next())
-            {
-                PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
-                if (tile)
-                {
-                    if (PyList_Append(list, tile) == 0)
-                    {
-                        Py_DECREF(tile);
-                        continue;
-                    }
-                    Py_DECREF(tile);
-                }
-                Py_DECREF(list);
-                return NULL;
-            }
-        }
-    }
-    return list;
+    return (*self->selectionType->getTiles)(self);
 }
+
 
 PyObject* PyFeatures::timestamp(PyFeatures* self)
 {

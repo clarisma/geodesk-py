@@ -25,6 +25,11 @@ public:
 	FeatureStore* store() const { return store_; }
 
 	FeatureRef next();
+	bool isCurrentForeign() const 
+	{
+		return currentMember_ & MemberFlags::FOREIGN; 
+	}
+	Tip currentTip() const { return currentTip_; }
 
 	/**
 	 * Obtains a borrowed reference to the Python string object that
