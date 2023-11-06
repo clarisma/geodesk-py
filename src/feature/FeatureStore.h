@@ -33,9 +33,7 @@ private:
 };
 
 
-// TODO:
-//  Replace boost::asio::thread_pool to get rid of Boost dependency
-//  Possible alternatives:
+//  Possible threadpool alternatives:
 //  - https://github.com/progschj/ThreadPool (Zlib license, header-only)
 
 

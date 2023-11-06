@@ -15,6 +15,7 @@
 #include "python/query/PyFeatures.h"
 #include "python/query/PyQuery.h"
 #include "python/query/PyQueryFinalizer.h"
+#include "python/query/PyTile.h"
 #include "python/util/PyBinder.h"
 #include "python/util/PyFastMethod.h"
 #include <common/util/log.h>
@@ -91,6 +92,7 @@ extern "C" PyMODINIT_FUNC PyInit_geodesk()
     if (createPrivateType(module, &PyFastMethod::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyBinder::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFormatter::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyTile::TYPE) < 0) return nullptr;
     // if (createPrivateType(module, &PyRTreeQuery::TYPE) < 0) return nullptr;
 
     Python::createDirMethod(&PyFeatures::TYPE, (PyCFunctionWithKeywords)&PyFeatures::dir);

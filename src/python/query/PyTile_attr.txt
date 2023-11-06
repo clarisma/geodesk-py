@@ -1,0 +1,16 @@
+%{
+// Keywords
+#include <assert.h>
+#include <cstdint>
+#include "python/util/util.h"
+
+%}
+struct PyTileAttribute { const char *name; Python::AttrRef attr; };
+%%
+bounds, ATTR_PROPERTY(PyTile::bounds)
+column, ATTR_PROPERTY(PyTile::column)
+id, ATTR_PROPERTY(PyTile::id)
+revision, ATTR_PROPERTY(PyTile::revision)
+row, ATTR_PROPERTY(PyTile::row)
+size, ATTR_PROPERTY(PyTile::size)
+zoom, ATTR_PROPERTY(PyTile::zoom)

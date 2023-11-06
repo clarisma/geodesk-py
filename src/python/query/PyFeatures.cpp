@@ -15,6 +15,7 @@
 #include "python/geom/PyCoordinate.h"
 #include "python/util/PyFastMethod.h"
 #include "PyQuery.h"
+#include "PyTile.h"
 #include <common/util/Parser.h>
 
 #include "PyFeatures_attr.cxx"
@@ -872,8 +873,32 @@ PyObject* PyFeatures::strings(PyFeatures* self)
 
 PyObject* PyFeatures::tiles(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    PyObject* list = PyList_New(0);
+    if (list)
+    {
+        if (self->selectionType == &PyFeatures::World::SUBTYPE)
+        {
+            FeatureStore* store = self->store;
+            TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds);
+            // TODO: pass filter to TIW
+            while (tiw.next())
+            {
+                PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
+                if (tile)
+                {
+                    if (PyList_Append(list, tile) == 0)
+                    {
+                        Py_DECREF(tile);
+                        continue;
+                    }
+                    Py_DECREF(tile);
+                }
+                Py_DECREF(list);
+                return NULL;
+            }
+        }
+    }
+    return list;
 }
 
 PyObject* PyFeatures::timestamp(PyFeatures* self)

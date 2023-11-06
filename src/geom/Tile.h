@@ -19,6 +19,11 @@ public:
 		return *this;
 	}
 
+	operator uint32_t() const 
+	{
+		return tile_;
+	}
+
 	inline static int columnFromXZ(int32_t x, ZoomLevel zoom) 
 	{
 		return (int)((static_cast<long long>(x) + (1LL << 31)) >> (32 - zoom));
@@ -59,12 +64,28 @@ public:
 		return std::numeric_limits<int32_t>::max() - (row() << (32 - zoom()));
 	}
 
+	int bottomY() const
+	{
+		return std::numeric_limits<int32_t>::min() - (int)((long)(row() + 1) << (32 - zoom()));
+		// << 32 wraps around for int, that's why we cast to long
+	}
+
 	int leftX() const
 	{
 		int z = zoom();
 		int col = column();
 		return (col - (1 << (z - 1))) << (32 - z);
 	}
+
+	Box bounds() const
+	{
+		int z = zoom();
+		int minX = leftX();
+		int minY = bottomY();
+		long extent = 1L << (32 - z);
+		return Box(minX, minY, (int)(minX + extent - 1), (int)(minY + extent - 1));
+	}
+
 
 private:
 	inline Tile(int col, int row, ZoomLevel zoom)
