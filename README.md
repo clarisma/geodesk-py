@@ -86,7 +86,7 @@ for route in street.parents("[route=bus]")):
 Count the number of entrances of a building:
 
 ```python
-numberOfEntrances = building.nodes("[entrance]").count
+number_of_entrances = building.nodes("[entrance]").count
 ```
 
 ## Documentation
