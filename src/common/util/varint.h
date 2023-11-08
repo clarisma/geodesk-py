@@ -56,3 +56,13 @@ inline int countVarints(const void* pStart, const void* pEnd)
 	}
 	return count;
 }
+
+void skipVarints(const uint8_t*& p, int count)
+{
+	do
+	{
+		uint8_t b = *p++;
+		count -= (b >> 7) ^ 1;
+	}
+	while (count);
+}
