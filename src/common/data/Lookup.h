@@ -14,27 +14,20 @@ public:
 
 	void insert(T* item)
 	{
-		int slot = this->self().getId(item) % this->tableSize_;
-		*this->self().next(item) = this->table_[slot];
-		table_[slot] = item;
+		size_t slot = Derived::getId(item) % this->tableSize_;
+		*Derived::next(item) = this->table_[slot];
+		this->table_[slot] = item;
 	}
 
 	T* lookup(uint64_t id)
 	{
-		int slot = id % this->tableSize_;
-		T* item = table_[slot];
+		size_t slot = id % this->tableSize_;
+		T* item = this->table_[slot];
 		while (item)
 		{
-			if (this->self().getId(item) == id) return item;
-			item = *this->self().next(item);
+			if (Derived::getId(item) == id) return item;
+			item = *Derived::next(item);
 		}
 		return nullptr;
 	}
-
-protected:
-	// int64_t getId(T* item)
-
-private:
-	T** table_;
-	int tableSize_;
 };

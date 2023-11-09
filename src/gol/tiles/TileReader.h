@@ -53,7 +53,7 @@ public:
         }
     }
 
-    void readRoot(int ppTree)
+    void readRoot(pointer ppTree)
     {
         int32_t rel = ppTree.getInt();
         if (rel != 0)
@@ -160,7 +160,7 @@ public:
     }
 
 private:
-    Derived& self() const
+    Derived& self() 
     {
         return *static_cast<Derived*>(this);
     }

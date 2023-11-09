@@ -6,55 +6,39 @@
 #include <common/data/Deduplicator.h>
 #include <common/data/Lookup.h>
 
+template <typename T> class ElementDeduplicator;
+
 class TElement
 {
 public:
-	class SizeAndAlignment
+	enum class Alignment : uint8_t
 	{
-	public:
-		SizeAndAlignment(uint32_t size, uint32_t alignment)
-		{
-			assert(alignment < 4);
-			value_ = (size << 2) | alignment;
-		}
-
-		uint32_t size() const { return value_ >> 2;  }
-
-	private:
-		uint32_t value_;
+		BYTE, WORD, DWORD, QWORD
 	};
 
-	static SizeAndAlignment unaligned(uint32_t size)
+	TElement(int32_t location, uint32_t size, Alignment alignment) :
+		location_(location), 
+		sizeAndAlignment_((size << 2) | static_cast<uint32_t>(alignment)) 
 	{
-		return SizeAndAlignment(size, 0);
 	}
 
-	static SizeAndAlignment aligned2(uint32_t size)
-	{
-		return SizeAndAlignment(size, 1);	// 2 == 1 << 1
-	}
-
-	static SizeAndAlignment aligned4(uint32_t size)
-	{
-		return SizeAndAlignment(size, 2);	// 4 == 1 << 2
-	}
-
-	TElement(int32_t location, SizeAndAlignment sizeAndAlignment) :
-		location_(location), sizeAndAlignment_(sizeAndAlignment) {}
 	int32_t location() const { return location_; }
 	void setLocation(int32_t location) { location_ = location; }
-	uint32_t size() const { return sizeAndAlignment_.size(); }
+	uint32_t size() const { return sizeAndAlignment_ >> 2; }
 
 private:
 	int32_t location_;
-	SizeAndAlignment sizeAndAlignment_;
+	uint32_t sizeAndAlignment_;
 };
 
 class TIndexedElement : public TElement
 {
 public:
-	TIndexedElement(int32_t location, SizeAndAlignment sizeAndAlignment) :
-		TElement(location, sizeAndAlignment), nextByLocation_(nullptr) {}
+	TIndexedElement(int32_t location, uint32_t size, Alignment alignment) :
+		TElement(location, size, alignment), 
+		nextByLocation_(nullptr) 
+	{
+	}
 
 private:
 	TIndexedElement* nextByLocation_;
@@ -65,8 +49,8 @@ private:
 class TSharedElement : public TIndexedElement
 {
 public:
-	TSharedElement(int32_t location, const uint8_t* data, SizeAndAlignment sizeAndAlignment) :
-		TIndexedElement(location, sizeAndAlignment), 
+	TSharedElement(int32_t location, const uint8_t* data, uint32_t size, Alignment alignment) :
+		TIndexedElement(location, size, alignment), 
 		data_(data),
 		nextByType_(nullptr) 
 	{
@@ -78,9 +62,12 @@ public:
 		memcpy(p, data_, size());
 	}
 
-private:
+public:		// workaround for template access
 	TSharedElement* nextByType_;
+private:
 	const uint8_t* data_;
+
+	// friend class ElementDeduplicator<TSharedElement>;
 };
 
 
@@ -96,33 +83,39 @@ public:
 	*/
 
 protected:
-	int64_t getId(TIndexedElement* element)
+	static int64_t getId(TIndexedElement* element)
 	{
 		return element->location();
 	}
 
-	TIndexedElement** next(TIndexedElement* elem)
+	static TIndexedElement** next(TIndexedElement* elem)
 	{
 		return &elem->nextByLocation_;
 	}
+
+	friend class Lookup<LookupByLocation, TIndexedElement>;
 };
+
+
 
 template<typename T>
 class ElementDeduplicator : public Deduplicator<ElementDeduplicator<T>, T>
 {
 protected:
-	const void* data(T* item)
+	static const void* data(T* item)
 	{
 		return item->data();
 	}
 
-	int length(T* item)
+	static int length(T* item)
 	{
 		return item->size();
 	}
 
-	TIndexedElement** next(TIndexedElement* elem)
+	static T** next(T* elem)
 	{
-		return &elem->nextByLocation_;
+		return reinterpret_cast<T**>(&elem->nextByType_);
 	}
+
+	friend class Deduplicator<ElementDeduplicator<T>, T>;
 };

@@ -20,10 +20,6 @@ public:
 	}
 
 protected:
-	Derived& self() const
-	{
-		return *static_cast<Derived*>(this);
-	}
 
 	T** table_;
 	size_t tableSize_;

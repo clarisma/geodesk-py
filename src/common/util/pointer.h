@@ -71,7 +71,8 @@ public:
 	pointer operator+(int32_t delta) const { return pointer(ptr_ + delta); }
 	pointer operator-(int32_t delta) const { return pointer(ptr_ - delta); }
 	pointer operator+(uint32_t delta) const { return pointer(ptr_ + delta); }
-	int32_t operator-(pointer other) const 
+	pointer operator-(uint32_t delta) const { return pointer(ptr_ - delta); }
+	int32_t operator-(pointer other) const
 	{ 
 		return static_cast<int32_t>(ptr_ - other.ptr_);
 	}

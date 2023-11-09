@@ -6,8 +6,8 @@
 class TTagTable : public TSharedElement
 {
 public:
-	TTagTable(int32_t loc, const uint8_t* data, uint8_t len, uint8_t anchor) :
-		TSharedElement(loc, data, aligned2(len)),
+	TTagTable(int32_t loc, const uint8_t* data, uint8_t size, uint8_t anchor) :
+		TSharedElement(loc, data, size, Alignment::WORD),
 		anchor_(anchor)
 		// TODO: category
 	{

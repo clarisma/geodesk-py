@@ -6,11 +6,11 @@ class TString : public TSharedElement
 {
 public:
 	TString(int32_t loc, const uint8_t* data) :
-		TSharedElement(loc, data, unaligned(readLength(data)))
+		TSharedElement(loc, data, getStringSize(data), Alignment::BYTE)
 	{
 	}
 
-	static uint32_t readLength(const uint8_t* data)
+	static uint32_t getStringSize(const uint8_t* data)
 	{
 		uint32_t len = *data;
 		return (len & 0x80) ? (((len & 0xf7) | (*(data + 1) << 7)) + 2) : (len + 1);

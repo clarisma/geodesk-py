@@ -22,6 +22,7 @@ public:
     void close();
     void* map(uint64_t offset, uint64_t length, int /* MappingMode */ mode);
     void unmap(void* address, uint64_t length);
+    void prefetch(void* address, uint64_t length);
 
 private:
 #if defined(_WIN32) // Windows

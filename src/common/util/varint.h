@@ -57,7 +57,7 @@ inline int countVarints(const void* pStart, const void* pEnd)
 	return count;
 }
 
-void skipVarints(const uint8_t*& p, int count)
+inline void skipVarints(const uint8_t*& p, int count)
 {
 	do
 	{
