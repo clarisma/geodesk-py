@@ -8,6 +8,13 @@
 
 class BlobStore : public Store
 {
+public:
+	void prefetchBlob(const void* pBlob)
+	{
+		uint32_t size = pointer(pBlob).getUnsignedInt() & 0x3fff'ffff;
+		prefetch(pBlob, size);
+	}
+
 protected:
 	static const uint32_t MAGIC = 0x7ADA0BB1;
 	static const uint32_t VERSION = 1'000'000;

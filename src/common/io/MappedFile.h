@@ -22,7 +22,8 @@ public:
     void close();
     void* map(uint64_t offset, uint64_t length, int /* MappingMode */ mode);
     void unmap(void* address, uint64_t length);
-    void prefetch(void* address, uint64_t length);
+    void prefetch(const void* address, uint64_t length);
+        // TODO: technically, does not need to be part of MappedFile
 
 private:
 #if defined(_WIN32) // Windows
