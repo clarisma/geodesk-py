@@ -1,6 +1,19 @@
 #pragma once
 #include "LookupBase.h"
 
+/**
+ * Template for classes that look up items in a hashtable using a 64-bit 
+ * numeric ID. Note that IDs should have reasonable distribution as they
+ * are used as the hash keys.
+ * 
+ * The following functions must be provided by the derived class:
+ * 
+ * - static T** next(T* item)
+ *   Returns the location of the "next item" pointer in the given item
+ * 
+ * - static int64_t getId(T* item)
+ *   Returns the ID of an item.
+ */
 template<typename Derived, typename T>
 class Lookup : public LookupBase<Derived, T>
 {
@@ -12,6 +25,12 @@ public:
 		init(table, tableSize);
 	}
 
+	/**
+	 * Inserts the given item into the index, using its ID 
+	 * (retrieved via getID) as a lookup key.
+	 * This function assumes that no item with the same ID
+	 * already exists in this index.
+	 */
 	void insert(T* item)
 	{
 		size_t slot = Derived::getId(item) % this->tableSize_;
@@ -19,6 +38,10 @@ public:
 		this->table_[slot] = item;
 	}
 
+	/**
+	 * Returns a pointer to the item with the given ID, or nullptr
+	 * if no such item exists.
+	 */
 	T* lookup(uint64_t id)
 	{
 		size_t slot = id % this->tableSize_;

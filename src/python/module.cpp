@@ -66,9 +66,17 @@ int createPublicType(PyObject* module, const char* name, PyTypeObject* type)
     return 0;
 }
 
+#ifdef GEODESK_TEST_PERFORMANCE
+volatile uint32_t performance_blackhole;
+#endif 
+
 extern "C" PyMODINIT_FUNC PyInit_geodesk()
 {
+#ifdef GEODESK_TEST_PERFORMANCE
+    printf("\n=== Test build, not for release ===\n");
+#endif
     LOG("PyInit_geodesk...");
+    
 
     if (Environment::get().init() < 0) return NULL;
 

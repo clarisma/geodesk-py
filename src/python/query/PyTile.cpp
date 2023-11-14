@@ -63,13 +63,46 @@ PyObject* PyTile::repr(PyTile* self)
 	Py_RETURN_NONE;
 }
 
-/*
+
 PyObject* PyTile::richcompare(PyTile* self, PyObject* other, int op)
 {
-	// TODO
-	Py_RETURN_NONE;
+	PyObject* res;
+	if (Py_TYPE(other) == &TYPE)
+	{
+		PyTile* tile = (PyTile*)other;
+		switch (op)
+		{
+		case Py_EQ:
+			res = (self->store == tile->store && self->tip == tile->tip) ?
+				Py_True : Py_False;
+			break;
+		case Py_NE:
+			res = (self->store != tile->store || self->tip != tile->tip) ?
+				Py_True : Py_False;
+			break;
+		default:
+			res = Py_NotImplemented;
+			break;
+		}
+	}
+	else
+	{
+		switch (op)
+		{
+		case Py_EQ:
+			res = Py_False;
+			break;
+		case Py_NE:
+			res = Py_True;
+			break;
+		default:
+			res = Py_NotImplemented;
+			break;
+		}
+	}
+	return Python::newRef(res);
 }
-*/
+
 
 PyObject* PyTile::str(PyTile* self)
 {
@@ -123,7 +156,7 @@ PyTypeObject PyTile::TYPE =
 	.tp_getattro = (getattrofunc)getattro,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "Tile objects",
-	// .tp_richcompare = (richcmpfunc)richcompare,
+	.tp_richcompare = (richcmpfunc)richcompare,
 	// .tp_iter = (getiterfunc)iter,
 	// .tp_iternext = (iternextfunc)next,
 };

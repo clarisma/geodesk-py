@@ -1,50 +1,58 @@
 #pragma once
-// #include <unordered_map>
-#include <common/alloc/Arena.h>
-#include "TileReader.h"
-#include "TFeature.h"
-#include "TRelationTable.h"
-#include "TString.h"
-#include "TTagTable.h"
 
-class TileCompiler : public TileReader<TileCompiler>
+#include <common/util/ThreadPool.h>
+#include "feature/FeatureStore.h"
+#include "geom/Tile.h"
+
+class TileCompiler;
+
+class TileCompilerTask
 {
 public:
-	TileCompiler();
-	void readTile(pointer pTile);
+	TileCompilerTask(TileCompiler* compiler, Tile tile, Tip tip) :
+		compiler_(compiler), tile_(tile), tip_(tip)
+	{
+	}
+
+	TileCompilerTask() : tip_(0) {} // TODO: Never used, exists only to satisfy compiler
+
+	void operator()();
 
 private:
-	void readNode(NodeRef node);
-	void readWay(WayRef way);
-	void readRelation(RelationRef relation);
-	TString* readString(pointer p);
-	TTagTable* readTagTable(pointer pTagged);
-	TRelationTable* readRelationTable(pointer p);
+	TileCompiler* compiler_;
+	Tile tile_;
+	Tip tip_;
+};
 
-	int32_t currentLocation(pointer p)
+
+class TileWriterTask
+{
+public:
+	TileWriterTask(TileCompiler* compiler, Tip tip, const uint8_t* data) :
+		compiler_(compiler), tip_(tip), data_(data)
 	{
-		return static_cast<int32_t>(pCurrentTile_ - p.asBytePointer());
-		// We use negative values to indicate old location
 	}
 
-	void addFeatureToIndex(TFeature* feature)
-	{
-		elementsByLocation_.insert(feature);
-		featuresById_.insert(feature);
-	}
+	TileWriterTask() : tip_(0) {} // TODO: Never used, exists only to satisfy compiler
 
-	void initTables(size_t tileSize);
+	void operator()();
 
-	Arena arena_;
-	LookupByLocation elementsByLocation_;
-	LookupById featuresById_;
-	ElementDeduplicator<TString> strings_;
-	ElementDeduplicator<TTagTable> tagTables_;
-	ElementDeduplicator<TRelationTable> relationTables_;
-	uint8_t* pCurrentTile_;
-	uint32_t currentTileSize_;
-	int tagTableCount_;
-	int stringCount_;
+private:
+	TileCompiler* compiler_;
+	const uint8_t* data_;
+	Tip tip_;
+};
 
-	friend class TileReader<TileCompiler>;
+class TileCompiler
+{
+public:
+	TileCompiler(FeatureStore* store);
+	void compile();
+
+private:
+	FeatureStore* store_;
+	ThreadPool<TileCompilerTask> workers_;
+	ThreadPool<TileWriterTask> writer_;
+
+	friend class TileCompilerTask;
 };

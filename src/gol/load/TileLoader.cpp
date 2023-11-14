@@ -1,6 +1,6 @@
 #include "TileLoader.h"
 #include "query/TileIndexWalker.h"
-#include "gol/tiles/TileCompiler.h"
+#include "gol/tiles/TTile.h"
 
 TileLoader::TileLoader(FeatureStore *store) :
 	store_(store),
@@ -31,7 +31,7 @@ void TileLoaderTask::operator()()
 	// uint32_t size = pTile.getInt() & 0x3fff'ffff;
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
-	TileCompiler compiler;
+	TTile compiler;
 	store_->prefetchBlob(pTile);
 	compiler.readTile(pTile);
 	/*
