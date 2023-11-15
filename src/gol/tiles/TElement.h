@@ -53,8 +53,7 @@ public:
 	TSharedElement(int32_t location, const uint8_t* data, uint32_t size, Alignment alignment) :
 		TIndexedElement(location, size, alignment), 
 		data_(data),
-		nextByType_(nullptr),
-		usage_(0)
+		nextByType_(nullptr)
 	{
 	}
 
@@ -64,12 +63,12 @@ public:
 		memcpy(p, data_, size());
 	}
 
+public:								// workaround for template access
+	TSharedElement* nextByType_;
 private:
 	const uint8_t* data_;
-public:								// workaround for template access
-	TSharedElement* nextByType_;	
-	uint32_t usage_;
-	uint32_t extra_;		// can be used by subclasses
+	// uint32_t usage_;
+	// uint32_t extra_;		// can be used by subclasses
 
 	// friend class ElementDeduplicator<TSharedElement>;
 };

@@ -13,7 +13,7 @@
  * 
  * - T* insert(T* item)
  *   Checks whether an item with the same content already exists;
- *   if so, increases the refcount of this item and returns it instead
+ *   if so, returns it instead
  * 
  * Needs the following functions in the derived class:
  * 
@@ -25,10 +25,6 @@
  * 
  * - static T** next(T* item)
  *   Returns the location of the "next item" pointer in the given item
- * 
- * - void addRef(T* item)
- *   Adds to the refcount of an item (Can be a no-op if refcounting is not used)
- * 
  */
 
 template<typename Derived, typename T>
@@ -69,7 +65,7 @@ public:
 			if (existingLen == itemLen && 
 				memcmp(itemData, Derived::data(existing), itemLen) == 0)
 			{
-				Derived::addRef(existing);
+				// Derived::addRef(existing);
 				return existing;
 			}
 			existing = *Derived::next(existing);
