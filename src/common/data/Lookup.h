@@ -42,7 +42,7 @@ public:
 	 * Returns a pointer to the item with the given ID, or nullptr
 	 * if no such item exists.
 	 */
-	T* lookup(uint64_t id)
+	T* lookup(uint64_t id) const
 	{
 		size_t slot = id % this->tableSize_;
 		T* item = this->table_[slot];

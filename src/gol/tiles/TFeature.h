@@ -21,6 +21,10 @@ public:
 		return feature_.idBits();
 	}
 
+	TFeature* next() const { return nextById_;  }
+
+	void write(const TTile* tile, uint8_t* p) const;
+
 private:
 	union
 	{
@@ -31,7 +35,7 @@ private:
 	};
 	TFeature* nextById_;
 
-	friend class LookupById;
+	friend class FeatureTable;
 };
 
 class TNode : public TFeature
@@ -99,15 +103,10 @@ private:
 };
 
 
-class LookupById : public Lookup<LookupById, TFeature>
+class FeatureTable : public Lookup<FeatureTable, TFeature>
 {
 public:
-	/*
-	void init(Arena& arena, size_t tableSize)
-	{
-		init(arena.allocArray<TIndexedElement*>(tableSize), tableSize);
-	}
-	*/
+	
 
 protected:
 	static int64_t getId(TFeature* element)
@@ -120,5 +119,5 @@ protected:
 		return &elem->nextById_;
 	}
 
-	friend class Lookup<LookupById, TFeature>;
+	friend class Lookup<FeatureTable, TFeature>;
 };

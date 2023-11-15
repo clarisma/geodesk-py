@@ -13,6 +13,18 @@ public:
 	TTile();
 	void readTile(pointer pTile);
 
+	TIndexedElement* getElement(const void* p) const
+	{
+		return elementsByLocation_.lookup(reinterpret_cast<const uint8_t*>(p) - pCurrentTile_);
+	}
+
+	uint32_t featureCount() const { return featureCount_; }
+
+	FeatureTable::Iterator iterFeatures() const
+	{
+		return featuresById_.iter();
+	}
+
 private:
 	void readNode(NodeRef node);
 	void readWay(WayRef way);
@@ -38,11 +50,11 @@ private:
 
 	Arena arena_;
 	LookupByLocation elementsByLocation_;
-	LookupById featuresById_;
+	FeatureTable featuresById_;
 	ElementDeduplicator<TString> strings_;
 	ElementDeduplicator<TTagTable> tagTables_;
 	ElementDeduplicator<TRelationTable> relationTables_;
-	uint8_t* pCurrentTile_;
+	const uint8_t* pCurrentTile_;
 	uint32_t currentTileSize_;
 	uint32_t featureCount_;
 

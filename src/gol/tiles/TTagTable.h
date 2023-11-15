@@ -13,6 +13,8 @@ public:
 	{
 	}
 
+	bool hasLocalTags() const { return anchor_ != 0; }
+
 private:
 	uint32_t anchor_;
 	int32_t category_;

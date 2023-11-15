@@ -79,7 +79,7 @@ public:
 	size_t count() const { return count_; }
 
 private:
-	uint32_t hash(T* item)
+	uint32_t hash(T* item) const
 	{
 		uint32_t hash = 0;
 		const uint8_t* p = reinterpret_cast<const uint8_t*>(Derived::data(item));

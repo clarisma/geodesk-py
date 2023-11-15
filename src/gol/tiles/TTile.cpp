@@ -230,3 +230,9 @@ TRelationTable* TTile::readRelationTable(pointer pTable)
 	relationTables_.insertUnique(rels);
 	return rels;
 }
+
+
+TTagTable* TTile::getTags(const void* p)
+{
+	TIndexedElement* elem = elementsByLocation(p - pTile_);
+}

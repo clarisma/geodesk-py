@@ -58,7 +58,7 @@ public:
 	}
 
 	const uint8_t* data() const { return data_; }
-	void write(uint8_t* p)
+	void write(uint8_t* p) const
 	{
 		memcpy(p, data_, size());
 	}
@@ -78,14 +78,6 @@ private:
 class LookupByLocation : public Lookup<LookupByLocation, TIndexedElement>
 {
 public:
-	/*
-	void init(Arena& arena, size_t tableSize)
-	{
-		init(arena.allocArray<TIndexedElement*>(tableSize), tableSize);
-	}
-	*/
-
-protected:
 	static int64_t getId(TIndexedElement* element)
 	{
 		return element->location();
@@ -95,8 +87,6 @@ protected:
 	{
 		return &elem->nextByLocation_;
 	}
-
-	friend class Lookup<LookupByLocation, TIndexedElement>;
 };
 
 
@@ -104,7 +94,7 @@ protected:
 template<typename T>
 class ElementDeduplicator : public Deduplicator<ElementDeduplicator<T>, T>
 {
-protected:
+public:
 	static const void* data(T* item)
 	{
 		return item->data();
@@ -119,11 +109,4 @@ protected:
 	{
 		return reinterpret_cast<T**>(&elem->nextByType_);
 	}
-
-	static void addRef(T* elem)
-	{
-		elem->usage_++;
-	}
-
-	friend class Deduplicator<ElementDeduplicator<T>, T>;
 };
