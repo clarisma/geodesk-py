@@ -16,12 +16,12 @@ public:
 	{
 	}
 
-	uint64_t idBits() const
-	{
-		return feature_.idBits();
-	}
+	FeatureRef feature() const { return feature_; }
+	uint64_t idBits() const { return feature_.idBits(); }
+	int flags() const {	return feature_.flags(); }
 
-	TFeature* next() const { return nextById_;  }
+	TFeature* next() const { return nextById_; }
+	void setNext(TFeature* next) { nextById_ = next; }
 
 	void write(const TTile* tile, uint8_t* p) const;
 

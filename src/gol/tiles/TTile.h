@@ -6,11 +6,12 @@
 #include "TRelationTable.h"
 #include "TString.h"
 #include "TTagTable.h"
+#include "geom/Tile.h"
 
 class TTile : public TileReader<TTile>
 {
 public:
-	TTile();
+	TTile(Tile tile);
 	void readTile(pointer pTile);
 
 	TIndexedElement* getElement(const void* p) const
@@ -18,6 +19,8 @@ public:
 		return elementsByLocation_.lookup(reinterpret_cast<const uint8_t*>(p) - pCurrentTile_);
 	}
 
+	Arena& arena() { return arena_; }
+	Box bounds() const { return tile_.bounds(); }
 	uint32_t featureCount() const { return featureCount_; }
 
 	FeatureTable::Iterator iterFeatures() const
@@ -57,6 +60,7 @@ private:
 	const uint8_t* pCurrentTile_;
 	uint32_t currentTileSize_;
 	uint32_t featureCount_;
+	Tile tile_;
 
 	friend class TileReader<TTile>;
 };

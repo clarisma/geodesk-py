@@ -91,5 +91,19 @@ uint32_t calculateHilbertDistance(uint32_t x, uint32_t y)
     return (interleave(i1) << 1) | interleave(i0);
 }
 
+/**
+ * Calculates the distance along the Hilbert Curve of the given coordinate
+ * within the reference bounds.
+ */
+uint32_t calculateHilbertDistance(Coordinate c, const Box& bounds)
+{
+    assert(bounds.contains(c));
+    uint64_t relX = static_cast<int64_t>(c.x) - bounds.minX();
+    uint64_t relY = static_cast<int64_t>(c.y) - bounds.minY();
+    uint32_t hilbertX = static_cast<uint32_t>((relX * MAX_COORDINATE) / bounds.widthSimple());
+    uint32_t hilbertY = static_cast<uint32_t>((relY * MAX_COORDINATE) / bounds.height());
+    return hilbert::calculateHilbertDistance(hilbertX, hilbertY);
+}
+
 
 } // namespace

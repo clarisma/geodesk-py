@@ -4,9 +4,10 @@
 #include <common/util/log.h>
 #include <common/util/varint.h>
 
-TTile::TTile() :
+TTile::TTile(Tile tile) :
 	arena_(1024 * 1024, Arena::GrowthPolicy::GROW_50_PERCENT),
-	featureCount_(0)
+	featureCount_(0),
+	tile_(tile)
 {
 }
 

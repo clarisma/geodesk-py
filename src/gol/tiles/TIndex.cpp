@@ -28,6 +28,7 @@ void TIndexLeaf::write(const TTile* tile, uint8_t* p) const
 }
 
 
+/*
 uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
 {
 	uint32_t size = 0;
@@ -40,7 +41,7 @@ uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
 	while (p);
 	return size;
 }
-
+*/
 
 void TIndexTrunk::write(uint8_t* pStart) const
 {
@@ -60,4 +61,74 @@ void TIndexTrunk::write(uint8_t* pStart) const
 		child = nextChild;
 	}
 	while (child);
+}
+
+
+TIndex::TIndex() :
+	TElement(0, 0, TElement::Alignment::DWORD),
+	firstRoot_(0)
+{
+	memset(&roots_, 0, sizeof(roots_));
+	memset(&next_, -1, sizeof(next_));
+}
+
+void TIndex::addFeature(TFeature* feature)
+{
+	Root& root = roots_[getFeatureCategory(feature)];
+	feature->setNext(root.firstFeature);
+	root.firstFeature = feature;
+	root.count++;
+}
+
+void TIndex::build()
+{
+	// TODO
+}
+
+
+void TIndex::write(uint8_t* p) const
+{
+	uint8_t pos = location();
+	int rootNumber = firstRoot_;
+	do
+	{
+		int nextRootNumber = next_[rootNumber];
+		const Root& root = roots_[rootNumber];
+		*reinterpret_cast<int32_t*>(p) =
+			(root.trunk->location() - pos) |
+			(nextRootNumber < 0 ? 1 : 0);
+		*reinterpret_cast<uint32_t*>(p + 4) = root.indexBits;
+		p += 8;
+		pos += 8;
+		rootNumber = nextRootNumber;
+	}
+	while (rootNumber >= 0);
+}
+
+/**
+ * If we right-shift the feature flags by 1, then take the bottom 4 bits,
+ * we can tell to which index the feature belongs without having to branch
+ * (We're interested in the type bits and the area-flag; we'll ignore the
+ *  member flag)
+ */
+const uint8_t Indexer::FLAGS_TO_TYPE[16] =
+{
+	NODES, INVALID, NODES, INVALID,
+	WAYS, AREAS, WAYS, AREAS,
+	RELATIONS, AREAS, RELATIONS, AREAS,
+	INVALID, INVALID, INVALID, INVALID
+};
+
+void Indexer::addFeatures(const FeatureTable& features)
+{
+	FeatureTable::Iterator iter = features.iter();
+	for (;;)
+	{
+		TFeature* feature = iter.next();
+		if (!feature) break;
+		int typeFlags = (feature->flags() >> 1) & 15;
+		int type = FLAGS_TO_TYPE[typeFlags];
+		assert(type != INVALID);		// TODO: make this a proper runtime check?
+		indexes_[type].addFeature(feature);
+	}
 }
