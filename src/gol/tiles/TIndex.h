@@ -5,6 +5,8 @@
 #include "geom/Box.h"
 
 class FeatureTable;
+class HilbertIndexBuilder;
+class IndexSettings;
 class TFeature;
 class TTile;
 
@@ -79,36 +81,46 @@ class TIndex : public TElement
 {
 public:
 	TIndex();
-	void addFeature(TFeature* feature);
-	void build();
+	void addFeature(TFeature* feature, const IndexSettings& settings);
+	void build(TTile& tile, const IndexSettings& settings);
 	void write(uint8_t* p) const;
 
 private:
 	static const int MAX_CATEGORIES = 30;
+	static const int NUMBER_OF_ROOTS = MAX_CATEGORIES + 2;
+		// includes no-category (first) and multi-category (last)
+	static const int MULTI_CATEGORY = NUMBER_OF_ROOTS - 1;
 
 	struct Root
 	{
 		int32_t indexBits;
-		uint32_t count;
+		uint32_t featureCount;
 		union
 		{
 			TIndexTrunk* trunk;
 			TFeature* firstFeature;
 		};
+
+		bool isEmpty() const { return featureCount == 0; }
+		void addFeature(TFeature* feature, uint32_t indexBits);
+		void add(Root& other);
+		void build(HilbertIndexBuilder& rtreeBuilder);
 	};
 
 	int getFeatureCategory(TFeature* feature);
 
-	Root roots_[MAX_CATEGORIES + 2];
-	int8_t next_[MAX_CATEGORIES + 2];
+	Root roots_[NUMBER_OF_ROOTS];
+	int8_t next_[NUMBER_OF_ROOTS];
+	int8_t firstRoot_;
+	int8_t lastRoot_;
 	int rootCount_;
-	int firstRoot_;
 };
 
 
 class Indexer
 {
 public:
+	Indexer(TTile& tile, const IndexSettings& settings);
 	void addFeatures(const FeatureTable& features);
 	void build();
 
@@ -124,5 +136,7 @@ private:
 		INVALID
 	};
 
+	TTile& tile_;
+	const IndexSettings& settings_;
 	TIndex indexes_[4];			// for nodes, ways, areas & relations
 };

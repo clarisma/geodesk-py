@@ -8,6 +8,7 @@ class FeatureStore;
 
 class IndexSettings 
 {
+public:
     IndexSettings(FeatureStore* store, int rtreeBucketSize, 
         int maxKeyIndexes, int keyIndexMinFeatures) :
         rtreeBucketSize_(rtreeBucketSize),
@@ -18,6 +19,10 @@ class IndexSettings
         // TODO        
     }
 
+    int rtreeBucketSize() const { return rtreeBucketSize_; }
+    int maxKeyIndexes() const { return maxKeyIndexes_; }
+    int keyIndexMinFeatures() const { return keyIndexMinFeatures_; }
+    
 private:
     const int rtreeBucketSize_;
     const int maxKeyIndexes_;
@@ -25,3 +30,4 @@ private:
     const int maxIndexedKey_;
     const std::unordered_map<int, int> keysToCategory;
 };
+

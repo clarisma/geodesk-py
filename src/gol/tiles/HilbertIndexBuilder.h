@@ -3,7 +3,9 @@
 #include "TTile.h"
 
 class TFeature;
+class TIndexBranch;
 class TIndexLeaf;
+class TIndexTrunk;
 
 class HilbertIndexBuilder
 {
@@ -15,6 +17,14 @@ public:
 	{
 	}
 
+	/**
+	 * Builds a spatial index for a set of features. Note that
+	 * features are in a CIRCULAR LIST, and an explicit count
+	 * must be passed (which must match the number of features)
+	 * 
+	 * @param firstFeature a circular list of features
+	 * @param the number of features
+	 */
 	TIndexTrunk* build(TFeature* firstFeature, int count);
 
 private:

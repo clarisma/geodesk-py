@@ -25,6 +25,13 @@ public:
 	int32_t location() const { return location_; }
 	void setLocation(int32_t location) { location_ = location; }
 	uint32_t size() const { return sizeAndAlignment_ >> 2; }
+	int32_t alignedLocation(int32_t loc)
+	{
+		int alignment = (sizeAndAlignment_ & 3);
+		int add = (1 << alignment) - 1;
+		int32_t mask = 0xffff'ffff << alignment;
+		return (loc + add) & mask;
+	}
 
 private:
 	int32_t location_;

@@ -30,7 +30,7 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 		p++;
 		feature = feature->next();
 	}
-	while (feature);
+	while (feature != firstFeature);
 	assert(p - hilbertItems == count);
 	assert(reinterpret_cast<uint8_t*>(p) == workspace + workspaceSize);
 

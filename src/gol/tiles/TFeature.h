@@ -6,6 +6,8 @@
 #include "feature/Way.h"
 #include "feature/Relation.h"
 
+class TTile;
+
 class TFeature : public TIndexedElement
 {
 public:
@@ -106,9 +108,6 @@ private:
 class FeatureTable : public Lookup<FeatureTable, TFeature>
 {
 public:
-	
-
-protected:
 	static int64_t getId(TFeature* element)
 	{
 		return element->location();
@@ -118,6 +117,4 @@ protected:
 	{
 		return &elem->nextById_;
 	}
-
-	friend class Lookup<FeatureTable, TFeature>;
 };

@@ -34,7 +34,7 @@ void TileCompilerTask::operator()()
 	// uint32_t size = pTile.getInt() & 0x3fff'ffff;
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
-	TTile tile;
+	TTile tile(tile_);
 	store->prefetchBlob(pTile);
 	tile.readTile(pTile);
 	/*

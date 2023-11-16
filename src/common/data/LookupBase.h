@@ -38,8 +38,8 @@ public:
 	public:
 		Iterator(const LookupBase* lookup)
 		{
-			pCurrentSlot_ = table_;
-			pEndSlot_ = table_ + tableSize_;
+			pCurrentSlot_ = lookup->table_;
+			pEndSlot_ = lookup->table_ + lookup->tableSize_;
 			nextSlot();
 		}
 		

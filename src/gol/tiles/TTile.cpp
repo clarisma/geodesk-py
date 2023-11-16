@@ -233,7 +233,8 @@ TRelationTable* TTile::readRelationTable(pointer pTable)
 }
 
 
-TTagTable* TTile::getTags(const void* p)
+TTagTable* TTile::getTags(const void* p) const
 {
-	TIndexedElement* elem = elementsByLocation(p - pTile_);
+	return reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
+		reinterpret_cast<const uint8_t*>(p) - pCurrentTile_));
 }

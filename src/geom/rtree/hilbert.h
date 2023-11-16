@@ -13,7 +13,7 @@ namespace hilbert {
 
 static const int MAX_COORDINATE = (1 << 16) - 1;
 
-uint32_t interleave(uint32_t x)
+inline uint32_t interleave(uint32_t x)
 {
     x = (x | (x << 8)) & 0x00FF00FF;
     x = (x | (x << 4)) & 0x0F0F0F0F;
@@ -22,7 +22,7 @@ uint32_t interleave(uint32_t x)
     return x;
 }
 
-uint32_t calculateHilbertDistance(uint32_t x, uint32_t y)
+inline uint32_t calculateHilbertDistance(uint32_t x, uint32_t y)
 {
     assert(x <= MAX_COORDINATE);
     assert(y <= MAX_COORDINATE);
@@ -95,7 +95,7 @@ uint32_t calculateHilbertDistance(uint32_t x, uint32_t y)
  * Calculates the distance along the Hilbert Curve of the given coordinate
  * within the reference bounds.
  */
-uint32_t calculateHilbertDistance(Coordinate c, const Box& bounds)
+inline uint32_t calculateHilbertDistance(Coordinate c, const Box& bounds)
 {
     assert(bounds.contains(c));
     uint64_t relX = static_cast<int64_t>(c.x) - bounds.minX();

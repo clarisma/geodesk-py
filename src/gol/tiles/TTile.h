@@ -28,6 +28,8 @@ public:
 		return featuresById_.iter();
 	}
 
+	TTagTable* getTags(const void* p) const;
+
 private:
 	void readNode(NodeRef node);
 	void readWay(WayRef way);
