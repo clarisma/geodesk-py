@@ -1,4 +1,5 @@
 #include "TIndex.h"
+#include "TTagTable.h"
 #include "TTile.h"
 #include "HilbertIndexBuilder.h"
 #include "IndexSettings.h"
@@ -109,14 +110,6 @@ void TIndex::Root::add(Root& other)
 void TIndex::Root::build(HilbertIndexBuilder& rtreeBuilder)
 {
 	trunk = rtreeBuilder.build(firstFeature, featureCount);
-}
-
-void TIndex::addFeature(TFeature* feature, const IndexSettings& settings)
-{
-	// TODO: get category, get index bits
-	int category = 0;	// TODO
-	uint32_t indexBits = 0; // TODO
-	roots_[category].addFeature(feature, indexBits);
 }
 
 
@@ -253,7 +246,22 @@ void Indexer::addFeatures(const FeatureTable& features)
 		int typeFlags = (feature->flags() >> 1) & 15;
 		int type = FLAGS_TO_TYPE[typeFlags];
 		assert(type != INVALID);		// TODO: make this a proper runtime check?
-		indexes_[type].addFeature(feature, settings_);
+		TTagTable* tags = feature->tags(tile_);
+		assert(tags);
+		int category = tags->category();
+		uint32_t indexBits;
+		if (category >= TIndex::MULTI_CATEGORY)
+		{
+			// Category is unassigned or multi-category
+			// In both cases, we need to construct indexBits
+			indexBits = tags->assignIndexCategory(settings_);
+			category = tags->category();
+		}
+		else
+		{
+			indexBits = 1 << (category - 1);
+		}
+		indexes_[type].addFeature(feature, category, indexBits);
 	}
 }
 

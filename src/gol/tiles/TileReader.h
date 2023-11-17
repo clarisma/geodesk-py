@@ -152,6 +152,7 @@ public:
             }
             else
             {
+                assert((flags & (3 << 3)) == (2 << 3));
                 self().readRelation(RelationRef(p));
             }
             if ((flags & 1) != 0) break;

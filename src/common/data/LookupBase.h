@@ -61,7 +61,7 @@ public:
 			while(pCurrentSlot_ != pEndSlot_)
 			{
 				pCurrentItem_ = *pCurrentSlot_;
-				if (!pCurrentItem_) break;
+				if (pCurrentItem_) break;
 				pCurrentSlot_++;
 			}
 		}

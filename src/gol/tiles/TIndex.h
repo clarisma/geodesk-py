@@ -81,15 +81,21 @@ class TIndex : public TElement
 {
 public:
 	TIndex();
-	void addFeature(TFeature* feature, const IndexSettings& settings);
+	void addFeature(TFeature* feature, int category, uint32_t indexBits)
+	{
+		roots_[category].addFeature(feature, indexBits);
+	}
+
 	void build(TTile& tile, const IndexSettings& settings);
 	void write(uint8_t* p) const;
 
-private:
 	static const int MAX_CATEGORIES = 30;
 	static const int NUMBER_OF_ROOTS = MAX_CATEGORIES + 2;
-		// includes no-category (first) and multi-category (last)
+	// includes no-category (first) and multi-category (last)
 	static const int MULTI_CATEGORY = NUMBER_OF_ROOTS - 1;
+	static const int UNASSIGNED_CATEGORY = 255;
+
+private:
 
 	struct Root
 	{

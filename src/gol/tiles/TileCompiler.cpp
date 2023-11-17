@@ -1,6 +1,8 @@
 #include "TileCompiler.h"
 #include "query/TileIndexWalker.h"
-#include "gol/tiles/TTile.h"
+#include "IndexSettings.h"
+#include "TTile.h"
+#include "TIndex.h"
 
 TileCompiler::TileCompiler(FeatureStore* store) :
 	store_(store),
@@ -37,6 +39,11 @@ void TileCompilerTask::operator()()
 	TTile tile(tile_);
 	store->prefetchBlob(pTile);
 	tile.readTile(pTile);
+
+	IndexSettings indexSettings(store, 8, 8, 300); // TODO
+	Indexer indexer(tile, indexSettings);
+	indexer.addFeatures(tile.features());
+	indexer.build();
 	/*
 	memcpy(pLoadedTile, pTile, size);
 	delete[] pLoadedTile;

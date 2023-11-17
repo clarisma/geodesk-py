@@ -7,6 +7,8 @@
 TTile::TTile(Tile tile) :
 	arena_(1024 * 1024, Arena::GrowthPolicy::GROW_50_PERCENT),
 	featureCount_(0),
+	pCurrentTile_(nullptr),
+	pNewTile_(nullptr),
 	tile_(tile)
 {
 }
@@ -36,6 +38,8 @@ void TTile::readTile(pointer pTile)
 {
 	uint32_t tileSize = pTile.getInt() & 0x3fff'ffff;
 
+	pCurrentTile_ = pTile;
+	currentTileSize_ = tileSize;
 	initTables(tileSize);
 	readTileFeatures(pTile);
 
@@ -46,6 +50,8 @@ void TTile::readTile(pointer pTile)
 
 void TTile::readNode(NodeRef node)
 {
+	assertValidCurrentPointer(node.ptr());
+	readTagTable(node);
 	TNode* tnode = arena_.alloc<TNode>();
 	new(tnode) TNode(currentLocation(node.ptr()), node);
 	addFeatureToIndex(tnode);
@@ -53,6 +59,8 @@ void TTile::readNode(NodeRef node)
 
 void TTile::readWay(WayRef way)
 {
+	assertValidCurrentPointer(way.ptr());
+	readTagTable(way);
 	TWay* tway = arena_.alloc<TWay>();
 	pointer pBody = way.bodyptr();
 	uint32_t size = way.flags() & 4;
@@ -96,12 +104,13 @@ void TTile::readWay(WayRef way)
 
 void TTile::readRelation(RelationRef relation)
 {
+	// LOG("Reading relation/%ld", relation.id());
+	assertValidCurrentPointer(relation.ptr());
+	readTagTable(relation);
 	TRelation* trel = arena_.alloc<TRelation>();
 	pointer pBody = relation.bodyptr();
 	uint32_t anchor = relation.flags() & 4;;
 	uint32_t size = anchor;
-
-	// LOG("Reading relation/%ld", relation.id());
 
 	pointer p(pBody);
 	for (;;)
@@ -136,6 +145,7 @@ void TTile::readRelation(RelationRef relation)
 
 TString* TTile::readString(pointer p)
 {
+	assertValidCurrentPointer(p);
 	int32_t currentLoc = currentLocation(p);
 	TString* str = reinterpret_cast<TString*>(elementsByLocation_.lookup(currentLoc));
 	if (str) return str;
@@ -149,6 +159,7 @@ TString* TTile::readString(pointer p)
 
 TTagTable* TTile::readTagTable(pointer pTagged)
 {
+	assertValidCurrentPointer(pTagged);
 	int32_t currentLoc = currentLocation(pTagged);
 	int hasLocalTags = currentLoc & 1;
 	currentLoc ^= hasLocalTags;
@@ -169,13 +180,14 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 			int flags = key & 7;
 			pointer pKeyString = origin + ((key ^ flags) >> 1);
 			TString* keyString = readString(pKeyString);
-			// TODO: force string to be 4-byte aligned
+			// Force string to be 4-byte aligned
+			keyString->setAlignment(TElement::Alignment::DWORD);
 			p -= 2 + (flags & 2);
 			if ((flags & 3) == 3) // wide-string value?
 			{
 				readString(p.follow());
 			}
-			if (flags & 1) break;  // last-tag flag?
+			if (flags & 4) break;  // last-tag?
 		}
 		anchor = pTags - p;
 	}
@@ -185,18 +197,27 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 		pTags = pTagged;
 	}
 	
+	uint32_t size;
 	pointer p = pTags;
-	for (;;)
+	if (p.getUnalignedUnsignedInt() == TagsRef::EMPTY_TABLE_MARKER)
 	{
-		uint16_t key = p.getUnsignedShort();
-		if ((key & 3) == 3)	// wide-string value?
-		{
-			readString(p.follow(2));
-		}
-		p += (key & 2) + 4;
-		if (key & 0x8000) break;	// last global key
+		// TODO: This will change, no more need for special check
+		size = 4;
 	}
-	uint32_t size = p = pTags + anchor;
+	else
+	{
+		for (;;)
+		{
+			uint16_t key = p.getUnsignedShort();
+			if ((key & 3) == 3)	// wide-string value?
+			{
+				readString(p.follow(2));
+			}
+			p += (key & 2) + 4;
+			if (key & 0x8000) break;	// last global key
+		}
+		size = p - pTags + anchor;
+	}
 
 	tags = arena_.alloc<TTagTable>();
 	new(tags) TTagTable(currentLoc, pTags-anchor, size, anchor);
@@ -208,6 +229,7 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 
 TRelationTable* TTile::readRelationTable(pointer pTable)
 {
+	assertValidCurrentPointer(pTable);
 	pointer p = pTable;
 	for (;;)
 	{
@@ -232,9 +254,3 @@ TRelationTable* TTile::readRelationTable(pointer pTable)
 	return rels;
 }
 
-
-TTagTable* TTile::getTags(const void* p) const
-{
-	return reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
-		reinterpret_cast<const uint8_t*>(p) - pCurrentTile_));
-}

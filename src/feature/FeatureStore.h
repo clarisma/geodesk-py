@@ -40,6 +40,8 @@ private:
 class FeatureStore : public BlobStore
 {
 public:
+    using IndexedKeyMap = std::unordered_map<uint16_t, uint16_t>;
+
     FeatureStore();
     ~FeatureStore();
 
@@ -60,6 +62,7 @@ public:
 
     uint32_t zoomLevels() const { return zoomLevels_; }
     StringTable& strings() { return strings_; }
+    const IndexedKeyMap& keysToCategories() const { return keysToCategories_; }
     int getIndexCategory(int keyCode) const;
     const MatcherHolder* getMatcher(const char* query);
 
@@ -103,7 +106,7 @@ private:
     
     size_t refcount_;
     StringTable strings_;
-    std::unordered_map<uint16_t, uint16_t> keysToCategories_;
+    IndexedKeyMap keysToCategories_;
     MatcherCompiler matchers_;
     MatcherHolder allMatcher_;
     PyObject* emptyFeatures_;       

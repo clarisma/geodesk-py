@@ -1,4 +1,10 @@
 #include "TFeature.h"
+#include "TTile.h"
+
+TTagTable* TFeature::tags(TTile& tile) const
+{
+	return reinterpret_cast<TTagTable*>(tile.getElement(feature_.tags().ptr()));
+}
 
 void TFeature::write(const TTile* tile, uint8_t* p) const
 {

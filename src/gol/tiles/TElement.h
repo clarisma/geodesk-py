@@ -18,24 +18,29 @@ public:
 
 	TElement(int32_t location, uint32_t size, Alignment alignment) :
 		location_(location), 
-		sizeAndAlignment_((size << 2) | static_cast<uint32_t>(alignment)) 
+		size_(size),
+		alignment_(static_cast<unsigned int>(alignment))
 	{
 	}
 
 	int32_t location() const { return location_; }
 	void setLocation(int32_t location) { location_ = location; }
-	uint32_t size() const { return sizeAndAlignment_ >> 2; }
+	uint32_t size() const { return size_; }
+	void setAlignment(Alignment alignment) 
+	{ 
+		alignment_ = static_cast<unsigned int>(alignment); 
+	}
 	int32_t alignedLocation(int32_t loc)
 	{
-		int alignment = (sizeAndAlignment_ & 3);
-		int add = (1 << alignment) - 1;
-		int32_t mask = 0xffff'ffff << alignment;
+		int add = (1 << alignment_) - 1;
+		int32_t mask = 0xffff'ffff << alignment_;
 		return (loc + add) & mask;
 	}
 
 private:
 	int32_t location_;
-	uint32_t sizeAndAlignment_;
+	unsigned int alignment_ :  2;
+	unsigned int size_      : 30;
 };
 
 class TIndexedElement : public TElement
@@ -72,7 +77,7 @@ public:
 
 public:								// workaround for template access
 	TSharedElement* nextByType_;
-private:
+protected:
 	const uint8_t* data_;
 	// uint32_t usage_;
 	// uint32_t extra_;		// can be used by subclasses

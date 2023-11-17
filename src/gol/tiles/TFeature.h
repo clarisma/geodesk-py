@@ -6,6 +6,7 @@
 #include "feature/Way.h"
 #include "feature/Relation.h"
 
+class TTagTable;
 class TTile;
 
 class TFeature : public TIndexedElement
@@ -21,7 +22,7 @@ public:
 	FeatureRef feature() const { return feature_; }
 	uint64_t idBits() const { return feature_.idBits(); }
 	int flags() const {	return feature_.flags(); }
-
+	TTagTable* tags(TTile& tile) const;
 	TFeature* next() const { return nextById_; }
 	void setNext(TFeature* next) { nextById_ = next; }
 
