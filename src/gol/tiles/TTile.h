@@ -1,6 +1,7 @@
 #pragma once
 // #include <unordered_map>
 #include <common/alloc/Arena.h>
+#include <common/util/log.h>
 #include "TileReader.h"
 #include "TFeature.h"
 #include "TRelationTable.h"
@@ -70,10 +71,19 @@ private:
 
 	/**
 	 * Asserts that the given pointer references a valid address in the
-	 * current tile data (i.e. the exisiting tile that is being read).
+	 * current tile data (i.e. the existing tile that is being read).
 	 */
 	void assertValidCurrentPointer(const void* p)
 	{
+#ifdef _DEBUG
+		if (p < pCurrentTile_ || p > pCurrentTile_ + currentTileSize_)
+		{
+			LOG("While reading % s in % s:", currentLoadingFeature_.toString().c_str(), tile_.toString().c_str());
+			LOG("  Pointer:    %016llX", reinterpret_cast<uintptr_t>(p));
+			LOG("  Tile start: %016llX", reinterpret_cast<uintptr_t>(pCurrentTile_));
+			LOG("  Tile end:   %016llX", reinterpret_cast<uintptr_t>(pCurrentTile_ + currentTileSize_));
+		}
+#endif
 		assert(p >= pCurrentTile_ && p <= pCurrentTile_ + currentTileSize_);
 	}
 
@@ -97,6 +107,8 @@ private:
 	uint32_t currentTileSize_;
 	uint32_t featureCount_;
 	Tile tile_;
-
+#ifdef _DEBUG
+	FeatureRef currentLoadingFeature_;
+#endif
 	friend class TileReader<TTile>;
 };

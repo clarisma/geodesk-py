@@ -1,9 +1,10 @@
 #include "TIndex.h"
 #include <common/util/log.h>
-#include "TTagTable.h"
-#include "TTile.h"
+#include "Layout.h"
 #include "HilbertIndexBuilder.h"
 #include "IndexSettings.h"
+#include "TTagTable.h"
+#include "TTile.h"
 
 uint32_t TIndexLeaf::calculateSize(TFeature* firstFeature)
 {
@@ -71,7 +72,6 @@ void TIndexTrunk::write(uint8_t* pStart) const
 TIndex::TIndex() :
 	TElement(0, 0, TElement::Alignment::DWORD),
 	firstRoot_(-1),
-	lastRoot_(-1),
 	rootCount_(0)
 {
 	memset(&roots_, 0, sizeof(roots_));
@@ -152,35 +152,34 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 			for (;;)
 			{
 				int nextRoot = *pNextRoot;
-				if (nextRoot == -1)
-				{
-					lastRoot_ = static_cast<int8_t>(i);
-				}
-				else if (roots_[nextRoot].featureCount > root.featureCount)
+				if (nextRoot >= 0 && roots_[nextRoot].featureCount > root.featureCount)
 				{
 					pNextRoot = &next_[nextRoot];
 					continue;
 				}
 				*pNextRoot = static_cast<int8_t>(i);
-				next_[i] = -1;
+				next_[i] = nextRoot;
 				break;
 			}
 			rootCount_++;
 		}
 	}
 
-	// The multi-cat root is always included, unless it has no features
-	// and we're not over the root-count limit
-	if (roots_[MULTI_CATEGORY].featureCount || rootCount_ > maxRootCount)
-	{
-		next_[lastRoot_] = lastRoot_ = MULTI_CATEGORY;
-		rootCount_++;
-	}
+	// rootCount_ is now the total number of non-empty roots, 
+	// excluding the multi-cat root
+
+	// include multi-cat if it has any features
+	int rootCountWithMultiCat = rootCount_ + (roots_[MULTI_CATEGORY].isEmpty() ? 0 : 1);
+
+	// The number of roots (excluding multi-cat) to keep as-is
+	int keepRootCount = std::min(rootCount_, maxRootCount - 1);
+	// (If we have 4 roots and multi-cat is empty, and the limit is 4,
+	// this simply means the smallest root turns into the multi-cat
+	// root, which simply consists of a single category)
 
 	// Build the rtree for all roots that are below maxRootCount
 	// (except for multi-cat root)
 
-	int keepRootCount = std::min(rootCount_, maxRootCount) - 1;
 	int8_t* pNextRoot = &firstRoot_;
 	for (int i = 0; i < keepRootCount; i++)
 	{
@@ -193,7 +192,9 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 	// If there are more roots than maxRootCount, consolidate the
 	// roots with the lowest numbers of features into the multi-cat root
 
-	int consolidateRootCount = std::max(rootCount_ - maxRootCount -1, 0);
+	int8_t* pLastRoot = pNextRoot;
+
+	int consolidateRootCount = rootCount_ - keepRootCount;
 	for (int i=0; i < consolidateRootCount; i++)
 	{
 		int nextRoot = *pNextRoot;
@@ -202,20 +203,89 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 		pNextRoot = &next_[nextRoot];
 	}
 
-	*pNextRoot = MULTI_CATEGORY;
+	*pLastRoot = -1;
 
 	// Adjust the root count
-	rootCount_ = std::min(rootCount_, maxRootCount);
+	rootCount_ = keepRootCount;
 
 	if (!roots_[MULTI_CATEGORY].isEmpty())
 	{
 		// If there are any features in the multi-cat root,
 		// add it to the end and build its rtree 
-		*pNextRoot = MULTI_CATEGORY;
+		*pLastRoot = MULTI_CATEGORY;
 		roots_[MULTI_CATEGORY].build(rtreeBuilder);
+		rootCount_++;
 	}
 }
 
+
+void TIndex::layout(Layout& layout)
+{
+	if (rootCount_ == 0) return;
+
+	layout.place(this);
+	int rootNumber = firstRoot_;
+	do
+	{
+		roots_[rootNumber].trunk->layout(layout);
+		rootNumber = next_[rootNumber];
+	}
+	while (rootNumber >= 0);
+}
+
+
+/**
+ * Place the feature in this leaf branch, then place any uncommon tag tables
+ * that haven't already been placed.
+ */
+void TIndexLeaf::layout(Layout& layout)
+{
+	TTagTable* firstTagTable;
+	TTagTable** pPrevTagTable = &firstTagTable;
+
+	TFeature* feature = firstFeature();
+	do
+	{
+		layout.place(feature);
+		TTagTable* tags = feature->tags(layout.tile());
+		assert(tags);
+		if (tags->location() <= 0)
+		{
+			*pPrevTagTable = tags;
+			pPrevTagTable = reinterpret_cast<TTagTable**>(&tags->nextByType_);
+		}
+		feature = feature->next();
+	}
+	while (feature);
+	*pPrevTagTable = nullptr;
+	 
+	TTagTable* tags = firstTagTable;
+	while (tags)
+	{
+		layout.place(tags);
+		tags = reinterpret_cast<TTagTable*>(tags->nextByType_);
+	}
+}
+
+
+void TIndexTrunk::layout(Layout& layout)
+{
+	layout.place(this);
+	TIndexBranch* branch = firstChildBranch();
+	do
+	{
+		if (branch->isLeaf())
+		{
+			reinterpret_cast<TIndexLeaf*>(branch)->layout(layout);
+		}
+		else
+		{
+			reinterpret_cast<TIndexTrunk*>(branch)->layout(layout);
+		}
+		branch = branch->next();
+	}
+	while (branch);
+}
 
 void TIndex::write(uint8_t* p) const
 {
@@ -312,3 +382,7 @@ void Indexer::build()
 		indexes_[i].build(tile_, settings_);
 	}
 }
+
+
+
+

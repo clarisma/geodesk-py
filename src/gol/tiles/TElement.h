@@ -75,6 +75,8 @@ public:
 		memcpy(p, data_, size());
 	}
 
+	static const int MIN_COMMON_USAGE = 4;
+
 public:								// workaround for template access
 	TSharedElement* nextByType_;
 protected:

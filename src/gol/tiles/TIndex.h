@@ -7,6 +7,7 @@
 class FeatureTable;
 class HilbertIndexBuilder;
 class IndexSettings;
+class Layout;
 class TFeature;
 class TTile;
 
@@ -55,6 +56,7 @@ public:
 	{
 	}
 
+	void layout(Layout& layout);
 	void write(const TTile* tile, uint8_t* p) const;
 
 private:
@@ -70,6 +72,7 @@ public:
 	{
 	}
 
+	void layout(Layout& layout);
 	void write(uint8_t* p) const;
 
 private:
@@ -87,6 +90,7 @@ public:
 	}
 
 	void build(TTile& tile, const IndexSettings& settings);
+	void layout(Layout& layout);
 	void write(uint8_t* p) const;
 
 	static const int MAX_CATEGORIES = 30;
@@ -118,7 +122,6 @@ private:
 	Root roots_[NUMBER_OF_ROOTS];
 	int8_t next_[NUMBER_OF_ROOTS];
 	int8_t firstRoot_;
-	int8_t lastRoot_;
 	int rootCount_;
 };
 

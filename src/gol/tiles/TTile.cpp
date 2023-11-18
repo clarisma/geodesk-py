@@ -9,6 +9,9 @@ TTile::TTile(Tile tile) :
 	featureCount_(0),
 	pCurrentTile_(nullptr),
 	pNewTile_(nullptr),
+#ifdef _DEBUG
+	currentLoadingFeature_(nullptr),
+#endif
 	tile_(tile)
 {
 }
@@ -36,7 +39,8 @@ void TTile::initTables(size_t tileSize)
 
 void TTile::readTile(pointer pTile)
 {
-	uint32_t tileSize = pTile.getInt() & 0x3fff'ffff;
+	uint32_t tileSize = (pTile.getInt() & 0x3fff'ffff) + 4;
+		// Need to add header size (4 bytes) to payload size
 
 	pCurrentTile_ = pTile;
 	currentTileSize_ = tileSize;
@@ -59,6 +63,10 @@ void TTile::readNode(NodeRef node)
 
 void TTile::readWay(WayRef way)
 {
+#ifdef _DEBUG
+	currentLoadingFeature_ = way;
+#endif
+	// LOG("Reading %s in %s...", way.toString().c_str(), tile_.toString().c_str());
 	assertValidCurrentPointer(way.ptr());
 	readTagTable(way);
 	TWay* tway = arena_.alloc<TWay>();

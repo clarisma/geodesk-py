@@ -1,7 +1,9 @@
 #include "Layout.h"
+#include "TIndex.h"
 
-Layout::Layout() : 
-	pos_(0)
+Layout::Layout(TTile &tile) :
+	pos_(0),
+    tile_(tile)
 {
 }
 
@@ -46,3 +48,11 @@ void Layout::flush()
 {
     while (!deferred_.isEmpty()) put(deferred_.remove());
 }
+
+
+/*
+void Layout::layoutIndex(TIndex* index)
+{
+
+}
+*/

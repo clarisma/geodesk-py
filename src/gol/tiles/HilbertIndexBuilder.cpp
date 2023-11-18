@@ -1,4 +1,5 @@
 #include "HilbertIndexBuilder.h"
+#include <common/util/log.h>
 #include "TFeature.h"
 #include "TIndex.h"
 #include "geom/rtree/hilbert.h"
@@ -24,6 +25,11 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 		else
 		{
 			Box bounds = Box::simpleIntersection(f.bounds(), tileBounds_);
+			assert(bounds.contains(bounds.center()));
+			if (!tileBounds_.containsSimple(bounds))
+			{
+				LOG("%s not contained in tile bounds", f.toString().c_str());
+			}
 			p->first = hilbert::calculateHilbertDistance(bounds.center(), tileBounds_);
 		}
 		p->second = feature;
@@ -80,15 +86,14 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 }
 
 
-TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pFirst, int count)
+TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pChildren, int count)
 {
-	HilbertItem* p = pFirst + count;
 	TFeature* firstFeature = nullptr;
 	Box bounds;
 	do
 	{
 		count--;
-		TFeature* feature = p[count].second;
+		TFeature* feature = pChildren[count].second;
 		feature->setNext(firstFeature);
 		firstFeature = feature;
 		FeatureRef f = feature->feature();
@@ -107,16 +112,15 @@ TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pFirst, int count)
 }
 
 
-TIndexTrunk* HilbertIndexBuilder::createTrunk(TIndexBranch** pFirst, int count)
+TIndexTrunk* HilbertIndexBuilder::createTrunk(TIndexBranch** pChildBranches, int count)
 {
 	int originalCount = count;
-	TIndexBranch** p = pFirst + count;
 	TIndexBranch* firstBranch = nullptr;
 	Box bounds;
 	do
 	{
 		count--;
-		TIndexBranch* branch = p[count];
+		TIndexBranch* branch = pChildBranches[count];
 		branch->setNext(firstBranch);
 		firstBranch = branch;
 		bounds.expandToIncludeSimple(branch->bounds());

@@ -2,11 +2,14 @@
 #include <common/data/FixedQueue.h>
 #include "TElement.h"
 
+class TTile;
+
 class Layout
 {
 public:
-	Layout();
+	Layout(TTile& tile);
 
+	TTile& tile() const { return tile_; }
 	int32_t size() { return pos_; }
 	void place(TElement* elem);
 	void flush();
@@ -16,6 +19,7 @@ public:
 		put(elem, elem->alignedLocation(pos_));
 	}
 
+	// void layoutIndex(TIndex* index);
 
 private:
 	static const int DEFERRED_QUEUESIZE = 32;
@@ -28,6 +32,7 @@ private:
 		// TODO: set last in chain?
 	}
 
+	TTile& tile_;
 	FixedQueue<TElement*, DEFERRED_QUEUESIZE> deferred_;
 	int32_t pos_;
 };
