@@ -42,6 +42,11 @@ public:
 			pEndSlot_ = lookup->table_ + lookup->tableSize_;
 			nextSlot();
 		}
+
+		bool hasNext()
+		{
+			return pCurrentItem_ != nullptr;
+		}
 		
 		T* next()
 		{

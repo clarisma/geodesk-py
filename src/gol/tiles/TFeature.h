@@ -109,7 +109,7 @@ private:
 class FeatureTable : public Lookup<FeatureTable, TFeature>
 {
 public:
-	static int64_t getId(TFeature* element)
+	static uint64_t getId(TFeature* element)
 	{
 		return element->location();
 	}

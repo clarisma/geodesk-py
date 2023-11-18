@@ -159,18 +159,17 @@ TString* TTile::readString(pointer p)
 
 TTagTable* TTile::readTagTable(pointer pTagged)
 {
-	assertValidCurrentPointer(pTagged);
-	int32_t currentLoc = currentLocation(pTagged);
-	int hasLocalTags = currentLoc & 1;
-	currentLoc ^= hasLocalTags;
+	pointer pTags = pointer::ofTagged(pTagged, ~1);
+	assertValidCurrentPointer(pTags);
+	int32_t currentLoc = currentLocation(pTags);
+	int hasLocalTags = reinterpret_cast<int>(pTagged.asBytePointer()) & 1;
+	assert((currentLoc & 1) == 0);
 	TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(currentLoc));
 	if (tags) return tags;
 
 	int anchor;
-	pointer pTags;
 	if (hasLocalTags)
 	{
-		pTags = pTagged - 1;
 		pointer p = pTags;
 		pointer origin = pointer::ofTagged(p, 0xffff'ffff'ffff'fffcULL);
 		for (;;)
@@ -194,7 +193,6 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 	else
 	{
 		anchor = 0;
-		pTags = pTagged;
 	}
 	
 	uint32_t size;
@@ -219,6 +217,7 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 		size = p - pTags + anchor;
 	}
 
+	assert((currentLoc & 1) == 0);
 	tags = arena_.alloc<TTagTable>();
 	new(tags) TTagTable(currentLoc, pTags-anchor, size, anchor);
 	elementsByLocation_.insert(tags);

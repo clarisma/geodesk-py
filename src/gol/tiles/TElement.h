@@ -90,7 +90,7 @@ protected:
 class LookupByLocation : public Lookup<LookupByLocation, TIndexedElement>
 {
 public:
-	static int64_t getId(TIndexedElement* element)
+	static uint64_t getId(TIndexedElement* element)
 	{
 		return element->location();
 	}

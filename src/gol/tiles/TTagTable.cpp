@@ -34,6 +34,7 @@ uint32_t TTagTable::assignIndexCategory(const IndexSettings& indexSettings)
 			assert (keyCategory >= 1 && keyCategory <= TIndex::MAX_CATEGORIES);
 			indexBits |= (1 << (keyCategory - 1));
 		}
+		p += 2 + (keyBits % 2);
 	}
 	while (keyWithLastFlag < maxIndexedKey);
 	category_ = category;

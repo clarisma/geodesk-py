@@ -1,4 +1,5 @@
 #include "TIndex.h"
+#include <common/util/log.h>
 #include "TTagTable.h"
 #include "TTile.h"
 #include "HilbertIndexBuilder.h"
@@ -79,6 +80,7 @@ TIndex::TIndex() :
 
 void TIndex::Root::addFeature(TFeature* feature, uint32_t indexBits)
 {
+	assert((featureCount == 0) == (firstFeature == nullptr));
 	if (firstFeature)
 	{
 		feature->setNext(firstFeature->next());
@@ -95,13 +97,21 @@ void TIndex::Root::addFeature(TFeature* feature, uint32_t indexBits)
 
 void TIndex::Root::add(Root& other)
 {
-	assert (!isEmpty());
-	assert (!other.isEmpty());
+	assert((featureCount == 0) == (firstFeature == nullptr));
+	assert(&other != this);
+	if (other.isEmpty()) return;
 	indexBits |= other.indexBits;
+	if (isEmpty())
+	{
+		firstFeature = other.firstFeature;
+	}
+	else
+	{
+		TFeature* next = firstFeature->next();
+		firstFeature->setNext(other.firstFeature->next());
+		other.firstFeature->setNext(next);
+	}
 	featureCount += other.featureCount;
-	TFeature* next = firstFeature->next();
-	firstFeature->setNext(other.firstFeature->next());
-	other.firstFeature->setNext(next);
 	other.featureCount = 0;
 	other.firstFeature = nullptr;
 }
@@ -135,6 +145,9 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 		}
 		else
 		{
+			// Otherwise, place this root into a linked list, 
+			// largest roots first
+
 			int8_t* pNextRoot = &firstRoot_;
 			for (;;)
 			{
@@ -167,11 +180,12 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 	// Build the rtree for all roots that are below maxRootCount
 	// (except for multi-cat root)
 
+	int keepRootCount = std::min(rootCount_, maxRootCount) - 1;
 	int8_t* pNextRoot = &firstRoot_;
-	int i = 0;
-	for (; i < maxRootCount-1; i++)
+	for (int i = 0; i < keepRootCount; i++)
 	{
 		int nextRoot = *pNextRoot;
+		assert (nextRoot >= 0);
 		roots_[nextRoot].build(rtreeBuilder);
 		pNextRoot = &next_[nextRoot];
 	}
@@ -179,19 +193,27 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 	// If there are more roots than maxRootCount, consolidate the
 	// roots with the lowest numbers of features into the multi-cat root
 
-	for (; i < rootCount_ - 1; i++)
+	int consolidateRootCount = std::max(rootCount_ - maxRootCount -1, 0);
+	for (int i=0; i < consolidateRootCount; i++)
 	{
 		int nextRoot = *pNextRoot;
-		*pNextRoot = MULTI_CATEGORY;
+		assert(nextRoot >= 0);
 		roots_[MULTI_CATEGORY].add(roots_[nextRoot]);
 		pNextRoot = &next_[nextRoot];
 	}
 
+	*pNextRoot = MULTI_CATEGORY;
+
 	// Adjust the root count
 	rootCount_ = std::min(rootCount_, maxRootCount);
 
-	// finally, build the rtree for the multi-cat root
-	roots_[MULTI_CATEGORY].build(rtreeBuilder);
+	if (!roots_[MULTI_CATEGORY].isEmpty())
+	{
+		// If there are any features in the multi-cat root,
+		// add it to the end and build its rtree 
+		*pNextRoot = MULTI_CATEGORY;
+		roots_[MULTI_CATEGORY].build(rtreeBuilder);
+	}
 }
 
 
@@ -239,15 +261,32 @@ Indexer::Indexer(TTile& tile, const IndexSettings& settings) :
 void Indexer::addFeatures(const FeatureTable& features)
 {
 	FeatureTable::Iterator iter = features.iter();
-	for (;;)
+	while(iter.hasNext())
 	{
 		TFeature* feature = iter.next();
-		if (!feature) break;
+
+		// LOG("Indexing %s...", feature->feature().toString().c_str());
 		int typeFlags = (feature->flags() >> 1) & 15;
 		int type = FLAGS_TO_TYPE[typeFlags];
 		assert(type != INVALID);		// TODO: make this a proper runtime check?
 		TTagTable* tags = feature->tags(tile_);
+		/*
+		if (!tags)
+		{
+			if (!feature->feature().tags().hasLocalKeys())
+			{
+				LOG("  No tags (no locals)");
+			}
+			continue;
+		}
+		*/
 		assert(tags);
+		/*
+		if (feature->feature().tags().hasLocalKeys())
+		{
+			LOG("  Tags (locals)");
+		}
+		*/
 		int category = tags->category();
 		uint32_t indexBits;
 		if (category >= TIndex::MULTI_CATEGORY)
