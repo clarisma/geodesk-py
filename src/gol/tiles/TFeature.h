@@ -38,6 +38,8 @@ private:
 	};
 	TFeature* nextById_;
 
+	// Need a flag to indicate last in a branch
+
 	friend class FeatureTable;
 };
 

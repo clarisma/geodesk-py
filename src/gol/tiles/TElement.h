@@ -41,6 +41,7 @@ private:
 	int32_t location_;
 	unsigned int alignment_ :  2;
 	unsigned int size_      : 30;
+	// TODO: Need oldLocation_, type/anchor, next_
 };
 
 class TIndexedElement : public TElement

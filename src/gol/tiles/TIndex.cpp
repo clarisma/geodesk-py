@@ -248,12 +248,24 @@ void TIndexLeaf::layout(Layout& layout)
 	{
 		layout.place(feature);
 		TTagTable* tags = feature->tags(layout.tile());
-		assert(tags);
-		if (tags->location() <= 0)
+#ifdef _DEBUG
+		if (!tags)
 		{
-			*pPrevTagTable = tags;
-			pPrevTagTable = reinterpret_cast<TTagTable**>(&tags->nextByType_);
+			LOG("Failed to get tags for %s", feature->feature().toString().c_str());
 		}
+		else
+		{
+#endif
+			assert(tags);
+			if (tags->location() <= 0)
+			{
+				*pPrevTagTable = tags;
+				pPrevTagTable = reinterpret_cast<TTagTable**>(&tags->nextByType_);
+			}
+#ifdef _DEBUG
+		}
+#endif
+
 		feature = feature->next();
 	}
 	while (feature);
@@ -339,6 +351,10 @@ void Indexer::addFeatures(const FeatureTable& features)
 		int typeFlags = (feature->flags() >> 1) & 15;
 		int type = FLAGS_TO_TYPE[typeFlags];
 		assert(type != INVALID);		// TODO: make this a proper runtime check?
+		if (feature->feature().id() == 11109166533)
+		{
+			LOG("Adding node/11109166533");
+		}
 		TTagTable* tags = feature->tags(tile_);
 		/*
 		if (!tags)
@@ -383,6 +399,12 @@ void Indexer::build()
 	}
 }
 
-
+void Indexer::layout(Layout& layout)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		indexes_[i].layout(layout);
+	}
+}
 
 

@@ -1,6 +1,7 @@
 #include "TileCompiler.h"
 #include "query/TileIndexWalker.h"
 #include "IndexSettings.h"
+#include "Layout.h"
 #include "TTile.h"
 #include "TIndex.h"
 
@@ -44,6 +45,10 @@ void TileCompilerTask::operator()()
 	Indexer indexer(tile, indexSettings);
 	indexer.addFeatures(tile.features());
 	indexer.build();
+
+	Layout layout(tile);
+	indexer.layout(layout);
+
 	/*
 	memcpy(pLoadedTile, pTile, size);
 	delete[] pLoadedTile;

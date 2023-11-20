@@ -132,6 +132,7 @@ public:
 	Indexer(TTile& tile, const IndexSettings& settings);
 	void addFeatures(const FeatureTable& features);
 	void build();
+	void layout(Layout& layout);
 
 private:
 	static const uint8_t FLAGS_TO_TYPE[16];
