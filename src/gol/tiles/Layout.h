@@ -19,7 +19,24 @@ public:
 		put(elem, elem->alignedLocation(pos_));
 	}
 
-	// void layoutIndex(TIndex* index);
+	int32_t size() const { return pos_; }
+	TElement* first() const { return placed_.first(); }
+
+	void addBodyElement(TElement* elem)
+	{
+		bodies_.addTail(elem);
+	}
+
+	void placeBodies()
+	{
+		TElement* elem = bodies_.first();
+		while (elem)
+		{
+			TElement* next = elem->next();
+			place(elem);
+			elem = next;
+		}
+	}
 
 private:
 	static const int DEFERRED_QUEUESIZE = 32;
@@ -27,12 +44,13 @@ private:
 	void put(TElement* elem, int pos)
 	{
 		elem->setLocation(pos);
-		// TODO: chain elements?
 		pos_ += elem->size();
-		// TODO: set last in chain?
+		placed_.addTail(elem);
 	}
 
 	TTile& tile_;
+	LinkedQueue<TElement> placed_;
+	LinkedQueue<TElement> bodies_;
 	FixedQueue<TElement*, DEFERRED_QUEUESIZE> deferred_;
 	int32_t pos_;
 };

@@ -47,8 +47,22 @@ void TileCompilerTask::operator()()
 	indexer.build();
 
 	Layout layout(tile);
-	indexer.layout(layout);
-
+	indexer.place(layout);
+	layout.placeBodies();
+	uint8_t* newTileData = tile.write(layout);
+	delete newTileData; // TODO
+	/*
+	uint8_t* newTileData = new uint8_t[layout.size()];
+	TElement* elem = layout.first();
+	do
+	{
+		switch (elem->type())
+		{
+		case TElement::Type::FEATURE:
+			reinterpret_cast<TFeature*>(elem)->write(&tile, )
+		}
+	}
+	*/
 	/*
 	memcpy(pLoadedTile, pTile, size);
 	delete[] pLoadedTile;

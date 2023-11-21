@@ -14,36 +14,20 @@ class TTile;
 class TIndexBranch : public TElement
 {
 public:
-	TIndexBranch(const Box& bounds, uintptr_t firstChild, uint32_t size) :
-		TElement(0, size, TElement::Alignment::DWORD),
-		firstChild_(firstChild),
-		next_(nullptr),
-		bounds_(bounds)
+	TIndexBranch(Type type, const Box& bounds, uint32_t size) :
+		TElement(type, 0, size, TElement::Alignment::DWORD),
+		bounds_(bounds),
+		nextSibling_(nullptr)
 	{
 	}
 
-	bool isLeaf() const { return (firstChild_ & 1) == 0; }
-	TFeature* firstFeature() const 
-	{ 
-		assert(isLeaf());
-		return reinterpret_cast<TFeature*>(firstChild_); 
-	}
-	TIndexBranch* firstChildBranch() const
-	{
-		assert(!isLeaf());
-		return reinterpret_cast<TIndexBranch*>(firstChild_ & ~1);
-	}
-
-	TIndexBranch* next() const { return next_; }
-	void setNext(TIndexBranch* next) { next_ = next; }
+	bool isLeaf() const { return type() == Type::LEAF; }
 	const Box& bounds() const { return bounds_; }
+	TIndexBranch* nextSibling() const { return nextSibling_; }
 
 private:
-	TIndexBranch* next_;
-	uintptr_t firstChild_;  // Tagged pointer
-							// Bit 0 == 0: pointer to features
-							// Bit 0 == 1: pointer to another branch
 	const Box bounds_;
+	TIndexBranch* nextSibling_;
 };
 
 
@@ -51,32 +35,37 @@ class TIndexLeaf : public TIndexBranch
 {
 public:
 	TIndexLeaf(const Box& bounds, TFeature* firstFeature) :
-		TIndexBranch(bounds, reinterpret_cast<uintptr_t>(firstFeature), 
-			calculateSize(firstFeature))
+		TIndexBranch(Type::LEAF, bounds, calculateSize(firstFeature)),
+		firstFeature_(firstFeature)
 	{
 	}
 
-	void layout(Layout& layout);
-	void write(const TTile* tile, uint8_t* p) const;
+	void place(Layout& layout);
+
+	TFeature* firstFeature() const { return firstFeature_; }
 
 private:
 	static uint32_t calculateSize(TFeature* firstFeature);
+
+	TFeature* firstFeature_;
 };
 
 class TIndexTrunk : public TIndexBranch
 {
 public:
 	TIndexTrunk(const Box& bounds, TIndexBranch* firstBranch, int count) :
-		TIndexBranch(bounds, reinterpret_cast<uintptr_t>(firstBranch) | 1,
-			count * 20)
+		TIndexBranch(Type::TRUNK, bounds, count * 20),
+		firstBranch_(firstBranch)
 	{
 	}
 
-	void layout(Layout& layout);
-	void write(uint8_t* p) const;
+	TIndexBranch* firstChildBranch() const { return firstBranch_; }
+
+	void place(Layout& layout);
+	void write(const TTile& tile) const;
 
 private:
-	// static uint32_t calculateSize(TIndexBranch* firstBranch);
+	TIndexBranch* firstBranch_;
 };
 
 
@@ -90,8 +79,8 @@ public:
 	}
 
 	void build(TTile& tile, const IndexSettings& settings);
-	void layout(Layout& layout);
-	void write(uint8_t* p) const;
+	void place(Layout& layout);
+	void write(const TTile& tile) const;
 
 	static const int MAX_CATEGORIES = 30;
 	static const int NUMBER_OF_ROOTS = MAX_CATEGORIES + 2;
@@ -132,7 +121,7 @@ public:
 	Indexer(TTile& tile, const IndexSettings& settings);
 	void addFeatures(const FeatureTable& features);
 	void build();
-	void layout(Layout& layout);
+	void place(Layout& layout);
 
 private:
 	static const uint8_t FLAGS_TO_TYPE[16];

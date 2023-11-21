@@ -13,13 +13,13 @@ uint32_t TIndexLeaf::calculateSize(TFeature* firstFeature)
 	do
 	{
 		size += p->size();
-		p = p->next();
+		p = p->nextFeature();
 	}
 	while (p);
 	return size;
 }
 
-
+/*
 void TIndexLeaf::write(const TTile* tile, uint8_t* p) const
 {
 	TFeature* feature = firstFeature();
@@ -27,11 +27,11 @@ void TIndexLeaf::write(const TTile* tile, uint8_t* p) const
 	{
 		feature->write(tile, p);
 		p += feature->size();
-		feature = feature->next();
+		feature = feature->nextFeature();
 	}
-	while (feature);
+	while (!feature->isLast());
 }
-
+*/
 
 /*
 uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
@@ -48,14 +48,14 @@ uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
 }
 */
 
-void TIndexTrunk::write(uint8_t* pStart) const
+void TIndexTrunk::write(const TTile& tile) const
 {
-	int32_t pos = location();
-	uint8_t* p = pStart;
+	uint8_t pos = location();
+	uint8_t* p = tile.newTileData() + pos;
 	TIndexBranch* child = firstChildBranch();
 	do
 	{
-		TIndexBranch* nextChild = child->next();
+		TIndexBranch* nextChild = child->nextSibling();
 		*reinterpret_cast<int32_t*>(p) = (child->location() - pos)
 			| (nextChild ? 0 : 1)			// last_item flag
 			| (child->isLeaf() ? 2 : 0);	// is_leaf flag
@@ -70,7 +70,7 @@ void TIndexTrunk::write(uint8_t* pStart) const
 
 
 TIndex::TIndex() :
-	TElement(0, 0, TElement::Alignment::DWORD),
+	TElement(Type::INDEX, 0, 0, TElement::Alignment::DWORD),
 	firstRoot_(-1),
 	rootCount_(0)
 {
@@ -107,8 +107,8 @@ void TIndex::Root::add(Root& other)
 	}
 	else
 	{
-		TFeature* next = firstFeature->next();
-		firstFeature->setNext(other.firstFeature->next());
+		TFeature* next = firstFeature->nextFeature();
+		firstFeature->setNext(other.firstFeature->nextFeature());
 		other.firstFeature->setNext(next);
 	}
 	featureCount += other.featureCount;
@@ -216,10 +216,12 @@ void TIndex::build(TTile& tile, const IndexSettings& settings)
 		roots_[MULTI_CATEGORY].build(rtreeBuilder);
 		rootCount_++;
 	}
+
+	setSize(rootCount_ * 8);
 }
 
 
-void TIndex::layout(Layout& layout)
+void TIndex::place(Layout& layout)
 {
 	if (rootCount_ == 0) return;
 
@@ -227,7 +229,7 @@ void TIndex::layout(Layout& layout)
 	int rootNumber = firstRoot_;
 	do
 	{
-		roots_[rootNumber].trunk->layout(layout);
+		roots_[rootNumber].trunk->place(layout);
 		rootNumber = next_[rootNumber];
 	}
 	while (rootNumber >= 0);
@@ -238,49 +240,60 @@ void TIndex::layout(Layout& layout)
  * Place the feature in this leaf branch, then place any uncommon tag tables
  * that haven't already been placed.
  */
-void TIndexLeaf::layout(Layout& layout)
+void TIndexLeaf::place(Layout& layout)
 {
-	TTagTable* firstTagTable;
-	TTagTable** pPrevTagTable = &firstTagTable;
+	LinkedQueue<TTagTable> tagTables;
+
+	// Note: We don't place the index leaf itself; instead, we place the 
+	// feature stubs that are contained in this leaf
 
 	TFeature* feature = firstFeature();
-	do
+	for(;;)
 	{
+		TFeature* nextFeature = feature->nextFeature();
 		layout.place(feature);
 		TTagTable* tags = feature->tags(layout.tile());
-#ifdef _DEBUG
-		if (!tags)
+		assert(tags);
+		if (tags->location() <= 0)
 		{
-			LOG("Failed to get tags for %s", feature->feature().toString().c_str());
+			tagTables.addTail(tags);
 		}
-		else
+		if (!nextFeature)
 		{
-#endif
-			assert(tags);
-			if (tags->location() <= 0)
-			{
-				*pPrevTagTable = tags;
-				pPrevTagTable = reinterpret_cast<TTagTable**>(&tags->nextByType_);
-			}
-#ifdef _DEBUG
+			feature->setLast(true);
+			break;
 		}
-#endif
-
-		feature = feature->next();
+		tags->addStrings(layout);
+		switch (feature->feature().typeCode())
+		{
+		case 0:
+			reinterpret_cast<TNode*>(feature)->placeBody(layout);
+			break;
+		case 1:
+			reinterpret_cast<TWay*>(feature)->placeBody(layout);
+			break;
+		case 2:
+			reinterpret_cast<TRelation*>(feature)->placeBody(layout);
+			break;
+		default:
+			assert(false);
+			break;
+		}
+		feature = nextFeature;
 	}
-	while (feature);
-	*pPrevTagTable = nullptr;
 	 
-	TTagTable* tags = firstTagTable;
+	TTagTable* tags = tagTables.first();
 	while (tags)
 	{
-		layout.place(tags);
-		tags = reinterpret_cast<TTagTable*>(tags->nextByType_);
+		TTagTable* nextTags = tags->nextTags();
+		layout.place(tags);		// place() changes `next`
+		tags = nextTags;
 	}
 }
 
 
-void TIndexTrunk::layout(Layout& layout)
+
+void TIndexTrunk::place(Layout& layout)
 {
 	layout.place(this);
 	TIndexBranch* branch = firstChildBranch();
@@ -288,20 +301,22 @@ void TIndexTrunk::layout(Layout& layout)
 	{
 		if (branch->isLeaf())
 		{
-			reinterpret_cast<TIndexLeaf*>(branch)->layout(layout);
+			reinterpret_cast<TIndexLeaf*>(branch)->place(layout);
 		}
 		else
 		{
-			reinterpret_cast<TIndexTrunk*>(branch)->layout(layout);
+			reinterpret_cast<TIndexTrunk*>(branch)->place(layout);
 		}
-		branch = branch->next();
+		branch = branch->nextSibling();
 	}
 	while (branch);
 }
 
-void TIndex::write(uint8_t* p) const
+
+void TIndex::write(const TTile& tile) const
 {
 	uint8_t pos = location();
+	uint8_t* p = tile.newTileData() + pos;
 	int rootNumber = firstRoot_;
 	do
 	{
@@ -351,10 +366,6 @@ void Indexer::addFeatures(const FeatureTable& features)
 		int typeFlags = (feature->flags() >> 1) & 15;
 		int type = FLAGS_TO_TYPE[typeFlags];
 		assert(type != INVALID);		// TODO: make this a proper runtime check?
-		if (feature->feature().id() == 11109166533)
-		{
-			LOG("Adding node/11109166533");
-		}
 		TTagTable* tags = feature->tags(tile_);
 		/*
 		if (!tags)
@@ -399,11 +410,11 @@ void Indexer::build()
 	}
 }
 
-void Indexer::layout(Layout& layout)
+void Indexer::place(Layout& layout)
 {
 	for (int i = 0; i < 4; i++)
 	{
-		indexes_[i].layout(layout);
+		indexes_[i].place(layout);
 	}
 }
 

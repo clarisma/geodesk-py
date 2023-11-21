@@ -15,7 +15,7 @@ public:
 	TTile(Tile tile);
 	void readTile(pointer pTile);
 
-	TIndexedElement* getElement(const void* p) const
+	TReferencedElement* getElement(const void* p) const
 	{
 		return elementsByLocation_.lookup(currentLocation(pointer(p)));
 	}
@@ -24,6 +24,12 @@ public:
 	{
 		p = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(p) & ~1);
 		return reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
+			currentLocation(pointer(p))));
+	}
+
+	TRelationTable* getRelationTable(const void* p) const
+	{
+		return reinterpret_cast<TRelationTable*>(elementsByLocation_.lookup(
 			currentLocation(pointer(p))));
 	}
 
@@ -36,6 +42,9 @@ public:
 	{
 		return featuresById_.iter();
 	}
+
+	uint8_t* newTileData() const { return pNewTile_;	}
+	uint8_t* write(Layout& layout);
 
 
 private:
@@ -103,7 +112,7 @@ private:
 	ElementDeduplicator<TTagTable> tagTables_;
 	ElementDeduplicator<TRelationTable> relationTables_;
 	const uint8_t* pCurrentTile_;
-	const uint8_t* pNewTile_;
+	uint8_t* pNewTile_;
 	uint32_t currentTileSize_;
 	uint32_t featureCount_;
 	Tile tile_;

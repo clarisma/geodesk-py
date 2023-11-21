@@ -34,7 +34,7 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 		}
 		p->second = feature;
 		p++;
-		feature = feature->next();
+		feature = feature->nextFeature();
 	}
 	while (feature != firstFeature);
 	assert(p - hilbertItems == count);
@@ -58,6 +58,7 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 			break;
 		}
 		*pBranch++ = createLeaf(p, rtreeBucketSize_);
+		p += rtreeBucketSize_;
 		count -= rtreeBucketSize_;
 	}
 
@@ -78,6 +79,7 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 				break;
 			}
 			*pParentBranch++ = createTrunk(pBranch, rtreeBucketSize_);
+			pBranch += rtreeBucketSize_;
 			count -= rtreeBucketSize_;
 		}
 		if (parentCount == 1) break;
@@ -88,12 +90,14 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 
 TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pChildren, int count)
 {
+	// LOG("Creating leaf (%d children at %016llX)...", count, pChildren);
 	TFeature* firstFeature = nullptr;
 	Box bounds;
 	do
 	{
 		count--;
 		TFeature* feature = pChildren[count].second;
+		assert(feature->type() == TElement::Type::FEATURE);
 		feature->setNext(firstFeature);
 		firstFeature = feature;
 		FeatureRef f = feature->feature();
@@ -114,6 +118,7 @@ TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pChildren, int count)
 
 TIndexTrunk* HilbertIndexBuilder::createTrunk(TIndexBranch** pChildBranches, int count)
 {
+	// LOG("Creating trunk (%d children at %016llX)...", count, pChildBranches);
 	int originalCount = count;
 	TIndexBranch* firstBranch = nullptr;
 	Box bounds;

@@ -6,7 +6,7 @@ class TString : public TSharedElement
 {
 public:
 	TString(int32_t loc, const uint8_t* data) :
-		TSharedElement(loc, data, getStringSize(data), Alignment::BYTE)
+		TSharedElement(Type::STRING, loc, data, getStringSize(data), Alignment::BYTE)
 	{
 	}
 

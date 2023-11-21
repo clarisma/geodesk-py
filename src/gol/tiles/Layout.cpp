@@ -1,8 +1,8 @@
 #include "Layout.h"
 #include "TIndex.h"
 
-Layout::Layout(TTile &tile) :
-	pos_(0),
+Layout::Layout(TTile& tile) :
+    pos_(0),
     tile_(tile)
 {
 }

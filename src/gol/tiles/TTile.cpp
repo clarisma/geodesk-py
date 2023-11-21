@@ -1,6 +1,7 @@
 #include "TTile.h"
 #include <algorithm>
 #include "TFeature.h"
+#include "Layout.h"
 #include <common/util/log.h>
 #include <common/util/varint.h>
 
@@ -9,6 +10,7 @@ TTile::TTile(Tile tile) :
 	featureCount_(0),
 	pCurrentTile_(nullptr),
 	pNewTile_(nullptr),
+	currentTileSize_(0),
 #ifdef _DEBUG
 	currentLoadingFeature_(nullptr),
 #endif
@@ -20,7 +22,7 @@ void TTile::initTables(size_t tileSize)
 {
 	size_t minTableSize = 1;
 	size_t tableSize = std::max(tileSize / 64 * 7, minTableSize);
-	elementsByLocation_.init(arena_.allocArray<TIndexedElement*>(tableSize), tableSize);
+	elementsByLocation_.init(arena_.allocArray<TReferencedElement*>(tableSize), tableSize);
 
 	tableSize = std::max(tileSize / 512 * 37, minTableSize);
 	featuresById_.init(arena_.allocArray<TFeature*>(tableSize), tableSize);
@@ -34,8 +36,6 @@ void TTile::initTables(size_t tileSize)
 	tableSize = std::max(tileSize / 3000, minTableSize);
 	relationTables_.init(arena_.allocArray<TRelationTable*>(tableSize), tableSize);
 }
-
-
 
 void TTile::readTile(pointer pTile)
 {
@@ -56,6 +56,7 @@ void TTile::readNode(NodeRef node)
 {
 	assertValidCurrentPointer(node.ptr());
 	readTagTable(node);
+	if (node.isRelationMember()) readRelationTable(node.bodyptr());
 	TNode* tnode = arena_.alloc<TNode>();
 	new(tnode) TNode(currentLocation(node.ptr()), node);
 	addFeatureToIndex(tnode);
@@ -103,8 +104,12 @@ void TTile::readWay(WayRef way)
 	const uint8_t* p = pBody;
 	int nodeCount = readVarint32(p);
 	skipVarints(p, nodeCount * 2);		// (coordinate pairs)
-	uint32_t relTablePtrSize = way.flags() & 4;
 	size += pointer(p) - pBody;
+	if (way.flags() & FeatureFlags::RELATION_MEMBER)
+	{
+		size += 4;
+		readRelationTable(pBody.follow(-4));   // TODO: This is an unaligned read!
+	}
 
 	new(tway) TWay(currentLocation(way.ptr()), way, pBody - anchor, size, anchor);
 	addFeatureToIndex(tway);
@@ -117,9 +122,7 @@ void TTile::readRelation(RelationRef relation)
 	readTagTable(relation);
 	TRelation* trel = arena_.alloc<TRelation>();
 	pointer pBody = relation.bodyptr();
-	uint32_t anchor = relation.flags() & 4;;
-	uint32_t size = anchor;
-
+	
 	pointer p(pBody);
 	for (;;)
 	{
@@ -146,7 +149,16 @@ void TTile::readRelation(RelationRef relation)
 		}
 		if (member & MemberFlags::LAST) break;
 	}
-	size += p - pBody;
+
+	uint32_t anchor = 0;
+	uint32_t size = p - pBody;
+	if (relation.flags() & FeatureFlags::RELATION_MEMBER)
+	{
+		readRelationTable(pBody.follow(-4));		// TODO: This is an unaligned read!
+		size += 4;
+		anchor = 4;
+	}
+
 	new(trel) TRelation(currentLocation(relation.ptr()), relation, pBody - anchor, size);
 	addFeatureToIndex(trel);
 }
@@ -192,7 +204,7 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 			p -= 2 + (flags & 2);
 			if ((flags & 3) == 3) // wide-string value?
 			{
-				readString(p.follow());
+				readString(p.follow());   // TODO: This is an unaligned read!
 			}
 			if (flags & 4) break;  // last-tag?
 		}
@@ -261,3 +273,46 @@ TRelationTable* TTile::readRelationTable(pointer pTable)
 	return rels;
 }
 
+
+
+uint8_t* TTile::write(Layout& layout)
+{
+	LOG("Old size: %d | New size: %d", currentTileSize_, layout.size());
+
+	pNewTile_ = new uint8_t[layout.size()];
+	TElement* elem = layout.first();
+	do
+	{
+		switch (elem->type())
+		{
+		case TElement::Type::FEATURE:
+			reinterpret_cast<TFeature*>(elem)->write(*this);
+			break;
+		case TElement::Type::WAY_BODY:
+			reinterpret_cast<TWayBody*>(elem)->write(*this);
+			break;
+		case TElement::Type::RELATION_BODY:
+			reinterpret_cast<TRelationBody*>(elem)->write(*this);
+			break;
+		case TElement::Type::STRING:
+			reinterpret_cast<TString*>(elem)->write(newTileData() + elem->location());
+			break;
+		case TElement::Type::TAGS:
+			reinterpret_cast<TTagTable*>(elem)->write(*this);
+			break;
+		case TElement::Type::RELTABLE:
+			reinterpret_cast<TRelationTable*>(elem)->write(*this);
+			break;
+		case TElement::Type::INDEX:
+			reinterpret_cast<TIndex*>(elem)->write(*this);
+			break;
+		case TElement::Type::TRUNK:
+			reinterpret_cast<TIndexTrunk*>(elem)->write(*this);
+			break;
+
+		}
+		elem = elem->next();
+	}
+	while (elem);
+	return pNewTile_;
+}

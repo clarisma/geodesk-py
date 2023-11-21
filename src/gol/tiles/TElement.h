@@ -4,11 +4,12 @@
 #include <cstdint>
 // #include <common/alloc/Arena.h>
 #include <common/data/Deduplicator.h>
+#include <common/data/Linked.h>
 #include <common/data/Lookup.h>
 
 template <typename T> class ElementDeduplicator;
 
-class TElement
+class TElement : public Linked<TElement>
 {
 public:
 	enum class Alignment : uint8_t
@@ -16,15 +17,39 @@ public:
 		BYTE, WORD, DWORD, QWORD
 	};
 
-	TElement(int32_t location, uint32_t size, Alignment alignment) :
-		location_(location), 
+	enum class Type : unsigned int
+	{
+		UNKNOWN,
+		STRING,
+		TAGS,
+		RELTABLE,
+		FEATURE,
+		WAY_BODY,
+		RELATION_BODY,
+		INDEX,
+		TRUNK,
+		LEAF
+	};
+
+	TElement(Type type, int32_t location, uint32_t size, Alignment alignment, int anchor = 0) :
+		Linked(nullptr),
+		location_(0), 
 		size_(size),
-		alignment_(static_cast<unsigned int>(alignment))
+		alignment_(static_cast<unsigned int>(alignment)),
+		oldLocation_(location),
+		type_(type),
+		isLast_(false),
+		isDeleted_(false),
+		anchor_(anchor)
 	{
 	}
 
+	Type type() const { return type_; }
+	TElement* next() const { return next_; }
+	void setNext(TElement* next) { next_ = next; }
 	int32_t location() const { return location_; }
 	void setLocation(int32_t location) { location_ = location; }
+	int32_t oldLocation() const { return oldLocation_; }
 	uint32_t size() const { return size_; }
 	void setAlignment(Alignment alignment) 
 	{ 
@@ -36,37 +61,48 @@ public:
 		int32_t mask = 0xffff'ffff << alignment_;
 		return (loc + add) & mask;
 	}
+	uint32_t anchor() const { return anchor_; }
+	bool isLast() const { return isLast_; }
+	void setLast(bool last) { isLast_ = last; }
+
+protected:
+	void setSize(uint32_t size) { size_ = size; }
 
 private:
 	int32_t location_;
 	unsigned int alignment_ :  2;
 	unsigned int size_      : 30;
-	// TODO: Need oldLocation_, type/anchor, next_
+	int32_t oldLocation_;
+	Type type_              :  6;
+	bool isLast_            :  1;
+	bool isDeleted_         :  1;
+	unsigned int anchor_    : 24;
 };
 
-class TIndexedElement : public TElement
+class TReferencedElement : public TElement
 {
 public:
-	TIndexedElement(int32_t location, uint32_t size, Alignment alignment) :
-		TElement(location, size, alignment), 
+	TReferencedElement(Type  type, int32_t location, uint32_t size,
+		Alignment alignment, int anchor) :
+		TElement(type, location, size, alignment, anchor), 
 		nextByLocation_(nullptr)
 	{
 	}
 
 private:
-	TIndexedElement* nextByLocation_;
+	TReferencedElement* nextByLocation_;
 
 	friend class LookupByLocation;
 };
 
 
-class TSharedElement : public TIndexedElement
+class TSharedElement : public TReferencedElement
 {
 public:
-	TSharedElement(int32_t location, const uint8_t* data, uint32_t size, Alignment alignment) :
-		TIndexedElement(location, size, alignment), 
-		data_(data),
-		nextByType_(nullptr)
+	TSharedElement(Type type, int32_t location, const uint8_t* data, 
+		uint32_t size, Alignment alignment, int anchor = 0) :
+		TReferencedElement(type, location, size, alignment, anchor),
+		data_(data)
 	{
 	}
 
@@ -78,8 +114,6 @@ public:
 
 	static const int MIN_COMMON_USAGE = 4;
 
-public:								// workaround for template access
-	TSharedElement* nextByType_;
 protected:
 	const uint8_t* data_;
 	// uint32_t usage_;
@@ -90,15 +124,15 @@ protected:
 
 
 
-class LookupByLocation : public Lookup<LookupByLocation, TIndexedElement>
+class LookupByLocation : public Lookup<LookupByLocation, TReferencedElement>
 {
 public:
-	static uint64_t getId(TIndexedElement* element)
+	static uint64_t getId(TReferencedElement* element)
 	{
-		return element->location();
+		return element->oldLocation();
 	}
 
-	static TIndexedElement** next(TIndexedElement* elem)
+	static TReferencedElement** next(TReferencedElement* elem)
 	{
 		return &elem->nextByLocation_;
 	}
@@ -122,6 +156,6 @@ public:
 
 	static T** next(T* elem)
 	{
-		return reinterpret_cast<T**>(&elem->nextByType_);
+		return reinterpret_cast<T**>(&elem->next_);
 	}
 };

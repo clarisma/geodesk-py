@@ -49,6 +49,7 @@ public:
 	bool isNode() const	{ return typeCode() == FeatureType::NODE; }
 	bool isWay() const	{ return typeCode() == FeatureType::WAY; }
 	bool isRelation() const	{ return typeCode() == FeatureType::RELATION; }
+	bool isRelationMember() const { return flags() & FeatureFlags::RELATION_MEMBER; }
 	bool isType(FeatureTypes types) { return types.acceptFlags(flags()); }
 
 	TagsRef tags() const

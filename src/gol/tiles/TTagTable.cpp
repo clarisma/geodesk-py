@@ -2,10 +2,12 @@
 #include "TTile.h"
 #include "IndexSettings.h"
 
-void TTagTable::write(const TTile* tile, uint8_t* p) const
+void TTagTable::write(const TTile& tile) const
 {
+	uint8_t* p = tile.newTileData() + location();
 	TSharedElement::write(p);
 
+	// TODO: adjust string pointers
 }
 
 
@@ -14,7 +16,7 @@ uint32_t TTagTable::assignIndexCategory(const IndexSettings& indexSettings)
 	int maxIndexedKey = indexSettings.maxIndexedKey();
 	int category = 0;
 	uint32_t indexBits = 0;
-	pointer p = data_ + anchor_;
+	pointer p = data_ + anchor();
 	int keyWithLastFlag;
 	do
 	{
@@ -39,4 +41,10 @@ uint32_t TTagTable::assignIndexCategory(const IndexSettings& indexSettings)
 	while (keyWithLastFlag < maxIndexedKey);
 	category_ = category;
 	return indexBits;
+}
+
+
+void TTagTable::addStrings(Layout& layout) const
+{
+	// TODO
 }
