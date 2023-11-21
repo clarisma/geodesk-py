@@ -19,6 +19,7 @@ TileCompiler::TileCompiler(FeatureStore* store) :
 
 void TileCompiler::compile()
 {
+	outFile_= std::ofstream("c:\\geodesk\\debug\\new-planet.bin", std::ios::binary);
 	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld());
 	while (tiw.next())
 	{
@@ -27,6 +28,7 @@ void TileCompiler::compile()
 	}
 	workers_.awaitCompletion();
 	writer_.awaitCompletion();
+	outFile_.close();
 }
 
 
@@ -50,7 +52,7 @@ void TileCompilerTask::operator()()
 	indexer.place(layout);
 	layout.placeBodies();
 	uint8_t* newTileData = tile.write(layout);
-	delete newTileData; // TODO
+	compiler_->writer_.post(TileWriterTask(compiler_, tip_, newTileData, layout.size()));
 	/*
 	uint8_t* newTileData = new uint8_t[layout.size()];
 	TElement* elem = layout.first();
@@ -72,4 +74,6 @@ void TileCompilerTask::operator()()
 
 void TileWriterTask::operator()()
 {
+	compiler_->outFile_.write(reinterpret_cast<const char*>(data_), size_);
+	delete[] data_;
 }

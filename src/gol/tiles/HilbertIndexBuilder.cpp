@@ -126,7 +126,7 @@ TIndexTrunk* HilbertIndexBuilder::createTrunk(TIndexBranch** pChildBranches, int
 	{
 		count--;
 		TIndexBranch* branch = pChildBranches[count];
-		branch->setNext(firstBranch);
+		branch->setNextSibling(firstBranch);
 		firstBranch = branch;
 		bounds.expandToIncludeSimple(branch->bounds());
 	}

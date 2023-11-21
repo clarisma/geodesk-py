@@ -24,6 +24,7 @@ public:
 	bool isLeaf() const { return type() == Type::LEAF; }
 	const Box& bounds() const { return bounds_; }
 	TIndexBranch* nextSibling() const { return nextSibling_; }
+	void setNextSibling(TIndexBranch* next) { nextSibling_ = next; }
 
 private:
 	const Box bounds_;
