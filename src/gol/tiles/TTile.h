@@ -29,6 +29,12 @@ public:
 			currentLocation(pointer(p))));
 	}
 
+	TString* getString(const void* p) const
+	{
+		return reinterpret_cast<TString*>(elementsByLocation_.lookup(
+			currentLocation(pointer(p))));
+	}
+
 	TRelationTable* getRelationTable(const void* p) const
 	{
 		return reinterpret_cast<TRelationTable*>(elementsByLocation_.lookup(
@@ -60,7 +66,8 @@ private:
 	TTagTable* readTagTable(pointer pTagged);
 	TTagTable* readTagTable(FeatureRef feature)
 	{
-		return readTagTable(feature.tags().taggedPtr());
+		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
+		tags->addUser();
 	}
 	TRelationTable* readRelationTable(pointer p);
 

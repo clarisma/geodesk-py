@@ -77,3 +77,9 @@ inline void writeVarint(uint8_t*& p, uint64_t val)
 	}
 	*p++ = val;
 }
+
+
+inline void writeSignedVarint(uint8_t*& p, int64_t val)
+{
+	writeVarint(p, (val << 1) ^ (val >> 63));
+}

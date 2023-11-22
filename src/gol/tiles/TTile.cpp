@@ -168,11 +168,14 @@ TString* TTile::readString(pointer p)
 	assertValidCurrentPointer(p);
 	int32_t currentLoc = currentLocation(p);
 	TString* str = reinterpret_cast<TString*>(elementsByLocation_.lookup(currentLoc));
-	if (str) return str;
-	str = arena_.alloc<TString>();
-	new(str) TString(currentLoc, p);
-	elementsByLocation_.insert(str);
-	strings_.insertUnique(str);
+	if (!str)
+	{
+		str = arena_.alloc<TString>();
+		new(str) TString(currentLoc, p);
+		elementsByLocation_.insert(str);
+		strings_.insertUnique(str);
+	}
+	str->addUser();
 	return str;
 }
 
@@ -248,28 +251,33 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 
 TRelationTable* TTile::readRelationTable(pointer pTable)
 {
-	assertValidCurrentPointer(pTable);
-	pointer p = pTable;
-	for (;;)
+	int32_t currentLoc = currentLocation(pTable);
+	TRelationTable* rels = getRelationTable(pTable);
+	if (!rels)
 	{
-		int32_t rel = p.getUnalignedInt();
-		p += 4;
-		if ((rel & (MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE)) ==
-			(MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE))
+		pointer p = pTable;
+		for (;;)
 		{
-			// foreign relation in different tile
-			p += 2;
-			p += (p.getShort() & 1) << 1;
-			// move forward by 2 extra bytes if the tip-delta is wide
-			// (denoted by Bit 0)
+			int32_t rel = p.getUnalignedInt();
+			p += 4;
+			if ((rel & (MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE)) ==
+				(MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE))
+			{
+				// foreign relation in different tile
+				p += 2;
+				p += (p.getShort() & 1) << 1;
+				// move forward by 2 extra bytes if the tip-delta is wide
+				// (denoted by Bit 0)
+			}
+			if (rel & MemberFlags::LAST) break;
 		}
-		if (rel & MemberFlags::LAST) break;
+		uint32_t size = p - pTable;
+		rels = arena_.alloc<TRelationTable>();
+		new(rels) TRelationTable(currentLocation(pTable), pTable, size);
+		elementsByLocation_.insert(rels);
+		relationTables_.insertUnique(rels);
 	}
-	uint32_t size = p - pTable;
-	TRelationTable* rels = arena_.alloc<TRelationTable>();
-	new(rels) TRelationTable(currentLocation(pTable), pTable, size);
-	elementsByLocation_.insert(rels);
-	relationTables_.insertUnique(rels);
+	rels->addUser();
 	return rels;
 }
 

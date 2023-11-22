@@ -99,6 +99,15 @@ public:
 		writeBytes(buf, p - buf);
 	}
 
+	void writeSignedVarint(int64_t v)
+	{
+		uint8_t buf[10];
+		uint8_t* p = buf;
+		::writeSignedVarint(p, v);
+		writeBytes(buf, p - buf);
+	}
+
+
 	template <size_t N>
 	void writeConstString(const char(&s)[N])
 	{

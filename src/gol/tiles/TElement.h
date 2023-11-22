@@ -102,7 +102,7 @@ public:
 	TSharedElement(Type type, int32_t location, const uint8_t* data, 
 		uint32_t size, Alignment alignment, int anchor = 0) :
 		TReferencedElement(type, location, size, alignment, anchor),
-		data_(data)
+		data_(data), users_(0), category_(0)
 	{
 	}
 
@@ -112,14 +112,17 @@ public:
 		memcpy(p, data_, size());
 	}
 
+	int users() const { return users_; }
+	void addUser() { users_++; }
+	int category() const { return category_; }
+	void setCategory(int category) { category_ = category; }
+
 	static const int MIN_COMMON_USAGE = 4;
 
 protected:
 	const uint8_t* data_;
-	// uint32_t usage_;
-	// uint32_t extra_;		// can be used by subclasses
-
-	// friend class ElementDeduplicator<TSharedElement>;
+	int users_;
+	int category_;
 };
 
 

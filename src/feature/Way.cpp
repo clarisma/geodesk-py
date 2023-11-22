@@ -83,7 +83,7 @@ NodeRef FeatureNodeIterator::next()
     {
         p_ -= 4;
         pointer pCurrent = p_;
-        currentNode_ = p_.getInt(); // TODO: unaligned
+        currentNode_ = p_.getUnalignedInt();
         NodeRef feature(nullptr);
         if (currentNode_ & MemberFlags::FOREIGN)
         {
