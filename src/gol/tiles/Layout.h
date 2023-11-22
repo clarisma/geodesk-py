@@ -36,6 +36,7 @@ public:
 			place(elem);
 			elem = next;
 		}
+		flush();
 	}
 
 private:

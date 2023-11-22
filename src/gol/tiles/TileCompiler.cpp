@@ -5,6 +5,9 @@
 #include "TTile.h"
 #include "TIndex.h"
 
+#include <thread>
+#include <chrono>
+
 TileCompiler::TileCompiler(FeatureStore* store) :
 	store_(store),
 #ifdef _DEBUG
@@ -19,7 +22,7 @@ TileCompiler::TileCompiler(FeatureStore* store) :
 
 void TileCompiler::compile()
 {
-	outFile_= std::ofstream("c:\\geodesk\\debug\\new-planet.bin", std::ios::binary);
+	// outFile_= std::ofstream("c:\\geodesk\\debug\\new-planet.bin", std::ios::binary);
 	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld());
 	while (tiw.next())
 	{
@@ -28,7 +31,9 @@ void TileCompiler::compile()
 	}
 	workers_.awaitCompletion();
 	writer_.awaitCompletion();
-	outFile_.close();
+	workers_.shutdown();
+	writer_.shutdown();
+	// outFile_.close();
 }
 
 
@@ -50,9 +55,11 @@ void TileCompilerTask::operator()()
 
 	Layout layout(tile);
 	indexer.place(layout);
+	layout.flush();
 	layout.placeBodies();
 	uint8_t* newTileData = tile.write(layout);
-	compiler_->writer_.post(TileWriterTask(compiler_, tip_, newTileData, layout.size()));
+	delete newTileData;
+	// compiler_->writer_.post(TileWriterTask(compiler_, tip_, newTileData, layout.size()));
 	/*
 	uint8_t* newTileData = new uint8_t[layout.size()];
 	TElement* elem = layout.first();
@@ -74,6 +81,10 @@ void TileCompilerTask::operator()()
 
 void TileWriterTask::operator()()
 {
-	compiler_->outFile_.write(reinterpret_cast<const char*>(data_), size_);
+	// compiler_->outFile_.write(reinterpret_cast<const char*>(data_), size_);
+	//uint8_t* copy = new uint8_t[size_];
+	// memcpy(copy, data_, size_);
 	delete[] data_;
+	// std::this_thread::sleep_for(std::chrono::microseconds(size_ / 500));
+	// delete[] copy;
 }

@@ -86,6 +86,10 @@ public:
             notFull_.wait(lock);  // Wait for a signal that a task has been completed
         }
         // When the loop exits, all tasks have been completed
+
+        // TODO: This does not work, because condition is signaled 
+        //  when the thread takes the task from the queue, not when it completes it
+        // We need a counter that indicates the number of threads still running
     }
 
     void shutdown()

@@ -9,6 +9,8 @@
 #include "TTagTable.h"
 #include "geom/Tile.h"
 
+// TODO: Call this TileKit
+
 class TTile : public TileReader<TTile>
 {
 public:
@@ -37,6 +39,9 @@ public:
 	Box bounds() const { return tile_.bounds(); }
 	uint32_t featureCount() const { return featureCount_; }
 	const FeatureTable& features() const { return featuresById_; }
+	const ElementDeduplicator<TString> strings() const { return strings_; }
+	const ElementDeduplicator<TTagTable> tagTables() const { return tagTables_; }
+	const ElementDeduplicator<TRelationTable> relationTables() const { return relationTables_; }
 
 	FeatureTable::Iterator iterFeatures() const
 	{

@@ -78,6 +78,11 @@ public:
 
 	size_t count() const { return count_; }
 
+	T** toArray(Arena& arena) const
+	{
+		return toArray(arena, count_);
+	}
+
 private:
 	uint32_t hash(T* item) const
 	{

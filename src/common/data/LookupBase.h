@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstring>
+#include <common/alloc/Arena.h>
 
 /**
  * Base template for classes that use hashtable-based lookup.
@@ -90,6 +91,20 @@ public:
 			if (!p) break;
 			*pa++ = p;
 		}
+	}
+
+	T** toArray(Arena& arena, size_t count) const
+	{
+		T** pa = arena.allocArray<T*>(count);
+		T** p = pa;
+		Iterator iter(this);
+		while (count)
+		{
+			T* item = iter.next();
+			assert(item);
+			*p++ = item;
+		}
+		return pa;
 	}
 
 protected:

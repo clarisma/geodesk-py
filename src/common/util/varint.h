@@ -66,3 +66,14 @@ inline void skipVarints(const uint8_t*& p, int count)
 	}
 	while (count);
 }
+
+
+inline void writeVarint(uint8_t*& p, uint64_t val)
+{
+	while (val >= 0x80)
+	{
+		*p++ = (val & 0x7f) | 0x80;
+		val >>= 7;
+	}
+	*p++ = val;
+}
