@@ -17,17 +17,23 @@ public:
 	void write();
 
 private:
+	using FeatureItem = std::pair<uint64_t, const TFeature*>;
+
 	template <typename T>
 	T** sortedItems(const ElementDeduplicator<T>& items);
 
 	void writeStrings();
+	void writeTagTables();
+	void writeRelationTables();
 	void writeTagTable(const TTagTable* tags);
 	void writeTagValue(pointer p, int valueFlags);
+	void writeRelationTable(const TRelationTable* relTable);
 	void writeNode(const TNode* node);
 	void writeWay(const TWay* way);
 	void writeRelation(const TRelation* relation);
 	void writeStub(const TFeature* feature, int flagBitCount, int flags);
 	void writeBounds(FeatureRef feature);
+	void writeFeatures();
 
 	static const int TAGS_CHANGED = 1;
 	static const int RELATIONS_CHANGED = 2;
@@ -35,9 +41,11 @@ private:
 	static const int AREA_FEATURE = 8;
 	static const int WAY_HAS_FEATURE_NODES = 16;
 
+	/*
 	TString** strings_;
 	TTagTable** tagTables_;
 	TRelationTable** relationTables_;
+	*/
 	TFeature** features_;
 	BufferWriter out_;
 	TTile& tile_;

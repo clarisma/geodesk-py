@@ -12,23 +12,55 @@ TesWriter::TesWriter(TTile& tile, Buffer* out) :
 
 void TesWriter::write()
 {
-	strings_ = sortedItems<TString>(tile_.strings());
-	tagTables_ = sortedItems<TTagTable>(tile_.tagTables());
-	relationTables_ = sortedItems<TRelationTable>(tile_.relationTables());
+	writeStrings();
+	writeTagTables();
+	writeRelationTables();
+	writeFeatures();
 }
 
 
 void TesWriter::writeStrings()
 {
+	TString** strings = sortedItems<TString>(tile_.strings());
 	size_t count = tile_.strings().count();
 	out_.writeVarint(count);
-	const TString** pEnd = strings_ + count;
-	TString** p = strings_;
+	const TString** pEnd = strings + count;
+	TString** p = strings;
 	while (p < pEnd)
 	{
 		out_.writeBytes((*p)->data(), (*p)->size());
+		p++;
 	}
 }
+
+
+void TesWriter::writeTagTables()
+{
+	const TTagTable** tagTables = sortedItems<TTagTable>(tile_.tagTables());
+	size_t count = tile_.tagTables().count();
+	out_.writeVarint(count);
+	const TTagTable** pEnd = tagTables + count;
+	const TTagTable** p = tagTables;
+	while (p < pEnd)
+	{
+		writeTagTable(*p++);
+	}
+}
+
+
+void TesWriter::writeRelationTables()
+{
+	const TRelationTable** relationTables = sortedItems<TRelationTable>(tile_.relationTables());
+	size_t count = tile_.relationTables().count();
+	out_.writeVarint(count);
+	const TRelationTable** pEnd = relationTables + count;
+	const TRelationTable** p = relationTables;
+	while (p < pEnd)
+	{
+		writeRelationTable(*p++);
+	}
+}
+
 
 template <typename T>
 T** TesWriter::sortedItems(const ElementDeduplicator<T>& items)
@@ -249,36 +281,55 @@ void TesWriter::writeRelation(const TRelation* relation)
 	for (;;)
 	{
 		int32_t member = p.getUnalignedInt();
+		int rolechangedFlag = (member & MemberFlags::DIFFERENT_TILE) ? 2 : 0;
 		if (member & MemberFlags::FOREIGN)
 		{
-			uint32_t ref = static_cast<uint32_t>(node) >> 4;
-			if (node & MemberFlags::DIFFERENT_TILE)
+			uint32_t ref = static_cast<uint32_t>(member) >> 4;
+			p += 4;
+			if (member & MemberFlags::DIFFERENT_TILE)
 			{
-				p -= 2;
 				int32_t tipDelta = p.getShort();
+				p += 2;
 				if (tipDelta & 1)
 				{
 					// wide TIP delta
-					p -= 2;
 					tipDelta = (tipDelta & 0xffff) |
 						(static_cast<int32_t>(p.getShort()) << 16);
+					p += 2;
 				}
 				tipDelta >>= 1;     // signed
-				out_.writeVarint((ref << 2) | 3);
+				out_.writeVarint((ref << 3) | 5 | rolechangedFlag);
 				out_.writeSignedVarint(tipDelta);
 			}
 			else
 			{
-				out_.writeVarint((ref << 2) | 1);
+				out_.writeVarint((ref << 3) | 1 | rolechangedFlag);
 			}
 		}
 		else
 		{
-			TNode* wayNode = reinterpret_cast<TNode*>(tile_.getElement(
-				p + (static_cast<int32_t>(node & 0xffff'fffc) >> 1)));
-			out_.writeVarint(wayNode->location() << 1);
+			TFeature* memberFeature = reinterpret_cast<TFeature*>(tile_.getElement(
+				(p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1)));
+			out_.writeVarint((memberFeature->location() << 2) | rolechangedFlag);
 		}
-		if (node & MemberFlags::LAST) break;
+		if (rolechangedFlag)
+		{
+			uint32_t roleValue;
+			int rawRole = p.getUnsignedShort();
+			if (rawRole & 1)
+			{
+				roleValue = rawRole;
+				p += 2;
+			}
+			else
+			{
+				TString* roleStr = tile_.getString(p + (p.getUnalignedInt() >> 1));
+				roleValue = roleStr->location() << 1;
+				p += 4;
+			}
+			out_.writeVarint(roleValue);
+		}
+		if (member & MemberFlags::LAST) break;
 	}
 }
 
@@ -295,4 +346,68 @@ void TesWriter::writeBounds(FeatureRef feature)
 	out_.writeVarint(static_cast<uint64_t>(
 		static_cast<int64_t>(bounds.maxY()) - bounds.minY()));
 	prevXY_ = bounds.bottomLeft();
+}
+
+
+void TesWriter::writeFeatures()
+{
+	size_t count = tile_.featureCount();
+	FeatureItem* features = tile_.arena().allocArray<FeatureItem>(count);
+	FeatureItem* p = features;
+	FeatureItem* pEnd = features + count;
+	FeatureTable::Iterator iter(&tile_.features());
+	while(p < pEnd)
+	{
+		TFeature* feature = iter.next();
+		assert(feature);
+		p->first = feature->id() | 
+			(static_cast<uint64_t>(feature->feature().typeCode()) << 56);
+		p->second = feature;
+		p++;
+	}
+
+	std::sort(features, pEnd);
+	p = features;
+	while (p < pEnd)
+	{
+		if ((p->first >> 56) != 0) break;
+		p++;
+	}
+	size_t nodeCount = p - features;
+	while (p < pEnd)
+	{
+		if ((p->first >> 56) != 1) break;
+		p++;
+	}
+	size_t wayCount = (p - features) - nodeCount;
+	size_t relationCount = count - nodeCount - wayCount;
+
+	p = features;
+	pEnd = p + nodeCount;
+	out_.writeVarint(nodeCount);
+	while (p < pEnd)
+	{
+		writeNode(reinterpret_cast<const TNode*>(p->second));
+		p++;
+	}
+	pEnd = p + wayCount;
+	out_.writeVarint(wayCount);
+	while (p < pEnd)
+	{
+		writeWay(reinterpret_cast<const TWay*>(p->second));
+		p++;
+	}
+	pEnd = p + relationCount;
+	out_.writeVarint(relationCount);
+	while (p < pEnd)
+	{
+		writeRelation(reinterpret_cast<const TRelation*>(p->second));
+		p++;
+	}
+}
+
+
+void TesWriter::writeRelationTable(const TRelationTable* relTable)
+{
+
 }
