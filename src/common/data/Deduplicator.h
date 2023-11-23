@@ -80,7 +80,7 @@ public:
 
 	T** toArray(Arena& arena) const
 	{
-		return toArray(arena, count_);
+		return LookupBase<Derived,T>::toArray(arena, count_);
 	}
 
 private:

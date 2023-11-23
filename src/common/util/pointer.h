@@ -56,7 +56,7 @@ public:
 	int32_t getInt() const { return *reinterpret_cast<const int32_t*>(ptr_); }
 	int32_t getInt(int ofs) const { return *reinterpret_cast<const int32_t*>(ptr_ + ofs); }
 	int32_t getUnalignedInt() const { return *reinterpret_cast<const int32_t*>(ptr_); } // TODO: unaligned read
-	int32_t getUnalignedInt(int ofs) const { return *reinterpret_cast<const int32_t*>(ptr_); } // TODO: unaligned read
+	int32_t getUnalignedInt(int ofs) const { return *reinterpret_cast<const int32_t*>(ptr_ + ofs); } // TODO: unaligned read
 	uint32_t getUnsignedInt() const { return *reinterpret_cast<const uint32_t*>(ptr_); }
 	uint32_t getUnsignedInt(int ofs) const { return *reinterpret_cast<const uint32_t*>(ptr_ + ofs); }
 	uint32_t getUnalignedUnsignedInt() const { return *reinterpret_cast<const uint32_t*>(ptr_); } // TODO: unaligned read

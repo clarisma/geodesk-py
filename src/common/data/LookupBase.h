@@ -97,8 +97,9 @@ public:
 	{
 		T** pa = arena.allocArray<T*>(count);
 		T** p = pa;
+		T** pEnd = pa + count;
 		Iterator iter(this);
-		while (count)
+		while (p < pEnd)
 		{
 			T* item = iter.next();
 			assert(item);

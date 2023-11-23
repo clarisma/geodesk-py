@@ -4,6 +4,7 @@
 #include "Layout.h"
 #include "TTile.h"
 #include "TIndex.h"
+#include "TesWriter.h"
 
 #include <thread>
 #include <chrono>
@@ -48,6 +49,11 @@ void TileCompilerTask::operator()()
 	store->prefetchBlob(pTile);
 	tile.readTile(pTile);
 
+	DynamicBuffer buf(128 * 1024);
+	TesWriter writer(tile, &buf);
+	writer.write();
+
+	/*
 	IndexSettings indexSettings(store, 8, 8, 300); // TODO
 	Indexer indexer(tile, indexSettings);
 	indexer.addFeatures(tile.features());
@@ -59,6 +65,8 @@ void TileCompilerTask::operator()()
 	layout.placeBodies();
 	uint8_t* newTileData = tile.write(layout);
 	delete newTileData;
+	*/
+
 	// compiler_->writer_.post(TileWriterTask(compiler_, tip_, newTileData, layout.size()));
 	/*
 	uint8_t* newTileData = new uint8_t[layout.size()];

@@ -72,12 +72,12 @@ void TTile::readWay(WayRef way)
 	readTagTable(way);
 	TWay* tway = arena_.alloc<TWay>();
 	pointer pBody = way.bodyptr();
-	uint32_t size = way.flags() & 4;
+	uint32_t relTablePtrSize = way.flags() & 4;
 	uint32_t anchor;
 	if (way.flags() & FeatureFlags::WAYNODE)
 	{
 		pointer pNode(pBody);
-		pNode -= size;		// skip pointer to reltable (4 bytes)
+		pNode -= relTablePtrSize;		// skip pointer to reltable (4 bytes)
 		for(;;)
 		{
 			pNode -= 4;
@@ -94,21 +94,19 @@ void TTile::readWay(WayRef way)
 			if (wayNode & MemberFlags::LAST) break;
 		}
 		anchor = pBody - pNode;
-		size += anchor;
 	}
 	else
 	{
-		anchor = 0;
+		anchor = relTablePtrSize;
 	}
 
 	const uint8_t* p = pBody;
 	int nodeCount = readVarint32(p);
 	skipVarints(p, nodeCount * 2);		// (coordinate pairs)
-	size += pointer(p) - pBody;
-	if (way.flags() & FeatureFlags::RELATION_MEMBER)
+	uint32_t size = pointer(p) - pBody + anchor;
+	if (relTablePtrSize)
 	{
-		size += 4;
-		readRelationTable(pBody.follow(-4));   // TODO: This is an unaligned read!
+		readRelationTable(pBody.followUnaligned(-4));
 	}
 
 	new(tway) TWay(currentLocation(way.ptr()), way, pBody - anchor, size, anchor);
@@ -118,6 +116,10 @@ void TTile::readWay(WayRef way)
 void TTile::readRelation(RelationRef relation)
 {
 	// LOG("Reading relation/%ld", relation.id());
+	if (relation.id() == 184508)
+	{
+		LOG("Reading %s", relation.toString().c_str());
+	}
 	assertValidCurrentPointer(relation.ptr());
 	readTagTable(relation);
 	TRelation* trel = arena_.alloc<TRelation>();

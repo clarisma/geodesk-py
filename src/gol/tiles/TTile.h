@@ -68,6 +68,7 @@ private:
 	{
 		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
 		tags->addUser();
+		return tags;
 	}
 	TRelationTable* readRelationTable(pointer p);
 

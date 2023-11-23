@@ -24,7 +24,7 @@ void TesWriter::writeStrings()
 	TString** strings = sortedItems<TString>(tile_.strings());
 	size_t count = tile_.strings().count();
 	out_.writeVarint(count);
-	const TString** pEnd = strings + count;
+	TString** pEnd = strings + count;
 	TString** p = strings;
 	while (p < pEnd)
 	{
@@ -36,11 +36,11 @@ void TesWriter::writeStrings()
 
 void TesWriter::writeTagTables()
 {
-	const TTagTable** tagTables = sortedItems<TTagTable>(tile_.tagTables());
+	TTagTable** tagTables = sortedItems<TTagTable>(tile_.tagTables());
 	size_t count = tile_.tagTables().count();
 	out_.writeVarint(count);
-	const TTagTable** pEnd = tagTables + count;
-	const TTagTable** p = tagTables;
+	TTagTable** pEnd = tagTables + count;
+	TTagTable** p = tagTables;
 	while (p < pEnd)
 	{
 		writeTagTable(*p++);
@@ -50,11 +50,11 @@ void TesWriter::writeTagTables()
 
 void TesWriter::writeRelationTables()
 {
-	const TRelationTable** relationTables = sortedItems<TRelationTable>(tile_.relationTables());
+	TRelationTable** relationTables = sortedItems<TRelationTable>(tile_.relationTables());
 	size_t count = tile_.relationTables().count();
 	out_.writeVarint(count);
-	const TRelationTable** pEnd = relationTables + count;
-	const TRelationTable** p = relationTables;
+	TRelationTable** pEnd = relationTables + count;
+	TRelationTable** p = relationTables;
 	while (p < pEnd)
 	{
 		writeRelationTable(*p++);
@@ -66,7 +66,7 @@ template <typename T>
 T** TesWriter::sortedItems(const ElementDeduplicator<T>& items)
 {
 	size_t count = items.count();
-	TSharedElement** sorted = items.toArray(tile_.arena());
+	T** sorted = items.toArray(tile_.arena());
 
 	std::sort(sorted, sorted+count, [](const T* a, const T* b) 
 		{
@@ -86,6 +86,7 @@ T** TesWriter::sortedItems(const ElementDeduplicator<T>& items)
 
 void TesWriter::writeTagValue(pointer p, int valueFlags)
 {
+	assert(valueFlags >= 0 && valueFlags <= 3);
 	uint32_t value;
 	if ((valueFlags & 2) == 0)		  // narrow value
 	{
@@ -97,6 +98,7 @@ void TesWriter::writeTagValue(pointer p, int valueFlags)
 		if (valueFlags == 3)
 		{
 			TString* valueStr = tile_.getString(p + static_cast<int32_t>(value));
+			assert(valueStr);
 			value = valueStr->location();
 		}
 	}
@@ -148,7 +150,7 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 			if (flags & 4) break;  // last-tag?
 		}
 	}
-	pointer p = pTable;
+	p = pTable;
 	if (globalTagCount)		// have to check in case of empty table
 	{
 		for (;;)
@@ -158,7 +160,7 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 			int valueType = key & 3;
 			p += 2;
 			writeTagValue(p, valueType);
-			p += key & 2;
+			p += 2 + (key & 2);
 			if (key & 0x8000) break;
 		}
 	}
@@ -203,21 +205,21 @@ void TesWriter::writeWay(const TWay* way)
 		(hasFeatureNodes ? WAY_HAS_FEATURE_NODES : 0));
 	
 	pointer pBody = way->body().data();
+	int anchor = way->body().anchor();
 	if (isRelationMember)
 	{
-		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned(-4));
+		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned(anchor-4));
 		out_.writeVarint(relTable->location());
 	}
 
 	writeBounds(wayRef);
-	int anchor = way->body().anchor();
 	out_.writeBytes(pBody.asBytePointer() + anchor, way->body().size() - anchor);
 
 	if (hasFeatureNodes)
 	{
 		int skipReltablePointer = isRelationMember ? 4 : 0;
 		out_.writeVarint(anchor - skipReltablePointer);
-		pointer p = pBody - skipReltablePointer;
+		pointer p = pBody + anchor - skipReltablePointer;
 		for (;;)
 		{
 			p -= 4;
@@ -248,7 +250,8 @@ void TesWriter::writeWay(const TWay* way)
 			else
 			{
 				TNode* wayNode = reinterpret_cast<TNode*>(tile_.getElement(
-					p + (static_cast<int32_t>(node & 0xffff'fffc) >> 1)));
+					p + (static_cast<int32_t>((node >> 2) << 1))));
+				// LOG("Way-node node/%lld", wayNode->id());
 				out_.writeVarint(wayNode->location() << 1);
 			}
 			if (node & MemberFlags::LAST) break;
@@ -264,11 +267,20 @@ void TesWriter::writeRelation(const TRelation* relation)
 		(isRelationMember ? RELATIONS_CHANGED : 0) |
 		(relationRef.isArea() ? AREA_FEATURE : 0));
 
+	return;  // TODO
+
+	LOG("Writing relation/%lld", relationRef.id());
+	if (relationRef.id() == 181912)
+	{
+		LOG("debug");
+	}
+
+
 	const TRelationBody& body = relation->body();
 	pointer pBody = body.data();
 	if (isRelationMember)
 	{
-		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned(-4));
+		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned());
 		out_.writeVarint(relTable->location());
 	}
 
@@ -281,7 +293,7 @@ void TesWriter::writeRelation(const TRelation* relation)
 	for (;;)
 	{
 		int32_t member = p.getUnalignedInt();
-		int rolechangedFlag = (member & MemberFlags::DIFFERENT_TILE) ? 2 : 0;
+		int rolechangedFlag = (member & MemberFlags::DIFFERENT_ROLE) ? 2 : 0;
 		if (member & MemberFlags::FOREIGN)
 		{
 			uint32_t ref = static_cast<uint32_t>(member) >> 4;
@@ -308,9 +320,18 @@ void TesWriter::writeRelation(const TRelation* relation)
 		}
 		else
 		{
-			TFeature* memberFeature = reinterpret_cast<TFeature*>(tile_.getElement(
-				(p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1)));
-			out_.writeVarint((memberFeature->location() << 2) | rolechangedFlag);
+			pointer pMember = (p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1);
+			TFeature* memberFeature = reinterpret_cast<TFeature*>(tile_.getElement(pMember));
+			if (memberFeature == nullptr)
+			{
+				FeatureRef xxx(pMember);
+				FORCE_LOG("Not found: %s", xxx.toString().c_str());
+			}
+			else
+			{
+				out_.writeVarint((memberFeature->location() << 2) | rolechangedFlag);
+			}
+			p += 4;
 		}
 		if (rolechangedFlag)
 		{
