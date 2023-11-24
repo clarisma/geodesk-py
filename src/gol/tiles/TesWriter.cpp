@@ -16,6 +16,7 @@ void TesWriter::write()
 	writeTagTables();
 	writeRelationTables();
 	writeFeatures();
+	out_.flush();
 }
 
 

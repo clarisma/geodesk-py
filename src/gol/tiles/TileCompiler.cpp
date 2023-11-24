@@ -23,7 +23,7 @@ TileCompiler::TileCompiler(FeatureStore* store) :
 
 void TileCompiler::compile()
 {
-	// outFile_= std::ofstream("c:\\geodesk\\debug\\new-planet.bin", std::ios::binary);
+	outFile_= std::ofstream("e:\\geodesk\\exports\\planet-tes.bin", std::ios::binary);
 	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld());
 	while (tiw.next())
 	{
@@ -34,7 +34,7 @@ void TileCompiler::compile()
 	writer_.awaitCompletion();
 	workers_.shutdown();
 	writer_.shutdown();
-	// outFile_.close();
+	outFile_.close();
 }
 
 
@@ -52,6 +52,11 @@ void TileCompilerTask::operator()()
 	DynamicBuffer buf(128 * 1024);
 	TesWriter writer(tile, &buf);
 	writer.write();
+	
+
+	size_t size = buf.length();
+	compiler_->writer_.post(TileWriterTask(compiler_, tip_, 
+		reinterpret_cast<uint8_t*>(buf.take()), size));
 
 	/*
 	IndexSettings indexSettings(store, 8, 8, 300); // TODO
@@ -69,18 +74,6 @@ void TileCompilerTask::operator()()
 
 	// compiler_->writer_.post(TileWriterTask(compiler_, tip_, newTileData, layout.size()));
 	/*
-	uint8_t* newTileData = new uint8_t[layout.size()];
-	TElement* elem = layout.first();
-	do
-	{
-		switch (elem->type())
-		{
-		case TElement::Type::FEATURE:
-			reinterpret_cast<TFeature*>(elem)->write(&tile, )
-		}
-	}
-	*/
-	/*
 	memcpy(pLoadedTile, pTile, size);
 	delete[] pLoadedTile;
 	*/
@@ -89,7 +82,8 @@ void TileCompilerTask::operator()()
 
 void TileWriterTask::operator()()
 {
-	// compiler_->outFile_.write(reinterpret_cast<const char*>(data_), size_);
+	compiler_->outFile_.write(reinterpret_cast<const char*>(data_), size_);
+
 	//uint8_t* copy = new uint8_t[size_];
 	// memcpy(copy, data_, size_);
 	delete[] data_;

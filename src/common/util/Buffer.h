@@ -36,6 +36,7 @@ public:
 
 	virtual void filled(char* p);
 	virtual void flush(char* p);
+	char* take();
 
 protected:
 	void grow();
