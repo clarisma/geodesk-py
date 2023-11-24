@@ -13,6 +13,7 @@ public:
         close();
     }
 
+    // TODO: Ensure these are the same values as OpenMode
     enum MappingMode
     {
         READ = 1 << 0,

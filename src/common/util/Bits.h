@@ -18,7 +18,7 @@ namespace Bits
      * Counts the number of leading zeroes in i. If i is 0, the result is
      * undefined.
      */
-    inline int countLeadingZerosInNonZero(uint32_t i)
+    inline int countLeadingZerosInNonZero32(uint32_t i)
     {
 #ifdef __GNUC__  // This branch also typically applies to Clang.
         return __builtin_clz(i);
@@ -42,10 +42,35 @@ namespace Bits
 #endif
     }
 
-    inline int countLeadingZeros(uint32_t i)
+    inline int countLeadingZerosInNonZero64(uint64_t i)
+    {
+#ifdef __GNUC__  // This branch also typically applies to Clang.
+        return __builtin_clzll(i);
+
+#elif defined(_MSC_VER)
+        unsigned long index;  // Note: 'long' in this context is always 32 bits on Windows, even in 64-bit compilations.
+        _BitScanReverse64(&index, i);
+        return 31 - index;
+#else
+        // Fallback version for other compilers, not as efficient.
+        int count = 0;
+        for (int pos = 63; pos >= 0; pos--)
+        {
+            if ((i & (1 << pos)) != 0)
+            {
+                break;
+            }
+            count++;
+        }
+        return count;
+#endif
+    }
+
+
+    inline int countLeadingZeros32(uint32_t i)
     {
         if (i == 0) return 32;
-        return countLeadingZerosInNonZero(i);
+        return countLeadingZerosInNonZero32(i);
     }
 
     inline int countTrailingZerosInNonZero(uint64_t n) 
@@ -66,6 +91,7 @@ namespace Bits
         return count;
 #endif
     }
+
 
 #ifdef __GNUC__
 

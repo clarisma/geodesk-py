@@ -22,7 +22,7 @@ void StringTable::create(const uint8_t* pStrings)
 
 	// Round up string count to next-highest power-of-2, then double it
 	// to get a decent hashtable size
-	leadingZeroes = Bits::countLeadingZerosInNonZero(stringCount_);
+	leadingZeroes = Bits::countLeadingZerosInNonZero32(stringCount_);
 	uint32_t bucketCount = 1U << (32 - leadingZeroes);
 	lookupMask_ = bucketCount - 1;
 
