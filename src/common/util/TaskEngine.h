@@ -11,6 +11,12 @@
 #include <common/util/log.h>
 
 
+class Task
+{
+public:
+
+};
+
 template <typename C, typename T>
 class TaskEngine
 {

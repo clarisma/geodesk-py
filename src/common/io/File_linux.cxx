@@ -107,3 +107,14 @@ void File::seek(uint64_t posAbsolute)
         IOException::checkAndThrow();
     }
 }
+
+
+size_t File::read(void* buf, size_t length)
+{
+    ssize_t bytesRead = ::read(fileHandle_, buf, length);
+    if (bytesRead < 0)
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesRead;
+}

@@ -31,7 +31,7 @@ Polygonizer::RingBuilder::RingBuilder(int segmentCount, Segment* firstSegment, A
 {
     segments_ = arena.allocArray<Segment*>(segmentCount);
     // tableSize_ = (((uint32_t)0xffff'ffff) >> Bits::numberOfLeadingZeros(segmentCount - 1)) + 1;
-    tableSize_ = (((uint32_t)0xffff'ffff) >> Bits::countLeadingZeros(
+    tableSize_ = (((uint32_t)0xffff'ffff) >> Bits::countLeadingZeros32(
         (segmentCount - 1) | 1)) + 1;
     assert(tableSize_ > 0);
 

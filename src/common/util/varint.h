@@ -3,10 +3,9 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <string_view>
-
-
 
 inline uint32_t readVarint32(const uint8_t*& p)
 {

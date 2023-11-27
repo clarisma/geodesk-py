@@ -89,6 +89,11 @@ set(LIBRARIES
 	geos
 )
 
+# Conditionally add Ws2_32 for Windows builds (required for ntohl in OsmPbfReader)
+if(WIN32)
+    list(APPEND LIBRARIES Ws2_32)
+endif()
+
 if(NOT BUILD_WHEELS)
 	# Create test harness
 	add_executable (geodesk-py "src/main.cpp" ${SOURCE_FILES})
