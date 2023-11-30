@@ -65,24 +65,6 @@ PyFeatures* filters::min_area(PyFeatures* self, PyObject* args, PyObject* kwargs
 	return NULL;
 }
 
-PyFeatures* filters::members_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	// TODO: check for PyAnonymousNode, return empty
-
-	PyFeature* feature = (PyFeature*)Python::checkSingleArg(
-		args, kwargs, &PyFeature::TYPE);
-	if (!feature) return NULL;
-
-	if (self->selectionType == &PyFeatures::World::SUBTYPE)
-	{
-		return PyFeatures::createRelated(self, &PyFeatures::Members::SUBTYPE,
-			feature->feature, FeatureTypes::ALL & FeatureTypes::RELATION_MEMBERS);
-	}
-	PyErr_SetString(PyExc_NotImplementedError,
-		"members_of is not implemented for this type of feature set");
-	return NULL;
-}
-
 
 PyFeatures* filters::min_length(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
