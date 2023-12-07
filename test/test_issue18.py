@@ -1,11 +1,4 @@
-
 def notest_18(features):
-    nodes = features("n")
-    areas = features("a")
-
-    for area in areas.members_of(nodes[0]):
-        print(area)
-   
     assert areas.members_of(nodes[0]).count == 0
     
     for area in areas.nodes_of(nodes[0]):
@@ -22,4 +15,5 @@ def test_19x(features):
             for n in area.nodes:
                 if n.id != 0:
                     print(f"- {n}")
+
 
