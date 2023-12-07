@@ -24,6 +24,7 @@ struct SelectionType
     PyObject* (*iter)(PyFeatures*);
     PyObject* (*count)(PyFeatures*);      
     int (*isEmpty)(PyFeatures*);    
+    int (*containsFeature)(PyFeatures*, PyObject*);
     PyObject* (*getTiles)(PyFeatures*);
 };
 
@@ -131,7 +132,7 @@ public:
 
     // Sequence Methods
 
-    static int contains(PyFeatures* self, PyObject* other);
+    static int contains(PyFeatures* self, PyObject* object);
 
     // Number method
 
@@ -165,11 +166,11 @@ public:
     static PyObject* load(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* update(PyFeatures* self, PyObject* args, PyObject* kwargs);
 
-    uint64_t getCount();
     int forEach(FeatureFunction func);
     PyObject* getFirst(bool mustHaveOne, bool mayHaveMore);
     PyObject* getList(Py_ssize_t maxLen);
     static int isTrue(PyFeatures* self);
+    static int containsFeature(PyFeatures* self, PyObject* object);
     static PyObject* getTiles(PyFeatures*);
 
     /**
@@ -203,6 +204,7 @@ public:
     static SelectionType SUBTYPE;
     static PyObject* iterFeatures(PyFeatures*);
     static PyObject* countFeatures(PyFeatures*);
+    static int containsFeature(PyFeatures* self, PyObject* feature);
     static PyObject* getTiles(PyFeatures*);
 };
 

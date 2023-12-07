@@ -72,9 +72,12 @@ SelectionType PyFeatures::Members::SUBTYPE =
     iterFeatures,
     countFeatures,
     isEmpty,
+    containsFeature,
     getTiles
 };
 
+
+// TODO: containsFeature should check for member flag to rule out given feature
 
 PyObject* PyMemberIterator::create(PyFeatures* features)
 {
