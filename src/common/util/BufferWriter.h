@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Buffer.h"
+#include "varint.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -84,6 +85,28 @@ public:
 			len -= remainingCapacity;
 		}
 	}
+
+	void writeBytes(const uint8_t* b, size_t len)
+	{
+		writeBytes(reinterpret_cast<const char*>(b), len);
+	}
+
+	void writeVarint(uint64_t v)
+	{
+		uint8_t buf[10];
+		uint8_t* p = buf;
+		::writeVarint(p, v);
+		writeBytes(buf, p - buf);
+	}
+
+	void writeSignedVarint(int64_t v)
+	{
+		uint8_t buf[10];
+		uint8_t* p = buf;
+		::writeSignedVarint(p, v);
+		writeBytes(buf, p - buf);
+	}
+
 
 	template <size_t N>
 	void writeConstString(const char(&s)[N])

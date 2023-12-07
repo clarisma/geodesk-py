@@ -3,10 +3,9 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <string_view>
-
-
 
 inline uint32_t readVarint32(const uint8_t*& p)
 {
@@ -55,4 +54,31 @@ inline int countVarints(const void* pStart, const void* pEnd)
 		if (*p++ >= 0) count++;
 	}
 	return count;
+}
+
+inline void skipVarints(const uint8_t*& p, int count)
+{
+	do
+	{
+		uint8_t b = *p++;
+		count -= (b >> 7) ^ 1;
+	}
+	while (count);
+}
+
+
+inline void writeVarint(uint8_t*& p, uint64_t val)
+{
+	while (val >= 0x80)
+	{
+		*p++ = (val & 0x7f) | 0x80;
+		val >>= 7;
+	}
+	*p++ = val;
+}
+
+
+inline void writeSignedVarint(uint8_t*& p, int64_t val)
+{
+	writeVarint(p, (val << 1) ^ (val >> 63));
 }

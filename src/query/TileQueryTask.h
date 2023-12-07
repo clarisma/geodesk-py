@@ -22,7 +22,7 @@ public:
     {
     }
 
-    TileQueryTask() {} // TODO: Never use this, exists only to satisfy compiler
+    TileQueryTask() {} // TODO: Never used, exists only to satisfy compiler
 
 
     void operator()();

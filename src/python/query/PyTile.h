@@ -24,7 +24,7 @@ public:
 	//static PyObject* iter(PyTile* self);
 	//static PyObject* next(PyTile* self);
 	static PyObject* repr(PyTile* self);
-	//static PyObject* richcompare(PyTile* self, PyObject* other, int op);
+	static PyObject* richcompare(PyTile* self, PyObject* other, int op);
 	static PyObject* str(PyTile* self);
 
 	static PyObject* bounds(PyTile* self);

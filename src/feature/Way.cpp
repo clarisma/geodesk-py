@@ -83,7 +83,7 @@ NodeRef FeatureNodeIterator::next()
     {
         p_ -= 4;
         pointer pCurrent = p_;
-        currentNode_ = p_.getInt(); // TODO: unaligned
+        currentNode_ = p_.getUnalignedInt();
         NodeRef feature(nullptr);
         if (currentNode_ & MemberFlags::FOREIGN)
         {
@@ -108,6 +108,8 @@ NodeRef FeatureNodeIterator::next()
         {
             feature = NodeRef(pCurrent + (
                 static_cast<int32_t>(currentNode_ & 0xffff'fffc) >> 1));
+            // TODO: This may be wrong, pCurrent must be 4-byte aligned
+            // In Java: pNode = (pCurrent & 0xffff_fffe) + ((node >> 2) << 1);
         }
 
         if(matcher_->mainMatcher().accept(feature.ptr()))

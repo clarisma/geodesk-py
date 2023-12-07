@@ -18,3 +18,11 @@ const char* FeatureRef::typeName() const
 }
 
 
+std::string FeatureRef::toString() const
+{
+	char buf[50];
+	sprintf(buf, "%s/%llu", typeName(), id());
+	return std::string(buf);
+}
+
+

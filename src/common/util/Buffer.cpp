@@ -76,6 +76,13 @@ void DynamicBuffer::flush(char* p)
     p_ = p;
 }
 
+char* DynamicBuffer::take()
+{
+    char* buf = buf_;
+    p_ = buf_ = end_ = nullptr;
+    return buf;
+}
+
 
 /*
 

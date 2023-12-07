@@ -122,3 +122,14 @@ void File::seek(uint64_t posAbsolute)
         IOException::checkAndThrow();
     }
 }
+
+
+size_t File::read(void* buf, size_t length)
+{
+    DWORD bytesRead;
+    if (!ReadFile(fileHandle_, buf, length, &bytesRead, NULL))
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesRead;
+}

@@ -199,7 +199,9 @@ public:
 
 	Coordinate center() const
 	{
-		return Coordinate((minX() + maxX()) / 2, (minY() + maxY()) / 2);
+		return Coordinate(
+			static_cast<int32_t>((static_cast<int64_t>(minX()) + maxX()) / 2),
+			static_cast<int32_t>((static_cast<int64_t>(minY()) + maxY()) / 2));
 	}
 
 	int minX() const { return m_minX; } 

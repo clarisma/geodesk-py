@@ -1,6 +1,8 @@
 // Copyright (c) 2023 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#pragma once
+
 #include <vector>
 #include <thread>
 #include <condition_variable>
@@ -74,6 +76,20 @@ public:
         // count_ will only decrease, so this should be safe without locking
         // But no noticeable performance difference, so we'll leave the lock for now
         return queueSize_ - count_;
+    }
+
+    void awaitCompletion()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        while (count_ != 0) 
+        {  // Continue to wait as long as there are tasks in the queue
+            notFull_.wait(lock);  // Wait for a signal that a task has been completed
+        }
+        // When the loop exits, all tasks have been completed
+
+        // TODO: This does not work, because condition is signaled 
+        //  when the thread takes the task from the queue, not when it completes it
+        // We need a counter that indicates the number of threads still running
     }
 
     void shutdown()

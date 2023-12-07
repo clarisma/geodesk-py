@@ -86,6 +86,12 @@ public:
 		return Box(minX, minY, (int)(minX + extent - 1), (int)(minY + extent - 1));
 	}
 
+	std::string toString() const
+	{
+		char buf[80];
+		sprintf(buf, "%d/%d/%d", zoom(), column(), row());
+		return std::string(buf);
+	}
 
 private:
 	inline Tile(int col, int row, ZoomLevel zoom)

@@ -6,6 +6,9 @@
 #include "FeatureStore.h"
 #include "filter/Filter.h"
 
+#ifdef GEODESK_TEST_PERFORMANCE
+extern volatile uint32_t performance_blackhole;
+#endif 
 
 MemberIterator::MemberIterator(FeatureStore* store, pointer pMembers,
     FeatureTypes types, const MatcherHolder* matcher, const Filter* filter) : 
@@ -106,6 +109,25 @@ FeatureRef MemberIterator::next()
                 }
                 feature = FeatureRef(pForeignTile_ + 
                     ((currentMember_ & 0xffff'fff0) >> 2));
+
+#ifdef GEODESK_TEST_PERFORMANCE
+                // Simulate the extra lookup needed to retrieve a foreign
+                // feature via an export table, rather than directly    
+                uint32_t tileSize = pForeignTile_.getUnsignedInt() & 0x3fff'ffff;
+                uint64_t id = feature.id();
+                uint32_t simulatedSlotNumber = id % 16'000;
+                pointer pSimulatedExportSlot = pForeignTile_ + 4 * 4096 + simulatedSlotNumber * 4;
+                if (pSimulatedExportSlot.asBytePointer() > pForeignTile_ + tileSize)
+                {
+                    pSimulatedExportSlot = pForeignTile_ + tileSize - 4;
+                }
+                /*
+                pointer pSimulatedExportSlot = pForeignTile_ +
+                    (feature.ptr() - pForeignTile_) / 8;
+                */
+                uint32_t simulatedSlotPtr = pSimulatedExportSlot.getUnsignedInt();
+                performance_blackhole += tileSize + simulatedSlotPtr;
+#endif
             }
             else
             {
@@ -141,5 +163,8 @@ FeatureRef MemberIterator::next()
             }
         }
 	}
+#ifdef GEODESK_TEST_PERFORMANCE
+    printf((performance_blackhole & 1) ? "odd\n" : "even\n");
+#endif
     return FeatureRef(nullptr);
 }

@@ -3,7 +3,7 @@
 
 #include "MappedFile.h"
 #include <stdexcept>
-
+#include <memoryapi.h>
 
 
 void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
@@ -34,6 +34,14 @@ void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
 void MappedFile::unmap(void* mappedAddress, uint64_t /* length */)
 {
     UnmapViewOfFile(mappedAddress);
+}
+
+void MappedFile::prefetch(const void* address, uint64_t length)
+{
+    WIN32_MEMORY_RANGE_ENTRY entry;
+    entry.VirtualAddress = const_cast<void*>(address);
+    entry.NumberOfBytes = length;
+    PrefetchVirtualMemory(GetCurrentProcess(), 1, &entry, 0);
 }
 
 void MappedFile::close()
