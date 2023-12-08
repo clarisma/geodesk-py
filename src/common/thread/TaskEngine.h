@@ -19,6 +19,12 @@ public:
         }
     }
 
+    ~TaskEngine()
+    {
+        end();
+    }
+
+
     void end()
     {
         workQueue_.awaitCompletion();
@@ -32,6 +38,12 @@ public:
                 th.join();
             }
         }
+    }
+
+protected:
+    void postWork(const WorkTask& task)
+    {
+        workQueue_.post(task);
     }
 
 private:
