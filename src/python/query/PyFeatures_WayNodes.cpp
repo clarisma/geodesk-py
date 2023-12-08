@@ -51,8 +51,11 @@ SelectionType PyFeatures::WayNodes::SUBTYPE =
     iterFeatures,
     countFeatures,
     isEmpty,
+    containsFeature,
     getTiles
 };
+
+// TODO: containsFeature should check for type ndoe and way-node flag to rule out given feature
 
 PyObject* PyWayNodeIterator::create(PyFeatures* features)
 {

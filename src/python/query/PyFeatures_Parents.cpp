@@ -46,6 +46,7 @@ SelectionType PyFeatures::Parents::SUBTYPE =
     iterFeatures,
     countFeatures,
     isEmpty,
+    containsFeature,
     getTiles
 };
 

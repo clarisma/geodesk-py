@@ -40,6 +40,7 @@ public:
 	// TODO: should just get pointer
 	Box bounds() const
 	{
+		assert(!isNode());
 		return Box(ptr_.getInt(-16), ptr_.getInt(-12), ptr_.getInt(-8), ptr_.getInt(-4));
 	}
 
@@ -51,6 +52,14 @@ public:
 	bool isRelation() const	{ return typeCode() == FeatureType::RELATION; }
 	bool isRelationMember() const { return flags() & FeatureFlags::RELATION_MEMBER; }
 	bool isType(FeatureTypes types) { return types.acceptFlags(flags()); }
+	bool intersects(const Box& bounds)
+	{
+		assert(!isNode());
+		return (!(ptr_.getInt() > bounds.maxX() ||
+			ptr_.getInt(4) > bounds.maxY() ||
+			ptr_.getInt(8) < bounds.minX() ||
+			ptr_.getInt(12) < bounds.minY()));
+	}
 
 	TagsRef tags() const
 	{

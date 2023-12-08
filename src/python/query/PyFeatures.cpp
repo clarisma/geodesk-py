@@ -414,10 +414,9 @@ PyObject* PyFeatures::getattr(PyFeatures* self, PyObject* nameObj)
     */
 }
 
-int PyFeatures::contains(PyFeatures* self, PyObject* other)
+int PyFeatures::contains(PyFeatures* self, PyObject* feature)
 {
-    // TODO
-    return 0;
+    return self->selectionType->containsFeature(self, feature);
 }
 
 PyObject* PyFeatures::subscript(PyFeatures* self, PyObject* key)
@@ -706,6 +705,7 @@ SelectionType PyFeatures::World::SUBTYPE =
     iterFeatures,
     countFeatures,
     isEmpty,
+    containsFeature,
     getTiles
 };
 
@@ -724,6 +724,59 @@ PyObject* PyFeatures::Empty::countFeatures(PyFeatures*)
 int PyFeatures::Empty::isEmpty(PyFeatures*)
 {
     return 1;
+}
+
+/**
+ * Simple (but inefficent) default implementation that checks the given
+ * feature against all features in the set.
+ */
+int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
+{
+    PyObject* iter = self->selectionType->iter(self);
+    if (iter == NULL) return -1;
+    
+    PyObject* candidate;
+    while ((candidate = PyIter_Next(iter)) != NULL)
+    {
+        int isEqual = PyObject_RichCompareBool(candidate, feature, Py_EQ);
+        if (isEqual != 0)  return isEqual;
+            // Either 1 (TRUE) or -1 (ERROR)
+    }
+    Py_DECREF(iter);
+    return 0;
+}
+
+/**
+ * For world queries, we use a much more efficient apporach: We check if the 
+ * feature comes from the same GOL and matches the query criteria.
+ */
+int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
+{
+    // Accept only "real" Feature; AnonymousNode is never returned by a world query
+    if (object->ob_type != &PyFeature::TYPE) return 0;
+    PyFeature* featureObj = (PyFeature*)object;
+
+    // Check if feature originates from the same GOL
+    if (featureObj->store != self->store) return 0;
+    FeatureRef feature = featureObj->feature;
+
+    // Check if the type is accepted
+    if(!self->acceptedTypes.acceptFlags(feature.flags())) return 0;
+
+    // Check if feature lies within the query's bbox
+    if (feature.isNode())
+    {
+        if (!NodeRef(feature).intersects(self->bounds)) return 0;
+    }
+    else
+    {
+        if (!feature.intersects(self->bounds)) return 0;
+    }
+
+    // Apply matcher (always present) and filter (optional)
+    if (!self->matcher->mainMatcher().accept(feature.ptr())) return 0;
+    if (self->filter == NULL) return 1;
+    return self->filter->accept(self->store, feature, FastFilterHint());
 }
 
 // TODO: This is broken !!!!!
@@ -752,6 +805,7 @@ SelectionType PyFeatures::Empty::SUBTYPE =
     iterFeatures,
     countFeatures,
     isEmpty,
+    containsFeature,
     getTiles
 };
 

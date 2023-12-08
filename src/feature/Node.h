@@ -19,4 +19,8 @@ public:
 		return Box(x(), y(), x(), y());
 	}
 	bool isPlaceholder() const { return ptr_.getUnalignedLong(-8) == 0; }
+	bool intersects(const Box& bounds) const
+	{
+		return bounds.contains(ptr_.getInt(-8), ptr_.getInt(-4));
+	}
 };
