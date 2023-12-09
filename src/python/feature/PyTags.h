@@ -19,6 +19,7 @@ public:
 
     static PyObject* create(FeatureStore* store, TagsRef tags);
     static void dealloc(PyTags* self);
+    static Py_ssize_t len(PyTags* self);
     static PyObject* str(PyTags* self);
     static PyObject* iter(PyTags* self);
     static PyObject* subscript(PyTags* self, PyObject* keyObj);

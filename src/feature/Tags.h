@@ -25,6 +25,8 @@ class TagsRef
 {
 public:
 	TagsRef(pointer ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
+
+	uint32_t count() const;
 	TagBits getKeyValue(PyObject* key, const StringTable& strings) const;
 	TagBits getKeyValue(const char* key, int len,
 		const StringTable& strings) const;
