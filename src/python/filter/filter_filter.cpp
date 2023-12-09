@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
+#include <common/util/log.h>
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
 
@@ -21,16 +22,21 @@ public:
 
 	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override
 	{
+		LOG("Pythonfilter needs to acquire the GIL...");
 		// The thread needs to acquire the GIL
 		PyGILState_STATE gstate;
 		gstate = PyGILState_Ensure();
+		LOG("Pythonfilter acquired the GIL");
 
+		// TODO: This is a bit ineffient: We need to create a PyFeature just
+		// to hand it to the predicate function
 		PyFeature* featureObj = PyFeature::create(store, feature, Py_None);
 		PyObject* result = PyObject_CallOneArg(function_, featureObj);
 		bool res;
 		if (result == NULL)
 		{
 			// TODO: pass exception to query
+			Python::logError();
 			PyErr_Clear();
 			res = false;
 		}
@@ -40,10 +46,11 @@ public:
 			// TODO: PyObject_IsTrue can technically fail with -1, but how?
 			Py_DECREF(result);
 		}
-		Py_DECREF(feature);
+		Py_DECREF(featureObj);
 		
 		// Release the GIL
 		PyGILState_Release(gstate);
+		LOG("Pythonfilter released the GIL");
 		return res;
 	}
 private:

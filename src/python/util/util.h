@@ -13,6 +13,7 @@ namespace Python
 	extern PyObject* formatString(PyObject* templateString, PyObject* object);
 	extern std::string_view stringAsStringView(PyObject* str);
 	extern std::string_view objectAsStringView(PyObject* str);
+	extern void logError();
 
 	extern void createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc);
 

@@ -90,9 +90,13 @@ const QueryResults* Query::take()
     std::unique_lock<std::mutex> lock(mutex_);
     while (completedTiles_ == 0)
     {
+        LOG("Waiting for query results...");
         Py_BEGIN_ALLOW_THREADS
+        LOG("Main thread released the GIL");
         resultsReady_.wait(lock);
+        LOG("Query results are ready");
         Py_END_ALLOW_THREADS
+        LOG("Main thread re-acquired the GIL");
     }
     QueryResults* res = queuedResults_;
     queuedResults_ = QueryResults::EMPTY;

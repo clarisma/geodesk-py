@@ -3,6 +3,7 @@
 
 #include "util.h"
 #include <stdexcept>
+#include <common/util/log.h>
 #include "PyFastMethod.h"
 
 
@@ -158,4 +159,31 @@ void Python::createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc
         PyDict_SetItemString(type->tp_dict, "__dir__", method);
         Py_DECREF(method);
     }
+}
+
+
+void Python::logError() 
+{
+    PyObject* ptype, *pvalue, *ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+
+    // pvalue contains the error message
+    if (pvalue != NULL) 
+    {
+        PyObject* str_exc_value = PyObject_Str(pvalue);
+        if (str_exc_value != NULL) 
+        {
+            const char* error_msg = PyUnicode_AsUTF8(str_exc_value);
+            if (error_msg != NULL) 
+            {
+                LOG("Error: %s\n", error_msg);
+            }
+            Py_DECREF(str_exc_value);
+        }
+        Py_DECREF(pvalue);
+    }
+
+    // The reference counts for ptype and ptraceback should also be decremented if they are non-null
+    Py_XDECREF(ptype);
+    Py_XDECREF(ptraceback);
 }
