@@ -1,4 +1,4 @@
-static const int ATTR_COUNT = 47;
+static const int ATTR_COUNT = 48;
 static const char* ATTR_NAMES[] =
 {
     "area",
@@ -34,6 +34,7 @@ static const char* ATTR_NAMES[] =
     "crosses",
     "descendants_of",
     "disjoint",
+    "filter",
     "intersects",
     "max_area",
     "max_length",

@@ -27,6 +27,7 @@ namespace filters
 	extern PyFeatures* nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* overlaps(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* parents_of(PyFeatures* self, PyObject* args, PyObject* kwargs);
+	extern PyFeatures* pythonFilter(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* touches(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* with_role(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* within(PyFeatures* self, PyObject* args, PyObject* kwargs);

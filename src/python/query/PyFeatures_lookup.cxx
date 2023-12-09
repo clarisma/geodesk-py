@@ -41,12 +41,12 @@
 #line 10 "PyFeatures_attr.txt"
 struct PyFeaturesAttribute { const char *name; Python::AttrRef attr; };
 
-#define TOTAL_KEYWORDS 47
+#define TOTAL_KEYWORDS 48
 #define MIN_WORD_LENGTH 3
 #define MAX_WORD_LENGTH 15
 #define MIN_HASH_VALUE 4
-#define MAX_HASH_VALUE 70
-/* maximum key range = 67, duplicates = 0 */
+#define MAX_HASH_VALUE 81
+/* maximum key range = 78, duplicates = 0 */
 
 class PyFeatures_AttrHash
 {
@@ -61,32 +61,32 @@ PyFeatures_AttrHash::hash (const char *str, size_t len)
 {
   static unsigned char asso_values[] =
     {
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 30, 71,  0, 60, 20,
-       0,  5, 30,  5, 15, 15, 40, 71, 55,  0,
-       0,  0, 50, 71,  5, 15, 20, 25, 10, 71,
-       5,  5, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71, 71, 71, 71, 71,
-      71, 71, 71, 71, 71, 71
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 30, 82,  0, 60, 20,
+       0,  5, 30,  5, 15, 15, 40, 82, 55,  0,
+       0,  0, 50, 82,  5, 15, 20, 25, 10, 82,
+       5,  5, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82, 82, 82, 82, 82,
+      82, 82, 82, 82, 82, 82
     };
   unsigned int hval = len;
 
@@ -124,20 +124,20 @@ PyFeatures_AttrHash::lookup (const char *str, size_t len)
       {"length", ATTR_PROPERTY(PyFeatures::length)},
 #line 39 "PyFeatures_attr.txt"
       {"connected_to",      ATTR_METHOD(filters::connected_to)},
-#line 53 "PyFeatures_attr.txt"
+#line 54 "PyFeatures_attr.txt"
       {"nodes_of",          ATTR_METHOD(filters::nodes_of)},
 #line 31 "PyFeatures_attr.txt"
       {"timestamp", ATTR_PROPERTY(PyFeatures::timestamp)},
-#line 52 "PyFeatures_attr.txt"
+#line 53 "PyFeatures_attr.txt"
       {"nearest_to",        ATTR_METHOD(filters::nearest_to)},
       {""},
 #line 18 "PyFeatures_attr.txt"
       {"indexed_keys", ATTR_PROPERTY(PyFeatures::indexed_keys)},
-#line 54 "PyFeatures_attr.txt"
+#line 55 "PyFeatures_attr.txt"
       {"overlaps",          ATTR_METHOD(filters::overlaps)},
 #line 17 "PyFeatures_attr.txt"
       {"guid", ATTR_PROPERTY(PyFeatures::guid)},
-#line 55 "PyFeatures_attr.txt"
+#line 56 "PyFeatures_attr.txt"
       {"parents_of",        ATTR_METHOD(filters::parents_of)},
       {""},
 #line 42 "PyFeatures_attr.txt"
@@ -164,25 +164,25 @@ PyFeatures_AttrHash::lookup (const char *str, size_t len)
 #line 27 "PyFeatures_attr.txt"
       {"revision", ATTR_PROPERTY(PyFeatures::revision)},
       {""},
-#line 45 "PyFeatures_attr.txt"
+#line 46 "PyFeatures_attr.txt"
       {"intersects",        ATTR_METHOD(filters::intersects)},
       {""},
 #line 37 "PyFeatures_attr.txt"
       {"ancestors_of",      ATTR_METHOD(filters::ancestors_of)},
-#line 49 "PyFeatures_attr.txt"
+#line 50 "PyFeatures_attr.txt"
       {"min_area",          ATTR_METHOD(filters::min_area)},
 #line 20 "PyFeatures_attr.txt"
       {"list", ATTR_PROPERTY(PyFeatures::list)},
-#line 51 "PyFeatures_attr.txt"
+#line 52 "PyFeatures_attr.txt"
       {"min_length",        ATTR_METHOD(filters::min_length)},
-#line 58 "PyFeatures_attr.txt"
+#line 59 "PyFeatures_attr.txt"
       {"within",            ATTR_METHOD(filters::within)},
       {""},
-#line 46 "PyFeatures_attr.txt"
-      {"max_area",          ATTR_METHOD(filters::max_area)},
-#line 57 "PyFeatures_attr.txt"
-      {"with_role",         ATTR_METHOD(filters::with_role)},
 #line 47 "PyFeatures_attr.txt"
+      {"max_area",          ATTR_METHOD(filters::max_area)},
+#line 58 "PyFeatures_attr.txt"
+      {"with_role",         ATTR_METHOD(filters::with_role)},
+#line 48 "PyFeatures_attr.txt"
       {"max_length",        ATTR_METHOD(filters::max_length)},
       {""},
 #line 15 "PyFeatures_attr.txt"
@@ -191,10 +191,10 @@ PyFeatures_AttrHash::lookup (const char *str, size_t len)
       {"geojsonl", ATTR_PROPERTY(PyFormatter::geojsonl)},
 #line 43 "PyFeatures_attr.txt"
       {"descendants_of",    ATTR_METHOD(filters::descendants_of)},
-#line 48 "PyFeatures_attr.txt"
+#line 49 "PyFeatures_attr.txt"
       {"max_meters_from",   ATTR_METHOD(filters::max_meters_from)},
       {""},
-#line 56 "PyFeatures_attr.txt"
+#line 57 "PyFeatures_attr.txt"
       {"touches",           ATTR_METHOD(filters::touches)},
 #line 21 "PyFeatures_attr.txt"
       {"map", ATTR_PROPERTY(PyFeatures::map)},
@@ -215,8 +215,12 @@ PyFeatures_AttrHash::lookup (const char *str, size_t len)
 #line 30 "PyFeatures_attr.txt"
       {"tiles", ATTR_PROPERTY(PyFeatures::tiles)},
       {""}, {""}, {""}, {""},
-#line 50 "PyFeatures_attr.txt"
-      {"members_of",        ATTR_METHOD(filters::members_of)}
+#line 51 "PyFeatures_attr.txt"
+      {"members_of",        ATTR_METHOD(filters::members_of)},
+      {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
+      {""},
+#line 45 "PyFeatures_attr.txt"
+      {"filter",            ATTR_METHOD(filters::pythonFilter)}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
