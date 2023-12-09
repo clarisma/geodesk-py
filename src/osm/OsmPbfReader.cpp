@@ -1,3 +1,6 @@
+// Copyright (c) 2023 Clarisma / GeoDesk contributors
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #include "OsmPbfReader.h"
 #include <fstream>
 #include <iostream>
@@ -63,7 +66,7 @@ enum OsmPbf
     RELATION_MEMBER_TYPES = (10 << 3) | 2
 };
 
-
+template <typename Derived, typename WorkContext, typename OutputTask>
 void OsmPbfReader::read(const char* fileName)
 {
 	std::ifstream file(fileName, std::ios::binary);
@@ -134,12 +137,14 @@ void OsmPbfReader::read(const char* fileName)
 }
 
 
+template <typename Derived, typename WorkContext, typename OutputTask>
 void OsmPbfReader::decodeHeaderBlock(const OsmPbfBlock& block)
 {
     UncompressedBlock uncompressed = uncompressBlock(block);
     // TODO
 }
 
+template <typename Derived, typename WorkContext, typename OutputTask>
 UncompressedBlock OsmPbfReader::uncompressBlock(const OsmPbfBlock& block)
 {
     const uint8_t* pRaw = nullptr;
@@ -208,7 +213,7 @@ UncompressedBlock OsmPbfReader::uncompressBlock(const OsmPbfBlock& block)
 }
 
 
-void WorkContext::processTask(OsmPbfBlock& block)
+void OsmPbfContext::processTask(OsmPbfBlock& block)
 {
     UncompressedBlock uncompressed = OsmPbfReader::uncompressBlock(block);
     const uint8_t* p = uncompressed.data;
@@ -262,7 +267,7 @@ void WorkContext::processTask(OsmPbfBlock& block)
 }
 
 
-void WorkContext::readStringTable(protobuf::Message strings)
+void OsmPbfContext::readStringTable(protobuf::Message strings)
 {
     // assert(_CrtCheckMemory());
     const uint8_t* p = strings.p;
@@ -273,12 +278,14 @@ void WorkContext::readStringTable(protobuf::Message strings)
         {
             throw OsmPbfException("Bad string table. Unexpected field:  %d", marker);
         }
-        strings_.push_back(readStringView(p));
+        const uint8_t* pString = p;
+        p += readVarint32(p);
+        strings_.push_back(pString);
     }
     assert(p == strings.pEnd);
 }
 
-void WorkContext::decodePrimitiveGroup(protobuf::Message group)
+void OsmPbfContext::decodePrimitiveGroup(protobuf::Message group)
 {
     const uint8_t* p = group.p;
     while (p < group.pEnd)
@@ -313,7 +320,7 @@ void WorkContext::decodePrimitiveGroup(protobuf::Message group)
 }
 
 
-void WorkContext::decodeDenseNodes(protobuf::Message data)
+void OsmPbfContext::decodeDenseNodes(protobuf::Message data)
 {
     const uint8_t* p = data.p;
     protobuf::Message ids;
@@ -372,12 +379,9 @@ void WorkContext::decodeDenseNodes(protobuf::Message data)
             lon += readSignedVarint64(lons.p);
             int64_t latInNanoDeg = (latOffset_ + (granularity_ * lat));
             int64_t lonInNanoDeg = (lonOffset_ + (granularity_ * lon));
-            /*
-            TODO
-            node(id, static_cast<int32_t>(lonInNanoDeg / 100),
+
+            this->node(id, static_cast<int32_t>(lonInNanoDeg / 100),
                 static_cast<int32_t>(latInNanoDeg / 100), tags);
-                */
-            // TODO: tags.advanceGroup();
         }
         assert(lats.isEmpty());
         assert(lons.isEmpty());
@@ -386,7 +390,7 @@ void WorkContext::decodeDenseNodes(protobuf::Message data)
 
 }
 
-void WorkContext::decodeWay(protobuf::Message data)
+void OsmPbfContext::decodeWay(protobuf::Message data)
 {
     int64_t id = 0;
     protobuf::Message keys;
@@ -427,7 +431,7 @@ void WorkContext::decodeWay(protobuf::Message data)
     */
 }
 
-void WorkContext::decodeRelation(protobuf::Message data)
+void OsmPbfContext::decodeRelation(protobuf::Message data)
 {
     int64_t id = 0;
     protobuf::Message keys;

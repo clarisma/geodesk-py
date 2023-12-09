@@ -18,6 +18,7 @@ namespace protobuf
 	struct Message
 	{
 		Message() : p(nullptr), pEnd(nullptr) {}
+		Message(const uint8_t* start, uint8_t* end) : p(start), pEnd(end) {}
 
 		bool isEmpty() const { return p == pEnd; }
 

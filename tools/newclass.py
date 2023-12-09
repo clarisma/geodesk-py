@@ -35,6 +35,9 @@ def write_py_impl(f, method):
 
 # Create the files
 with open(f"{classname}.h", 'x') as f:       # "x" means don't overwrite existing
+    f.write('// Copyright (c) 2023 Clarisma / GeoDesk contributors\n')
+    f.write('// SPDX-License-Identifier: LGPL-3.0-only\n\n')
+
     f.write('#pragma once\n')
     if is_py:
         f.write('#include <Python.h>\n')

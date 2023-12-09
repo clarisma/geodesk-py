@@ -1,9 +1,13 @@
+// Copyright (c) 2023 Clarisma / GeoDesk contributors
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #pragma once
 #include <string_view>
 #include <common/thread/TaskEngine.h>
 #include <common/util/protobuf.h>
 #include <cstdarg> // For va_list, va_start, va_end
 
+template <typename Derived, typename WorkContext, typename OutputTask>
 class OsmPbfReader;
 
 class OsmPbfBlock
@@ -42,15 +46,22 @@ public:
 	const uint8_t* toDelete;
 };
 
-class WorkContext
+template <typename Reader>
+class OsmPbfContext
 {
 public:
-	WorkContext(void* reader) :
-		reader_(reinterpret_cast<OsmPbfReader*>(reader))
+	OsmPbfContext(void* reader) :
+		reader_(reinterpret_cast<Reader*>(reader))
 	{}
 
 	void processTask(OsmPbfBlock& task);
 	void* engine() const { return reader_;};
+
+protected:
+	const uint8_t* string(uint32_t index) const
+	{
+		return strings_[index];		// TODO: bounds check
+	}
 
 private:
 	void readStringTable(protobuf::Message strings);
@@ -59,9 +70,8 @@ private:
 	void decodeWay(protobuf::Message data);
 	void decodeRelation(protobuf::Message data);
 
-protected:
-	OsmPbfReader* reader_;
-	std::vector<std::string_view> strings_;
+	Reader* reader_;
+	std::vector<const uint8_t*> strings_;
 	std::vector<protobuf::Message> groups_;
 	int64_t latOffset_;
 	int64_t lonOffset_;
@@ -94,8 +104,8 @@ class OsmPbfOutputTask
 {
 };
 
-
-class OsmPbfReader : public TaskEngine<OsmPbfReader, WorkContext, OsmPbfBlock, OsmPbfOutputTask>
+template <typename Derived, typename WorkContext, typename OutputTask>
+class OsmPbfReader : public TaskEngine<Derived, WorkContext, OsmPbfBlock, OutputTask>
 {
 public:
 	OsmPbfReader(int numberOfThreads) :
@@ -117,5 +127,5 @@ private:
 	static UncompressedBlock uncompressBlock(const OsmPbfBlock& block);
 	void decodeHeaderBlock(const OsmPbfBlock& block);
 
-	friend class WorkContext;
+	friend class OsmPbfContext;
 };

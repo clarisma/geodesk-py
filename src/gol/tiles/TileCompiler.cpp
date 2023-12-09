@@ -5,7 +5,7 @@
 #include "TTile.h"
 #include "TIndex.h"
 #include "TesWriter.h"
-#include "osm/OsmPbfReader.h"
+#include "gol/build/Analyzer.h"
 
 #include <thread>
 #include <chrono>
@@ -29,7 +29,7 @@ void TileCompiler::compile()
 #else
 	int threads = std::thread::hardware_concurrency();
 #endif
-	OsmPbfReader reader(threads);
+	Analyzer reader(threads);
 	// reader.read("e:\\geodesk\\mapdata\\de-2021-01-29.osm.pbf");
 	reader.read("e:\\geodesk\\mapdata\\planet-2023-10-07.osm.pbf");
 	return;
