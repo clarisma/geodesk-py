@@ -154,3 +154,34 @@ PyObject* TagsRef::valueAsNumber(TagBits value, StringTable& strings) const
 	double v = globalString(value, strings).toDouble();
 	return PyFloat_FromDouble(v);
 }
+
+
+uint32_t TagsRef::count() const
+{
+	int count = 0;
+	uint32_t tag;
+	pointer pTable = pointer::ofTagged(taggedPtr_, ~1);
+	if (pTable.getUnalignedUnsignedInt() != EMPTY_TABLE_MARKER)
+	{
+		pointer p = pTable;
+		do
+		{
+			count++;
+			tag = p.getUnalignedUnsignedInt();
+			p += 4 + (tag & 2);
+		}
+		while((tag & 0x8000) == 0);
+	}
+	if (hasLocalKeys())
+	{
+		pointer p = pTable - 4;
+		do
+		{
+			count++;
+			tag = p.getUnalignedUnsignedInt();
+			p -= 6 + (tag & 2);
+		}
+		while ((tag & 4) == 0);
+	}
+	return count;
+}

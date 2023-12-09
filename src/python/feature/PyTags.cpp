@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyTags.h"
+#include <common/util/log.h>
 #include "feature/FeatureStore.h"
 #include "feature/TagIterator.h"
 #include "format/GeoJsonWriter.h"
@@ -41,6 +42,11 @@ PyObject* PyTags::iter(PyTags* self)
 }
 
 
+Py_ssize_t PyTags::len(PyTags* self)
+{
+    return self->tags.count();
+}
+
 PyObject* PyTags::subscript(PyTags* self, PyObject* keyObj)
 {
     if (!PyUnicode_Check(keyObj))
@@ -53,8 +59,8 @@ PyObject* PyTags::subscript(PyTags* self, PyObject* keyObj)
 
 PyMappingMethods PyTags::MAPPING_METHODS =
 {
-    nullptr,         // mp_length
-    (binaryfunc)PyTags::subscript, // mp_subscript
+    (lenfunc)len,         // mp_length
+    (binaryfunc)subscript, // mp_subscript
     nullptr          // mp_ass_subscript
 };
 
@@ -131,7 +137,7 @@ PyObject* PyTagIterator::nextGlobal(PyTagIterator* self)
     // Based on the last-item flag (Bit 15) and the local-tags flag
     // (Bit 0) of the tag-table pointer, the retrieval method will
     // be `nextGlobal`, `firstLocal` or `done`
-    self->func = NEXT[(tag >> 14) & 2 + self->tags.hasLocalKeys()];
+    self->func = NEXT[((tag >> 14) & 2) + self->tags.hasLocalKeys()];
 
     int keyCode = (tag >> 2) & 0x1fff;
     PyObject* keyObj = self->store->strings().getStringObject(keyCode);
