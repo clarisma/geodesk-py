@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Query.h"
+#include <Python.h>
 #include "TileQueryTask.h"
 
 // #include <boost/asio.hpp>
@@ -89,7 +90,9 @@ const QueryResults* Query::take()
     std::unique_lock<std::mutex> lock(mutex_);
     while (completedTiles_ == 0)
     {
+        Py_BEGIN_ALLOW_THREADS
         resultsReady_.wait(lock);
+        Py_END_ALLOW_THREADS
     }
     QueryResults* res = queuedResults_;
     queuedResults_ = QueryResults::EMPTY;

@@ -119,12 +119,14 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 	return NULL;
 }
 
+/*
 PyFeatures* filters::pythonFilter(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
 		"filter will be available in Version 0.2.0");
 	return NULL;
 }
+*/
 
 PyFeatures* filters::touches(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
