@@ -66,7 +66,7 @@ def notest_map():
     counties = world("a[boundary=administrative][admin_level=6]")
     counties.within(italy).map(tooltip="{name} ({short_name})").show()
 
-def test_map_french_departments():
+def notest_map_french_departments():
     world = Features("c:\\geodesk\\tests\\world.gol")
     france = world("a[boundary=administrative][admin_level=2][name=France]").one
     deps = world("a[boundary=administrative][admin_level=6]").within(france)
@@ -82,3 +82,10 @@ def notest_map_french_departments():
     m.add(yyy, tooltip="way/{id}", color="orange")
     m.add(Box(minlon=0, maxlon=0, minlat=-85,maxlat=85), color="red")
     m.show()
+
+def test_basemap_performance():
+    m1 = Map(basemap="https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png")
+    m1.show()
+    m2 = Map(basemap="https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+    m2.show()
+    

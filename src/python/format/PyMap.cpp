@@ -83,7 +83,8 @@ const int PyMap::ATTR_FLAGS[] =
 const char* PyMap::ATTR_DEFAULTS[] =
 {
 	"Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors", // ATTRIBUTION
-	"https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png", // BASEMAP
+	// "https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png", // BASEMAP
+	"https://tile.openstreetmap.org/{z}/{x}/{y}.png",  // BASEMAP
 	"", // CLASSNAME
 	"#3388ff", // COLOR
 	"", // DASHARRAY
