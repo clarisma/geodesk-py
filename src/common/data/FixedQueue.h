@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <cstddef>  // For size_t
 #include <cstdint>
 
 template <typename T, size_t SIZE>
