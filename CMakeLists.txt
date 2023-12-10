@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
 # Used for testing, disable in release!
-add_definitions(-DGEODESK_TEST_PERFORMANCE)
+# add_definitions(-DGEODESK_TEST_PERFORMANCE)
 
 # Define _WIN32_WINNT to be at least Windows 8.1
 # (Needed for virtual memory management)
