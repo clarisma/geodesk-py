@@ -187,7 +187,7 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 	pointer pTags = pointer::ofTagged(pTagged, ~1);
 	assertValidCurrentPointer(pTags);
 	int32_t currentLoc = currentLocation(pTags);
-	int hasLocalTags = reinterpret_cast<int>(pTagged.asBytePointer()) & 1;
+	int hasLocalTags = reinterpret_cast<uintptr_t>(pTagged.asBytePointer()) & 1;
 	assert((currentLoc & 1) == 0);
 	TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(currentLoc));
 	if (tags) return tags;
