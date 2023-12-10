@@ -24,6 +24,24 @@ PyCoordinate* PyCoordinate::create(int32_t x, int32_t y)
     return self;
 }
 
+PyObject* PyCoordinate::create(PyObject* args, bool latFirst)
+{
+    Py_ssize_t argCount = PySequence_Length(args);
+    if (argCount != 2)
+    {
+        PyErr_SetString(PyExc_TypeError, latFirst ? "Expected (lat,lon)" : "Expected (lon,lat)");
+        return NULL;
+    }
+    PyObject* arg = PyTuple_GET_ITEM(args, latFirst ? 1 : 0);
+    double lon = lonValue(arg);
+    if (lon == -1.0 && PyErr_Occurred()) return NULL;
+    arg = PyTuple_GET_ITEM(args, latFirst ? 0 : 1);
+    double lat = latValue(arg);
+    if (lat == -1.0 && PyErr_Occurred()) return NULL;
+    
+    return create(Mercator::xFromLon(lon), Mercator::yFromLat(lat));
+}
+
 int PyCoordinate::init(PyCoordinate* self, PyObject* args, PyObject* kwargs)
 {
     Py_ssize_t argCount = PySequence_Length(args);

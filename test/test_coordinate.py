@@ -42,4 +42,17 @@ def test_as_tuple():
     assert x == c.x
     assert y == c.y
 
+def test_lonlat():
+    a = Coordinate(lon=-80, lat=30)
+    b = lonlat(-80, 30)
+    c = latlon(30, -80)
+    assert a == b
+    assert a == c
 
+def test_lonlat_errors():
+    with pytest.raises(ValueError):            
+        bad = lonlat(-130, 999)
+    with pytest.raises(TypeError):            
+        bad = latlon("apple", "banana")
+    with pytest.raises(TypeError):            
+        bad = latlon(12)

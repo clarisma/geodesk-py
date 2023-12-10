@@ -22,6 +22,10 @@
 
 static PyMethodDef GEODESK_METHODS[] = 
 {
+    { "lonlat", (PyCFunction)PyCoordinate::createLonLat, METH_VARARGS,
+      "Creates a Coordinate from (lon, lat)"},
+    { "latlon", (PyCFunction)PyCoordinate::createLatLon, METH_VARARGS,
+      "Creates a Coordinate from (lat, lon)"},
     { "to_mercator", (PyCFunction)PyMercator::to_mercator, METH_VARARGS | METH_KEYWORDS,
      "Converts coordinates or measurements from WGS-84 to Mercator projection"},
     { "from_mercator", (PyCFunction)PyMercator::from_mercator, METH_VARARGS | METH_KEYWORDS,

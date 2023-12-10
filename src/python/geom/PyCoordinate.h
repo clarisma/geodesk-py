@@ -20,7 +20,15 @@ public:
 
     static PyCoordinate* create(int32_t x, int32_t y);
     static PyCoordinate* create(Coordinate c) { return create(c.x, c.y); }
-    // static PyObject* create(PyTypeObject* type, PyObject* args, PyObject* kwargs);
+    static PyObject* create(PyObject* args, bool latFirst);
+    static PyObject* createLonLat(PyObject* /* self */, PyObject* args)
+    {
+        return create(args, false);
+    }
+    static PyObject* createLatLon(PyObject* /* self */, PyObject* args)
+    {
+        return create(args, true);
+    }
     static int init(PyCoordinate* self, PyObject* args, PyObject* kwds);
 
     static PyObject* dir(PyCoordinate* self, PyObject* unused);
