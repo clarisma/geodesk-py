@@ -5,14 +5,12 @@
 #include <common/util/log.h>
 #include <common/util/pointer.h>
 #include <cassert>
+#include <filesystem>
 
 Store::Store() :
     openMode_(0),
-    lockLevel_(LOCK_NONE),
-    mainMapping_(nullptr),
-    mainMappingLength_(0)
+    lockLevel_(LOCK_NONE)
 {
-    memset(extendedMappings_, 0, sizeof(extendedMappings_));
 }
 
 
@@ -28,7 +26,7 @@ Store::LockLevel Store::lock(LockLevel newLevel)
         }
         if (lockLevel_ == LOCK_NONE && newLevel != LOCK_NONE)
         {
-            lockRead_.lock(file_.handle(), 0, 4, newLevel != LOCK_EXCLUSIVE);
+            lockRead_.lock(handle(), 0, 4, newLevel != LOCK_EXCLUSIVE);
         }
         if (oldLevel == LOCK_APPEND)
         {
@@ -36,7 +34,7 @@ Store::LockLevel Store::lock(LockLevel newLevel)
         }
         if (newLevel == LOCK_APPEND)
         {
-            lockWrite_.lock(file_.handle(), 4, 4, false);
+            lockWrite_.lock(handle(), 4, 4, false);
         }
         lockLevel_ = newLevel;
         // LOG("Lock level is now %d", newLevel);
@@ -48,47 +46,29 @@ Store::LockLevel Store::lock(LockLevel newLevel)
 bool Store::tryExclusiveLock()
 {
     assert(lockLevel_ == LOCK_NONE);
-    if (!lockRead_.tryLock(file_.handle(), 0, 4, false)) return false;
+    if (!lockRead_.tryLock(handle(), 0, 4, false)) return false;
     lockLevel_ = LOCK_EXCLUSIVE;
     return true;
 }
 
 void Store::open(const char* filename, int mode)
 {
-    if (file_.isOpen()) throw StoreException("Store is already open");
+    if (isOpen()) throw StoreException("Store is already open");
 
     fileName_ = filename;
 
     // LOG("Opening %s (Mode %d) ...", filename, mode);
 
-    file_.open(filename,
-        File::OpenMode::READ | File::OpenMode::SPARSE |
-        ((mode & OpenMode::WRITE) ? (File::OpenMode::WRITE) : 0) |
-        ((mode & OpenMode::CREATE) ? (File::OpenMode::CREATE | File::OpenMode::WRITE) : 0));
+    ExpandableMappedFile::open(filename, mode & ~OpenMode::EXCLUSIVE);
+        // Don't pass EXCLUSIVE to base because it has no meaning
+
+    // TODO: Ideally, we should lock before mapping (Creating a writable 
+    // mapping can grow the file, if we can't obtain the lock we may get
+    // an exception -- ideally, we should catch the exception and then
+    // shrink back the file)
     lock((mode & OpenMode::EXCLUSIVE) ? LOCK_EXCLUSIVE : LOCK_READ);
 
-    // Always do the following first, even if journal is present
-
-    uint64_t fileSize = file_.size();
-    // LOG("File size = %ld", fileSize);
-    int mappingMode;
-    if (mode & OpenMode::WRITE)
-    {
-        mainMappingLength_ = (fileSize + SEGMENT_LENGTH - 1) / SEGMENT_LENGTH * SEGMENT_LENGTH;
-        file_.setSize(mainMappingLength_);
-            // TODO: only needed on Linux, Windows expands the file automatically
-            // to match the mapping extent
-        mappingMode = MappedFile::MappingMode::READ | MappedFile::MappingMode::WRITE;
-    }
-    else
-    {
-        mainMappingLength_ = fileSize;
-        mappingMode = MappedFile::MappingMode::READ;
-    }
-    // LOG("About to map main mapping (mode = %d) ...", mappingMode);
-    mainMapping_ = file_.map(0, mainMappingLength_, mappingMode);
-    // LOG("Mapped main mapping.", mappingMode);
-    pointer p(mainMapping_);
+    pointer p(mainMapping());
 
     // TODO: if mode is not CREATE, throw an exception instead
     if (p.getUnsignedInt() == 0) createStore();
@@ -108,16 +88,9 @@ void Store::open(const char* filename, int mode)
 }
 
 
-void Store::unmapSegments()
-{
-    file_.unmap(mainMapping_, mainMappingLength_);
-    // TODO: unmap extended segments
-}
-
-
 void Store::close()
 {
-    if(!file_.isOpen()) return;     // TODO: spec this behavior
+    if(!isOpen()) return;     // TODO: spec this behavior
     
     uint64_t trueSize = getTrueSize();
     bool journalPresent = false;
@@ -163,13 +136,13 @@ void Store::close()
             {
                 segmentUnmapAttempted = true;
                 unmapSegments();
-                file_.setSize(trueSize);
+                setSize(trueSize);
             }
             lock(LOCK_NONE);
         }
     }
     if (!segmentUnmapAttempted) unmapSegments();
-    file_.close();
+    ExpandableMappedFile::close();
     fileName_.clear();
 }
 
@@ -177,4 +150,84 @@ void Store::close()
 void Store::error(const char* msg) const
 {
     throw StoreException(fileName(), msg);
+}
+
+
+void Store::checkJournal()
+{
+    std::string journalFileName = getJournalFileName();
+    if (!std::filesystem::exists(journalFileName)) return;
+
+    File journalFile;
+    journalFile.open(journalFileName.c_str(), File::OpenMode::READ);
+    uint32_t instruction;
+    journalFile.read(&instruction, 4);
+    if (instruction != 0)
+    {
+        // Even though we may be making modifications other than additions,
+        // we only need to obtain the append lock: If another process died
+        // while making additions, then exclusive read access isn't necessary.
+        // If another process made modifications that did not complete
+        // normally, it would have had to hold exclusive read access -- this
+        // means that if we are here, we have been waiting to open the file,
+        // so we are the first to see the journal instructions.
+
+        LockLevel prevLockLevel = lock(LOCK_APPEND);  // TODO: need exclusive lock!
+
+        // Check header again, because another process may have already
+        // processed the journal while we were waiting for the lock
+
+        journalFile.seek(0);
+        journalFile.read(&instruction, 4);
+        if (instruction != 0)
+        {
+            if (isJournalValid(journalFile))
+            {
+            }
+        }
+        lock(prevLockLevel);
+    }
+    journalFile.close();
+}
+
+bool Store::isJournalValid(File& file)
+{
+    uint64_t journalSize = file.size();
+    if (journalSize < 24 || (journalSize & 3) != 0) return false;
+
+    uint32_t patchWordsRemaining = (journalSize - 24) / 4;
+    uint32_t patchWord;
+    while (patchWordsRemaining)
+    {
+
+    }
+    byte[] ba = new byte[4];
+    CRC32 crc = new CRC32();
+    try
+    {
+        journal.seek(4);
+        long timestamp = journal.readLong();
+        if (timestamp != getTimestamp()) return false;
+        for (; ; )
+        {
+            int patchLow = journal.readInt();
+            int patchHigh = journal.readInt();
+            if (patchHigh == 0xffff_ffff && patchLow == 0xffff_ffff) break;
+            int len = (patchLow & 0x3ff) + 1;
+            intToBytes(ba, patchLow);
+            crc.update(ba);
+            intToBytes(ba, patchHigh);
+            crc.update(ba);
+            for (int i = 0; i < len; i++)
+            {
+                intToBytes(ba, journal.readInt());
+                crc.update(ba);
+            }
+        }
+        return journal.readInt() == (int)crc.getValue();
+    }
+    catch (EOFException ex)
+    {
+        return false;
+    }
 }
