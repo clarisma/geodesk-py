@@ -14,10 +14,16 @@ public:
         threads_.emplace_back(&TaskEngine::processOutput, this);
         for (int i = 0; i < numberOfThreads; i++)
         {
-            workContexts_.emplace_back(WorkContext(this));
+            workContexts_.emplace_back(reinterpret_cast<Derived*>(this));
             threads_.emplace_back(&TaskEngine::process, this, &workContexts_[i]);
         }
     }
+
+    ~TaskEngine()
+    {
+        end();
+    }
+
 
     void end()
     {
@@ -32,6 +38,12 @@ public:
                 th.join();
             }
         }
+    }
+
+protected:
+    void postWork(const WorkTask& task)
+    {
+        workQueue_.post(task);
     }
 
 private:

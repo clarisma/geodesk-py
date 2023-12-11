@@ -4,6 +4,7 @@
 #pragma once
 
 #include <limits>
+#include "Box.h"
 
 typedef int32_t ZoomLevel;
 
