@@ -82,12 +82,16 @@ private:
 
 	LockLevel lock(LockLevel newLevel);
 	bool tryExclusiveLock();
+	
+	static const uint64_t JOURNAL_END_MARKER = 0xffff'ffff'ffff'ffffUll;
+	
 	void checkJournal();
 	std::string getJournalFileName() const
 	{
 		return fileName_ + ".journal";
 	}
 	bool isJournalValid(File& file);
+	void applyJournal(File& file);
 
 	std::string fileName_;
 	int openMode_;

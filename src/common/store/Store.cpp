@@ -6,6 +6,7 @@
 #include <common/util/pointer.h>
 #include <cassert>
 #include <filesystem>
+#include <zlib.h>
 
 Store::Store() :
     openMode_(0),
@@ -183,6 +184,7 @@ void Store::checkJournal()
         {
             if (isJournalValid(journalFile))
             {
+                applyJournal(journalFile);
             }
         }
         lock(prevLockLevel);
@@ -195,39 +197,56 @@ bool Store::isJournalValid(File& file)
     uint64_t journalSize = file.size();
     if (journalSize < 24 || (journalSize & 3) != 0) return false;
 
+    // TODO: Here, we assume Little-Endian byte order, which differs from Java
+
+    uint64_t timestamp;
+    file.seek(4);
+    file.read(&timestamp, 8);
+    if (timestamp != getLocalCreationTimestamp()) return false;
+
+    uint32_t crc = crc32(0L, Z_NULL, 0);  // Initialize the CRC
     uint32_t patchWordsRemaining = (journalSize - 24) / 4;
-    uint32_t patchWord;
     while (patchWordsRemaining)
     {
+        uint32_t patchWord;
+        file.read(&patchWord, 4);
+        crc32(crc, reinterpret_cast<const Bytef*>(&patchWord), 4);
+        patchWordsRemaining--;
+    }
 
-    }
-    byte[] ba = new byte[4];
-    CRC32 crc = new CRC32();
-    try
+    uint64_t endMarker;
+    file.read(&endMarker, 8);
+    if (endMarker != JOURNAL_END_MARKER) return false;
+
+    uint32_t journalCrc;
+    file.read(&journalCrc, 4);
+    return journalCrc == crc;
+}
+
+
+void Store::applyJournal(File& file)
+{
+    uint64_t storeFileSize = size();
+
+    file.seek(12);
+    for (;;)
     {
-        journal.seek(4);
-        long timestamp = journal.readLong();
-        if (timestamp != getTimestamp()) return false;
-        for (; ; )
+        uint64_t patch;
+        file.read(&patch, 8);
+        if (patch == JOURNAL_END_MARKER) break;
+        uint64_t pos = (patch >> 10) << 2;
+        uint32_t len = ((patch & 0x3ff) + 1) * 4;
+        // Log.debug("Patching %d words at %X", len, pos);
+        if ((pos + len) > storeFileSize)
         {
-            int patchLow = journal.readInt();
-            int patchHigh = journal.readInt();
-            if (patchHigh == 0xffff_ffff && patchLow == 0xffff_ffff) break;
-            int len = (patchLow & 0x3ff) + 1;
-            intToBytes(ba, patchLow);
-            crc.update(ba);
-            intToBytes(ba, patchHigh);
-            crc.update(ba);
-            for (int i = 0; i < len; i++)
-            {
-                intToBytes(ba, journal.readInt());
-                crc.update(ba);
-            }
+            error("Cannot restore from journal, store modified outside transaction");
+            return;
         }
-        return journal.readInt() == (int)crc.getValue();
+        if (file.read(mainMapping() + pos, len) != len)
+        {
+            error("Failed to apply patch from journal");
+            return;
+        }
     }
-    catch (EOFException ex)
-    {
-        return false;
-    }
+    sync(mainMapping(), storeFileSize);
 }

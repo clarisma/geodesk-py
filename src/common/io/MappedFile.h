@@ -25,6 +25,7 @@ public:
     void unmap(void* address, uint64_t length);
     void prefetch(const void* address, uint64_t length);
         // TODO: technically, does not need to be part of MappedFile
+    void sync(const void* address, uint64_t length);
 
 private:
 #if defined(_WIN32) // Windows
