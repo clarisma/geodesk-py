@@ -250,3 +250,48 @@ void Store::applyJournal(File& file)
     }
     sync(mainMapping(), storeFileSize);
 }
+
+
+Store::Transaction::Transaction(Store* store) :
+    store_(store),
+    preCommitStoreSize_(store->getTrueSize())
+{
+}
+
+
+Store::Transaction::~Transaction()
+{
+    for (const auto& pair : blocks_) 
+    {
+        delete pair.second;
+    }
+}
+
+uint8_t* Store::Transaction::getBlock(uint64_t pos)
+{
+    if (pos >= preCommitStoreSize_) return store_->translate(pos);
+    TransactionBlock* block;
+    auto it = blocks_.find(pos);
+    if (it == blocks_.end())
+    {
+        block = new TransactionBlock(store_->translate(pos));
+        blocks_.emplace(pos, block);
+    }
+    else
+    {
+        block = it->second;
+    }
+    return block->current();
+}
+
+
+const uint8_t* Store::Transaction::getConstBlock(uint64_t pos)
+{
+    TransactionBlock* block;
+    auto it = blocks_.find(pos);
+    if (it != blocks_.end())
+    {
+        return it->second->current();
+    }
+    return store_->translate(pos);
+}

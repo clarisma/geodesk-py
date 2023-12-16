@@ -72,11 +72,17 @@ protected:
 	class TransactionBlock
 	{
 	public:
+		TransactionBlock(uint8_t* original) :
+			original_(original)
+		{
+			memcpy(current_, original, SIZE);
+		}
+		uint8_t* current() { return current_; }
+
 		static const int SIZE = 4096;
 
 	private:
-		uint64_t pos_;
-		void* original_;
+		uint8_t* original_;
 		uint8_t current_[SIZE];
 	};
 
@@ -85,6 +91,9 @@ protected:
 	public:
 		Transaction(Store* store);
 		~Transaction();
+
+		uint8_t* getBlock(uint64_t pos);
+		const uint8_t* getConstBlock(uint64_t pos);
 		void commit();
 
 	private:
@@ -104,7 +113,7 @@ protected:
 		 * the 4-KB blocks where changes are staged until commit() or rollback()
 		 * is called.
 		 */
-		std::unordered_map<uint64_t, TransactionBlock*> transactionBlocks_;
+		std::unordered_map<uint64_t, TransactionBlock*> blocks_;
 
 		/**
 		 * A list of those TransactionBlocks that lie in the metadata portion
@@ -114,7 +123,7 @@ protected:
 		 * must set the page number of a tile in the Tile Index of a FeatureStore
 		 * only once all of the actual tile data has been written to the Store.
 		 */
-		std::vector<TransactionBlock*> metadataTransactionBlocks_;
+		std::vector<TransactionBlock*> metadataBlocks_;
 	};
 
 private:

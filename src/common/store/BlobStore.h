@@ -15,6 +15,20 @@ public:
 		prefetch(pBlob, size);
 	}
 
+	class Transaction : private Store::Transaction
+	{
+	public:
+		Transaction(BlobStore* store) :
+			Store::Transaction(store)
+		{
+		}
+
+		uint32_t alloc(uint32_t payloadSize);
+		void free(uint32_t firstPage);
+	};
+
+	uint8_t* translatePage(uint32_t page);
+
 protected:
 	static const uint32_t MAGIC = 0x7ADA0BB1;
 	static const uint32_t VERSION = 1'000'000;
