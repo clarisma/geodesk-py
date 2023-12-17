@@ -96,7 +96,7 @@ protected:
 		const uint8_t* getConstBlock(uint64_t pos);
 		void commit();
 
-	private:
+	protected:
 		Store* store_;
 		File journalFile_;
 		/**
