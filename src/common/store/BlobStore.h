@@ -16,6 +16,9 @@ public:
 		prefetch(pBlob, size);
 	}
 
+	struct Blob;
+	struct Header;
+
 	class Transaction : private Store::Transaction
 	{
 	public:
@@ -29,10 +32,19 @@ public:
 		void free(uint32_t firstPage);
 
 	private:
-		uint8_t* getBlockOfPage(uint32_t page)
-		{
-			return getBlock(static_cast<uint64_t>(page) << store()->pageSizeShift_);
+		Header* getRootBlock() 
+		{ 
+			return reinterpret_cast<Header*>(getBlock(0)); 
 		}
+
+		Blob* getBlobBlock(uint32_t page)
+		{
+			return reinterpret_cast<Blob*>(
+				getBlock(static_cast<uint64_t>(page) 
+					<< store()->pageSizeShift_));
+		}
+
+		void removeFreeBlob(Blob* freeBlock);
 
 		std::unordered_set<uint32_t> freedBlobs_;
 	};
@@ -121,6 +133,8 @@ private:
 		uint32_t prevFreeBlob;
 		uint32_t nextFreeBlob;
 		uint32_t leafFreeTableRanges;
+		uint8_t  unused2[44];
+		uint32_t leafFreeTable[512];
 	};
 
 	uint32_t pageSizeShift_ = 12;	// TODO: default 4KB page
