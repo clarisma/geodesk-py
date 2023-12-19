@@ -6,22 +6,18 @@
 
 uint64_t BlobStore::getLocalCreationTimestamp() const 
 {
-	return pointer(mainMapping()).getUnsignedLong(LOCAL_CREATION_TIMESTAMP_OFS);
+	return getRoot()->creationTimestamp;
 }
 
 uint64_t BlobStore::getTrueSize() const 
 {
-	int totalPages = pointer(mainMapping()).getInt(TOTAL_PAGES_OFS);
-	// TODO: totalPages should really be unsigned, but we treat it as int
-	// to stay compatible with the Java implementation
-	// TODO: A FeatureStore cannot have more than 2^31 pages because 
-	// of the marker bit in the tile index
-	return static_cast<uint64_t>(totalPages) << pageSizeShift_;
+    return static_cast<uint64_t>(getRoot()->totalPageCount) << pageSizeShift_;
 }
 
 void BlobStore::verifyHeader() const 
 {
-	if (pointer(mainMapping()).getUnsignedInt() != MAGIC)
+    const Header* root = getRoot();
+	if (root->magic != MAGIC)
 	{
 		error("Not a BlobStore file");
 	}
@@ -100,7 +96,7 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
 
             for (; trunkSlot < trunkSlotEnd; trunkSlot++)
             {
-                uint32_t leafTableBlob = rootBlock->trunkFreeTable[trunkSlot];
+                PageNum leafTableBlob = rootBlock->trunkFreeTable[trunkSlot];
                 if (leafTableBlob == 0) continue;
 
                 // There are one or more free blobs within the
@@ -108,8 +104,6 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
 
                 Blob* leafBlock = getBlobBlock(leafTableBlob);
                 int leafRanges = leafBlock->leafFreeTableRanges;
-                // int leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
-                // int leafEnd = (leafOfs & 0xffff'ffc0) + 64;
                 uint32_t leafSlotEnd = (leafSlot & 0x1f0) + 16;
                 assert(leafBlock->isFree);
 
@@ -123,12 +117,10 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
                         int rangesToSkip = Bits::countTrailingZerosInNonZero(leafRanges);
                         leafSlotEnd += rangesToSkip * 16;
                         leafSlot = leafSlotEnd - 16;
-                        // leafEnd += rangesToSkip * 64;
-                        // leafOfs = leafEnd - 64;
                     }
                     for (; leafSlot < leafSlotEnd; leafSlot++)
                     {
-                        uint32_t freeBlob = leafBlock->leafFreeTable[leafSlot];
+                        PageNum freeBlob = leafBlock->leafFreeTable[leafSlot];
                         if (freeBlob == 0) continue;
 
                         // Found a free blob of sufficient size
@@ -142,7 +134,7 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
 
                             // log.debug("    Candidate free blob {} holds leaf FT", freeBlob);
 
-                            uint32_t nextFreeBlob = leafBlock->nextFreeBlob;
+                            PageNum nextFreeBlob = leafBlock->nextFreeBlob;
                             if (nextFreeBlob != 0)
                             {
                                 // If so, we'll use that blob instead
@@ -180,7 +172,7 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
                             //  blob of same size range, which means we'd have
                             //  to move FT twice
 
-                            uint32_t newLeafBlob = relocateFreeTable(freeBlob, freePages);
+                            PageNum newLeafBlob = relocateFreeTable(freeBlob, freePages);
                             if (newLeafBlob != 0)
                             {
                                 // log.debug("    Moved leaf FT to {}", newLeafBlob);
@@ -265,8 +257,8 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
 
 void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 {
-    uint32_t prevBlob = freeBlock->prevFreeBlob;
-    uint32_t nextBlob = freeBlock->nextFreeBlob;
+    PageNum prevBlob = freeBlock->prevFreeBlob;
+    PageNum nextBlob = freeBlock->nextFreeBlob;
 
     // Unlink the blob from its siblings
 
@@ -293,7 +285,7 @@ void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
     // log.debug("     Removing blob with {} pages", pages);
 
     Header* rootBlock = getRootBlock();
-    uint32_t leafBlob = rootBlock->trunkFreeTable[trunkSlot];
+    PageNum leafBlob = rootBlock->trunkFreeTable[trunkSlot];
 
     // If the leaf FT has already been dropped, there's nothing
     // left to do (TODO: this feels messy)
@@ -345,4 +337,209 @@ void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 
     // The trunk range has no leaf tables, clear its range bit
     rootBlock->trunkFreeTableRanges &= ~(1 << trunkRange);
+}
+
+
+/**
+ * Adds a blob to the freetable, and sets its size, header flags and trailer.
+ *
+ * This method does not affect the PRECEDING_BLOB_FREE_FLAG of the successor blob; it is the responsibility of the
+ * caller to set the flag, if necessary.
+ *
+ * @param firstPage the first page of the blob
+ * @param pages     the number of pages of this blob
+ * @param freeFlags PRECEDING_BLOB_FREE_FLAG or 0
+ */
+void BlobStore::Transaction::addFreeBlob(PageNum firstPage, uint32_t pages, uint32_t precedingFreePages)
+{
+    Blob* block = getBlobBlock(firstPage);
+    block->precedingFreeBlobPages = precedingFreePages;
+    block->payloadSize = (pages << store()->pageSizeShift_) - BLOB_HEADER_SIZE;
+    block->isFree = true;
+    block->prevFreeBlob = 0;
+    Header* rootBlock = getRootBlock();
+    uint32_t trunkSlot = (pages - 1) / 512;
+    PageNum leafBlob = rootBlock->trunkFreeTable[trunkSlot];
+    Blob* leafBlock;
+    if (leafBlob == 0)
+    {
+        // If no local free table exists for the size range of this blob,
+        // this blob becomes the local free table
+
+        block->leafFreeTableRanges = 0;
+        memset(block->leafFreeTable, 0, sizeof(block->leafFreeTable));
+        rootBlock->trunkFreeTableRanges |= 1 << (trunkSlot / 16);
+        rootBlock->trunkFreeTable[trunkSlot] = firstPage;
+        leafBlock = block;
+
+        // Log.debug("  Free blob %d: Created leaf FT for %d pages", firstPage, pages);
+    }
+    else
+    {
+        leafBlock = getBlobBlock(leafBlob);
+    }
+
+    // Determine the slot in the leaf freetable where this
+    // free blob will be placed
+
+    uint32_t leafSlot = (pages - 1) % 512;
+    PageNum nextBlob = leafBlock->leafFreeTable[leafSlot];
+    if (nextBlob != 0)
+    {
+        // If a free blob of the same size exists already,
+        // chain this blob as a sibling
+
+        Blob* nextBlock = getBlobBlock(nextBlob);
+        nextBlock->prevFreeBlob = firstPage;
+    }
+    block->nextFreeBlob = nextBlob;
+
+    // Enter this free blob into the size-specific slot
+    // in the leaf freetable, and set the range bit
+
+    leafBlock->leafFreeTable[leafSlot] = firstPage;
+    leafBlock->leafFreeTableRanges |= 1 << (leafSlot / 16);
+}
+
+
+/**
+ * Deallocates a blob. Any adjacent free blobs are coalesced, 
+ * provided that they are located in the same 1-GB segment.
+ *
+ * @param firstPage the first page of the blob
+ */
+void BlobStore::Transaction::free(PageNum firstPage)
+{
+    Header* rootBlock = getRootBlock();
+    Blob* block = getBlobBlock(firstPage);
+    
+    assert(block->isFree);
+    /*
+    if (freeFlag != 0)
+    {
+        throw new StoreException(
+            "Attempt to free blob that is already marked as free", path());
+    }
+    */
+
+    uint32_t totalPages = rootBlock->totalPageCount;
+
+    uint32_t pages = store()->pagesForPayloadSize(block->payloadSize);
+    PageNum prevBlob = 0;
+    PageNum nextBlob = firstPage + pages;
+    uint32_t prevPages = block->precedingFreeBlobPages;
+    uint32_t nextPages = 0;
+
+    if (prevPages && !isFirstPageOfSegment(firstPage))
+    {
+        // If there is another free blob preceding this one,
+        // and it is in the same segment, coalesce it
+
+        prevBlob = firstPage - prevPages;
+        Blob* prevBlock = getBlobBlock(prevBlob);
+
+        // TODO: check:    
+        // The preceding free blob could itself have a preceding free blob
+        // (not coalesced because it is located in different segment),
+        // so we preserve the preceding_free_flag
+
+        removeFreeBlob(prevBlock);
+        block = prevBlock;
+        // log.debug("    Coalescing preceding blob at {} ({} pages})", prevBlob, prevPages);
+    }
+
+    if (nextBlob < totalPages && !isFirstPageOfSegment(nextBlob))
+    {
+        // There is another blob following this one,
+        // and it is in the same segment
+
+        Blob* nextBlock = getBlobBlock(nextBlob);
+        if (nextBlock->isFree)
+        {
+            // The next blob is free, coalesce it
+
+            nextPages = store()->pagesForPayloadSize(nextBlock->payloadSize);
+            removeFreeBlob(nextBlock);
+
+            // log.debug("    Coalescing following blob at {} ({} pages})", nextBlob, nextPages);
+        }
+    }
+
+    if (prevPages != 0)
+    {
+        uint32_t trunkSlot = (prevPages - 1) / 512;
+        PageNum prevFreeTableBlob = rootBlock->trunkFreeTable[trunkSlot];
+        if (prevFreeTableBlob == prevBlob)
+        {
+            relocateFreeTable(prevFreeTableBlob, prevPages);
+        }
+    }
+    if (nextPages != 0)
+    {
+        uint32_t trunkSlot = (nextPages - 1) / 512;
+        PageNum nextFreeTableBlob = rootBlock->trunkFreeTable[trunkSlot];
+        if (nextFreeTableBlob == nextBlob)
+        {
+            relocateFreeTable(nextFreeTableBlob, nextPages);
+        }
+    }
+
+    pages += prevPages + nextPages;
+    firstPage -= prevPages;
+
+    /*
+    if(pages == 262144)
+    {
+        Log.debug("Freeing 1-GB blob (First page = %d @ %X)...",
+            firstPage, (long)firstPage << pageSizeShift);
+    }
+     */
+
+    if (firstPage + pages == totalPages)
+    {
+        // If the free blob is located at the end of the file, reduce
+        // the total page count (effectively truncating the store)
+
+        totalPages = firstPage;
+        while (block->precedingFreeBlobPages)
+        {
+            // If the preceding blob is free, that means it
+            // resides in the preceding 1-GB segment (since we cannot
+            // coalesce across segment boundaries). Remove this blob
+            // from its freetable and trim it off. If this blob
+            // occupies an entire segment, and its preceding blob is
+            // free as well, keep trimming
+
+            // Log.debug("Trimming across segment boundary...");
+
+            prevPages = block->precedingFreeBlobPages;
+            totalPages -= prevPages;
+            prevBlob = totalPages;
+            block = getBlobBlock(prevBlob);
+            removeFreeBlob(block);
+
+            // Move freetable, if necessary
+
+            uint32_t trunkSlot = (prevPages - 1) / 512;
+            PageNum prevFreeTableBlob = rootBlock->trunkFreeTable[trunkSlot];
+            if (prevFreeTableBlob == prevBlob)
+            {
+                // Log.debug("Relocating free table for %d pages", prevPages);
+                relocateFreeTable(prevBlob, prevPages);
+            }
+
+            if (!isFirstPageOfSegment(totalPages)) break;
+        }
+        rootBlock->totalPageCount = totalPages;
+
+        // Log.debug("Truncated store to %d pages.", totalPages);
+    }
+    else
+    {
+        // Blob is not at end of file, add it to the free table
+
+        addFreeBlob(firstPage, pages, block->precedingFreeBlobPages);
+        Blob* nextBlock = getBlobBlock(firstPage + pages);
+        nextBlock->precedingFreeBlobPages = pages;
+    }
 }
