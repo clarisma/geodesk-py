@@ -42,7 +42,17 @@ uint32_t BlobStore::pagesForPayloadSize(uint32_t payloadSize) const
 }
 
 
-uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
+/**
+ * Allocates a blob of a given size. If possible, the smallest existing 
+ * free blob that can accommodate the requested number of bytes will 
+ * be reused; otherwise, a new blob will be appended to the store file.
+ *
+ * TODO: guard against exceeding maximum file size
+ *
+ * @param size   the size of the blob, not including its 4-byte header
+ * @return       the first page of the blob
+ */
+BlobStore::PageNum BlobStore::Transaction::alloc(uint32_t payloadSize)
 {
     assert (payloadSize <= SEGMENT_LENGTH - BLOB_HEADER_SIZE);
     // int precedingBlobFreeFlag = 0;
@@ -254,7 +264,19 @@ uint32_t BlobStore::Transaction::alloc(uint32_t payloadSize)
     return totalPages;
 }
 
-
+/**
+ * Removes a free blob from its freetable. If this blob is the last 
+ * free blob in a given size range, removes the leaf freetable from 
+ * the trunk freetable. If this free blob contains the leaf freetable, 
+ * and this freetable is still needed, it is the responsibility of 
+ * the caller to copy it to another free blob in the same size range.
+ *
+ * This method does not affect the precedingFreeBlobPages field of the 
+ * successor blob; it is the responsibility of the caller to clear 
+ * the flag, if necessary.
+ *
+ * @param freeBlock
+ */
 void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 {
     PageNum prevBlob = freeBlock->prevFreeBlob;
@@ -343,12 +365,13 @@ void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 /**
  * Adds a blob to the freetable, and sets its size, header flags and trailer.
  *
- * This method does not affect the PRECEDING_BLOB_FREE_FLAG of the successor blob; it is the responsibility of the
- * caller to set the flag, if necessary.
+ * This method does not affect the precedingFreeBlobPages field of the 
+ * successor blob; it is the responsibility of the caller to set this, 
+ * if necessary.
  *
  * @param firstPage the first page of the blob
  * @param pages     the number of pages of this blob
- * @param freeFlags PRECEDING_BLOB_FREE_FLAG or 0
+ * @param precedingFreePages
  */
 void BlobStore::Transaction::addFreeBlob(PageNum firstPage, uint32_t pages, uint32_t precedingFreePages)
 {
@@ -542,4 +565,57 @@ void BlobStore::Transaction::free(PageNum firstPage)
         Blob* nextBlock = getBlobBlock(firstPage + pages);
         nextBlock->precedingFreeBlobPages = pages;
     }
+}
+
+/**
+ * Copies a blob's free table to another free blob. The original blob's 
+ * free table and the free-range bits must be valid, all other data is 
+ * allowed to have been modified at this point.
+ *
+ * @param page        the first page of the original blob
+ * @param sizeInPages the blob's size in pages
+ * @return the page of the blob to which the free table has been assigned, or 0 if the table has not been relocated.
+ */
+BlobStore::PageNum BlobStore::Transaction::relocateFreeTable(PageNum page, int sizeInPages)
+{
+    Blob* block = getBlobBlock(page);
+    uint32_t ranges = block->leafFreeTableRanges;
+    // Make a copy of ranges, because we will modify it during search
+    uint32_t originalRanges = ranges;
+    uint32_t slot = 0;
+    while (ranges != 0)
+    {
+        if ((ranges & 1) != 0)
+        {
+            uint32_t endSlot = slot + 16;
+            for (; slot < endSlot; slot++)
+            {
+                PageNum otherPage = block->leafFreeTable[slot];
+                if (otherPage != 0 && otherPage != page)
+                {
+                    Blob* otherBlock = getBlobBlock(otherPage);
+                    assert(otherBlock->isFree);
+
+                    memcpy(otherBlock->leafFreeTable, block->leafFreeTable, sizeof(block->leafFreeTable));
+                    otherBlock->leafFreeTableRanges = originalRanges;
+                    // don't use `ranges`; search consumes the bits
+                    Header* rootBlock = getRootBlock();
+                    uint32_t trunkSlot = (sizeInPages - 1) / 512;
+                    rootBlock->trunkFreeTable[trunkSlot] = otherPage;
+
+                    // log.debug("      Moved free table from {} to {}", page, otherPage);
+                    return otherPage;
+                }
+            }
+            slot = endSlot;
+            ranges >>= 1;
+        }
+        else
+        {
+            int rangesToSkip = Bits::countTrailingZerosInNonZero(ranges);
+            ranges >>= rangesToSkip;
+            slot += rangesToSkip * 16;
+        }
+    }
+    return 0;
 }

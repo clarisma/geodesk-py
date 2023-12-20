@@ -47,6 +47,11 @@ public:
 
 		void addFreeBlob(PageNum firstPage, uint32_t pages, uint32_t precedingFreePages);
 		void removeFreeBlob(Blob* freeBlock);
+		PageNum relocateFreeTable(PageNum page, int sizeInPages);
+		bool isFirstPageOfSegment(PageNum page)
+		{
+			return (page & ((0x3fff'ffff) >> store()->pageSizeShift_)) == 0;
+		}
 
 		std::unordered_set<uint32_t> freedBlobs_;
 	};
@@ -112,6 +117,7 @@ protected:
 	uint64_t getLocalCreationTimestamp() const override;
 	uint64_t getTrueSize() const override;
 	uint32_t pagesForPayloadSize(uint32_t payloadSize) const;
+	
 		
 private:
 	struct Header
