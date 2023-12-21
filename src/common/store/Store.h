@@ -77,6 +77,7 @@ protected:
 		{
 			memcpy(current_, original, SIZE);
 		}
+		uint8_t* original() { return original_; }
 		uint8_t* current() { return current_; }
 
 		static const int SIZE = 4096;
@@ -97,6 +98,8 @@ protected:
 		void commit();
 
 	protected:
+		void saveJournal();
+
 		Store* store_;
 		File journalFile_;
 		/**

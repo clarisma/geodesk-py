@@ -133,3 +133,14 @@ size_t File::read(void* buf, size_t length)
     }
     return bytesRead;
 }
+
+
+size_t File::write(const void* buf, size_t length)
+{
+    DWORD bytesWritten;
+    if (!WriteFile(fileHandle_, buf, length, &bytesWritten, NULL))
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesWritten;
+}

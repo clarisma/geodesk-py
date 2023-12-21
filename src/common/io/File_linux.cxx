@@ -118,3 +118,14 @@ size_t File::read(void* buf, size_t length)
     }
     return bytesRead;
 }
+
+
+size_t File::write(const void* buf, size_t length)
+{
+    ssize_t bytesWritten = ::write(fileHandle_, buf, length);
+    if (bytesWritten < 0)
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesWritten;
+}

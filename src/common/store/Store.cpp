@@ -295,3 +295,57 @@ const uint8_t* Store::Transaction::getConstBlock(uint64_t pos)
     }
     return store_->translate(pos);
 }
+
+
+void Store::Transaction::commit()
+{
+    // TODO
+}
+
+
+void Store::Transaction::saveJournal()
+{
+    if (!journalFile_.isOpen())
+    {
+        journalFile_.open(store_->getJournalFileName().c_str(),
+            File::OpenMode::READ | File::OpenMode::WRITE | File::OpenMode::CREATE);
+    }
+    journalFile_.seek(0);
+    uint32_t command = 1;
+    journalFile_.write(&command, 4);
+    uint64_t timestamp = store_->getLocalCreationTimestamp();
+    journalFile_.write(&timestamp, 8);
+    uint32_t crc = crc32(0L, Z_NULL, 0);  // Initialize the CRC
+    for (const auto& it: blocks_)
+    {
+        uint64_t baseWordAddress = it.first / 4;
+        TransactionBlock* block = it.second;
+        const uint32_t* original = reinterpret_cast<uint32_t*>(block->original());
+        const uint32_t* current = reinterpret_cast<uint32_t*>(block->current());
+        int n = 0;
+        while(n < 1024)
+        {
+            if (original[n] != current[n])
+            {
+                int start = n;
+                for (;;)
+                {
+                    n++;
+                    if (n == 1024) break;
+                    if (original[n] == current[n]) break;
+                }
+                int patchLen = n - start;
+                uint64_t patch = ((baseWordAddress + start) << 10) | (patchLen - 1);
+                journalFile_.write(&patch, 8);
+                journalFile_.write(&original[start], patchLen * 4);
+                crc32(crc, reinterpret_cast<const Bytef*>(&patch), 8);
+                crc32(crc, reinterpret_cast<const Bytef*>(&original[start]), patchLen * 4);
+            }
+            n++;
+        }
+    }
+    uint64_t trailer = JOURNAL_END_MARKER;
+    journalFile_.write(&trailer, 8);
+    journalFile_.write(&crc, 4);
+    journalFile_.force();
+}
