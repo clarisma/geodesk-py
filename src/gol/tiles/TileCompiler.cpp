@@ -57,7 +57,7 @@ void TileCompilerTask::operator()()
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
 	TTile tile(tile_);
-	store->prefetchBlob(pTile);
+	// store->prefetchBlob(pTile);
 	tile.readTile(pTile);
 
 	DynamicBuffer buf(128 * 1024);

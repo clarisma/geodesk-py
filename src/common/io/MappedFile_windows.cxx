@@ -42,7 +42,7 @@ void MappedFile::sync(const void* address, uint64_t length)
     if (!FlushFileBuffers(handle())) IOException::checkAndThrow();
 }
 
-void MappedFile::prefetch(const void* address, uint64_t length)
+void MappedFile::prefetch(void* address, uint64_t length)
 {
     WIN32_MEMORY_RANGE_ENTRY entry;
     entry.VirtualAddress = const_cast<void*>(address);

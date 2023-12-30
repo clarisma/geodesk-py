@@ -10,7 +10,7 @@
 class BlobStore : public Store
 {
 public:
-	void prefetchBlob(const void* pBlob)
+	void prefetchBlob(void* pBlob)
 	{
 		uint32_t size = pointer(pBlob).getUnsignedInt() & 0x3fff'ffff;
 		prefetch(pBlob, size);

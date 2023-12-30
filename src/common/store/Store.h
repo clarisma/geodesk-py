@@ -58,6 +58,10 @@ protected:
 	}
 
 	void error(const char* msg) const;
+	void prefetch(void* p, size_t len)
+	{
+		file_.prefetch(p, len);
+	}
 
 	enum LockLevel
 	{
