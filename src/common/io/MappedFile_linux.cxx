@@ -26,6 +26,13 @@ void MappedFile::unmap(void* address, uint64_t length)
     munmap(address, length);
 }
 
+void MappedFile::prefetch(const void* address, uint64_t length)
+{
+    if (madvise(address, length, MADV_WILLNEED) != 0)
+    {
+        IOException::checkAndThrow();
+    }
+}
 
 void MappedFile::close()
 {
