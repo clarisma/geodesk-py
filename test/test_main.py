@@ -27,7 +27,8 @@ if __name__ == '__main__':
     # pytest.main(["test_crosses.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_map.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_area_performance.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["test_load.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["test_load.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["test_countries.py", "-rA", "-s", "--durations=9999"])
 
 
     
