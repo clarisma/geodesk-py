@@ -32,7 +32,7 @@ void TileLoaderTask::operator()()
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
 	TTile tile(tile_);
-	store_->prefetchBlob(pTile);
+	// store_->prefetchBlob(pTile);
 	tile.readTile(pTile);
 	/*
 	memcpy(pLoadedTile, pTile, size);
