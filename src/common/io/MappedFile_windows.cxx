@@ -36,7 +36,7 @@ void MappedFile::unmap(void* mappedAddress, uint64_t /* length */)
     UnmapViewOfFile(mappedAddress);
 }
 
-void MappedFile::prefetch(const void* address, uint64_t length)
+void MappedFile::prefetch(void* address, uint64_t length)
 {
     WIN32_MEMORY_RANGE_ENTRY entry;
     entry.VirtualAddress = const_cast<void*>(address);
