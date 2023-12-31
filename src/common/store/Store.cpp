@@ -60,7 +60,8 @@ void Store::open(const char* filename, int mode)
 
     // LOG("Opening %s (Mode %d) ...", filename, mode);
 
-    ExpandableMappedFile::open(filename, mode & ~OpenMode::EXCLUSIVE);
+    ExpandableMappedFile::open(filename, (mode & ~OpenMode::EXCLUSIVE) |
+        File::OpenMode::READ);
         // Don't pass EXCLUSIVE to base because it has no meaning
 
     // TODO: Ideally, we should lock before mapping (Creating a writable 
