@@ -37,19 +37,27 @@ void MCIndexBuilder::segmentizeWay(WayRef way)
 	while (slicer.hasMore());
 }
 
-// TODO: sub-relations (but careful of refcycles)
-
 void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel)
 {
-	// TODO: use FastMemberIterator
-	MemberIterator iter(store, rel.bodyptr(), FeatureTypes::WAYS,
-		store->borrowAllMatcher(), nullptr);
+	FastMemberIterator iter(store, rel);
 	for (;;)
 	{
 		FeatureRef member = iter.next();
 		if (member.isNull()) break;
-		segmentizeWay(WayRef(member));
+		if(member.isWay()) segmentizeWay(WayRef(member));
 	}
+
+	// If no ways were extracted, attempt to extract any features
+	// (i.e. treat like non-area relation)
+
+	if (chainCount_ == 0)
+	{
+		RecursionGuard guard(rel);
+		segmentizeMembers(store, rel, guard);
+	}
+
+	// TODO: We still need to ensure there is at least one chain;
+	// chainCount_ coukld be 0 if relation only consists of nodes
 }
 
 
@@ -76,7 +84,7 @@ void MCIndexBuilder::segmentizeMembers(FeatureStore* store, RelationRef rel, Rec
 	}
 }
 
-
+// TODO: must be able to deal with empty areas (i.e. chainCount_ == 0)
 MCIndex MCIndexBuilder::build(Box bounds)
 {
 	assert(chainCount_ > 0);
