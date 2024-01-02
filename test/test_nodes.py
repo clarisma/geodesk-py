@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Clarisma / GeoDesk contributors
+# SPDX-License-Identifier: LGPL-3.0-only
+
 def notest_nodes(features):
     streets=features("w[highway=service]")
     barriers=features("[barrier=lift_gate]")
