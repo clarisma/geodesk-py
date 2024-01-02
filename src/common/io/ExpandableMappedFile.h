@@ -39,6 +39,9 @@ public:
 	 */
 	uint8_t* translate(uint64_t ofs);
 	uint8_t* mainMapping() const { return mainMapping_; }
+	uint8_t* mapping(int n);
+	size_t mappingSize(int n) const;
+	int mappingNumber(uint64_t ofs) const;
 
 protected:
 	static const uint64_t SEGMENT_LENGTH = 1024 * 1024 * 1024;		// 1 GB

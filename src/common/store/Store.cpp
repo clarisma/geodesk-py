@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Store.h"
+#include <common/util/BitIterator.h>
 #include <common/util/log.h>
 #include <common/util/pointer.h>
 #include <cassert>
@@ -301,6 +302,52 @@ const uint8_t* Store::Transaction::getConstBlock(uint64_t pos)
 void Store::Transaction::commit()
 {
     // TODO
+
+    // Save the rollback instructions and make sure the journal file
+    // is safely written to disk
+    saveJournal();
+
+    // TODO: order matters! Possible race condition where index blocks
+    //  are written before tile contents -- make sure to write blocks
+    //  that are part of metadata *last*
+
+    uint32_t dirtyMappings = 0;
+    for (const auto& it : blocks_)
+    {
+        uint64_t ofs = it.first;
+        TransactionBlock* block = it.second;
+        memcpy(block->original(), block->current(), TransactionBlock::SIZE);
+        dirtyMappings |= 1 << store_->mappingNumber(ofs);
+    }
+
+    // Blocks that are appended to the file during the transaction are
+    // not journaled (they are simply truncated in case of a rollback);
+    // nevertheless, we need to record their segments as well, so we
+    // can force them to be written to disk
+
+    uint64_t newStoreSize = store_->getTrueSize();
+    if (newStoreSize > preCommitStoreSize_)
+    {
+        int start = store_->mappingNumber(preCommitStoreSize_);
+        int end = store_->mappingNumber(newStoreSize-1);
+        for (int n = start; n <= end; n++)
+        {
+            dirtyMappings |= 1 << n;
+        }
+    }
+
+    // Ensure that the modified mappings are written to disk
+    BitIterator<uint32_t> iter(dirtyMappings);
+    for (;;)
+    {
+        int n = iter.next();
+        if (n < 0) break;
+        store_->sync(store_->mapping(n), store_->mappingSize(n));
+    }
+    
+    clearJournal();
+
+    preCommitStoreSize_ = newStoreSize;
 }
 
 
@@ -348,5 +395,15 @@ void Store::Transaction::saveJournal()
     uint64_t trailer = JOURNAL_END_MARKER;
     journalFile_.write(&trailer, 8);
     journalFile_.write(&crc, 4);
+    journalFile_.force();
+}
+
+
+void Store::Transaction::clearJournal()
+{
+    journalFile_.seek(0);
+    uint32_t command = 0;
+    journalFile_.write(&command, 4);
+    journalFile_.setSize(4);   // TODO: just trim to 0 instead?
     journalFile_.force();
 }

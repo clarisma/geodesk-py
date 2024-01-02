@@ -99,6 +99,7 @@ protected:
 
 	protected:
 		void saveJournal();
+		void clearJournal();
 
 		Store* store_;
 		File journalFile_;

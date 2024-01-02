@@ -34,14 +34,15 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 uint8_t* ExpandableMappedFile::translate(uint64_t ofs)
 {
 	if (ofs < mainMappingSize_) return mainMapping_ + ofs;
-	uint64_t ofsBits = ((ofs - mainMappingSize_) >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
+	ofs -= mainMappingSize_;
+	uint64_t ofsBits = (ofs >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
 		// we set 0-bit to 1 so we can use the slightly more efficient bit count
 		// (that doesn't work if a value is zero)
 	int slot = Bits::countLeadingZerosInNonZero64(ofsBits) - 1;
 	assert(slot < EXTENDED_MAPPINGS_SLOT_COUNT);
 	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[slot]);
 	if (!mapping) mapping = createExtendedMapping(slot);
-	return mapping + (ofs & SEGMENT_LENGTH_MASK);
+	return mapping + ofs - (SEGMENT_LENGTH << slot) + SEGMENT_LENGTH;
 }
 
 
@@ -83,3 +84,32 @@ void ExpandableMappedFile::unmapSegments()
 		}
 	}
 }
+
+
+uint8_t* ExpandableMappedFile::mapping(int n) 
+{
+	assert(n >= 0 && n <= EXTENDED_MAPPINGS_SLOT_COUNT);
+	if(n == 0) return mainMapping_; 
+	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[n-1]);
+	if (!mapping) mapping = createExtendedMapping(n-1);
+	return mapping;
+}
+
+
+size_t ExpandableMappedFile::mappingSize(int n) const
+{
+	return n == 0 ? mainMappingSize_ : (SEGMENT_LENGTH << (n - 1));
+}
+
+int ExpandableMappedFile::mappingNumber(uint64_t ofs) const
+{
+	if (ofs < mainMappingSize_) return 0;
+	uint64_t ofsBits = ((ofs - mainMappingSize_ ) >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
+	// we set 0-bit to 1 so we can use the slightly more efficient bit count
+	// (that doesn't work if a value is zero)
+	int slot = Bits::countLeadingZerosInNonZero64(ofsBits) - 1;
+	assert(slot < EXTENDED_MAPPINGS_SLOT_COUNT);
+	return slot + 1;
+}
+
+
