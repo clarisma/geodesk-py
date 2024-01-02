@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Clarisma / GeoDesk contributors
+// SPDX-License-Identifier: LGPL-3.0-only
+
 /* C++ code produced by gperf version 3.1 */
 /* Command-line: 'C:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyFeatures_AttrHash --lookup-function-name=lookup PyFeatures_attr.txt  */
 /* Computed positions: -k'3-4' */

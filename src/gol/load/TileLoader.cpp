@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Clarisma / GeoDesk contributors
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #include "TileLoader.h"
 #include "query/TileIndexWalker.h"
 #include "gol/tiles/TTile.h"

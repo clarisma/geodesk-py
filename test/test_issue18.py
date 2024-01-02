@@ -1,3 +1,6 @@
+# Copyright (c) 2024 Clarisma / GeoDesk contributors
+# SPDX-License-Identifier: LGPL-3.0-only
+
 def notest_18(features):
     assert areas.members_of(nodes[0]).count == 0
     
