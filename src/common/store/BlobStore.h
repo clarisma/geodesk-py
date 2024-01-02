@@ -4,7 +4,7 @@
 #pragma once
 
 #include "Store.h"
-#include <unordered_set>
+#include <unordered_map>
 #include <common/util/pointer.h>
 
 class BlobStore : public Store
@@ -31,6 +31,7 @@ public:
 		BlobStore* store() const { return reinterpret_cast<BlobStore*>(store_); }
 		PageNum alloc(uint32_t payloadSize);
 		void free(PageNum firstPage);
+		void commit();
 
 	private:
 		Header* getRootBlock() 
@@ -53,7 +54,7 @@ public:
 			return (page & ((0x3fff'ffff) >> store()->pageSizeShift_)) == 0;
 		}
 
-		std::unordered_set<uint32_t> freedBlobs_;
+		std::unordered_map<PageNum, uint32_t> freedBlobs_;
 	};
 
 	uint8_t* translatePage(uint32_t page);

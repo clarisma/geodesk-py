@@ -135,6 +135,8 @@ BlobStore::PageNum BlobStore::Transaction::alloc(uint32_t payloadSize)
 
                         // Found a free blob of sufficient size
 
+                        // TODO: Do not re-allocate blobs from freedBlobs_
+
                         uint32_t freePages = trunkSlot * 512 + leafSlot + 1;
                         if (freeBlob == leafTableBlob)
                         {
@@ -436,7 +438,7 @@ void BlobStore::Transaction::free(PageNum firstPage)
     Header* rootBlock = getRootBlock();
     Blob* block = getBlobBlock(firstPage);
     
-    assert(block->isFree);
+    assert(!block->isFree);
     /*
     if (freeFlag != 0)
     {
@@ -565,6 +567,14 @@ void BlobStore::Transaction::free(PageNum firstPage)
         Blob* nextBlock = getBlobBlock(firstPage + pages);
         nextBlock->precedingFreeBlobPages = pages;
     }
+
+    // Track this freed blob so we don't re-allocate it within
+    // the same transaction (If we were to re-allocate freed blobs,
+    // we would have to journal their entire contents in order to
+    // ensure that the transaction can be fully rolled back in case
+    // of failure)
+
+    freedBlobs_.insert(firstPage, pages);
 }
 
 /**
@@ -618,4 +628,19 @@ BlobStore::PageNum BlobStore::Transaction::relocateFreeTable(PageNum page, int s
         }
     }
     return 0;
+}
+
+
+void BlobStore::Transaction::commit()
+{
+    Store::Transaction::commit();
+    // TODO: Deallocate pages of freed blobs ("punch holes")
+    for (const auto& it : freedBlobs_)
+    {
+        PageNum firstPage = it.first;
+        uint32_t pages = it.second;
+
+        // TODO: punch hole (but respect filesystem block sizes)
+        // Do not deallocate the first 4KB block, as it contains
+    }
 }
