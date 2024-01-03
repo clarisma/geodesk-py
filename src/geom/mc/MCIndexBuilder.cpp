@@ -44,7 +44,11 @@ void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel
 	{
 		FeatureRef member = iter.next();
 		if (member.isNull()) break;
-		if(member.isWay()) segmentizeWay(WayRef(member));
+		if (member.isWay())
+		{
+			WayRef way(member);
+			if(!way.isPlaceholder()) segmentizeWay(way);
+		}
 	}
 
 	// If no ways were extracted, attempt to extract any features

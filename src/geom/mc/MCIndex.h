@@ -118,7 +118,8 @@ public:
 	bool containsPoint(Coordinate c) const;	
 	bool pointOnBoundary(Coordinate c) const;
 	bool intersects(const MonotoneChain* mc) const;
-	bool intersects(const Box* box) const;
+	bool intersectsBox(const Box& box) const;
+	// bool intersectsLineSegment(Coordinate start, Coordinate end) const;
 	
 	// -1 outside, 0 = boundary, 1 = inside
 	int locatePoint(Coordinate c) const
@@ -144,6 +145,13 @@ private:
 
 	static bool intersectsChain(const RTree<const MonotoneChain>::Node* node,
 		const MonotoneChain* candidate);
+	static bool intersectsBox(const RTree<const MonotoneChain>::Node* node,
+		const Box* bounds);
+
+	/*
+	static bool intersectsLineSegment(const RTree<const MonotoneChain>::Node* node,
+		const Box* bounds);
+	*/
 	static bool countCrossings(const RTree<const MonotoneChain>::Node* node,
 		PointLocationClosure* closure);
 

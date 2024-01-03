@@ -17,7 +17,7 @@ bool SpatialFilter::acceptFeature(FeatureStore* store, FeatureRef feature) const
 	return acceptMembers(store, relation, guard);
 }
 
-// TODO: check member bboxes as a qucik way to eliminate
+// TODO: check member bboxes as a quick way to eliminate
 bool SpatialFilter::acceptMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const
 {
 	FastMemberIterator iter(store, relation);

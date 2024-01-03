@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "geom/LineSegment.h"
 
-static_assert(sizeof(MonotoneChain) == 12,
+static_assert(sizeof(MonotoneChain) == 20,
 	"Compiler doesn't properly pack structs");
 
 /**

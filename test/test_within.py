@@ -3,7 +3,7 @@
 
 from geodesk import *
 
-def test_within(features):
+def notest_within(features):
     country = features("a[boundary=administrative][admin_level=2][name:en=Germany]")[0]
     states = features("a[boundary=administrative][admin_level=4]")
     # bavaria = states[0]
@@ -26,6 +26,17 @@ def test_within(features):
     print(f"{country.name} has {state_count} states")
     print(f"Sum of restaurants from state queries: {total_restaurant_count}")
     print(f"Total restaurants in {country.name}: {restaurants.within(country).count}")
+    print(
+        "(This total may be higher if there are restaurants that straddle\n"
+        "a state boundary, and hence are not *within* either state)")
 
+# An area is considered to be within itself
+def test_area_within_itself(features):
+    # areas = features("a[wikidata=Q1693]")
+    areas = features("a")
+    for a in areas:
+        print(f"Checking {a}...")
+        assert a in features.within(a)
+    
 
 

@@ -116,8 +116,69 @@ bool MCIndex::countCrossings(const RTree<const MonotoneChain>::Node* node,
 	return false; // keep going
 }
 
-bool MCIndex::intersects(const Box* box) const
+/*
+static bool intersectsLineSegment(const RTree<const MonotoneChain>::Node* node,
+	const Box* bounds)
 {
 	return false; // TODO
+}
+
+bool MCIndex::intersectsLineSegment(Coordinate start, Coordinate end) const
+{
+	const Box bounds(start.x, start.y, end.x, end.y);
+	return index_.search(bounds, intersectsLineSegment, &bounds);
+}
+*/
+
+bool MCIndex::intersectsBox(const RTree<const MonotoneChain>::Node* node,
+	const Box* bounds)
+{
+	enum Edge
+	{
+		LEFT = 1,
+		RIGHT = 2,
+		BOTTOM = 4,
+		TOP = 8
+	};
+	uint32_t testEdges =
+		(node->bounds.minX() < bounds->minX() ? LEFT : 0) |
+		(node->bounds.maxX() > bounds->maxX() ? RIGHT : 0) |
+		(node->bounds.minY() < bounds->minY() ? BOTTOM : 0) |
+		(node->bounds.maxY() > bounds->maxY() ? TOP : 0);
+	if ((testEdges & (LEFT | RIGHT)) == 0 || (testEdges & (BOTTOM | TOP)) == 0)
+	{
+		return true;
+	}
+
+	// TODO: There are faster ways to check if a vertical or horizontal
+	// line segment intersects a quadrant-monotone chain
+
+	if (testEdges & LEFT)
+	{
+		MonotoneChain mc(bounds->bottomLeft(), bounds->topLeft());
+		if (mc.intersects(node->item())) return true;
+	}
+	if (testEdges & RIGHT)
+	{
+		MonotoneChain mc(bounds->bottomRight(), bounds->topRight());
+		if (mc.intersects(node->item())) return true;
+	}
+	if (testEdges & BOTTOM)
+	{
+		MonotoneChain mc(bounds->bottomLeft(), bounds->bottomRight());
+		if (mc.intersects(node->item())) return true;
+	}
+	if (testEdges & TOP)
+	{
+		MonotoneChain mc(bounds->topLeft(), bounds->topRight());
+		if (mc.intersects(node->item())) return true;
+	}
+	return false;
+}
+
+
+bool MCIndex::intersectsBox(const Box& box) const
+{
+	return index_.search(box, intersectsBox, &box);
 }
 

@@ -55,10 +55,10 @@ public:
 	bool intersects(const Box& bounds)
 	{
 		assert(!isNode());
-		return (!(ptr_.getInt() > bounds.maxX() ||
-			ptr_.getInt(4) > bounds.maxY() ||
-			ptr_.getInt(8) < bounds.minX() ||
-			ptr_.getInt(12) < bounds.minY()));
+		return (!(ptr_.getInt(-16) > bounds.maxX() ||
+			ptr_.getInt(-12) > bounds.maxY() ||
+			ptr_.getInt(-8) < bounds.minX() ||
+			ptr_.getInt(-4) < bounds.minY()));
 	}
 
 	TagsRef tags() const

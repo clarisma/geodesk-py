@@ -5,16 +5,18 @@ from geodesk import *
 planet = Features("c:\\geodesk\\tests\\w2.gol")
 
 islands = planet("a[place=island,islet]")
-island_count = 0
-inner_island_count = 0
+map = Map()
+count = 0
 for outer_island in islands.relations:
-    if outer_island.id in {
-        15441662, 15763992, 12691338, 12125559, 12288209, 10791297, 10792714 }:
-        print(f"Checking island: {outer_island}")
-        print(outer_island.wkt)
-    else:    
-        print(f"Checking island: {outer_island}")
-        inner_islands = islands.within(outer_island)
-        inner_island_count += inner_islands.count
-        island_count += 1
-print(f"Found {island_count} islands with {inner_island_count} inner islands.")
+    inner_islands = islands.within(outer_island)
+    if inner_islands:
+        # print(f"{outer_island} has inner islands")
+        # map.add(outer_island, color="orange")
+        for inner in inner_islands:
+            if inner == outer_island:
+                print(f"{outer_island} is within itself")
+            # map.add(inner, color="red", tooltip="{name}", link="https://www.openstreetmap.org/{osm_type}/{id}")
+        count += 1
+        if count > 1000:
+            break
+# map.show()

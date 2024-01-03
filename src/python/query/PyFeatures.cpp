@@ -770,6 +770,8 @@ int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
     }
     else
     {
+        assert (feature.bounds().intersects(self->bounds) ==
+            feature.intersects(self->bounds));
         if (!feature.intersects(self->bounds)) return 0;
     }
 

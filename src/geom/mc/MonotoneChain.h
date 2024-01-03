@@ -8,6 +8,12 @@
 class MonotoneChain
 {
 public:
+    MonotoneChain(Coordinate start, Coordinate end) :
+        coordCount(2),
+        coords{start,end}
+    {
+    }
+
     void initLineSegment(Coordinate start, Coordinate end)
     {
         coordCount = 2;
@@ -25,7 +31,7 @@ public:
     const Coordinate* findSegmentForY(int32_t y) const;
 
     /**
-     * Checks if this chain intersects another. This fucntion assumes that a 
+     * Checks if this chain intersects another. This function assumes that a 
      * preliminary check already established that their bounding boxes intersect.
      */
     bool intersects(const MonotoneChain* other) const;
@@ -44,7 +50,7 @@ public:
 
     // void createFromWay(Coordinate start, int wayFlags, WayCoordinateIterator& iter, int maxVertexes);
 
-    // TODO: could be fatser for normalized MC
+    // TODO: could be faster for normalized MC
     Box bounds() const
     {
         return Box::normalizedSimple(coords[0], coords[coordCount - 1]);
@@ -57,7 +63,7 @@ private:
     void copyCoordinates(Coordinate* dest, int direction) const;
 
 	int32_t coordCount;
-	Coordinate coords[1];		// variable-length
+	Coordinate coords[2];		// variable-length; minimum 2
 
     friend class WaySlicer;
     friend class CoordSequenceSlicer;
