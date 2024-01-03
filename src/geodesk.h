@@ -3,4 +3,4 @@
 
 #pragma once
 
-#define GEODESK_VERSION "0.1.3"
+#define GEODESK_VERSION "0.1.4"
