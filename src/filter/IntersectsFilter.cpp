@@ -44,9 +44,10 @@ bool IntersectsPolygonFilter::accept(FeatureStore* store, FeatureRef feature, Fa
 int IntersectsPolygonFilter::acceptTile(Tile tile) const
 {
 	Box tileBounds = tile.bounds();
-	if (index_.intersectsBox(tileBounds)) return 0;
-	return index_.locatePoint(tileBounds.bottomLeft()) < 0 ? -1 : 1;
+	int loc = index_.locateBox(tileBounds);
+	if (loc > 0) return 1;
 	// TODO: Don't use 1 to indicate tile acceleration, use enum constant
+	return loc;
 }
 
 

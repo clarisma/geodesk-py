@@ -119,8 +119,15 @@ public:
 	bool pointOnBoundary(Coordinate c) const;
 	bool intersects(const MonotoneChain* mc) const;
 
-	// TODO: This is really "crosses", since it only checks if the linework interacts
-	bool intersectsBox(const Box& box) const;
+	/**
+	 * Tests where the given Box is located in respect to the indexed polygon.
+	 * 
+	 * @returns  -1 = Box lies fully outside
+	 *            0 = Box boundary intersects with the polygon, or Box
+	 *                contains the polygon
+	 *            1 = Box lies fully inside the polygon
+	 */
+	int locateBox(const Box& box) const;
 	// bool intersectsLineSegment(Coordinate start, Coordinate end) const;
 	
 	// -1 outside, 0 = boundary, 1 = inside
@@ -147,7 +154,7 @@ private:
 
 	static bool intersectsChain(const RTree<const MonotoneChain>::Node* node,
 		const MonotoneChain* candidate);
-	static bool intersectsBox(const RTree<const MonotoneChain>::Node* node,
+	static bool intersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
 		const Box* bounds);
 
 	/*
