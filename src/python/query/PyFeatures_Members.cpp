@@ -43,7 +43,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
         // by definition member tiles cannot lie outside of the relation's
         // bounds (TODO: non-spatial members?)
 
-        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), relation.bounds());
+        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), relation.bounds(), self->filter);
             // TODO: could calculate tighter bounds based on accepted members
         while (tiw.next())
         {

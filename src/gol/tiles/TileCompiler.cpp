@@ -27,7 +27,7 @@ TileCompiler::TileCompiler(FeatureStore* store) :
 void TileCompiler::compile()
 {
 	outFile_= std::ofstream("e:\\geodesk\\exports\\planet-tes.bin", std::ios::binary);
-	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld());
+	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld(), nullptr);
 	while (tiw.next())
 	{
 		TileCompilerTask task(this, tiw.currentTile(), tiw.currentTip());

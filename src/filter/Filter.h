@@ -88,6 +88,7 @@ public:
      *  1 if tile is eligible for acceleration
      *    (ComboFilter returns a bit pattern indicating fast-filter status
      *     of each child filter)
+     *     // TODO: make sure this pattern does not collide with -1
      * -1 if tile should be skipped altogether
      * 
      * For ComboFilter, tile fails to fulfill any filter, it fails for the entire chain.

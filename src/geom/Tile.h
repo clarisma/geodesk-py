@@ -24,6 +24,11 @@ public:
 		return tile_;
 	}
 
+	bool operator==(const Tile& other) const 
+	{
+		return tile_ == other.tile_;
+	}
+
 	inline static int columnFromXZ(int32_t x, ZoomLevel zoom) 
 	{
 		return (int)((static_cast<long long>(x) + (1LL << 31)) >> (32 - zoom));
@@ -101,3 +106,16 @@ private:
 	
 	uint32_t tile_;
 };
+
+
+namespace std 
+{
+	template<>
+	struct hash<Tile> 
+	{
+		size_t operator()(const Tile& tile) const 
+		{
+			return std::hash<uint32_t>()(tile); 
+		}
+	};
+}

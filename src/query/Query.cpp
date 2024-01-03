@@ -17,7 +17,7 @@ Query::Query(FeatureStore* store, const Box& box, FeatureTypes types,
     currentResults_(QueryResults::EMPTY),
     currentPos_(QueryResults::EMPTY->count),
     allTilesRequested_(false),
-    tileIndexWalker_(store->tileIndex(), store->zoomLevels(), box),
+    tileIndexWalker_(store->tileIndex(), store->zoomLevels(), box, filter),
     queuedResults_(QueryResults::EMPTY),
     completedTiles_(0),
     isCancelled_(false)

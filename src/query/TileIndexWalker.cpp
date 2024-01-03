@@ -5,11 +5,16 @@
 
 #include <common/util/Bits.h>
 #include "feature/Feature.h"
+#include "filter/Filter.h"
 
-TileIndexWalker::TileIndexWalker(pointer pIndex, uint32_t zoomLevels, const Box& box) :
+TileIndexWalker::TileIndexWalker(
+    pointer pIndex, uint32_t zoomLevels, const Box& box, const Filter* filter) :
 	pIndex_(pIndex),
 	currentLevel_(0),
-    box_(box)
+    box_(box),
+    filter_(filter),
+    tileBasedAcceleration_(false),
+    trackAcceptedTiles_(false)
 {
 	int zoom = -1;
     Level* level = levels_;
@@ -22,6 +27,18 @@ TileIndexWalker::TileIndexWalker(pointer pIndex, uint32_t zoomLevels, const Box&
         zoomLevels >>= step;
         if (zoomLevels == 0) break;
         level++;
+    }
+    if (filter)
+    {
+        int filterFlags = filter->flags();
+        if (filterFlags & FilterFlags::FAST_TILE_FILTER)
+        {
+            tileBasedAcceleration_ = true;
+            if ((filterFlags & FilterFlags::STRICT_BBOX) == 0)
+            {
+                trackAcceptedTiles_ = true;
+            }
+        }
     }
     startRoot();
 }
@@ -145,6 +162,7 @@ void TileIndexWalker::startLevel(Level* level, int tip)
 
     level->childTileMask = (pIndex_ + (tip + 1) * 4).getUnsignedLong();
     level->pChildEntries = tip + (step == 3 ? 3 : 2);
+    level->turboFlags = 0; // TODO
 }
 
 void TileIndexWalker::startRoot()
