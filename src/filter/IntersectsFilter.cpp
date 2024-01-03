@@ -7,6 +7,10 @@
 
 bool IntersectsPolygonFilter::acceptWay(WayRef way) const
 {
+	Box bounds = way.bounds();
+	int loc = index_.maybeLocateBox(bounds);
+	if (loc != 0) return loc > 0;
+
 	if (wayIntersectsPolygon(way)) return true;
 	if (way.isArea() && way.bounds().containsSimple(bounds_))
 	{

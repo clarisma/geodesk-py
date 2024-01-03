@@ -176,6 +176,11 @@ bool MCIndex::intersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
 	return false;
 }
 
+bool MCIndex::maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
+	const Box* bounds)
+{
+	return true;
+}
 
 int MCIndex::locateBox(const Box& box) const
 {
@@ -189,3 +194,9 @@ int MCIndex::locateBox(const Box& box) const
 	return 1; // Box lies fully inside polygon
 }
 
+
+int MCIndex::maybeLocateBox(const Box& box) const
+{
+	if (index_.search(box, maybeIntersectsBoxBounds, &box)) return 0;
+	return locatePoint(box.bottomLeft());
+}

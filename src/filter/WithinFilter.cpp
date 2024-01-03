@@ -23,6 +23,10 @@ bool WithinPolygonFilter::acceptWay(WayRef way) const
 	// just need to check inside/outside base on single point
 	// (as well as check if way contains the filter polygon)
 
+	Box bounds = way.bounds();
+	int loc = index_.maybeLocateBox(bounds);
+	if (loc != 0) return loc > 0;
+
 	// TODO: accept if location >= 0 for area within area
 	// A within B is always true if A == B
 
@@ -91,7 +95,6 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 
 bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
 {
-	RecursionGuard guard(relation);
 	// We only check ways (i.e. ignore label nodes and sub-areas)
 
 	FastMemberIterator iter(store, relation);

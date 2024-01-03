@@ -128,6 +128,18 @@ public:
 	 *            1 = Box lies fully inside the polygon
 	 */
 	int locateBox(const Box& box) const;
+
+	/**
+	 * A shortcut test that only considers the bounding boxes of monotone 
+	 * chain.
+	 *
+	 * @returns  -1 = Box definitely lies fully outside 
+	 *            0 = Box *may* interact with the monotone chains (bboxes intersect);
+	 *                a full test is needed
+	 *            1 = Box definitely lies fully inside the polygon
+	 */
+	int maybeLocateBox(const Box& box) const;
+
 	// bool intersectsLineSegment(Coordinate start, Coordinate end) const;
 	
 	// -1 outside, 0 = boundary, 1 = inside
@@ -155,6 +167,8 @@ private:
 	static bool intersectsChain(const RTree<const MonotoneChain>::Node* node,
 		const MonotoneChain* candidate);
 	static bool intersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
+		const Box* bounds);
+	static bool maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
 		const Box* bounds);
 
 	/*
