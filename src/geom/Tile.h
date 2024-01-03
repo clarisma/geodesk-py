@@ -82,6 +82,12 @@ public:
 		return (col - (1 << (z - 1))) << (32 - z);
 	}
 
+	int rightX() const
+	{
+		int64_t extent = 1LL << (32 - zoom());
+		return static_cast<int>(leftX() + extent - 1);
+	}
+
 	Box bounds() const
 	{
 		int z = zoom();
@@ -89,6 +95,25 @@ public:
 		int minY = bottomY();
 		int64_t extent = 1LL << (32 - z);
 		return Box(minX, minY, (int)(minX + extent - 1), (int)(minY + extent - 1));
+	}
+
+	/**
+	 * Returns the tile number of an adjacent tile that lies
+	 * in the specified direction.
+	 *
+     * @param  colDelta
+     * @param  rowDelta
+     * @return the tile number of the adjacent tile
+     */
+	Tile neighbor(int colDelta, int rowDelta)
+	{
+		int z = zoom();
+		int x = column();
+		int y = row();
+		int mask = (1 << z) - 1;
+		x = (x + colDelta) & mask;
+		y = (y + rowDelta) & mask;
+		return fromColumnRowZoom(x, y, z);
 	}
 
 	std::string toString() const

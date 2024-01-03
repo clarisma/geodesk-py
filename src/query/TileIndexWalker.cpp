@@ -108,7 +108,36 @@ bool TileIndexWalker::next()
 
             if (tileBasedAcceleration_)
             {
-                // TODO
+                // TODO: Don't call acceptTile() if all turbo-flags are
+                // set for the current tile
+                
+                int turboFlags = filter_->acceptTile(currentTile_);
+                if (turboFlags < 0) continue;
+                turboFlags_ = static_cast<uint32_t>(turboFlags);
+                
+                if (trackAcceptedTiles_)
+                {
+                    Tile northTile = currentTile_.neighbor(0, -1);
+                    Tile westTile = currentTile_.neighbor(-1, 0);
+                    northwestFlags_ =
+                        (acceptedTiles_.find(northTile) != acceptedTiles_.end() ?
+                            FeatureFlags::MULTITILE_NORTH : 0) |
+                        (acceptedTiles_.find(westTile) != acceptedTiles_.end() ?
+                            FeatureFlags::MULTITILE_WEST : 0);
+                    acceptedTiles_.insert(currentTile_);
+                }
+                else
+                {
+                    // If we're not tracking accepted NW tiles (for filters that
+                    // use a strict bbox), pretend that NW tiles exist
+                    // If a feature extends into a N/W tile, the query bbox must
+                    // extend into the N/W tile as well, else it cannot be fully
+                    // within the bbox
+                    // (For simplicity, we could track tiles for strict-bbox filters
+                    // as well)
+
+                    northwestFlags_ = FeatureFlags::MULTITILE_NORTH | FeatureFlags::MULTITILE_WEST;
+                }
             }
             else
             {
@@ -121,6 +150,7 @@ bool TileIndexWalker::next()
                         FeatureFlags::MULTITILE_NORTH : 0) |
                     ((box_.minX() < currentTile_.leftX()) ?
                         FeatureFlags::MULTITILE_WEST : 0);
+                turboFlags_ = 0;
             }
             int tip = level->pChildEntries + childEntry;
             uint32_t pageOrPtr = (pIndex_ + (tip << 2)).getUnsignedInt();

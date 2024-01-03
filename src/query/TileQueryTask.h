@@ -14,10 +14,10 @@ class Query;
 class TileQueryTask
 {
 public:
-    TileQueryTask(Query* query, uint32_t tipAndFlags) :
+    TileQueryTask(Query* query, uint32_t tipAndFlags, FastFilterHint fastFilterHint) :
         query_(query),
         tipAndFlags_(tipAndFlags),
-        // fastFilterHint_(0),     // TODO: initialize
+        fastFilterHint_(fastFilterHint),     
         results_(QueryResults::EMPTY)
     {
     }

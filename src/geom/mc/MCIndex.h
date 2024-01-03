@@ -118,6 +118,8 @@ public:
 	bool containsPoint(Coordinate c) const;	
 	bool pointOnBoundary(Coordinate c) const;
 	bool intersects(const MonotoneChain* mc) const;
+
+	// TODO: This is really "crosses", since it only checks if the linework interacts
 	bool intersectsBox(const Box& box) const;
 	// bool intersectsLineSegment(Coordinate start, Coordinate end) const;
 	

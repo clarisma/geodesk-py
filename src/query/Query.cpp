@@ -140,7 +140,8 @@ void Query::requestTiles()
         }
         TileQueryTask task(this,
             (tileIndexWalker_.currentTip() << 8) |
-            tileIndexWalker_.northwestFlags());
+            tileIndexWalker_.northwestFlags(),
+            FastFilterHint(tileIndexWalker_.turboFlags(), tileIndexWalker_.currentTile()));
         store_->executor().post(task);
         pendingTiles_++;
         submitCount--;

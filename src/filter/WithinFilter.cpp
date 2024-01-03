@@ -112,11 +112,31 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 
 bool WithinPolygonFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
 {
-	/*
-	if (fast.turboFlags) return true;
-	// TODO: Turbo-mode needs to check if feature lies fully within tile bounds
-	*/
+	if (fast.turboFlags)
+	{
+		if ((feature.flags() &
+			(FeatureFlags::MULTITILE_NORTH | FeatureFlags::MULTITILE_WEST)) == 0)
+		{
+			// If feature lies completely within the current tile,
+			// we can fast-accept it
+
+			if (feature.minY() >= fast.tile.bottomY() &&
+				feature.maxX() <= fast.tile.rightX())
+			{
+				return true;
+			}
+		}
+	}
 	return acceptFeature(store, feature);
+}
+
+
+int WithinPolygonFilter::acceptTile(Tile tile) const
+{
+	Box tileBounds = tile.bounds();
+	if (index_.intersectsBox(tileBounds)) return 0;
+	return index_.locatePoint(tileBounds.bottomLeft()) < 0 ? -1 : 1; 
+		// TODO: Don't use 1 to indicate tile acceleration, use enum constant
 }
 
 /*

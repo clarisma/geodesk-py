@@ -17,9 +17,13 @@ class IntersectsPolygonFilter : public PreparedSpatialFilter
 {
 public:
 	IntersectsPolygonFilter(const Box& bounds, MCIndex&& index) :
-		PreparedSpatialFilter(bounds, std::move(index)) {}
+		PreparedSpatialFilter(bounds, std::move(index))
+	{
+		flags_ |= FilterFlags::FAST_TILE_FILTER;
+	}
 
 	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+	int acceptTile(Tile tile) const override;
 
 protected:
 	bool acceptWay(WayRef way) const override;

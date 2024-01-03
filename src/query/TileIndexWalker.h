@@ -20,6 +20,7 @@ public:
     uint32_t currentTip() const { return currentTip_; }
     Tile currentTile() const { return currentTile_; }
     uint32_t northwestFlags() const { return northwestFlags_; }
+    uint32_t turboFlags() const { return turboFlags_; }
     const Box& bounds() const { return box_; }
 
 private:
@@ -50,9 +51,10 @@ private:
     int currentLevel_;
     Tile currentTile_;
     uint32_t currentTip_;
+    uint32_t northwestFlags_;
+    uint32_t turboFlags_;
     bool tileBasedAcceleration_;
     bool trackAcceptedTiles_;
-    uint32_t northwestFlags_;
     std::unordered_set<Tile> acceptedTiles_;
     Level levels_[MAX_LEVELS];
 };
