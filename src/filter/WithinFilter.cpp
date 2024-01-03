@@ -26,7 +26,14 @@ bool WithinPolygonFilter::acceptWay(WayRef way) const
 	// TODO: accept if location >= 0 for area within area
 	// A within B is always true if A == B
 
-	return locateWayNodes(way) == 1; // && !anySegmentsCross(way);
+	return locateWayNodes(way) > (way.isArea() ? -1 : 0);
+	// A linestring is not considered "within" if it lies entirely
+	// on the boundary; it must have at least one node that lies on the
+	// interior, hence we only accept 1 ("inside")
+	// For ways that represent an area, we just ensure that none
+	// of the way's geometry lies outside (> -1); we need to accept
+	// 0 (on boundary) because two polygons which are geometrically equal 
+	// are considered to be within each other
 }
 
 bool WithinPolygonFilter::acceptNode(NodeRef node) const
@@ -85,7 +92,21 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
 {
 	RecursionGuard guard(relation);
-	return locateMembers(store, relation, guard) >= 0;
+	// We only check ways (i.e. ignore label nodes and sub-areas)
+
+	FastMemberIterator iter(store, relation);
+	for (;;)
+	{
+		FeatureRef member = iter.next();
+		if (member.isNull()) break;
+		if (member.isWay())
+		{
+			WayRef memberWay(member);
+			if (memberWay.isPlaceholder()) continue;
+			if (locateWayNodes(memberWay) < 0) return false;
+		}
+	}
+	return true;
 }
 
 

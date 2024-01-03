@@ -32,10 +32,10 @@ def notest_within(features):
 
 # An area is considered to be within itself
 def test_area_within_itself(features):
-    # areas = features("a[wikidata=Q1693]")
+    # areas = features("a[wikidata=Q54150]")
     areas = features("a")
     for a in areas:
-        print(f"Checking {a}...")
+        # print(f"Checking {a}...")
         assert a in features.within(a)
     
 
