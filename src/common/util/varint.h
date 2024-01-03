@@ -74,7 +74,7 @@ inline void writeVarint(uint8_t*& p, uint64_t val)
 		*p++ = (val & 0x7f) | 0x80;
 		val >>= 7;
 	}
-	*p++ = val;
+	*p++ = static_cast<uint8_t>(val);
 }
 
 

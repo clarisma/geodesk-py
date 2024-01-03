@@ -79,7 +79,7 @@ void OsmPbfReader::read(const char* fileName)
     {
         uint32_t rawHeaderLen;
         file.read(reinterpret_cast<char*>(&rawHeaderLen), 4);
-        uint32_t headerLen = ntohl(headerLen);
+        uint32_t headerLen = ntohl(rawHeaderLen);
 
         if (headerLen > 256)
         {
