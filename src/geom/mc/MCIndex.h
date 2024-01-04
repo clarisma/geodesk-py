@@ -189,6 +189,11 @@ private:
 
 	RTree<const MonotoneChain> index_;
 	const uint8_t* data_;
+
+	// TODO: Get rid of this, we cannot rely on a single point to check
+	//  if test geom is contained in candidate, because it may not have
+	//  continuous linework (e.g. multi-polygon); instead, we need to 
+	//  perform a more stringent test
 	Coordinate representativePoint_;
 };
 

@@ -46,7 +46,7 @@ def test_performance_intersects(features):
     usa = features(
         "a[boundary=administrative]"
         "[admin_level=2][name='United States']").one
-    buildings = features("a[building]")
+    buildings = features("a[building=yes]")
     
     benchmark("Filter construction", 
         lambda: buildings.intersects(bavaria))

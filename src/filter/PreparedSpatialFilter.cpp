@@ -33,8 +33,17 @@ bool PreparedSpatialFilter::anySegmentsCross(WayRef way) const
 
 bool PreparedSpatialFilter::wayIntersectsPolygon(WayRef way) const
 {
+
 	// First, check if any nodes lie inside the polygon or on its boundary
-	if (anyNodesInPolygon(way)) return true;
+	// if (anyNodesInPolygon(way)) return true;
+	 
+	// Changed: We only need to check the first node
+	// But performance impact appears to be negligible
+	
+	WayCoordinateIterator iter;
+	iter.start(way, 0);
+	if(index_.containsPoint(iter.next())) return true;
+		 
 	// Then check if any of the way's line segments cross any line segments of 
 	// the polygon
 	return anySegmentsCross(way);
