@@ -120,6 +120,15 @@ public:
 	bool intersects(const MonotoneChain* mc) const;
 
 	/**
+	 * Tests whether the boundary of the given box interacts with any
+	 * of the monotone chains in the index.
+	 */
+	bool intersectsBoxBoundary(const Box& box) const
+	{
+		return index_.search(box, intersectsBoxBoundary, &box);
+	}
+
+	/**
 	 * Tests where the given Box is located in respect to the indexed polygon.
 	 * 
 	 * @returns  -1 = Box lies fully outside
@@ -166,7 +175,7 @@ private:
 
 	static bool intersectsChain(const RTree<const MonotoneChain>::Node* node,
 		const MonotoneChain* candidate);
-	static bool intersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
+	static bool intersectsBoxBoundary(const RTree<const MonotoneChain>::Node* node,
 		const Box* bounds);
 	static bool maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
 		const Box* bounds);

@@ -130,7 +130,7 @@ bool MCIndex::intersectsLineSegment(Coordinate start, Coordinate end) const
 }
 */
 
-bool MCIndex::intersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
+bool MCIndex::intersectsBoxBoundary(const RTree<const MonotoneChain>::Node* node,
 	const Box* bounds)
 {
 	enum Edge
@@ -184,12 +184,17 @@ bool MCIndex::maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* n
 
 int MCIndex::locateBox(const Box& box) const
 {
-	if (index_.search(box, intersectsBoxBounds, &box)) return 0;
+	if (index_.search(box, intersectsBoxBoundary, &box)) return 0;
 	if (locatePoint(box.bottomLeft()) < 0)
 	{
 		// The box boundary lies outside the polygon
 		// Still need to check if the polygon lies inside the Box
 		return box.contains(representativePoint_) ? 0 : -1;
+
+		// TODO: No, this is not sufficient
+		// What is test geom is a multi-polygon, and the Box contains
+		// only one of the polygons which does not have the representative
+		// point as a vertex?
 	}
 	return 1; // Box lies fully inside polygon
 }

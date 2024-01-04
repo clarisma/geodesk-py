@@ -97,11 +97,6 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 {
 	// We only check ways (i.e. ignore label nodes and sub-areas)
 
-	if (relation.id() == 16367304)
-	{
-		LOG("DEBUG!!!");
-	}
-
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{

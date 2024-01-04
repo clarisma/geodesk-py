@@ -41,4 +41,9 @@ bool PreparedSpatialFilter::wayIntersectsPolygon(WayRef way) const
 	// TODO: need to check if area-way encloses polygon
 	// must be area
 	// bbox must be >= polygon bbox
+
+	// TODO: It may be cheaper to check only if the first point lies inside
+	// the test geometry
+	// If first point lies outside, the way can only intersect if any
+	// segments cross
 }

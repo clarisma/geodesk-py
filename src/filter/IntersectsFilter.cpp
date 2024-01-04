@@ -15,6 +15,22 @@ bool IntersectsPolygonFilter::acceptWay(WayRef way) const
 	if (way.isArea() && way.bounds().containsSimple(bounds_))
 	{
 		// check if representative point lies inside
+		// TODO: No, this test is not sufficient; we could also have a
+		// multi-polygon test geometry, and the candidate geometry only contains
+		// one of the polygons (which may not have the representative point)
+		// Must check entire test geom!
+
+		// Also, containsSimple does not work for the case where test geometry
+		// is a multi-polygon
+
+		// Proposed:
+		// - If way appears to not intersect, perform this final test:
+		//   - Find all MCs whose bbox intersects candidate bbox:
+		//     - IF MC bbox contained in candidate bbox:
+		//       - Check if first coordinate lies inside candidate polygon
+		//         - If so, the features intersect
+		// - OR: Perform this before the chain-crossing tests?
+
 		PointInPolygon tester(index_.representativePoint());
 		tester.testAgainstWay(way);
 		return tester.isInside();
@@ -33,6 +49,10 @@ bool IntersectsPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRe
 	if (acceptMembers(store, relation, guard)) return true;
 	if (!relation.bounds().containsSimple(bounds_)) return false;
 	// check if representative point lies inside area relation
+	// TODO: No, this test is not sufficient; we could also have a
+	// multi-polygon test geometry, and the candidate geometry only contains
+	// one of the polygons (which may not have the representative point)
+	// Must check entire test geom!
 	PointInPolygon tester(index_.representativePoint());
 	tester.testAgainstRelation(store, relation);
 	return tester.isInside();
@@ -57,6 +77,7 @@ int IntersectsPolygonFilter::acceptTile(Tile tile) const
 
 bool IntersectsLinealFilter::acceptWay(WayRef way) const
 {
+	// TODO: We also need to check if an area-way contains the test geometry!
 	return anySegmentsCross(way);
 }
 
@@ -67,6 +88,7 @@ bool IntersectsLinealFilter::acceptNode(NodeRef node) const
 
 bool IntersectsLinealFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
 {
+	// TODO: We also need to check if an area-relation contains the test geometry!
 	RecursionGuard guard(relation);
 	return acceptMembers(store, relation, guard);
 }

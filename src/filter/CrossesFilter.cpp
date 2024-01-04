@@ -5,6 +5,19 @@
 #include "feature/FastMemberIterator.h"
 
 
+int CrossesFilter::acceptTile(Tile tile) const
+{
+	return 0; // TODO
+	/*
+	Box tileBounds = tile.bounds();
+	if (index_.intersectsBoxBoundary(tileBounds)) return 0;
+	if(tileBounds.containsSimple(bounds_))
+	{
+		// TODO: Need to test tile if it contains the test geometry
+	}
+	return -1;
+	*/
+}
 
 bool CrossesFilter::acceptWay(WayRef way) const
 {

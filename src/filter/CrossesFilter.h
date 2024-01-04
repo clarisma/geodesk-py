@@ -15,10 +15,12 @@ public:
 	CrossesFilter(FeatureTypes accepted, const Box& bounds, MCIndex&& index) :
 		PreparedSpatialFilter(bounds, std::move(index)) 
 	{
+		flags_ |= FilterFlags::FAST_TILE_FILTER;
 		acceptedTypes_ = accepted;
 	}
 
 	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+	int acceptTile(Tile tile) const override;
 
 protected:
 	bool acceptWay(WayRef way) const override;
