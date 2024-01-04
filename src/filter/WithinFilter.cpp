@@ -91,8 +91,12 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 
 bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
 {
-	RecursionGuard guard(relation);
 	// We only check ways (i.e. ignore label nodes and sub-areas)
+
+	if (relation.id() == 16367304)
+	{
+		LOG("DEBUG!!!");
+	}
 
 	FastMemberIterator iter(store, relation);
 	for (;;)
@@ -106,6 +110,13 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 			if (locateWayNodes(memberWay) < 0) return false;
 		}
 	}
+
+	// TODO: Currently, areas without ways will be accepted (we should
+	// return false instead if there were no non-placeholder ways);
+	// however, this needs to be fixed in the GOL Tool and therefore
+	// won't be an issue
+	// See geodesk-py#30, gol-tool#107
+
 	return true;
 }
 
