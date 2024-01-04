@@ -37,9 +37,15 @@ def benchmark(desc, fun):
     
 
 def test_performance_intersects(features):
+    germany = features(
+        "a[boundary=administrative]"
+        "[admin_level=2][name:en=Germany]").one
     bavaria = features(
         "a[boundary=administrative]"
         "[admin_level=4][name:en=Bavaria]").one
+    usa = features(
+        "a[boundary=administrative]"
+        "[admin_level=2][name='United States']").one
     buildings = features("a[building=yes]")
     
     benchmark("Filter construction", 
@@ -54,7 +60,18 @@ def test_performance_intersects(features):
     benchmark("Buildings within Bavaria", 
         lambda: buildings.within(bavaria).count)
     
+    benchmark("Buildings that intersect Germany", 
+        lambda: buildings.intersects(germany).count)
+    
+    benchmark("Buildings within Germany", 
+        lambda: buildings.within(germany).count)
+    
+    benchmark("Buildings that intersect USA", 
+        lambda: buildings.intersects(usa).count)
+    
+    benchmark("Buildings within USA", 
+        lambda: buildings.within(usa).count)
+    
     benchmark("All post boxes", 
         lambda: features("na[amenity=post_box]").count)
-    
     
