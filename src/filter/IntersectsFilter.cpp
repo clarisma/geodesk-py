@@ -92,8 +92,9 @@ int IntersectsPolygonFilter::acceptTile(Tile tile) const
 
 bool IntersectsLinealFilter::acceptWay(WayRef way) const
 {
-	// TODO: We also need to check if an area-way contains the test geometry!
-	return anySegmentsCross(way);
+	if(anySegmentsCross(way)) return true;
+	if (!way.isArea()) return false;
+	return index_.findChains(way.bounds(), chainContainedByAreaWay, way.asBytePointer());
 }
 
 bool IntersectsLinealFilter::acceptNode(NodeRef node) const
@@ -103,9 +104,13 @@ bool IntersectsLinealFilter::acceptNode(NodeRef node) const
 
 bool IntersectsLinealFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
 {
-	// TODO: We also need to check if an area-relation contains the test geometry!
+	// TODO: check ways only
 	RecursionGuard guard(relation);
-	return acceptMembers(store, relation, guard);
+	if (acceptMembers(store, relation, guard)) return true;
+	
+	const StoredRelation storedRel{ store, relation };
+	return index_.findChains(relation.bounds(), 
+		chainContainedByAreaRelation, &storedRel);
 }
 
 
