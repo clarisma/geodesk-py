@@ -6,8 +6,8 @@ import pytest
 
 @pytest.fixture(scope="session")
 def features():
-    # f = Features('c:\\geodesk\\tests\\de.gol')
-    f = Features('c:\\geodesk\\tests\\w2.gol')
+    f = Features('c:\\geodesk\\tests\\de.gol')
+    # f = Features('c:\\geodesk\\tests\\w2.gol')
     yield f
 
 @pytest.fixture(scope="session")
