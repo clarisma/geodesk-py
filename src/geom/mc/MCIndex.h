@@ -79,15 +79,14 @@ private:
 class MCIndex
 {
 public:
-	MCIndex() : data_(nullptr), representativePoint_(0,0) {}
+	MCIndex() : data_(nullptr) {}
 	~MCIndex()
 	{
 		if (data_) delete[] data_;
 	}
 
-	MCIndex(const uint8_t* data, RTree<const MonotoneChain>&& index, 
-		Coordinate representativePoint) : 
-		data_(data), index_(std::move(index)), representativePoint_(representativePoint)
+	MCIndex(const uint8_t* data, RTree<const MonotoneChain>&& index) : 
+		data_(data), index_(std::move(index))
 	{
 		assert(data);
 	}
@@ -97,8 +96,7 @@ public:
 	MCIndex& operator=(const MCIndex& other) = delete;
 	MCIndex(MCIndex&& other) noexcept : 
 		data_(other.data_), 
-		index_(std::move(other.index_)),
-		representativePoint_(other.representativePoint_)
+		index_(std::move(other.index_))
 	{
 		other.data_ = nullptr; // Prevent other from deallocating the memory
 	}
@@ -108,12 +106,10 @@ public:
 		index_ = std::move(other.index_);
 		if (this != &other && data_) delete data_; // Release currently owned memory (if any)
 		data_ = other.data_;
-		representativePoint_ = other.representativePoint_;
 		other.data_ = nullptr;
 		return *this;
 	}
 
-	Coordinate representativePoint() const { return representativePoint_; }
 	bool properlyContainsPoint(Coordinate c) const;
 	bool containsPoint(Coordinate c) const;	
 	bool pointOnBoundary(Coordinate c) const;
@@ -194,12 +190,6 @@ private:
 
 	RTree<const MonotoneChain> index_;
 	const uint8_t* data_;
-
-	// TODO: Get rid of this, we cannot rely on a single point to check
-	//  if test geom is contained in candidate, because it may not have
-	//  continuous linework (e.g. multi-polygon); instead, we need to 
-	//  perform a more stringent test
-	Coordinate representativePoint_;
 };
 
 

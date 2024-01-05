@@ -182,19 +182,24 @@ bool MCIndex::maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* n
 	return true;
 }
 
+static bool chainContainedByBox(
+	const RTree<const MonotoneChain>::Node* node, const Box* box)
+{
+	return box->containsSimple(node->bounds);
+}
+
 int MCIndex::locateBox(const Box& box) const
 {
+	// TODO: maybe check corner location first? (cheaper?)
 	if (index_.search(box, intersectsBoxBoundary, &box)) return 0;
 	if (locatePoint(box.bottomLeft()) < 0)
 	{
-		// The box boundary lies outside the polygon
-		// Still need to check if the polygon lies inside the Box
-		return box.contains(representativePoint_) ? 0 : -1;
-
-		// TODO: No, this is not sufficient
-		// What is test geom is a multi-polygon, and the Box contains
-		// only one of the polygons which does not have the representative
-		// point as a vertex?
+		// If the box does not lie inside the test polygon,
+		// and their boundaries don't intersect, check if there
+		// are any chains that are contained by the box
+		// If so, the Box intersects the test polygon's boundary (=0)
+		// If not, we know that the Box truly lies outside (-1)
+		return findChains(box, chainContainedByBox, &box) ? 0 : -1;
 	}
 	return 1; // Box lies fully inside polygon
 }
