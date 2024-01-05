@@ -6,6 +6,7 @@
 #include "feature/Way.h"
 #include "feature/polygon/Polygonizer.h"
 #include "project/Lambert.h"
+#include "project/Sinusoidal.h"
 #include "Mercator.h"
 
 class Area
@@ -42,14 +43,25 @@ public:
 
     static ProjectedCoordinate project(Coordinate c)
     {
+        double lat = Mercator::latFromY(c.y);
+        return ProjectedCoordinate
+        {
+            Sinusoidal::xFromLonLat(Mercator::lonFromX(c.x), lat),
+            Sinusoidal::yFromLat(lat)
+        };
+    }
+
+    /*
+    static ProjectedCoordinate project(Coordinate c)
+    {
         return ProjectedCoordinate
         {
             Lambert::xFromLon(Mercator::lonFromX(c.x)),
             Lambert::yFromLat(Mercator::latFromY(c.y))
         };
     }
-
-    
+    */
+        
 	template<typename Iter>
 	static double signedOfAbstractRing(Iter& iter)
 	{
