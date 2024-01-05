@@ -97,4 +97,5 @@ AttrFunctionPtr const PyFeature::Node::FEATURE_METHODS[] =
     (AttrFunctionPtr)PyFormatter::wkt,   // wkt
     x,                  // x
     y,                  // y
+    return_zero,        // fast_area
 };

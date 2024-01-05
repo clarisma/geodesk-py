@@ -31,3 +31,4 @@ tags, 22
 wkt, 23
 x, 24
 y, 25
+fast_area, 26

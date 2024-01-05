@@ -186,6 +186,7 @@ AttrFunctionPtr const PyAnonymousNode::FEATURE_METHODS[] =
     (AttrFunctionPtr)PyFormatter::wkt,              // wkt -- TODO
     (AttrFunctionPtr)x,            // x
     (AttrFunctionPtr)y,            // y
+    PyFeature::return_zero,        // fast_area
 };
 
 

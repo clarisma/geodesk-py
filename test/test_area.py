@@ -32,9 +32,10 @@ def test_area_against_known(features):
     
     print() 
     print("                       Area (in square km)")
-    print("State                  Calculated   Wikipedia")
-    print("--------------------   ----------   ----------")
+    print("State                  Fast         Accurate     Wikipedia")
+    print("--------------------   ----------   ----------   ----------")
     for name, official_area in zip(state_names, official_area):
         state = features(f"a[boundary=administrative][admin_level=4][name='{name}']").one
+        fast_area = round(state.fast_area / 1000000)
         area = round(state.area / 1000000)
-        print(f"{name:20}   {area:>10}   {official_area:>10}")
+        print(f"{name:20}   {fast_area:>10}   {area:>10}   {official_area:>10}")

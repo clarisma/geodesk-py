@@ -6,6 +6,7 @@
 #include "feature/polygon/Polygonizer.h"
 #include "feature/polygon/Ring.h"
 #include "geom/Area.h"
+#include "geom/FastArea.h"
 #include "geom/Centroid.h"
 #include "geom/Length.h"
 #include "geom/Mercator.h"
@@ -31,6 +32,16 @@ PyObject* PyFeature::Relation::area(PyFeature* self)
         // total area of members that are areas?
     return PyFloat_FromDouble(Area::ofRelation(self->store, relation));
 }
+
+PyObject* PyFeature::Relation::fast_area(PyFeature* self)
+{
+    RelationRef relation(self->feature);
+    if (!relation.isArea()) return PyLong_FromLong(0);
+    // TODO: for non-area realtions, should we return the 
+    // total area of members that are areas?
+    return PyFloat_FromDouble(FastArea::ofRelation(self->store, relation));
+}
+
 
 PyObject* PyFeature::Relation::centroid(PyFeature* self)
 {
@@ -107,4 +118,5 @@ AttrFunctionPtr const PyFeature::Relation::FEATURE_METHODS[] =
     (AttrFunctionPtr)PyFormatter::wkt,   // wkt
     x,                  // x
     y,                  // y
+    fast_area,          // area
 };

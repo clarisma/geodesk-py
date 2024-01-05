@@ -93,6 +93,7 @@ class PyFeature::Way : public PyFeature
 {
 public:
     static PyObject* area(PyFeature* self);
+    static PyObject* fast_area(PyFeature* self);
     static PyObject* centroid(PyFeature* self);
     static PyObject* is_placeholder(PyFeature* self);
     static PyObject* length(PyFeature* self);
@@ -106,6 +107,7 @@ class PyFeature::Relation : public PyFeature
 {
 public:
     static PyObject* area(PyFeature* self);
+    static PyObject* fast_area(PyFeature* self);
     static PyObject* centroid(PyFeature* self);
     static PyObject* is_placeholder(PyFeature* self);
     static PyObject* length(PyFeature* self);
