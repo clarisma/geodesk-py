@@ -163,6 +163,11 @@ public:
 
 	// static void nextWayChain(Coordinate start, WayCoordinateIterator& iter, MonotoneChain* mc, int maxVertexes);
 
+	template <typename QT>
+	bool findChains(const Box& box, RTree<const MonotoneChain>::SearchFunction<QT> func, QT* closure) const
+	{
+		return index_.search(box, func, closure);
+	}
 	
 private:
 	struct PointLocationClosure
