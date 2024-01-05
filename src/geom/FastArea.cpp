@@ -50,7 +50,7 @@ double FastArea::signedMercatorOfRing(const Polygonizer::Ring* ring)
 double FastArea::ofRelation(FeatureStore* store, const RelationRef relation)
 {
     assert(relation.isArea());
-    int32_t avgY = (relation.minY() + relation.maxY()) / 2;
+    int32_t avgY = (static_cast<int64_t>(relation.minY()) + relation.maxY()) / 2;
     double scale = Mercator::metersPerUnitAtY(avgY);
     scale *= scale;     // squared for square meters
     double totalArea = 0;

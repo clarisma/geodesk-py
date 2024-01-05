@@ -1,6 +1,7 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
+import geodesk
 import time
 
 def test_area_against_known(features):
@@ -81,10 +82,12 @@ def sum_areas_fast(list):
         area += f.fast_area
     return area    
 
-def notest_performance(features):
-    areas = features("a")[:100000]
+def test_performance(features):
+    areas = features("a[building]")[:10000]
+    # areas = features("a[leisure=pitch]")[:100000]
     benchmark("Fast area", lambda: sum_areas_fast(areas))
     benchmark("Accurate area", lambda: sum_areas(areas))
+    geodesk.Map().add(areas, tooltip="{fast_area}").show()
 
 def test_polar_areas(features):
     greenland = features(

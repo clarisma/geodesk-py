@@ -13,7 +13,9 @@
 namespace Lambert
 {
     constexpr double EARTH_RADIUS = 6371000; // in meters, assuming spherical Earth
-
+    // TODO: maybe use an ellipsoid model?
+    // At 0 lat:     6,378,137
+    // At +/-90 lat: 6,356,752
     inline double xFromLon(double lon)
     {
         return EARTH_RADIUS * lon * M_PI / 180;

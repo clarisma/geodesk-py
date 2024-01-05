@@ -20,7 +20,7 @@ public:
     static double signedMercatorOfRing(const Polygonizer::Ring* ring);
     static double ofWay(const WayRef way)
 	{
-        int32_t avgY = (way.minY() + way.maxY()) / 2;
+        int32_t avgY = (static_cast<int64_t>(way.minY()) + way.maxY()) / 2;
         double scale = Mercator::metersPerUnitAtY(avgY);
 		return std::abs(signedMercatorOfWay(way)) * scale * scale;
 	}

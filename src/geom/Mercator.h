@@ -66,6 +66,6 @@ namespace Mercator
         double xDelta = (double)p1.x - p2.x;
         double yDelta = (double)p1.y - p2.y;
         double d = sqrt(xDelta * xDelta + yDelta * yDelta);
-        return d * metersPerUnitAtY((p1.y + p2.y) / 2);
+        return d * metersPerUnitAtY((static_cast<int64_t>(p1.y) + p2.y) / 2);
     }
 }
