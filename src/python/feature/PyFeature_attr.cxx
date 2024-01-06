@@ -1,4 +1,4 @@
-static const int ATTR_COUNT = 27;
+static const int ATTR_COUNT = 26;
 static const char* ATTR_NAMES[] =
 {
     "area",
@@ -27,5 +27,4 @@ static const char* ATTR_NAMES[] =
     "wkt",
     "x",
     "y",
-    "fast_area",
 };

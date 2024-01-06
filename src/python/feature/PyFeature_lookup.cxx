@@ -37,7 +37,7 @@
 #line 6 "PyFeature_attr.txt"
 struct Attribute { const char *name; int index; };
 
-#define TOTAL_KEYWORDS 27
+#define TOTAL_KEYWORDS 26
 #define MIN_WORD_LENGTH 1
 #define MAX_WORD_LENGTH 14
 #define MIN_HASH_VALUE 1
@@ -67,7 +67,7 @@ PyFeature_AttrHash::hash (const char *str, size_t len)
       39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
       39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
       39, 39, 39, 39, 39, 39, 39, 10, 20, 30,
-       0,  0, 10, 15, 15,  0, 39, 39,  0,  5,
+       0,  0, 39, 15, 15,  0, 39, 39,  0,  5,
        5, 25, 15, 39,  0,  0, 15, 39, 39, 10,
        5,  0, 39, 39, 39, 39, 39, 39, 39, 39,
       39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
@@ -145,9 +145,7 @@ PyFeature_AttrHash::lookup (const char *str, size_t len)
       {"geojson", 3},
 #line 31 "PyFeature_attr.txt"
       {"wkt", 23},
-#line 34 "PyFeature_attr.txt"
-      {"fast_area", 26},
-      {""}, {""}, {""},
+      {""}, {""}, {""}, {""},
 #line 25 "PyFeature_attr.txt"
       {"osm_type", 17},
       {""}, {""}, {""}, {""},

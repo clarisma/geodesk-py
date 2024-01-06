@@ -5,34 +5,28 @@
 
 #include "feature/Way.h"
 #include "feature/polygon/Polygonizer.h"
-#include "project/Lambert.h"
-#include "project/Sinusoidal.h"
 #include "Mercator.h"
 
+// TODO: units are squared-mercator-units, not square meters
 class Area
 {
-protected:
-    struct ProjectedCoordinate
-    {
-        double x;
-        double y;
-    };
-
 public:
     /**
-     * Returns the signed area (in squared meters)
+     * Returns the signed area (in squared Mercator units)
      * of the given way; assumes that way is an area.
      * (This function is useful for getting the winding order)
      */
-    static double signedOfWay(const WayRef way);
-    static double signedOfRing(const Polygonizer::Ring* ring);
+    static double signedMercatorOfWay(const WayRef way);
+    static double signedMercatorOfRing(const Polygonizer::Ring* ring);
     static double ofWay(const WayRef way)
 	{
-        return std::abs(signedOfWay(way));
+        int32_t avgY = (static_cast<int64_t>(way.minY()) + way.maxY()) / 2;
+        double scale = Mercator::metersPerUnitAtY(avgY);
+		return std::abs(signedMercatorOfWay(way)) * scale * scale;
 	}
-    static double ofRing(const Polygonizer::Ring* ring)
+    static double mercatorOfRing(const Polygonizer::Ring* ring)
     {
-        return std::abs(signedOfRing(ring));
+        return std::abs(signedMercatorOfRing(ring));
     }
 
     /**
@@ -41,37 +35,16 @@ public:
      */
     static double ofRelation(FeatureStore* store, const RelationRef relation);
 
-    static ProjectedCoordinate project(Coordinate c)
-    {
-        double lat = Mercator::latFromY(c.y);
-        return ProjectedCoordinate
-        {
-            Sinusoidal::xFromLonLat(Mercator::lonFromX(c.x), lat),
-            Sinusoidal::yFromLat(lat)
-        };
-    }
-
-    /*
-    static ProjectedCoordinate project(Coordinate c)
-    {
-        return ProjectedCoordinate
-        {
-            Lambert::xFromLon(Mercator::lonFromX(c.x)),
-            Lambert::yFromLat(Mercator::latFromY(c.y))
-        };
-    }
-    */
-        
 	template<typename Iter>
-	static double signedOfAbstractRing(Iter& iter)
+	static double signedMercatorOfAbstractRing(Iter& iter)
 	{
-        ProjectedCoordinate prev = project(iter.next());
-        ProjectedCoordinate middle = project(iter.next());
+        Coordinate prev = iter.next();
+        Coordinate middle = iter.next();
         double sum = 0.0;
         double x0 = prev.x;
         for (int count = iter.coordinatesRemaining(); count > 0; count--)
         {
-            ProjectedCoordinate next = project(iter.next());
+            Coordinate next = iter.next();
             double x = middle.x - x0;
             double y1 = next.y;
             double y2 = prev.y;

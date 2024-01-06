@@ -4,7 +4,6 @@
 #include "PyFeature.h"
 #include "feature/GeometryBuilder.h"
 #include "geom/Area.h"
-#include "geom/FastArea.h"
 #include "geom/Centroid.h"
 #include "geom/Length.h"
 #include "geom/Mercator.h"
@@ -26,13 +25,6 @@ PyObject* PyFeature::Way::area(PyFeature* self)
     WayRef way(self->feature);
     if (!way.isArea()) return PyLong_FromLong(0);
     return PyFloat_FromDouble(Area::ofWay(way));
-}
-
-PyObject* PyFeature::Way::fast_area(PyFeature* self)
-{
-    WayRef way(self->feature);
-    if (!way.isArea()) return PyLong_FromLong(0);
-    return PyFloat_FromDouble(FastArea::ofWay(way));
 }
 
 
@@ -95,6 +87,5 @@ AttrFunctionPtr const PyFeature::Way::FEATURE_METHODS[] =
     (AttrFunctionPtr)PyFormatter::wkt, // wkt
     x,                  // x
     y,                  // y
-    fast_area,          // area
 };
 

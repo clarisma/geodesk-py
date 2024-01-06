@@ -43,6 +43,7 @@ cmake-build-*/
 geodesk.egg-info/
 src/geodesk.egg-info/
 wheelhouse/
+enc_temp_folder/
 
 *.pyc
 .~lock*
