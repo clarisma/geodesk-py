@@ -12,7 +12,7 @@
 #include "geom/Mercator.h"
 #include <common/util/log.h>
 
-#include "PyFeature_attr.cxx"
+#include "PyFeature_lookup.cxx"
 
 
 // TODO: adding feature IDs to a set is 3x faster than adding the actual feature to a set!
