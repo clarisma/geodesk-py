@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cmath>
+#include <common/util/log.h>
 #include "Coordinate.h"
 
 #ifndef M_PI
@@ -36,11 +37,6 @@ namespace Mercator
         return static_cast<int>(std::round(yFromLat(static_cast<double>(lat) / 10000000.0)));
     }
 
-    inline double scale(double y)
-    {
-        return std::cosh(y * 2.0 * M_PI / MAP_WIDTH);
-    }
-
     inline double lonFromX(double x)
     {
         return x * 360.0 / MAP_WIDTH;
@@ -51,6 +47,27 @@ namespace Mercator
         return std::atan(std::exp(y * M_PI * 2.0 / MAP_WIDTH)) * 360.0 / M_PI - 90.0;
     }
     
+    inline double scale(double y)
+    {
+        /*
+        for (double lat = 0; lat <= 86; lat++)
+        {
+            LOG("new scale at %f lat = %f", lat, 1 / std::cos(lat * M_PI / 180.0));
+            LOG("old scale at %f lat = %f", lat, std::cosh(yFromLat(lat) * 2.0 * M_PI / MAP_WIDTH));
+        }
+        double latMax = 85.0511;
+        LOG("new scale at %f lat = %f", latMax, 1 / std::cos(latMax * M_PI / 180.0));
+        LOG("old scale at %f lat = %f", latMax, std::cosh(yFromLat(latMax) * 2.0 * M_PI / MAP_WIDTH));
+        */
+
+        // Re Issue #33:
+        // The original code is fine, equivalent to this (more expensive) formula
+        // up to Mercator maximum:
+        // return 1 / std::cos(latFromY(y) * M_PI / 180.0);
+
+        return std::cosh(y * 2.0 * M_PI / MAP_WIDTH);
+    }
+
     static double metersPerUnitAtY(double y)
     {
         return EARTH_CIRCUMFERENCE / MAP_WIDTH / scale(y);
