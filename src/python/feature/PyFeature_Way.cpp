@@ -27,6 +27,7 @@ PyObject* PyFeature::Way::area(PyFeature* self)
     return PyFloat_FromDouble(Area::ofWay(way));
 }
 
+
 PyObject* PyFeature::Way::centroid(PyFeature* self)
 {
     return PyCoordinate::create(Centroid::ofWay(WayRef(self->feature)));

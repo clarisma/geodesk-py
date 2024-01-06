@@ -32,6 +32,7 @@ PyObject* PyFeature::Relation::area(PyFeature* self)
     return PyFloat_FromDouble(Area::ofRelation(self->store, relation));
 }
 
+
 PyObject* PyFeature::Relation::centroid(PyFeature* self)
 {
     return PyCoordinate::create(Centroid::ofRelation(self->store, RelationRef(self->feature)));
