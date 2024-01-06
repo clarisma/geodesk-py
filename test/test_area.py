@@ -4,7 +4,7 @@
 import geodesk
 import time
 
-def test_area_against_known(features):
+def notest_area_against_known(features):
     state_names = [ 
         "Baden-W\u00FCrttemberg",
         "Bayern", 
@@ -82,14 +82,14 @@ def sum_areas_fast(list):
         area += f.fast_area
     return area    
 
-def test_performance(features):
+def notest_performance(features):
     areas = features("a[building]")[:10000]
     # areas = features("a[leisure=pitch]")[:100000]
     benchmark("Fast area", lambda: sum_areas_fast(areas))
     benchmark("Accurate area", lambda: sum_areas(areas))
     geodesk.Map().add(areas, tooltip="{fast_area}").show()
 
-def test_polar_areas(features):
+def notest_polar_areas(features):
     greenland = features(
         "a[boundary=administrative]"
         "[admin_level=2][name:en=Greenland]").one
@@ -111,8 +111,30 @@ def test_polar_areas(features):
     f = features("a[place=island][name='Meighen Island']").one
     print(f"Area of Meighen Island (fast):     {f.fast_area}")
     print(f"Area of Meighen Island (accurate): {f.area}")
-
     
-
-
+def test_areas(features):    
+    areas = [
+        ("Araucania (Chile)", 31842.3, "a[boundary=administrative][admin_level=4][wikidata=Q2176]"),
+        ("Baffin Island", 507451, "a[place=island][name:en='Baffin Island']"),
+        ("Bavaria", 70550.19, "a[boundary=administrative][admin_level=4][name:en=Bavaria]"),
+        ("Germany (land area)", 357600, "a[boundary=land_area][name:en='Federal Republic of Germany (land mass)']"),
+        ("Greenland (admin area)", 2166086, "a[boundary=administrative][admin_level=2][name:en=Greenland]"),
+        ("Komsomolets Island", 9006, "a[place=island][wikidata=Q248654]"),
+        ("Meighen Island", 955, "a[place=island][wikidata=Q477759]"),
+        ("Nordaustlandet", 14443, "a[place=island][name='Nordaustlandet']"),
+        ("Tarapaca (Chile)", 41799.5, "a[boundary=administrative][admin_level=4][wikidata=Q2114]"),
+        ("Saarland (Germany)", 2570, "a[boundary=administrative][admin_level=4][name=Saarland]"),
+        ("Sakhalin (Russia)", 72492, "a[place=island][wikidata=Q7792]"),
+        ("Victoria Island (Canada)", 217291, "a[place=island][name='Victoria Island'][wikidata=Q158129]"),
+        ("Victoria Island (Russia)", 10.8, "a[place=island][name:en='Victoria Island'][wikidata=Q1276972]"),
+    ]
     
+    print() 
+    print("                            Area (in square km)")
+    print("Name                        Fast         Accurate     Wikipedia")
+    print("-------------------------   ----------   ----------   ----------")
+    for name, official_area, query in areas:
+        f = features(query).one
+        fast_area = f.fast_area / 1000000
+        area = f.area / 1000000
+        print(f"{name:25}   {fast_area:10.2f}   {area:10.2f}   {official_area:10.2f}")
