@@ -54,7 +54,9 @@ private:
     uint8_t* arena_;
     uint16_t* buckets_;
     Entry* entries_;
+    #ifdef GEODESK_PYTHON
     PyObject** stringObjects_;
+    #endif
     // beware of alignment!
 };
 

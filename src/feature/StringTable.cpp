@@ -27,14 +27,20 @@ void StringTable::create(const uint8_t* pStrings)
 	uint32_t bucketCount = 1U << (32 - leadingZeroes);
 	lookupMask_ = bucketCount - 1;
 
+	#ifdef GEODESK_PYTHON
 	int stringObjectTableSize = stringCount_ * sizeof(PyObject*);
+	#else
+	int stringObjectTableSize = 0;
+	#endif
 	int entryTableSize = stringCount_ * sizeof(Entry*);
 	int arenaSize =
 		stringObjectTableSize +
 		entryTableSize +
 		bucketCount * sizeof(uint16_t);
 	arena_ = new uint8_t[arenaSize];
+	#ifdef GEODESK_PYTHON
 	stringObjects_ = reinterpret_cast<PyObject**>(arena_);
+	#endif
 	entries_ = reinterpret_cast<Entry*>(arena_ + stringObjectTableSize);
 	buckets_ = reinterpret_cast<uint16_t*>(arena_
 		+ stringObjectTableSize + entryTableSize);
@@ -52,16 +58,22 @@ void StringTable::create(const uint8_t* pStrings)
 	for (int i = stringCount_ - 1; i > 0; i--)
 	{
 		GlobalString str(stringBase_ + entries_[i].relPointer);
-		Py_hash_t hash = _Py_HashBytes(str.data(), str.length());
+		#ifdef GEODESK_PYTHON
+		HashCode hash = _Py_HashBytes(str.data(), str.length());
+		#else
+		HashCode hash = Strings::hash(str.data(), str.length());
+		#endif
 		int bucket = hash & lookupMask_;
 		uint16_t oldEntry = buckets_[bucket];
 		if (oldEntry) entries_[i].next = oldEntry;
 		buckets_[bucket] = i;
 	}
 
+	#ifdef GEODESK_PYTHON
 	// TODO: This may change if we store "" in the GOL's global strings
 	// PyObject* emptyStr = PyUnicode_NewEmptyUnicodeObject();
 	stringObjects_[0] = PyUnicode_InternFromString("");
+	#endif
 }
 
 
@@ -69,11 +81,13 @@ StringTable::~StringTable()
 {
 	if (arena_)
 	{
+		#ifdef GEODESK_PYTHON
 		for (uint32_t i = 0; i < stringCount_; i++)
 		{
 			PyObject* strObj = stringObjects_[i];
 			if (strObj) Py_DECREF(strObj);
 		}
+		#endif
 		delete[] arena_;
 	}
 }
@@ -130,6 +144,7 @@ int StringTable::getCode(const char* str, int len) const
 	return getCode(hash, str, len);
 }
 
+#ifdef GEODESK_PYTHON
 int StringTable::getCode(PyObject* strObj) const
 {
 	const char* str;
@@ -138,4 +153,4 @@ int StringTable::getCode(PyObject* strObj) const
 	return getCode(PyObject_Hash(strObj), str, static_cast<int>(len));
 	// TODO: Could get hash directly, but this is not in the public API
 }
-
+#endif

@@ -73,6 +73,8 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
         // are always global strings (may not be the case for very small
         // datasets where their string count falls below the minimum)
 
+        // TODO: just drop Python code altogether
+        #ifdef GEODESK_PYTHON
         PyObject* roleString = iter.borrowCurrentRole();
         const char* strRole = PyUnicode_AsUTF8(roleString);
         if(strRole)
@@ -88,6 +90,19 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
                 innerSegmentCount++;
             }
         }
+        #else   
+        std::string_view role = iter.currentRole();
+        if (role == "outer")
+        {
+            outerSegments = createSegment(way, outerSegments);
+            outerSegmentCount++;
+        }
+        else if (role == "inner")
+        {
+            innerSegments = createSegment(way, innerSegments);
+            innerSegmentCount++;
+        }
+        #endif
     }
     if (outerSegmentCount > 0)
     {

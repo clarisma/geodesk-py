@@ -62,6 +62,7 @@ endif()
 # link_directories(third-party/asmjit/out/build/x64-Release)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
+list(REMOVE_ITEM SOURCE_FILES "/src/main.cpp")
 
 # set(BOOST_ROOT "third-party/boost_1_81_0")
 # set(Boost_USE_STATIC_LIBS ON)  # Use static libraries. Switch to OFF if you want to use dynamic

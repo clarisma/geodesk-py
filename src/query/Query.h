@@ -32,16 +32,6 @@ public:
 
     pointer next();
 
-    /*
-    static const uint32_t NODES =     0b00000000'00000101'00000000'00000101;
-    static const uint32_t WAYS =      0b00000000'11110000'00000000'11110000;
-    static const uint32_t RELATIONS = 0b00001111'00000000'00001111'00000000;
-    static const uint32_t AREAS =     0b00001010'10100000'00001010'10100000;
-    static const uint32_t NONAREA_WAYS = WAYS & (~AREAS);
-    static const uint32_t NONAREA_RELATIONS = RELATIONS & (~AREAS);
-    static const uint32_t ALL = NODES | WAYS | RELATIONS;
-    */
-
     static const uint32_t REQUIRES_DEDUP = 0x8000'0000;
 
 private:

@@ -11,6 +11,8 @@
 
 // Warning: MemberIterator cannot be used on empty relations, need to check first
 
+// TODO: For the sake of the API, we should treat local and global strings the same
+
 class MemberIterator
 {
 public:
@@ -32,6 +34,18 @@ public:
 		return currentMember_ & MemberFlags::FOREIGN; 
 	}
 	Tip currentTip() const { return currentTip_; }
+
+	std::string_view currentRole() const
+	{
+		if (currentRoleCode_ >= 0)
+		{
+			return store_->strings().getGlobalString(currentRoleCode_).toStringView();
+		}
+		else
+		{
+			return currentRoleStr_.toStringView();
+		}
+	}
 
 	#ifdef GEODESK_PYTHON
 	/**

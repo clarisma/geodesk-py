@@ -9,7 +9,9 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#ifdef GEODESK_PYTHON
 #include <Python.h>
+#endif
 
 // TODO: use p_ and end_ of buffer, enable buffer to be safely used by multiple
 // writers, and avoid need to flush for memory-based buffers
@@ -124,6 +126,7 @@ public:
 		writeBytes(sv.data(), sv.length());
 	}
 
+	#ifdef GEODESK_PYTHON
 	void writeString(PyObject* str)
 	{
 		Py_ssize_t len;
@@ -135,6 +138,7 @@ public:
 		}
 		writeBytes(s, len);
 	}
+	#endif
 
 	void writeReplacedString(const char* s, const char* find, size_t findLen, 
 		const char* replaceWith, size_t replaceLen);

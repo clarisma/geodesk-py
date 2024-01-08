@@ -106,11 +106,12 @@ private:
     IndexedKeyMap keysToCategories_;
     MatcherCompiler matchers_;
     MatcherHolder allMatcher_;
+    #ifdef GEODESK_PYTHON
     PyObject* emptyFeatures_;       
         // Not ideal, should have global singleton instead of per-store,
         // but PyFeatures requires a non-null MatcherHolder, which in turn
         // requires a FeatureStore
-    // boost::asio::thread_pool executor_;
+    #endif
     ThreadPool<TileQueryTask> executor_;
     uint32_t zoomLevels_;
 

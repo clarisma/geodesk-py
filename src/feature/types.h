@@ -180,10 +180,12 @@ public:
         return std::string_view(data(), length());
     }
 
+    #ifdef GEODESK_PYTHON
     PyObject* toStringObject() const
     {
         return PyUnicode_FromStringAndSize(data(), length());
     }
+    #endif
 
     // TODO: std::from_chars not supported in GNU 10.2.1
     /*
