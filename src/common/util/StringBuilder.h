@@ -3,7 +3,9 @@
 
 #pragma once
 
+#ifdef GEODESK_PYTHON
 #include <Python.h>
+#endif
 #include "BufferWriter.h"
 
 class StringBuilder : public BufferWriter
@@ -21,12 +23,13 @@ public:
 		return std::string(buf_.data(), buf_.length());
 	}
 
+	#ifdef GEODESK_PYTHON
 	PyObject* toPythonString() 
 	{
 		flush();
 		return PyUnicode_FromStringAndSize(buf_.data(), buf_.length());
 	}
-
+	#endif	
 
 private:
 	DynamicBuffer buf_;		// TODO: Should use a StackBuffer

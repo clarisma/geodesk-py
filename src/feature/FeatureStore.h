@@ -5,8 +5,6 @@
 
 #include <algorithm>
 #include <unordered_map>
-// #include <boost/asio/thread_pool.hpp>
-// #include <boost/thread.hpp>
 #include <common/store/BlobStore.h>
 #include <common/util/Bits.h>
 #include <common/util/ThreadPool.h>
@@ -18,13 +16,11 @@
 
 class MatcherHolder;
 
-
 class ZoomLevels
 {
 public:
     inline int count()
     {
-        // return _mm_popcnt_u32(m_levels);        // TODO: Use Bits
         return Bits::bitCount(m_levels);
     }
 
@@ -78,10 +74,11 @@ public:
         return matcher == &allMatcher_;
     }
 
-    PyObject* emptyString();
+    #ifdef GEODESK_PYTHON
+    // PyObject* emptyString();
     PyObject* emptyTags();
+    #endif
 
-    // boost::asio::thread_pool& executor() { return executor_; }
     ThreadPool<TileQueryTask>& executor() { return executor_; }
 
     pointer fetchTile(Tip tip);
@@ -109,11 +106,12 @@ private:
     IndexedKeyMap keysToCategories_;
     MatcherCompiler matchers_;
     MatcherHolder allMatcher_;
+    #ifdef GEODESK_PYTHON
     PyObject* emptyFeatures_;       
         // Not ideal, should have global singleton instead of per-store,
         // but PyFeatures requires a non-null MatcherHolder, which in turn
         // requires a FeatureStore
-    // boost::asio::thread_pool executor_;
+    #endif
     ThreadPool<TileQueryTask> executor_;
     uint32_t zoomLevels_;
 

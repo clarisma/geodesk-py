@@ -11,6 +11,8 @@
 
 // Warning: MemberIterator cannot be used on empty relations, need to check first
 
+// TODO: For the sake of the API, we should treat local and global strings the same
+
 class MemberIterator
 {
 public:
@@ -19,7 +21,9 @@ public:
 
 	~MemberIterator()
 	{
+		#ifdef GEODESK_PYTHON
 		Py_DECREF(currentRoleObject_);
+		#endif
 	}
 
 	FeatureStore* store() const { return store_; }
@@ -31,11 +35,25 @@ public:
 	}
 	Tip currentTip() const { return currentTip_; }
 
+	std::string_view currentRole() const
+	{
+		if (currentRoleCode_ >= 0)
+		{
+			return store_->strings().getGlobalString(currentRoleCode_).toStringView();
+		}
+		else
+		{
+			return currentRoleStr_.toStringView();
+		}
+	}
+
+	#ifdef GEODESK_PYTHON
 	/**
 	 * Obtains a borrowed reference to the Python string object that
 	 * represents the role of the current member.
 	 */
 	PyObject* borrowCurrentRole() const { return currentRoleObject_; }
+	#endif
 
 private:
 	FeatureStore* store_;
@@ -44,7 +62,9 @@ private:
 	const Filter* filter_;
 	int currentRoleCode_;
 	LocalString currentRoleStr_;
+	#ifdef GEODESK_PYTHON
 	PyObject* currentRoleObject_;
+	#endif
 	Tip currentTip_;
 	int32_t currentMember_;
 	const Matcher* currentMatcher_;
@@ -52,15 +72,3 @@ private:
 	pointer pForeignTile_;
 };
 
-
-/*
-
-class AllMemberIterator : public MemberIterator
-{
-public:
-	AllMemberIterator(FeatureStore* store, pointer pMembers) :
-		MemberIterator(store, pMembers, FeatureTypes::ALL,
-			store->borrowAllMatcher(), nullptr) {}
-};
-
-*/

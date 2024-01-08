@@ -62,6 +62,7 @@ endif()
 # link_directories(third-party/asmjit/out/build/x64-Release)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
+list(REMOVE_ITEM SOURCE_FILES "/src/main.cpp")
 
 # set(BOOST_ROOT "third-party/boost_1_81_0")
 # set(Boost_USE_STATIC_LIBS ON)  # Use static libraries. Switch to OFF if you want to use dynamic
@@ -99,6 +100,7 @@ if(NOT BUILD_WHEELS)
 	add_executable (geodesk-py "src/main.cpp" ${SOURCE_FILES})
 	target_include_directories(geodesk-py PRIVATE "${GEOS_ROOT}/include/capi" "${GEOS_ROOT}/include")
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
+	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON=1)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
 endif()
 
@@ -114,6 +116,7 @@ else()
 	endif()
 endif()
 
+target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON=1)
 target_compile_definitions(geodesk PRIVATE _WIN32_WINNT=0x0601)
 # TODO: Add tests and install targets if needed.
 

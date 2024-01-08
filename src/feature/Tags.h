@@ -5,7 +5,9 @@
 
 #include <cassert>
 #include <string>
+#ifdef GEODESK_PYTHON
 #include <Python.h>
+#endif
 #include "types.h"
 #include "StringTable.h"
 #include <common/util/pointer.h>
@@ -36,10 +38,14 @@ public:
 	{
 		return reinterpret_cast<std::uintptr_t>(taggedPtr_) & 1;
 	}
+
+	#ifdef GEODESK_PYTHON
 	PyObject* valueAsString(TagBits value, StringTable& strings) const;
 	PyObject* valueAsObject(TagBits value, StringTable& strings) const;
 	PyObject* valueAsNumber(TagBits value, StringTable& strings) const;
 	PyObject* getValue(PyObject* key, StringTable& strings) const;
+	#endif
+
 	pointer ptr() const { return pointer::ofTagged(taggedPtr_, -2); }
 	pointer taggedPtr() const { return taggedPtr_; }
 	pointer alignedBasePtr() const { return pointer::ofTagged(taggedPtr_, -4); }
@@ -66,12 +72,6 @@ private:
 		return strings.getGlobalString(static_cast<uint32_t>(value) >> 16);
 	}
 
-	static PyObject* getGlobalStringObject(TagBits value, StringTable& strings)
-	{
-		assert((value & 3) == 1);
-		return strings.getStringObject(static_cast<uint32_t>(value) >> 16);
-	}
-
 	LocalString localString(TagBits value) const
 	{
 		assert((value & 3) == 3);
@@ -79,10 +79,18 @@ private:
 		return LocalString(ppValue + ppValue.getUnalignedInt());
 	}
 
+	#ifdef GEODESK_PYTHON
+	static PyObject* getGlobalStringObject(TagBits value, StringTable& strings)
+	{
+		assert((value & 3) == 1);
+		return strings.getStringObject(static_cast<uint32_t>(value) >> 16);
+	}
+
 	PyObject* getLocalStringObject(TagBits value) const
 	{
 		return localString(value).toStringObject();
 	}
+	#endif
 
 	const uint8_t* taggedPtr_;
 
