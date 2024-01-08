@@ -3,12 +3,13 @@
 
 from geodesk import *
 
-def notest_world_tiles():
-    world = Features("c:\\geodesk\\tests\\world.gol")
-    germany = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+def test_world_tiles():
+    world = Features("c:\\geodesk\\tests\\w2.gol")
+    # country = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+    country = world("a[boundary=administrative][admin_level=2][name='United States']").one
     m = Map()
     count = 0
-    for tile in world(germany).tiles:
+    for tile in world(country).tiles:
         bounds = tile.bounds
         m.add(bounds, tooltip=str(tile))
         count += 1
@@ -16,13 +17,14 @@ def notest_world_tiles():
     print (f"{count} tiles")
     
 def test_member_tiles():
-    world = Features("c:\\geodesk\\tests\\world.gol")
-    germany = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+    world = Features("c:\\geodesk\\tests\\w2.gol")
+    # country = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+    country = world("a[boundary=administrative][admin_level=2][name='United States']").one
     m = Map()
     count = 0
-    for tile in germany.members.tiles:
+    for tile in country.members.tiles:
         bounds = tile.bounds
         m.add(bounds, tooltip=str(tile))
         count += 1
     m.show()    
-    print (f"{germany.members.count} members in {count} tiles")
+    print (f"{country.members.count} members in {count} tiles")

@@ -11,7 +11,8 @@ public:
     ComboFilter(const Filter* a, const Filter* b);
     ~ComboFilter();
 
-    virtual bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const;
+    bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+    int acceptTile(Tile tile) const override;
 
 private:
     void add(const Filter* f);

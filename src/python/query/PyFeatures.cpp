@@ -186,7 +186,6 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
     {
         FeatureStore* store = self->store;
         TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds, self->filter);
-        // TODO: pass filter to TIW
         while (tiw.next())
         {
             PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());

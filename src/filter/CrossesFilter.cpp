@@ -7,20 +7,14 @@
 
 int CrossesFilter::acceptTile(Tile tile) const
 {
-	return 0; // TODO
-	/*
-	Box tileBounds = tile.bounds();
-	if (index_.intersectsBoxBoundary(tileBounds)) return 0;
-	if(tileBounds.containsSimple(bounds_))
-	{
-		// TODO: Need to test tile if it contains the test geometry
-	}
-	return -1;
-	*/
+	return index_.locateBox(tile.bounds()) == 0 ? 0 : -1;
 }
 
 bool CrossesFilter::acceptWay(WayRef way) const
 {
+	// If the way's bounding box does not intersect any MC bboxes,
+	// then it is impossible for its geometry to cross 
+	if (!index_.intersectsBoxBoundary(way.bounds())) return false;
 	return anySegmentsCross(way);
 }
 
