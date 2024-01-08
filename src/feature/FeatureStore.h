@@ -74,8 +74,10 @@ public:
         return matcher == &allMatcher_;
     }
 
+    #ifdef GEODESK_PYTHON
     // PyObject* emptyString();
     PyObject* emptyTags();
+    #endif
 
     ThreadPool<TileQueryTask>& executor() { return executor_; }
 

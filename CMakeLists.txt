@@ -99,6 +99,7 @@ if(NOT BUILD_WHEELS)
 	add_executable (geodesk-py "src/main.cpp" ${SOURCE_FILES})
 	target_include_directories(geodesk-py PRIVATE "${GEOS_ROOT}/include/capi" "${GEOS_ROOT}/include")
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
+	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON=1)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
 endif()
 
@@ -114,6 +115,7 @@ else()
 	endif()
 endif()
 
+target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON=1)
 target_compile_definitions(geodesk PRIVATE _WIN32_WINNT=0x0601)
 # TODO: Add tests and install targets if needed.
 

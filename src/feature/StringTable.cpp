@@ -5,6 +5,7 @@
 
 #include <common/util/Bits.h>
 #include <common/util/PbfDecoder.h>
+#include <common/util/Strings.h>
 
 StringTable::StringTable() :
 	arena_(nullptr)
@@ -89,7 +90,7 @@ bool StringTable::isValidCode(int code)
 	return code >= 0 && code < stringCount_;
 }
 
-
+#ifdef GEODESK_PYTHON
 PyObject* StringTable::getStringObject(int code)
 {
 	assert(code >= 0 && code < stringCount_);
@@ -103,8 +104,9 @@ PyObject* StringTable::getStringObject(int code)
 	Py_INCREF(strObj);
 	return strObj;
 }
+#endif
 
-int StringTable::getCode(Py_hash_t hash, const char* str, int len) const
+int StringTable::getCode(HashCode hash, const char* str, int len) const
 {
 	int bucket = hash & lookupMask_;
 	uint16_t code = buckets_[bucket];
@@ -120,7 +122,11 @@ int StringTable::getCode(Py_hash_t hash, const char* str, int len) const
 
 int StringTable::getCode(const char* str, int len) const
 {
-	Py_hash_t hash = _Py_HashBytes(str, len);
+	#ifdef GEODESK_PYTHON
+	HashCode hash = _Py_HashBytes(str, len);
+	#else
+	HashCode hash = Strings::hash(str, len);
+	#endif
 	return getCode(hash, str, len);
 }
 

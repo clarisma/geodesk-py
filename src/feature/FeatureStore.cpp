@@ -113,6 +113,7 @@ const MatcherHolder* FeatureStore::getMatcher(const char* query)
 	return matchers_.getMatcher(query);
 }
 
+#ifdef GEODESK_PYTHON
 
 /*
 PyObject* FeatureStore::emptyString()
@@ -128,5 +129,6 @@ PyObject* FeatureStore::emptyTags()
 	Py_RETURN_NONE;
 }
 
+#endif
 
 

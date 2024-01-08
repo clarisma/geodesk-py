@@ -4,11 +4,13 @@
 #include "Tags.h"
 #include <common/util/StringBuilder.h>
 
+#ifdef GEODESK_PYTHON
 PyObject* TagsRef::getValue(PyObject* key, StringTable& strings) const
 {
 	int64_t value = getKeyValue(key, strings);
 	return valueAsObject(value, strings);
 }
+#endif
 
 int64_t TagsRef::getKeyValue(PyObject* key, const StringTable& strings) const
 {
@@ -91,7 +93,7 @@ double TagsRef::wideNumber(TagBits value) const
 	return TagValue::doubleFromWideNumber(pValue.getUnsignedInt());
 }
 
-
+#ifdef GEODESK_PYTHON
 PyObject* TagsRef::valueAsString(TagBits value, StringTable& strings) const
 {
 	if (value == 0) return strings.getStringObject(0);
@@ -111,7 +113,6 @@ PyObject* TagsRef::valueAsString(TagBits value, StringTable& strings) const
 	buf.formatDouble(TagValue::doubleFromWideNumber(rawValue), scale, true);
 	return buf.toPythonString();
 }
-
 
 PyObject* TagsRef::valueAsObject(TagBits value, StringTable& strings) const
 {
@@ -155,6 +156,7 @@ PyObject* TagsRef::valueAsNumber(TagBits value, StringTable& strings) const
 	return PyFloat_FromDouble(v);
 }
 
+#endif // GEODESK_PYTHON
 
 uint32_t TagsRef::count() const
 {

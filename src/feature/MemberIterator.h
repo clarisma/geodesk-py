@@ -19,7 +19,9 @@ public:
 
 	~MemberIterator()
 	{
+		#ifdef GEODESK_PYTHON
 		Py_DECREF(currentRoleObject_);
+		#endif
 	}
 
 	FeatureStore* store() const { return store_; }
@@ -31,11 +33,13 @@ public:
 	}
 	Tip currentTip() const { return currentTip_; }
 
+	#ifdef GEODESK_PYTHON
 	/**
 	 * Obtains a borrowed reference to the Python string object that
 	 * represents the role of the current member.
 	 */
 	PyObject* borrowCurrentRole() const { return currentRoleObject_; }
+	#endif
 
 private:
 	FeatureStore* store_;
@@ -44,7 +48,9 @@ private:
 	const Filter* filter_;
 	int currentRoleCode_;
 	LocalString currentRoleStr_;
+	#ifdef GEODESK_PYTHON
 	PyObject* currentRoleObject_;
+	#endif
 	Tip currentTip_;
 	int32_t currentMember_;
 	const Matcher* currentMatcher_;
@@ -52,15 +58,3 @@ private:
 	pointer pForeignTile_;
 };
 
-
-/*
-
-class AllMemberIterator : public MemberIterator
-{
-public:
-	AllMemberIterator(FeatureStore* store, pointer pMembers) :
-		MemberIterator(store, pMembers, FeatureTypes::ALL,
-			store->borrowAllMatcher(), nullptr) {}
-};
-
-*/
