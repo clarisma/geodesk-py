@@ -1,6 +1,10 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#ifndef GEODESK_PYTHON
+#error "Relies on Python; enable GEODESK_PYTHON"
+#endif
+
 #include "python/module.h"
 #include <iostream>
 #include <chrono>

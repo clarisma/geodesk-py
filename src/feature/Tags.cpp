@@ -10,7 +10,6 @@ PyObject* TagsRef::getValue(PyObject* key, StringTable& strings) const
 	int64_t value = getKeyValue(key, strings);
 	return valueAsObject(value, strings);
 }
-#endif
 
 int64_t TagsRef::getKeyValue(PyObject* key, const StringTable& strings) const
 {
@@ -25,6 +24,7 @@ int64_t TagsRef::getKeyValue(PyObject* key, const StringTable& strings) const
 	return getLocalKeyValue(str, len);
 }
 
+#endif
 
 int64_t TagsRef::getKeyValue(const char* key, int len,
 	const StringTable& strings) const
