@@ -5,8 +5,6 @@
 
 #include <algorithm>
 #include <unordered_map>
-// #include <boost/asio/thread_pool.hpp>
-// #include <boost/thread.hpp>
 #include <common/store/BlobStore.h>
 #include <common/util/Bits.h>
 #include <common/util/ThreadPool.h>
@@ -18,13 +16,11 @@
 
 class MatcherHolder;
 
-
 class ZoomLevels
 {
 public:
     inline int count()
     {
-        // return _mm_popcnt_u32(m_levels);        // TODO: Use Bits
         return Bits::bitCount(m_levels);
     }
 
@@ -78,10 +74,9 @@ public:
         return matcher == &allMatcher_;
     }
 
-    PyObject* emptyString();
+    // PyObject* emptyString();
     PyObject* emptyTags();
 
-    // boost::asio::thread_pool& executor() { return executor_; }
     ThreadPool<TileQueryTask>& executor() { return executor_; }
 
     pointer fetchTile(Tip tip);

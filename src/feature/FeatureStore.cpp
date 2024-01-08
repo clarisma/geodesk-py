@@ -9,8 +9,7 @@
 #include <common/util/PbfDecoder.h>
 // #include "python/query/PyFeatures.h"
 
-// TODO: Replace boost::thread::hardware_concurrency() with 
-// std::thread::hardware_concurrency(). Note: It can return 0, so use
+// TODO: std::thread::hardware_concurrency() can return 0, so use
 // a default value in that case (e.g. 4 threads)
 
 std::unordered_map<std::string, FeatureStore*> FeatureStore::openStores_;
@@ -78,8 +77,6 @@ pointer FeatureStore::fetchTile(Tip tip)
 	uint32_t pageEntry = (tileIndex() + (tip << 2)).getUnsignedInt();
 	// Bit 0 is a flag bit (page vs. child pointer)
 	// TODO: load tiles
-	// test_xxx.test();
-	// thread_local ThreadLocalTest test_xxx;
 
 	return pagePointer(pageEntry >> 1);
 }
@@ -117,11 +114,13 @@ const MatcherHolder* FeatureStore::getMatcher(const char* query)
 }
 
 
+/*
 PyObject* FeatureStore::emptyString()
 {
 	// TODO
 	Py_RETURN_NONE;
 }
+*/
 
 PyObject* FeatureStore::emptyTags()
 {
