@@ -32,14 +32,9 @@ project ("geodesk-py")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/geos)
+add_subdirectory(third_party/zlib)
 
 include_directories(src)
-
-# ZLIB (not needed for now)
-# include_directories(third-party/zlib)
-# add_subdirectory(third-party/zlib)
-# link_directories(third-party/zlib/out/build/x64-Release)
-# include_directories(third-party/zlib/out/build/x64-Release)
 
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)
@@ -80,15 +75,29 @@ else()
 	set(GEOS_ROOT "${CMAKE_SOURCE_DIR}/out/build/x64-release/geos")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(ZLIB_ROOT "${CMAKE_SOURCE_DIR}/out/build/x64-debug/third_party/zlib")
+else()
+	set(ZLIB_ROOT "${CMAKE_SOURCE_DIR}/out/build/x64-release/third_party/zlib")
+endif()
+
+
 set(GEOS_LIBRARY_DIR "${GEOS_ROOT}/lib")
 
 set(LIBRARIES 
 	${Python_LIBRARIES}
 	# ${Boost_LIBRARIES}
-	# zlibstatic
+	zlibstatic
 	# asmjit
 	geos_c
 	geos
+)
+
+set(INCLUDES
+	"${GEOS_ROOT}/include/capi" 
+	"${GEOS_ROOT}/include"
+	third_party/zlib
+	${ZLIB_ROOT}
 )
 
 # Conditionally add Ws2_32 for Windows builds (required for ntohl in OsmPbfReader)
@@ -113,7 +122,7 @@ if(NOT BUILD_WHEELS)
 endif()
 
 add_library(geodesk MODULE ${SOURCE_FILES} )
-target_include_directories(geodesk PRIVATE "${GEOS_ROOT}/include/capi" "${GEOS_ROOT}/include")
+target_include_directories(geodesk PRIVATE ${INCLUDES})
 target_link_libraries(geodesk ${LIBRARIES})
 if(BUILD_WHEELS)
 	python_extension_module(geodesk)

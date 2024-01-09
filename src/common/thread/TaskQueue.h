@@ -16,7 +16,8 @@ public:
         size_(size),
         count_(0),
         front_(0),
-        rear_(0)
+        rear_(0),
+        running_(true)
     {
         queue_.resize(size);
     }

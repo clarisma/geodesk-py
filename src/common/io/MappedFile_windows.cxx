@@ -36,6 +36,12 @@ void MappedFile::unmap(void* mappedAddress, uint64_t /* length */)
     UnmapViewOfFile(mappedAddress);
 }
 
+void MappedFile::sync(const void* address, uint64_t length)
+{
+    if (!FlushViewOfFile(address, length)) IOException::checkAndThrow();
+    if (!FlushFileBuffers(handle())) IOException::checkAndThrow();
+}
+
 void MappedFile::prefetch(void* address, uint64_t length)
 {
     WIN32_MEMORY_RANGE_ENTRY entry;

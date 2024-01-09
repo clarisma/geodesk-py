@@ -33,11 +33,11 @@
 
 # Local directories
 .vs/
-build/
-out/
-_skbuild/
-dist/
-third-party/
+/build/
+/out/
+/_skbuild/
+/dist/
+/third-party/
 .idea/
 cmake-build-*/
 geodesk.egg-info/

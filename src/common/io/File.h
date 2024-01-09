@@ -53,6 +53,7 @@ public:
 
     void seek(uint64_t posAbsolute);
     size_t read(void* buf, size_t length);
+    size_t write(const void* buf, size_t length);
 
     void force();
 

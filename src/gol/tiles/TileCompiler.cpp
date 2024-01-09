@@ -8,6 +8,7 @@
 #include "TTile.h"
 #include "TIndex.h"
 #include "TesWriter.h"
+#include "gol/build/Analyzer.h"
 
 #include <thread>
 #include <chrono>
@@ -26,6 +27,16 @@ TileCompiler::TileCompiler(FeatureStore* store) :
 
 void TileCompiler::compile()
 {
+#ifdef _DEBUG
+	int threads = 1;
+#else
+	int threads = std::thread::hardware_concurrency();
+#endif
+	Analyzer reader(threads);
+	// reader.read("e:\\geodesk\\mapdata\\de-2021-01-29.osm.pbf");
+	reader.read("e:\\geodesk\\mapdata\\planet-2023-10-07.osm.pbf");
+	return;
+
 	outFile_= std::ofstream("e:\\geodesk\\exports\\planet-tes.bin", std::ios::binary);
 	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld(), nullptr);
 	while (tiw.next())
