@@ -17,7 +17,7 @@ Query::Query(FeatureStore* store, const Box& box, FeatureTypes types,
     currentResults_(QueryResults::EMPTY),
     currentPos_(QueryResults::EMPTY->count),
     allTilesRequested_(false),
-    tileIndexWalker_(store->tileIndex(), store->zoomLevels(), box),
+    tileIndexWalker_(store->tileIndex(), store->zoomLevels(), box, filter),
     queuedResults_(QueryResults::EMPTY),
     completedTiles_(0),
     isCancelled_(false)
@@ -140,7 +140,8 @@ void Query::requestTiles()
         }
         TileQueryTask task(this,
             (tileIndexWalker_.currentTip() << 8) |
-            tileIndexWalker_.northwestFlags());
+            tileIndexWalker_.northwestFlags(),
+            FastFilterHint(tileIndexWalker_.turboFlags(), tileIndexWalker_.currentTile()));
         store_->executor().post(task);
         pendingTiles_++;
         submitCount--;

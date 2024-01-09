@@ -24,6 +24,11 @@ public:
 		return tile_;
 	}
 
+	bool operator==(const Tile& other) const 
+	{
+		return tile_ == other.tile_;
+	}
+
 	inline static int columnFromXZ(int32_t x, ZoomLevel zoom) 
 	{
 		return (int)((static_cast<long long>(x) + (1LL << 31)) >> (32 - zoom));
@@ -77,6 +82,12 @@ public:
 		return (col - (1 << (z - 1))) << (32 - z);
 	}
 
+	int rightX() const
+	{
+		int64_t extent = 1LL << (32 - zoom());
+		return static_cast<int>(leftX() + extent - 1);
+	}
+
 	Box bounds() const
 	{
 		int z = zoom();
@@ -84,6 +95,25 @@ public:
 		int minY = bottomY();
 		int64_t extent = 1LL << (32 - z);
 		return Box(minX, minY, (int)(minX + extent - 1), (int)(minY + extent - 1));
+	}
+
+	/**
+	 * Returns the tile number of an adjacent tile that lies
+	 * in the specified direction.
+	 *
+     * @param  colDelta
+     * @param  rowDelta
+     * @return the tile number of the adjacent tile
+     */
+	Tile neighbor(int colDelta, int rowDelta)
+	{
+		int z = zoom();
+		int x = column();
+		int y = row();
+		int mask = (1 << z) - 1;
+		x = (x + colDelta) & mask;
+		y = (y + rowDelta) & mask;
+		return fromColumnRowZoom(x, y, z);
 	}
 
 	std::string toString() const
@@ -101,3 +131,16 @@ private:
 	
 	uint32_t tile_;
 };
+
+
+namespace std 
+{
+	template<>
+	struct hash<Tile> 
+	{
+		size_t operator()(const Tile& tile) const 
+		{
+			return std::hash<uint32_t>()(tile); 
+		}
+	};
+}

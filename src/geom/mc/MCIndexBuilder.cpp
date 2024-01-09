@@ -61,7 +61,7 @@ void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel
 	}
 
 	// TODO: We still need to ensure there is at least one chain;
-	// chainCount_ coukld be 0 if relation only consists of nodes
+	// chainCount_ could be 0 if relation only consists of nodes
 }
 
 
@@ -96,7 +96,6 @@ MCIndex MCIndexBuilder::build(Box bounds)
 	uint8_t* data = new uint8_t[totalChainSize_];
 	BoundedItem* boundedItems = arena_.allocArray<BoundedItem>(chainCount_);
 	const MCHolder* holder = first_;
-	Coordinate representativePoint = holder->chain.first();
 	BoundedItem* p = boundedItems;
 	uint8_t* pNextNormalizedChain = data;
 	while (holder)
@@ -114,7 +113,7 @@ MCIndex MCIndexBuilder::build(Box bounds)
 
 	HilbertTreeBuilder indexBuilder(&arena_);
 	return MCIndex(data, indexBuilder.build<const MonotoneChain>(
-		boundedItems, chainCount_, 9, bounds), representativePoint);
+		boundedItems, chainCount_, 9, bounds));
 }
 
 

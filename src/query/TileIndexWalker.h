@@ -3,19 +3,24 @@
 
 #pragma once
 
+#include <unordered_set>
 #include "feature/FeatureStore.h"
 #include "geom/Box.h"
 #include "geom/Tile.h"
 
+class Filter;
+
 class TileIndexWalker
 {
 public:
-    TileIndexWalker(pointer pIndex, uint32_t zoomLevels, const Box& box);
+    TileIndexWalker(pointer pIndex, uint32_t zoomLevels, 
+        const Box& box, const Filter* filter);
 
     bool next();
     uint32_t currentTip() const { return currentTip_; }
     Tile currentTile() const { return currentTile_; }
     uint32_t northwestFlags() const { return northwestFlags_; }
+    uint32_t turboFlags() const { return turboFlags_; }
     const Box& bounds() const { return box_; }
 
 private:
@@ -34,18 +39,22 @@ private:
         int16_t endRow;
         int16_t currentCol;
         int16_t currentRow;
-        // Filter filter;
+        uint32_t turboFlags;
 	};
 
     void startLevel(Level* level, int tip);
     void startRoot();
     
     Box box_;
+    const Filter* filter_;
     pointer pIndex_;
     int currentLevel_;
     Tile currentTile_;
     uint32_t currentTip_;
-    bool tileBasedAcceleration_ = false; // TODO
     uint32_t northwestFlags_;
+    uint32_t turboFlags_;
+    bool tileBasedAcceleration_;
+    bool trackAcceptedTiles_;
+    std::unordered_set<Tile> acceptedTiles_;
     Level levels_[MAX_LEVELS];
 };

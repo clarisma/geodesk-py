@@ -4,9 +4,13 @@ def test_performance_intersects(features):
         "[admin_level=2][name='United States']").one
     buildings = features("a[building]")
 
-    with open("c:\\geodesk\\debug\\slow-rels.txt", 'w') as file:
+    with open("c:\\geodesk\\debug\\fast-rels.txt", 'w') as file:
         for rel in buildings.relations.within(usa):
             file.write(f"{rel.id}\n")
+            
+    slow_ids = read_ids("c:\\geodesk\\debug\\slow-rels.txt")
+    fast_ids = read_ids("c:\\geodesk\\debug\\fast-rels.txt")
+    compare_sets_and_print_difference(slow_ids, fast_ids)
 
 def read_ids(file_path):
     ids = set()

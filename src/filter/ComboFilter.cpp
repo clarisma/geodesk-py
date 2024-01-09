@@ -78,3 +78,17 @@ bool ComboFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint
     }
     return true;
 }
+
+int ComboFilter::acceptTile(Tile tile) const
+{
+    int fast = 0;
+    int nextFlag = 1;
+    for (auto it = filters_.begin(); it != filters_.end(); ++it)
+    {
+        int accept = (*it)->acceptTile(tile);
+        if (accept < 0) return accept;
+        fast |= accept == 0 ? 0 : nextFlag;
+        nextFlag <<= 1;
+    }
+    return fast;
+}

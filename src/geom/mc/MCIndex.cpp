@@ -130,7 +130,7 @@ bool MCIndex::intersectsLineSegment(Coordinate start, Coordinate end) const
 }
 */
 
-bool MCIndex::intersectsBox(const RTree<const MonotoneChain>::Node* node,
+bool MCIndex::intersectsBoxBoundary(const RTree<const MonotoneChain>::Node* node,
 	const Box* bounds)
 {
 	enum Edge
@@ -176,9 +176,37 @@ bool MCIndex::intersectsBox(const RTree<const MonotoneChain>::Node* node,
 	return false;
 }
 
-
-bool MCIndex::intersectsBox(const Box& box) const
+bool MCIndex::maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
+	const Box* bounds)
 {
-	return index_.search(box, intersectsBox, &box);
+	return true;
 }
 
+static bool chainContainedByBox(
+	const RTree<const MonotoneChain>::Node* node, const Box* box)
+{
+	return box->containsSimple(node->bounds);
+}
+
+int MCIndex::locateBox(const Box& box) const
+{
+	// TODO: maybe check corner location first? (cheaper?)
+	if (index_.search(box, intersectsBoxBoundary, &box)) return 0;
+	if (locatePoint(box.bottomLeft()) < 0)
+	{
+		// If the box does not lie inside the test polygon,
+		// and their boundaries don't intersect, check if there
+		// are any chains that are contained by the box
+		// If so, the Box intersects the test polygon's boundary (=0)
+		// If not, we know that the Box truly lies outside (-1)
+		return findChains(box, chainContainedByBox, &box) ? 0 : -1;
+	}
+	return 1; // Box lies fully inside polygon
+}
+
+
+int MCIndex::maybeLocateBox(const Box& box) const
+{
+	if (index_.search(box, maybeIntersectsBoxBounds, &box)) return 0;
+	return locatePoint(box.bottomLeft());
+}

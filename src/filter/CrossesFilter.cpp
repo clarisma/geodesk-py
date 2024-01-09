@@ -5,9 +5,16 @@
 #include "feature/FastMemberIterator.h"
 
 
+int CrossesFilter::acceptTile(Tile tile) const
+{
+	return index_.locateBox(tile.bounds()) == 0 ? 0 : -1;
+}
 
 bool CrossesFilter::acceptWay(WayRef way) const
 {
+	// If the way's bounding box does not intersect any MC bboxes,
+	// then it is impossible for its geometry to cross 
+	if (!index_.intersectsBoxBoundary(way.bounds())) return false;
 	return anySegmentsCross(way);
 }
 

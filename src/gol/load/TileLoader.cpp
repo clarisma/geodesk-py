@@ -18,7 +18,7 @@ TileLoader::TileLoader(FeatureStore *store) :
 
 void TileLoader::load()
 {
-	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld());
+	TileIndexWalker tiw(store_->tileIndex(), store_->zoomLevels(), Box::ofWorld(), nullptr);
 	while (tiw.next())
 	{
 		TileLoaderTask task(store_, tiw.currentTile(), tiw.currentTip());

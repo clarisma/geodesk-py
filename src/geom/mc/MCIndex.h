@@ -79,15 +79,14 @@ private:
 class MCIndex
 {
 public:
-	MCIndex() : data_(nullptr), representativePoint_(0,0) {}
+	MCIndex() : data_(nullptr) {}
 	~MCIndex()
 	{
 		if (data_) delete[] data_;
 	}
 
-	MCIndex(const uint8_t* data, RTree<const MonotoneChain>&& index, 
-		Coordinate representativePoint) : 
-		data_(data), index_(std::move(index)), representativePoint_(representativePoint)
+	MCIndex(const uint8_t* data, RTree<const MonotoneChain>&& index) : 
+		data_(data), index_(std::move(index))
 	{
 		assert(data);
 	}
@@ -97,8 +96,7 @@ public:
 	MCIndex& operator=(const MCIndex& other) = delete;
 	MCIndex(MCIndex&& other) noexcept : 
 		data_(other.data_), 
-		index_(std::move(other.index_)),
-		representativePoint_(other.representativePoint_)
+		index_(std::move(other.index_))
 	{
 		other.data_ = nullptr; // Prevent other from deallocating the memory
 	}
@@ -108,17 +106,45 @@ public:
 		index_ = std::move(other.index_);
 		if (this != &other && data_) delete data_; // Release currently owned memory (if any)
 		data_ = other.data_;
-		representativePoint_ = other.representativePoint_;
 		other.data_ = nullptr;
 		return *this;
 	}
 
-	Coordinate representativePoint() const { return representativePoint_; }
 	bool properlyContainsPoint(Coordinate c) const;
 	bool containsPoint(Coordinate c) const;	
 	bool pointOnBoundary(Coordinate c) const;
 	bool intersects(const MonotoneChain* mc) const;
-	bool intersectsBox(const Box& box) const;
+
+	/**
+	 * Tests whether the boundary of the given box interacts with any
+	 * of the monotone chains in the index.
+	 */
+	bool intersectsBoxBoundary(const Box& box) const
+	{
+		return index_.search(box, intersectsBoxBoundary, &box);
+	}
+
+	/**
+	 * Tests where the given Box is located in respect to the indexed polygon.
+	 * 
+	 * @returns  -1 = Box lies fully outside
+	 *            0 = Box boundary intersects with the polygon, or Box
+	 *                contains the polygon
+	 *            1 = Box lies fully inside the polygon
+	 */
+	int locateBox(const Box& box) const;
+
+	/**
+	 * A shortcut test that only considers the bounding boxes of monotone 
+	 * chain.
+	 *
+	 * @returns  -1 = Box definitely lies fully outside 
+	 *            0 = Box *may* interact with the monotone chains (bboxes intersect);
+	 *                a full test is needed
+	 *            1 = Box definitely lies fully inside the polygon
+	 */
+	int maybeLocateBox(const Box& box) const;
+
 	// bool intersectsLineSegment(Coordinate start, Coordinate end) const;
 	
 	// -1 outside, 0 = boundary, 1 = inside
@@ -133,6 +159,11 @@ public:
 
 	// static void nextWayChain(Coordinate start, WayCoordinateIterator& iter, MonotoneChain* mc, int maxVertexes);
 
+	template <typename QT>
+	bool findChains(const Box& box, RTree<const MonotoneChain>::SearchFunction<QT> func, QT* closure) const
+	{
+		return index_.search(box, func, closure);
+	}
 	
 private:
 	struct PointLocationClosure
@@ -145,7 +176,9 @@ private:
 
 	static bool intersectsChain(const RTree<const MonotoneChain>::Node* node,
 		const MonotoneChain* candidate);
-	static bool intersectsBox(const RTree<const MonotoneChain>::Node* node,
+	static bool intersectsBoxBoundary(const RTree<const MonotoneChain>::Node* node,
+		const Box* bounds);
+	static bool maybeIntersectsBoxBounds(const RTree<const MonotoneChain>::Node* node,
 		const Box* bounds);
 
 	/*
@@ -157,7 +190,6 @@ private:
 
 	RTree<const MonotoneChain> index_;
 	const uint8_t* data_;
-	Coordinate representativePoint_;
 };
 
 

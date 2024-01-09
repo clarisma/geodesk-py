@@ -23,6 +23,10 @@ bool WithinPolygonFilter::acceptWay(WayRef way) const
 	// just need to check inside/outside base on single point
 	// (as well as check if way contains the filter polygon)
 
+	Box bounds = way.bounds();
+	int loc = index_.maybeLocateBox(bounds);
+	if (loc != 0) return loc > 0;
+
 	// TODO: accept if location >= 0 for area within area
 	// A within B is always true if A == B
 
@@ -93,11 +97,6 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 {
 	// We only check ways (i.e. ignore label nodes and sub-areas)
 
-	if (relation.id() == 16367304)
-	{
-		LOG("DEBUG!!!");
-	}
-
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
@@ -123,11 +122,32 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 
 bool WithinPolygonFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
 {
-	/*
-	if (fast.turboFlags) return true;
-	// TODO: Turbo-mode needs to check if feature lies fully within tile bounds
-	*/
+	if (fast.turboFlags)
+	{
+		if ((feature.flags() &
+			(FeatureFlags::MULTITILE_NORTH | FeatureFlags::MULTITILE_WEST)) == 0)
+		{
+			// If feature lies completely within the current tile,
+			// we can fast-accept it
+
+			if (feature.minY() >= fast.tile.bottomY() &&
+				feature.maxX() <= fast.tile.rightX())
+			{
+				return true;
+			}
+		}
+	}
 	return acceptFeature(store, feature);
+}
+
+
+int WithinPolygonFilter::acceptTile(Tile tile) const
+{
+	Box tileBounds = tile.bounds();
+	int loc = index_.locateBox(tileBounds);
+	if (loc > 0) return 1; 
+		// TODO: Don't use 1 to indicate tile acceleration, use enum constant
+	return loc; 
 }
 
 /*

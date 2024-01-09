@@ -13,6 +13,7 @@ class PointInPolygon
 {
 public:
 	// TODO: class is not really used here, defined for Polygonizer
+	// TODO: These constants differ from other cases, which use -1/0/1
 	enum class Location
 	{
 		OUTSIDE = 0,

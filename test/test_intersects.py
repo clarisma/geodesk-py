@@ -5,7 +5,7 @@ import geodesk
 import json
 from shapely.geometry import shape
 
-def notest_intersects(features):
+def test_intersects(features):
     """
     - An `intersects` query should return the same number of features,
      regardless whether we use the area feature or its shape

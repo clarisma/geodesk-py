@@ -15,7 +15,9 @@ public:
 	WithinPolygonFilter(const Box& bounds, MCIndex&& index) :
 		PreparedSpatialFilter(bounds, std::move(index)) 
 	{
-		flags_ |= FilterFlags::MUST_ACCEPT_ALL_MEMBERS | 
+		flags_ |= 
+			FilterFlags::FAST_TILE_FILTER |
+			FilterFlags::MUST_ACCEPT_ALL_MEMBERS | 
 			FilterFlags::STRICT_BBOX;
 	}
 
@@ -27,7 +29,8 @@ public:
 	}
 
 	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
-
+	int acceptTile(Tile tile) const override;
+	
 protected:
 	bool acceptWay(WayRef way) const override;
 	bool acceptNode(NodeRef node) const override;
