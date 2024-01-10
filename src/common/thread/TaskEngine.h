@@ -24,6 +24,7 @@ public:
 
     ~TaskEngine()
     {
+        // TODO: Check if alread shut down (more efficient)
         end();
     }
 

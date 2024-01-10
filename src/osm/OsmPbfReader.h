@@ -3,6 +3,7 @@
 
 #pragma once
 #include <string_view>
+#include <common/io/File.h>
 #include <common/thread/TaskEngine.h>
 #include <common/util/Bits.h>
 #include <common/util/log.h>
@@ -413,10 +414,9 @@ public:
 
 	void read(const char* fileName)
 	{
-		std::ifstream file(fileName, std::ios::binary);
-		file.seekg(0, std::ifstream::end);  // Move to the end of the file
-		std::streamsize fileSize = file.tellg(); // Get the position (file size)
-		file.seekg(0, std::ifstream::beg);   // Reset the position to the beginning
+		File file;
+		file.open(fileName, File::OpenMode::READ);
+		uint64_t fileSize = file.size();
 
 		size_t totalBytesRead = 0;
 		while (totalBytesRead < fileSize)
@@ -424,7 +424,7 @@ public:
 			// The header length (uint32) is in network byte order
 			// TODO: Code below assumes native byte order is Little-Endian
 			uint32_t rawHeaderLen;
-			file.read(reinterpret_cast<char*>(&rawHeaderLen), 4);
+			file.read(&rawHeaderLen, 4);
 			uint32_t headerLen = Bits::reverseByteOrder32(rawHeaderLen);
 
 			if (headerLen > 256)
@@ -433,7 +433,7 @@ public:
 			}
 
 			uint8_t buf[256];
-			file.read(reinterpret_cast<char*>(buf), headerLen);
+			file.read(buf, headerLen);
 			const uint8_t* p = buf;
 			const uint8_t* pEnd = p + headerLen;
 
@@ -463,11 +463,11 @@ public:
 			block.data = data;
 			block.dataSize = dataLen;
 			block.blockSize = dataLen + headerLen + 4;
-			file.read(reinterpret_cast<char*>(data), dataLen);
+			file.read(data, dataLen);
 			if (blockType == "OSMData")
 			{
 				LOG("Block with %d bytes", block.blockSize);
-				// this->postWork(block);
+				this->postWork(block);
 			}
 			else if (blockType == "OSMHeader")
 			{
@@ -479,6 +479,8 @@ public:
 			}
 			totalBytesRead += block.blockSize;
 		}
+		LOG("Waiting for threads to complete...");
+		this->end();
 		LOG("Done.");
 	}
 
