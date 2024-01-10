@@ -574,7 +574,7 @@ void BlobStore::Transaction::free(PageNum firstPage)
     // ensure that the transaction can be fully rolled back in case
     // of failure)
 
-    freedBlobs_.insert(firstPage, pages);
+    freedBlobs_.insert({ firstPage, pages });
 }
 
 /**

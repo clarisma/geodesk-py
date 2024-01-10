@@ -34,7 +34,7 @@ public:
 	DynamicBuffer(size_t initialCapacity);
 	virtual ~DynamicBuffer();
 
-	virtual void filled(char* p);
+	virtual void filled(char* p);		// TODO: why does this take a pointer??
 	virtual void flush(char* p);
 	char* take();
 

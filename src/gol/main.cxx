@@ -4,9 +4,14 @@
 #include <chrono>
 #include "feature/FeatureStore.h"
 #include "query/Query.h"
+#include "BuildCommand.h"
 
 int main(int argc, char* argv[])
 {
+	BuildCommand cmd;
+	cmd.run(argv);
+
+	/*
 	FeatureStore store;
 	store.open(argv[2]);
 
@@ -31,5 +36,6 @@ int main(int argc, char* argv[])
 
 		printf("%lld features found in %.3f seconds\n", count, duration.count() / 1e6);
 	}
+	*/
 }
 

@@ -17,8 +17,52 @@ public:
 	}
 
 	using PageNum = uint32_t;
-	struct Blob;
-	struct Header;
+
+	struct Header
+	{
+		uint32_t magic;
+		uint16_t versionLow;
+		uint16_t versionHigh;
+		uint64_t creationTimestamp;
+		uint8_t  guid[16];
+		uint8_t  pageSize;
+		uint32_t reserved : 24;
+		uint32_t metadataSize;
+		uint32_t propertiesPointer;
+		uint32_t indexPointer;
+
+		/**
+		 * The total number of pages in use (includes free blobs and metadata pages).
+		 */
+		uint32_t totalPageCount;
+
+		/**
+		 * A bitfield indicating which spans of 16 slots in the Trunk Free-Table
+		 * have at least one slot that is non-zero.
+		 */
+		uint32_t trunkFreeTableRanges;
+		uint32_t datasetVersion;
+		uint32_t reserved2;
+		uint8_t  subtypeData[64];
+
+		/**
+		 * The Trunk Free-Table
+		 */
+		PageNum trunkFreeTable[512];
+	};
+
+	struct Blob
+	{
+		uint32_t precedingFreeBlobPages;
+		uint32_t payloadSize : 30;
+		bool     unused : 1;
+		bool     isFree : 1;
+		PageNum  prevFreeBlob;
+		PageNum  nextFreeBlob;
+		uint32_t leafFreeTableRanges;
+		uint8_t  unused2[44];
+		PageNum  leafFreeTable[512];
+	};
 
 	class Transaction : private Store::Transaction
 	{
@@ -121,52 +165,6 @@ protected:
 	
 		
 private:
-	struct Header
-	{
-		uint32_t magic;
-		uint16_t versionLow;
-		uint16_t versionHigh;
-		uint64_t creationTimestamp;
-		uint8_t  guid[16];
-		uint8_t  pageSize;
-		uint32_t reserved : 24;
-		uint32_t metadataSize;
-		uint32_t propertiesPointer;
-		uint32_t indexPointer;
-
-		/**
-		 * The total number of pages in use (includes free blobs and metadata pages).
-		 */
-		uint32_t totalPageCount;
-
-		/**
-		 * A bitfield indicating which spans of 16 slots in the Trunk Free-Table
-		 * have at least one slot that is non-zero.
-		 */
-		uint32_t trunkFreeTableRanges;
-		uint32_t datasetVersion;
-		uint32_t reserved2;
-		uint8_t  subtypeData[64];
-
-		/**
-		 * The Trunk Free-Table
-		 */
-		PageNum trunkFreeTable[512];
-	};
-
-	struct Blob
-	{
-		uint32_t precedingFreeBlobPages;
-		uint32_t payloadSize : 30;
-		bool     unused : 1;
-		bool     isFree : 1;
-		PageNum  prevFreeBlob;
-		PageNum  nextFreeBlob;
-		uint32_t leafFreeTableRanges;
-		uint8_t  unused2[44];
-		PageNum  leafFreeTable[512];
-	};
-
 	uint32_t pageSizeShift_ = 12;	// TODO: default 4KB page
 };
 

@@ -466,7 +466,8 @@ public:
 			file.read(reinterpret_cast<char*>(data), dataLen);
 			if (blockType == "OSMData")
 			{
-				this->postWork(block);
+				LOG("Block with %d bytes", block.blockSize);
+				// this->postWork(block);
 			}
 			else if (blockType == "OSMHeader")
 			{
