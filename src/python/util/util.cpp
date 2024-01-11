@@ -128,6 +128,17 @@ PyObject* Python::checkType(PyObject* arg, PyTypeObject* type, const char* what)
     return arg;
 }
 
+PyObject* Python::checkNumeric(PyObject* arg)
+{
+    if (!PyNumber_Check(arg))
+    {
+        PyErr_Format(PyExc_TypeError, "Expected number (instead of %s)", 
+            arg->ob_type->tp_name);
+        return NULL;
+    }
+    return arg;
+}
+
 
 PyObject* Python::checkSingleArg(PyObject* args, PyObject* kwargs, PyTypeObject* type)
 {

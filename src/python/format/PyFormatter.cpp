@@ -7,9 +7,14 @@
 #include "format/GeoJsonWriter.h"
 #include "format/WktWriter.h"
 #include "python/feature/PyFeature.h"
+#include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
 
-PyObject* PyFormatter::create(PyObject* obj, WriteFunc func, const char* ext)
+#include "PyFormatter_attr.cxx"
+#include "PyFormatter_lookup.cxx"
+
+
+PyFormatter* PyFormatter::create(PyObject* obj, WriteFunc func, const char* ext)
 {
 	PyFormatter* self = (PyFormatter*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
@@ -17,14 +22,40 @@ PyObject* PyFormatter::create(PyObject* obj, WriteFunc func, const char* ext)
 		self->target = Python::newRef(obj);
 		self->writeFunc = func;
 		self->fileExtension = ext;
+		self->limit = INT64_MAX;
+		self->scale = 1.0;
+		self->translateX = 0.0;
+		self->translateY = 0.0;
+		self->precision = 7;
+		self->pretty = false;
+		self->linewise = false;
+		self->mercator = false;
+		self->sortTags = false;
 	}
 	return self;
 }
 
+int PyFormatter::setAttributes(PyObject* dict)
+{
+	PyObject* key;
+	PyObject* value;
+	Py_ssize_t pos = 0;
+
+	while (PyDict_Next(dict, &pos, &key, &value))
+	{
+		if (setAttribute(key, value) < 0) return -1;
+	}
+	return 0;
+}
+
 PyObject* PyFormatter::call(PyFormatter* self, PyObject* args, PyObject* kwargs)
 {
-	// TODO
-	Py_RETURN_NONE;
+	// TODO: Shouldn't we create a copy of the Formatter?
+	if (kwargs)
+	{
+		if (self->setAttributes(kwargs) < 0) return NULL;
+	}
+	return Python::newRef(self);
 }
 
 void PyFormatter::dealloc(PyFormatter* self)
@@ -32,11 +63,64 @@ void PyFormatter::dealloc(PyFormatter* self)
 	Py_DECREF(self->target);
 }
 
+int PyFormatter::lookupAttr(PyObject* key)
+{
+	Py_ssize_t len;
+	const char* name = PyUnicode_AsUTF8AndSize(key, &len);
+	if (!name) return -1;
+	// TODO: distinguish between error and unknown attr
+
+	Attr* attr = PyFormatter_AttrHash::lookup(name, len);
+	if (!attr) return -1;
+	return attr->index;
+}
+
 PyObject* PyFormatter::getattro(PyFormatter* self, PyObject* attr)
 {
-	// TODO
+	int index = self->lookupAttr(attr);
+	switch (index)
+	{
+	case LIMIT:
+		return PyLong_FromLong(self->limit);
+	case LINEWISE:
+		return Python::boolValue(self->linewise);
+	case MERCATOR:
+		return Python::boolValue(self->mercator);
+	case PRECISION:
+		return PyLong_FromLong(self->precision);
+	case PRETTY:
+		return Python::boolValue(self->pretty);
+	case SAVE:
+		return PyFastMethod::create(self, (PyCFunctionWithKeywords)&save);
+	}
 	return PyObject_GenericGetAttr(self, attr);
 }
+
+int PyFormatter::setAttribute(PyObject* attr, PyObject* value)
+{
+	int index = lookupAttr(attr);
+	switch (index)
+	{
+	case LIMIT:
+		if (value == Py_None)
+		{
+			limit = INT64_MAX;
+			return 0;
+		}
+		return Python::setLong(value, &limit, 1, INT64_MAX);
+	case LINEWISE:
+		return Python::setBool(value, &linewise);
+	case MERCATOR:
+		return Python::setBool(value, &mercator);
+	case PRECISION:
+		return Python::setInt(value, &precision, 0, 15);
+	case PRETTY:
+		return Python::setBool(value, &pretty);
+	}
+	PyErr_SetObject(PyExc_AttributeError, attr);
+	return -1;
+}
+
 
 
 PyObject* PyFormatter::repr(PyFormatter* self)
@@ -80,9 +164,9 @@ void PyFormatter::write(FeatureWriter* writer)
 	writer->flush();
 }
 
-PyObject* PyFormatter::save(PyFormatter* self, PyObject* args)
+PyObject* PyFormatter::save(PyFormatter* self, PyObject* args, PyObject* kwargs)
 {
-	PyObject* arg = Python::checkSingleArg(args, NULL, "<filename>");
+	PyObject* arg = Python::checkSingleArg(args, kwargs, "<filename>");
 	if (arg == NULL) return NULL;
 	const char* fileName = PyUnicode_AsUTF8(arg);
 	if (!fileName) return NULL;
@@ -104,12 +188,13 @@ PyObject* PyFormatter::save(PyFormatter* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+/*
 PyMethodDef PyFormatter::METHODS[] =
 {
 	{"save", (PyCFunction)save, METH_VARARGS, "Saves the file" },
 	{ NULL, NULL, 0, NULL },
 };
-
+*/
 
 PyTypeObject PyFormatter::TYPE =
 {
@@ -122,13 +207,15 @@ PyTypeObject PyFormatter::TYPE =
 	.tp_getattro = (getattrofunc)getattro,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "Formatter objects",
-	.tp_methods = METHODS,
+	// .tp_methods = METHODS,
 };
 
 
 void PyFormatter::writeGeoJson(PyFormatter* self, Buffer* buf)
 {
 	GeoJsonWriter writer(buf);
+	writer.precision(self->precision);
+	writer.pretty(self->pretty);
 	self->write(&writer);
 }
 
@@ -139,14 +226,16 @@ PyObject* PyFormatter::geojson(PyObject* obj)
 
 PyObject* PyFormatter::geojsonl(PyObject* obj)
 {
-	PyErr_SetString(PyExc_NotImplementedError,
-		"This feature will be available in Version 0.2.0");
-	return NULL;
+	PyFormatter* formatter = create(obj, &writeGeoJson, ".geojsonl");
+	formatter->linewise = true;
+	return formatter;
 }
 
 void PyFormatter::writeWkt(PyFormatter* self, Buffer* buf)
 {
 	WktWriter writer(buf);
+	writer.precision(self->precision);
+	writer.pretty(self->pretty);
 	self->write(&writer);
 }
 
@@ -154,3 +243,4 @@ PyObject* PyFormatter::wkt(PyObject* obj)
 {
 	return create(obj, &writeWkt, ".wkt");
 }
+

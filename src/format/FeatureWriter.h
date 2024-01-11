@@ -7,7 +7,7 @@
 #include "geom/Coordinate.h"
 #include "GeometryWriter.h"
 
-class FeatureWriter : protected GeometryWriter
+class FeatureWriter : public GeometryWriter
 {
 public:
 	FeatureWriter(Buffer* buf) : GeometryWriter(buf) {}

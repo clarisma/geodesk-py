@@ -17,6 +17,13 @@ class GeometryWriter : public BufferWriter
 public:
 	GeometryWriter(Buffer* buf) : BufferWriter(buf) {}
 	
+	void precision(int precision) 
+	{ 
+		assert(precision >= 0);
+		assert(precision <= 15);
+		precision_ = precision;
+	}
+
 protected:
 	void writeCoordinate(Coordinate c);
 	
