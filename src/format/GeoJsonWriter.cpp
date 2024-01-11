@@ -125,7 +125,7 @@ void GeoJsonWriter::writeWayGeometry(WayRef way)
 	{
 		writeConstString("\"LineString\",\"coordinates\":");
 	}
-	writeWayCoordinates(way);
+	writeWayCoordinates(way, way.isArea());
 }
 
 void GeoJsonWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relation)

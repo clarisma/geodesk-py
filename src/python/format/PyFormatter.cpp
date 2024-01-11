@@ -41,8 +41,7 @@ PyObject* PyFormatter::getattro(PyFormatter* self, PyObject* attr)
 
 PyObject* PyFormatter::repr(PyFormatter* self)
 {
-	// TODO
-	Py_RETURN_NONE;
+	return str(self);
 }
 
 PyObject* PyFormatter::str(PyFormatter* self)

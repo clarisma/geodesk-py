@@ -726,7 +726,7 @@ void MapWriter::writePolygonOrPolyline(bool polygon)
 void MapWriter::writeWay(WayRef way)
 {
 	writePolygonOrPolyline(way.isArea());
-	writeWayCoordinates(way);
+	writeWayCoordinates(way, false);
 	// TODO: Leaflet doesn't need duplicate end coordinate for polygons
 }
 

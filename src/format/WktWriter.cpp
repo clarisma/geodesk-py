@@ -9,8 +9,8 @@
 WktWriter::WktWriter(Buffer* buf) : FeatureWriter(buf)
 {
 	coordValueSeparatorChar_ = ' ';
-	coordStartChar_ = '(';
-	coordEndChar_ = ')';
+	coordStartChar_ = 0;
+	coordEndChar_ = 0;
 	coordGroupStartChar_ = '(';
 	coordGroupEndChar_ = ')';
 }
@@ -18,8 +18,9 @@ WktWriter::WktWriter(Buffer* buf) : FeatureWriter(buf)
 
 void WktWriter::writeNodeGeometry(NodeRef node)
 {
-	writeConstString("POINT");
+	writeConstString("POINT(");
 	writeCoordinate(node.xy());
+	writeByte(')');
 }
 
 void WktWriter::writeWayGeometry(WayRef way)
@@ -32,7 +33,7 @@ void WktWriter::writeWayGeometry(WayRef way)
 	{
 		writeConstString("LINESTRING");
 	}
-	writeWayCoordinates(way);
+	writeWayCoordinates(way, way.isArea());
 }
 
 void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relation)

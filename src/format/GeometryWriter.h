@@ -62,7 +62,7 @@ protected:
 
 	// ==== Feature Geometries ====
 
-	void writeWayCoordinates(WayRef way);
+	void writeWayCoordinates(WayRef way, bool group);
 	void writePolygonizedCoordinates(const Polygonizer& polygonizer);
 
 	int precision_ = 7;

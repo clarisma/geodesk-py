@@ -3,6 +3,7 @@
 
 from geodesk import *
 import json
+import shapely.errors
 import shapely.geometry
 import shapely.wkt
 
@@ -19,17 +20,28 @@ def notest_wkt(features):
         print(f.wkt)
         
 def check_format(feature):
-    geojson = json.loads(str(feature.geojson))
-    s1 = to_mercator(shapely.geometry.shape(geojson['geometry']))
-    assert s1.equals(feature.shape)
-    wkt = str(feature.wkt)
-    s1 = to_mercator(shapely.wkt.loads(wkt))
-    assert s1.equals(feature.shape)
+    try:
+        feature_shape = feature.shape
+        geojson = json.loads(str(feature.geojson))
+        s1 = to_mercator(shapely.geometry.shape(geojson['geometry']))
+        assert s1.equals(feature_shape)
+        wkt = str(feature.wkt)
+        s1 = to_mercator(shapely.wkt.loads(wkt))
+        assert s1.equals(feature_shape)
+    except shapely.errors.GEOSException as ex: 
+        print(f"GEOSException for {feature}: {ex}")
+        print(feature.wkt)
+        feature.wkt.save("c:\\geodesk\\debug\\bad-shape")
+        assert False
     
 
 def test_format(features):
+    """
+    Tests if correct GeoJSON/WKT is written for all basic shapes: points,
+    linestrings, single polygons (with and without holes), multipolygons
+    (with and without holes)
+    """
     point = features("n").first
-    print(point.shape)
     linestring = features("w").first
     area_way = features.ways("a").first
     area_relation_single_simple = None
@@ -37,7 +49,7 @@ def test_format(features):
     area_relation_multi_simple = None
     area_relation_multi_holes = None
     area_types_found = 0
-    for f in features.relations("a"):
+    for f in features.relations("a[landuse]"):
         try:
             shape = f.shape
         except RuntimeError:
@@ -82,6 +94,8 @@ def test_format(features):
     check_format(area_relation_single_holes)
     check_format(area_relation_multi_simple)
     check_format(area_relation_multi_holes)
+       
+        
         
 def notest_wkt_rounding(features):
     w = features("w[wikidata=Q7669413]").one
