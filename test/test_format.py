@@ -120,3 +120,9 @@ def test_anon_nodes(features):
     nodes = w.nodes
     assert nodes.wkt is not None
     assert nodes.geojson is not None
+
+def test_geojsonl(features):
+    geojsonl = str(features("w[highway]").geojsonl(limit=10))
+    print(geojsonl)
+    # geojsonl_lines = geojsonl.strip().split('\n')
+    

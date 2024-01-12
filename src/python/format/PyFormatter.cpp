@@ -153,6 +153,7 @@ void PyFormatter::write(FeatureWriter* writer)
 		writer->writeHeader();
 		PyObject* iter = PyObject_GetIter(target);
 		PyObject* item;
+		uint64_t count=0;
 		while ((item = PyIter_Next(iter)))
 		{
 			PyTypeObject* childType = Py_TYPE(item);
@@ -167,6 +168,8 @@ void PyFormatter::write(FeatureWriter* writer)
 				writer->writeAnonymousNodeNode(Coordinate(node->x_, node->y_));
 			}
 			Py_DECREF(item);
+			count++;
+			if (count == limit) break;
 		}
 		writer->writeFooter();
 	}
@@ -223,8 +226,10 @@ PyTypeObject PyFormatter::TYPE =
 void PyFormatter::writeGeoJson(PyFormatter* self, Buffer* buf)
 {
 	GeoJsonWriter writer(buf);
+	writer.linewise(self->linewise);
 	writer.precision(self->precision);
-	writer.pretty(self->pretty);
+	writer.pretty(self->pretty && !self->linewise);
+		// pretty must be false for line-wise GeoJSON
 	self->write(&writer);
 }
 

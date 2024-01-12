@@ -11,6 +11,8 @@ class GeoJsonWriter : public FeatureWriter
 public:
 	GeoJsonWriter(Buffer* buf) : FeatureWriter(buf) {}
 
+	void linewise(bool b) { linewise_ = b; }
+
 	void writeFeature(FeatureStore* store, FeatureRef feature) override;
 	void writeAnonymousNodeNode(Coordinate point) override;
 	void writeHeader() override;
@@ -24,4 +26,6 @@ protected:
 	void writeWayGeometry(WayRef way) override;
 	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation) override;
 	void writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation) override;
+
+	bool linewise_;
 };

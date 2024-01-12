@@ -62,6 +62,7 @@ void GeoJsonWriter::writeTags(TagIterator& iter)
 
 void GeoJsonWriter::writeHeader()
 {
+	if (linewise_) return;  // No header for GeoJSONL
 	if (pretty_)
 	{
 		writeConstString(
@@ -83,6 +84,7 @@ void GeoJsonWriter::writeHeader()
 
 void GeoJsonWriter::writeFooter()
 {
+	if (linewise_) return;  // No footer for GeoJSONL
 	if (pretty_)
 	{
 		writeConstString("\n\t]\n}");
@@ -235,7 +237,7 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 	}
 	else
 	{
-		if (!firstFeature_) writeByte(',');
+		if (!firstFeature_) writeByte(linewise_ ? '\n' : ',');
 		writeConstString("{\"type\":\"Feature\",");
 		writeId(feature);
 		// TODO: bbox
