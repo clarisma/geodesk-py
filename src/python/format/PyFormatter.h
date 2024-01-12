@@ -29,6 +29,7 @@ public:
 		TRANSLATE,
 	};
 
+	PyObject* idSchema;
 	int64_t limit;
 	double scale;
 	double translateX;

@@ -12,6 +12,7 @@ public:
 	GeoJsonWriter(Buffer* buf) : FeatureWriter(buf) {}
 
 	void writeFeature(FeatureStore* store, FeatureRef feature) override;
+	void writeAnonymousNodeNode(Coordinate point) override;
 	void writeHeader() override;
 	void writeFooter() override;
 
@@ -19,9 +20,8 @@ public:
 
 protected:
 	void writeId(FeatureRef feature);
-	void writeGeometry(FeatureStore* store, FeatureRef feature);
-	void writeNodeGeometry(NodeRef node);
-	void writeWayGeometry(WayRef way);
-	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation);
-	void writeMemberGeometries(FeatureStore* store, RelationRef relation, RecursionGuard& guard);
+	void writeNodeGeometry(NodeRef node) override;
+	void writeWayGeometry(WayRef way) override;
+	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation) override;
+	void writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation) override;
 };

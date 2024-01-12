@@ -1014,7 +1014,7 @@ void MapWriter::formatAttributeValue(int key, PyObject* value)
 				if (numValue == NULL)
 				{
 					PyErr_Clear();
-					// If the formatted string does not represent a valie number,
+					// If the formatted string does not represent a valid number,
 					// write the default value
 					writeString(PyMap::ATTR_DEFAULTS[key]);
 				}

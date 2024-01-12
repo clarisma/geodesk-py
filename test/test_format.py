@@ -18,32 +18,51 @@ def notest_geojson(features):
 def notest_wkt(features):
     for f in features[:100]:
         print(f.wkt)
-        
-def check_format(feature):
+
+def check_geojson_format(formatter, feature_shape):
     try:
-        feature_shape = feature.shape
-        geojson = json.loads(str(feature.geojson))
+        geojson = json.loads(str(formatter))
         s1 = to_mercator(shapely.geometry.shape(geojson['geometry']))
-        assert s1.equals(feature_shape)
-        wkt = str(feature.wkt)
-        s1 = to_mercator(shapely.wkt.loads(wkt))
         assert s1.equals(feature_shape)
     except shapely.errors.GEOSException as ex: 
         print(f"GEOSException for {feature}: {ex}")
-        print(feature.wkt)
+        formatter.save("c:\\geodesk\\debug\\bad-shape")
+        assert False
+
+def check_wkt_format(formatter, feature_shape):
+    try:    
+        s1 = to_mercator(shapely.wkt.loads(str(formatter)))
+        assert s1.equals(feature_shape)
+    except shapely.errors.GEOSException as ex: 
+        print(f"GEOSException for {feature}: {ex}")
+        formatter.save("c:\\geodesk\\debug\\bad-shape")
+        assert False
+        
+def check_format(feature):
+    try:    
+        feature_shape = feature.shape
+    except shapely.errors.GEOSException as ex: 
+        print(f"GEOSException for {feature}: {ex}")
         feature.wkt.save("c:\\geodesk\\debug\\bad-shape")
         assert False
+    check_geojson_format(feature.geojson(pretty=True), feature_shape)
+    check_geojson_format(feature.geojson(pretty=False), feature_shape)
+    check_wkt_format(feature.wkt(pretty=True), feature_shape)
+    check_wkt_format(feature.wkt(pretty=False), feature_shape)
     
-
-def test_format(features):
-    """
-    Tests if correct GeoJSON/WKT is written for all basic shapes: points,
-    linestrings, single polygons (with and without holes), multipolygons
-    (with and without holes)
-    """
+def test_test_basic_shapes(features):
     point = features("n").first
     linestring = features("w").first
-    area_way = features.ways("a").first
+    check_format(point)
+    check_format(linestring)
+    
+def test_relations(features):
+    relation = features("r[type=restriction]").first
+    super_relation = features("r[type=superroute]").first
+    check_format(relation)
+    check_format(super_relation)
+
+def test_area_features(features):
     area_relation_single_simple = None
     area_relation_single_holes = None
     area_relation_multi_simple = None
@@ -87,17 +106,16 @@ def test_format(features):
             "Couldn't find a representative feature for " 
             "each kind of area-relation")
     
-    check_format(point)
-    check_format(linestring)
-    check_format(area_way)
     check_format(area_relation_single_simple)
     check_format(area_relation_single_holes)
     check_format(area_relation_multi_simple)
     check_format(area_relation_multi_holes)
-       
-        
-        
-def notest_wkt_rounding(features):
-    w = features("w[wikidata=Q7669413]").one
-    str(w.wkt)
+    
+def test_empty_features(features):
+    check_format(features.nodes.relations)
+               
+def test_anon_nodes(features):
+    w = features("w[highway]").first
+    check_format(w.nodes)
+    check_format(w.nodes[0])
     

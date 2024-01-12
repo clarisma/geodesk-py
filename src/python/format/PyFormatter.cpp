@@ -142,7 +142,12 @@ void PyFormatter::write(FeatureWriter* writer)
 	{
 		PyFeature* feature = (PyFeature*)target;
 		writer->writeFeature(feature->store, feature->feature);
-	}	// TODO: AnonymousNode
+	}
+	else if (type == &PyAnonymousNode::TYPE)
+	{
+		PyAnonymousNode* node = (PyAnonymousNode*)target;
+		writer->writeAnonymousNodeNode(Coordinate(node->x_, node->y_));
+	}
 	else if (Python::isIterable(target))
 	{
 		writer->writeHeader();
@@ -151,12 +156,16 @@ void PyFormatter::write(FeatureWriter* writer)
 		while ((item = PyIter_Next(iter)))
 		{
 			PyTypeObject* childType = Py_TYPE(item);
-			if (Py_TYPE(item) == &PyFeature::TYPE)
+			if (childType == &PyFeature::TYPE)
 			{
 				PyFeature* feature = (PyFeature*)item;
 				writer->writeFeature(feature->store, feature->feature);
 			}
-			// TODO: AnonymousNode
+			else if (childType == &PyAnonymousNode::TYPE)
+			{
+				PyAnonymousNode* node = (PyAnonymousNode*)item;
+				writer->writeAnonymousNodeNode(Coordinate(node->x_, node->y_));
+			}
 			Py_DECREF(item);
 		}
 		writer->writeFooter();

@@ -111,21 +111,46 @@ void GeoJsonWriter::writeId(FeatureRef feature)
 
 void GeoJsonWriter::writeNodeGeometry(NodeRef node)
 {
-	writeConstString("\"Point\",\"coordinates\":");
+	if (pretty_)
+	{
+		writeConstString("{ \"type\": \"Point\", \"coordinates\": ");
+	}
+	else
+	{
+		writeConstString("{\"type\":\"Point\",\"coordinates\":");
+	}
 	writeCoordinate(node.xy());
+	writeByte('}');
 }
+
+
 
 void GeoJsonWriter::writeWayGeometry(WayRef way)
 {
 	if (way.isArea())
 	{
-		writeConstString("\"Polygon\",\"coordinates\":");
+		if (pretty_)
+		{
+			writeConstString("{ \"type\": \"Polygon\", \"coordinates\": ");
+		}
+		else
+		{
+			writeConstString("{\"type\":\"Polygon\",\"coordinates\":");
+		}
 	}
 	else
 	{
-		writeConstString("\"LineString\",\"coordinates\":");
+		if (pretty_)
+		{
+			writeConstString("{ \"type\": \"LineString\", \"coordinates\": ");
+		}
+		else
+		{
+			writeConstString("{\"type\":\"LineString\",\"coordinates\":");
+		}
 	}
 	writeWayCoordinates(way, way.isArea());
+	writeByte('}');
 }
 
 void GeoJsonWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relation)
@@ -137,11 +162,25 @@ void GeoJsonWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef r
 	int count = ring ? (ring->next() ? 2 : 1) : 0;
 	if (count > 1)
 	{
-		writeConstString("\"MultiPolygon\",\"coordinates\":");
+		if (pretty_)
+		{
+			writeConstString("{ \"type\": \"MultiPolygon\", \"coordinates\": ");
+		}
+		else
+		{
+			writeConstString("{\"type\":\"MultiPolygon\",\"coordinates\":");
+		}
 	}
 	else
 	{
-		writeConstString("\"Polygon\",\"coordinates\":");
+		if (pretty_)
+		{
+			writeConstString("{ \"type\": \"Polygon\", \"coordinates\": ");
+		}
+		else
+		{
+			writeConstString("{\"type\":\"Polygon\",\"coordinates\":");
+		}
 	}
 	if (count == 0)
 	{
@@ -151,46 +190,26 @@ void GeoJsonWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef r
 	{
 		writePolygonizedCoordinates(polygonizer);
 	}
-}
-
-
-void GeoJsonWriter::writeGeometry(FeatureStore* store, FeatureRef feature)
-{
-	writeConstString("{\"type\":");
-	if (pretty_) writeByte(' ');
-	if (feature.isWay())
-	{
-		writeWayGeometry(WayRef(feature));
-	}
-	else if (feature.isNode())
-	{
-		writeNodeGeometry(NodeRef(feature));
-	}
-	else
-	{
-		assert(feature.isRelation());
-		RelationRef relation(feature);
-		if (relation.isArea())
-		{
-			writeAreaRelationGeometry(store, relation);
-		}
-		else
-		{
-			RecursionGuard guard(relation);
-			writeConstString("\"GeometryCollection\",\"geometries\":[");
-			writeMemberGeometries(store, relation, guard);
-			writeByte(']');
-		}
-	}
 	writeByte('}');
 }
 
 
-void GeoJsonWriter::writeMemberGeometries(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+void GeoJsonWriter::writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation)
 {
-	// TODO
+	if (pretty_)
+	{
+		writeConstString("{ \"type\": \"GeometryCollection\", \"geometries\": ");
+	}
+	else
+	{
+		writeConstString("{\"type\":\"GeometryCollection\",\"geometries\":");
+	}
+	if (writeMemberGeometries(store, relation) == 0)
+	{
+		writeConstString("[]");
+	}
+	writeConstString("}");
 }
-
 
 void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 {
@@ -206,7 +225,7 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 		// TODO: bbox
 		writeConstString(
 			"\t\t\t\"geometry\": ");
-		writeGeometry(store, feature);
+		writeFeatureGeometry(store, feature);
 		writeConstString(
 			",\n"
 			"\t\t\t\"properties\": ");
@@ -221,7 +240,7 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 		writeId(feature);
 		// TODO: bbox
 		writeConstString("\"geometry\":");
-		writeGeometry(store, feature);
+		writeFeatureGeometry(store, feature);
 		writeConstString(",\"properties\":");
 		writeTags(tagIter);
 		writeByte('}');
@@ -229,3 +248,28 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 	firstFeature_ = false;
 }
 
+void GeoJsonWriter::writeAnonymousNodeNode(Coordinate point)
+{
+	if (pretty_)
+	{
+		if (!firstFeature_) writeConstString(",\n");
+		writeConstString(
+			"\t\t{\n"
+			"\t\t\t\"type\": \"Feature\",\n\t\t\t"
+			"\t\t\t\"geometry\": "
+			"{ \"type\": \"Point\", \"coordinates\": ");
+		writeCoordinate(point);
+		writeConstString(
+			"}\n\t\t}");
+	}
+	else
+	{
+		if (!firstFeature_) writeByte(',');
+		writeConstString(
+			"{\"type\":\"Feature\",\"geometry\":"
+			"{\"type\":\"Point\",\"coordinates\":");
+		writeCoordinate(point);
+		writeConstString("}}");
+	}
+	firstFeature_ = false;
+}
