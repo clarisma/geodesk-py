@@ -30,6 +30,7 @@ if __name__ == '__main__':
     # pytest.main(["test_intersects.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])
     pytest.main(["test_format.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["test_anonymous_nodes.py", "-rA", "-s", "--durations=9999"])
 
 
     

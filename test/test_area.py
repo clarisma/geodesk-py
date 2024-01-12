@@ -32,3 +32,5 @@ def test_areas(features):
         area = f.area / 1000000
         fast_area = area # f.fast_area / 1000000
         print(f"{name:25}   {fast_area:10.2f}   {area:10.2f}   {official_area:10.2f}")
+
+    
