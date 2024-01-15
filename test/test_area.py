@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
+from geodesk import *
+
 def test_areas(features):    
     areas = [
         ("Araucania (Chile)", 31842.3, "a[boundary=administrative][admin_level=4][wikidata=Q2176]"),
@@ -28,7 +30,12 @@ def test_areas(features):
     print("Name                        Fast         Accurate     Wikipedia")
     print("-------------------------   ----------   ----------   ----------")
     for name, official_area, query in areas:
-        f = features(query).one
+        try:
+            f = features(query).one
+        except QueryError:
+            continue
         area = f.area / 1000000
         fast_area = area # f.fast_area / 1000000
         print(f"{name:25}   {fast_area:10.2f}   {area:10.2f}   {official_area:10.2f}")
+
+    

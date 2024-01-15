@@ -1,0 +1,21 @@
+%{
+// Keywords
+#include <assert.h>
+
+%}
+struct Attr { const char *name; int index; };
+%%
+exclude_keys, PyFormatter::EXCLUDE_KEYS
+id, PyFormatter::ID
+keys, PyFormatter::KEYS
+limit, PyFormatter::LIMIT
+linewise, PyFormatter::LINEWISE
+max_width, PyFormatter::MAX_WIDTH
+mercator, PyFormatter::MERCATOR
+precision, PyFormatter::PRECISION
+pretty, PyFormatter::PRETTY
+save, PyFormatter::SAVE
+scale, PyFormatter::SCALE
+simplify, PyFormatter::SIMPLIFY
+sort_tags, PyFormatter::SORT_TAGS
+translate, PyFormatter::TRANSLATE

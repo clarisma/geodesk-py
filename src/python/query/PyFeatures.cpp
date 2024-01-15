@@ -815,23 +815,28 @@ SelectionType PyFeatures::Empty::SUBTYPE =
 PyObject* PyFeatures::area(PyFeatures* self)
 {
     double totalArea = 0;
-    int res = self->forEach([&totalArea](PyFeature* feature)
+    int res = self->forEach([&totalArea](PyObject* item)
     {
-        FeatureRef f = feature->feature;
-        if (f.isArea())
+        if (Py_TYPE(item) == &PyFeature::TYPE)
         {
-            double area;
-            if (f.isWay())
+            PyFeature* feature = (PyFeature*)item;
+            FeatureRef f = feature->feature;
+            if (f.isArea())
             {
-                area = Area::ofWay(WayRef(f));
-            } 
-            else
-            {
-                assert(f.isRelation());
-                area = Area::ofRelation(feature->store, RelationRef(f));
+                double area;
+                if (f.isWay())
+                {
+                    area = Area::ofWay(WayRef(f));
+                }
+                else
+                {
+                    assert(f.isRelation());
+                    area = Area::ofRelation(feature->store, RelationRef(f));
+                }
+                totalArea += area;
             }
-            totalArea += area;
         }
+        // ignore anonymous nodes because their area is zero
     });
     return res == 0 ? PyFloat_FromDouble(totalArea) : NULL;
 }
@@ -865,19 +870,24 @@ PyObject* PyFeatures::length(PyFeatures* self)
     // Would need to change area to total_area
 
     double totalLength = 0;
-    int res = self->forEach([&totalLength](PyFeature* feature)
+    int res = self->forEach([&totalLength](PyObject* item)
     {
-        FeatureRef f = feature->feature;
-        double length;
-        if (f.isWay())
+        if (Py_TYPE(item) == &PyFeature::TYPE)
         {
-            length = Length::ofWay(WayRef(f));
+            PyFeature* feature = (PyFeature*)item;
+            FeatureRef f = feature->feature;
+            double length;
+            if (f.isWay())
+            {
+                length = Length::ofWay(WayRef(f));
+            }
+            else if (f.isRelation())
+            {
+                length = Length::ofRelation(feature->store, RelationRef(f));
+            }
+            totalLength += length;
         }
-        else if(f.isRelation())
-        {
-            length = Length::ofRelation(feature->store, RelationRef(f));
-        }
-        totalLength += length;
+        // ignore anonymous nodes because their length is zero
     });
     return res==0 ? PyFloat_FromDouble(totalLength) : NULL;
 }
@@ -933,10 +943,21 @@ PyObject* PyFeatures::shape(PyFeatures* self)
     if (!geosContext) return NULL;
 
     std::vector< GEOSGeometry*> geoms;
-    int res = self->forEach([&geoms, geosContext](PyFeature* feature)
+    int res = self->forEach([&geoms, geosContext](PyObject* item)
         {
-            geoms.push_back(GeometryBuilder::buildFeatureGeometry(
-                feature->store, feature->feature, geosContext));
+            if (Py_TYPE(item) == &PyFeature::TYPE)
+            {
+                PyFeature* feature = (PyFeature*)item;
+                geoms.push_back(GeometryBuilder::buildFeatureGeometry(
+                    feature->store, feature->feature, geosContext));
+            }
+            else
+            {
+                assert(Py_TYPE(item) == &PyAnonymousNode::TYPE);
+                PyAnonymousNode* node = (PyAnonymousNode*)item;
+                geoms.push_back(GeometryBuilder::buildPointGeometry(
+                    node->x_, node->y_, geosContext));
+            }
         });
     if (res < 0)
     {

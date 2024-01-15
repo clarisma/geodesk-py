@@ -17,7 +17,8 @@ class Matcher;
 class PyFeature;
 class PyFeatures;
 
-typedef const std::function<void(PyFeature* feature)>& FeatureFunction;
+// Must bePyObject to support both PyFeature and PyAnonymousNode
+typedef const std::function<void(PyObject* feature)>& FeatureFunction;
 
 struct SelectionType
 {
