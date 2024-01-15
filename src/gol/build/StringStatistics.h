@@ -3,44 +3,56 @@
 
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <common/util/protobuf.h>
 
 struct StringCounter;
 
-struct StringCounterHeader
-{
-	StringCounter* next;
-	uint64_t count;
-	uint32_t hash;
-};
 
-struct StringCounter : public StringCounterHeader
-{
-	uint8_t bytes[1];
-};
-
-
+/*
 class StringBin
 {
 private:
 	uint8_t* start_;
 	uint8_t* end_;
 };
-
+*/
 
 class StringStatistics
 {
 public:
-	StringStatistics(uint32_t tableSize, uint32_t heapSize);
-	~StringStatistics();
+	using StringCount = int64_t;   // Signed to allow -1 as a marker
 
-	bool addString(const uint8_t* bytes, uint64_t count);
+	StringStatistics(uint32_t tableSize, uint32_t arenaSize);
+
+	bool addString(const uint8_t* bytes, StringCount count);
 	bool addString(const StringCounter *pCounter);
 	void removeStrings(uint32_t minCount);
 	protobuf::Message takeStrings();
 
 private:
-	bool addString(const uint8_t* bytes, uint32_t size, uint32_t hash, uint64_t count);
+	using CounterOfs = uint32_t;
+
+	struct CounterHeader
+	{
+		CounterOfs next;				   // offset of next counter	
+		uint32_t hash;
+		StringCount keys;
+		StringCount values;
+	};
+
+	struct Counter : public CounterHeader
+	{
+		uint8_t bytes[1];
+	};
+
+	Counter* counterAt(CounterOfs ofs) const
+	{
+		return reinterpret_cast<Counter*>(arena_.get() + ofs);
+	}
+	bool addString(const uint8_t* bytes, uint32_t size, uint32_t hash, 
+		StringCount keys, StringCount values);
+	bool addString(const uint8_t* bytes, StringCount keys, StringCount values);
 	void clearTable();
 	static uint32_t stringCharCount(const uint8_t* bytes)
 	{
@@ -56,6 +68,7 @@ private:
 				(len & 0x7f)) + 2) : (len + 1);
 	}
 
+	/*
 	static uint32_t hashString(const uint8_t* p, uint32_t size)
 	{
 		uint32_t hash = 0;
@@ -67,11 +80,11 @@ private:
 		while (p < end);
 		return hash;
 	}
+	*/
 
-	StringCounter** table_;
-	uint8_t* heap_;
-	uint8_t* heapEnd_;
+	std::unique_ptr<CounterOfs[]> table_;
+	std::unique_ptr<uint8_t[]> arena_;
+	const uint8_t* arenaEnd_;
 	uint8_t* p_;
 	size_t tableSize_;
-	size_t countersSize_;
 };

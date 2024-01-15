@@ -3,64 +3,67 @@
 
 #include "StringStatistics.h"
 #include <cstring>
+#include <common/util/Strings.h>
 
-StringStatistics::StringStatistics(uint32_t tableSize, uint32_t heapSize) :
+StringStatistics::StringStatistics(uint32_t tableSize, uint32_t arenaSize) :
 	tableSize_(tableSize),
-	table_(nullptr),
-	heap_(nullptr)
+	table_(new CounterOfs[tableSize]),
+	arena_(new uint8_t[arenaSize])
 {
-	table_ = new StringCounter * [tableSize];
 	clearTable();
-	p_ = heap_ = new uint8_t[heapSize];
-	heapEnd_ = heap_ + heapSize;
-}
-
-
-StringStatistics::~StringStatistics()
-{
-	if (table_) delete[] table_;
-	if (heap_) delete[] heap_;
+	p_ = arena_.get() + sizeof(uint32_t);
+		// We use the first 4 bytes as the actual size fo the arena
+		// (This also allows us to use 0 as a null value, since no
+		//  Counter will ever be placed at offset 0)
+	arenaEnd_ = p_ + arenaSize;
 }
 
 void StringStatistics::clearTable()
 {
-	memset(table_, 0, sizeof(StringCounter*) * tableSize_);
+	memset(table_.get(), 0, sizeof(CounterOfs) * tableSize_);
 }
 
 
-bool StringStatistics::addString(const uint8_t* bytes, uint32_t size, uint32_t hash, uint64_t count)
+bool StringStatistics::addString(const uint8_t* bytes, uint32_t size, uint32_t hash, 
+	StringCount keys, StringCount values)
 {
 	uint32_t slot = hash % tableSize_;
-	StringCounter* pCounter = table_[slot];
-	while (pCounter)
+	CounterOfs counterOfs = table_[slot];
+	while (counterOfs)
 	{
+		Counter* pCounter = counterAt(counterOfs);
 		if (pCounter->hash == hash)
 		{
 			if (memcmp(&pCounter->bytes, bytes, size) == 0)
 			{
-				pCounter->count += count;
+				pCounter->keys += keys;
+				pCounter->values += values;
 				return true;
 			}
 		}
-		pCounter = pCounter->next;
+		counterOfs = pCounter->next;
 	}
 
-	uint32_t counterSize = sizeof(StringCounterHeader) + size;
-	if (p_ + counterSize > heapEnd_) return false;
-	pCounter = reinterpret_cast<StringCounter*>(p_);
+	uint32_t counterSize = sizeof(CounterHeader) + size;
+	if (p_ + counterSize > arenaEnd_) return false;
+	Counter* pCounter = reinterpret_cast<Counter*>(p_);
 	pCounter->next = table_[slot];
-	table_[slot] = pCounter;
-	pCounter->count = count;
 	pCounter->hash = hash;
+	pCounter->keys = keys;
+	pCounter->values = values;
 	memcpy(&pCounter->bytes, bytes, size);
-	p_ += (counterSize + 7) & ~7;
+	table_[slot] = p_ - arena_.get();
+	p_ += (counterSize + 3) & ~3;		
+		// maintain 4-byte alignment
+		// TODO: Not portable since we are using 64-bit StringCount
+		// Should align on 8 bytes instead?
 	return true;
 }
 
-bool StringStatistics::addString(const uint8_t* bytes, uint64_t count)
+bool StringStatistics::addString(const uint8_t* bytes, StringCount keys, StringCount values)
 {
 	uint32_t size = stringSize(bytes);
-	return addString(bytes, size, hashString(bytes, size), count);
+	return addString(bytes, size, Strings::hash(bytes, size), count);
 }
 
 bool StringStatistics::addString(const StringCounter* pCounter)
