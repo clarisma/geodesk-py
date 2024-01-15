@@ -1,6 +1,7 @@
 # Example MapRoulette Challenge: Find mundane features like garbage bins
 # and toilets that have a "name" tag (Ordinarily, these features should
 # not have names)
+# See https://community.openstreetmap.org/t/105540
 
 import geodesk
 
