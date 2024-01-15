@@ -4,8 +4,10 @@
 #pragma once
 #include <Python.h>
 #include <structmember.h>
+#include "feature/Feature.h"
 
 class Buffer;
+class FeatureStore;
 class FeatureWriter;
 
 class PyFormatter : public PyObject
@@ -64,10 +66,14 @@ public:
 	int lookupAttr(PyObject* key);
 	int setAttribute(PyObject* attr, PyObject* value);
 	int setAttributes(PyObject* dict);
+	int setId(PyObject* value);
 
 	static PyObject* save(PyFormatter* self, PyObject* args, PyObject* kwargs);
 	void write(FeatureWriter* writer);
 	
+	static void writeIdViaCallable(FeatureWriter* writer,
+		FeatureStore* store, FeatureRef feature, /* PyObject */ void* closure);
+
 	static void writeGeoJson(PyFormatter* self, Buffer* buf);
 	static void writeWkt(PyFormatter* self, Buffer* buf);
 };

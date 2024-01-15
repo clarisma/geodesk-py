@@ -95,7 +95,7 @@ void GeoJsonWriter::writeFooter()
 	}
 }
 
-
+/*
 void GeoJsonWriter::writeId(FeatureRef feature)
 {
 	if (pretty_)
@@ -110,6 +110,7 @@ void GeoJsonWriter::writeId(FeatureRef feature)
 	formatInt(feature.id());		// TODO: rename, is long in reality
 	writeConstString("\",");
 }
+*/
 
 void GeoJsonWriter::writeNodeGeometry(NodeRef node)
 {
@@ -221,11 +222,11 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 		if (!firstFeature_) writeConstString(",\n");
 		writeConstString(
 			"\t\t{\n"
-			"\t\t\t\"type\": \"Feature\",\n\t\t\t");
-		writeId(feature);
-		writeByte('\n');
-		// TODO: bbox
-		writeConstString(
+			"\t\t\t\"type\": \"Feature\",\n"
+			"\t\t\t\"id\": ");
+		writeId(store, feature);
+		// TODO: bbox?
+		writeConstString(",\n"
 			"\t\t\t\"geometry\": ");
 		writeFeatureGeometry(store, feature);
 		writeConstString(
@@ -238,10 +239,10 @@ void GeoJsonWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 	else
 	{
 		if (!firstFeature_) writeByte(linewise_ ? '\n' : ',');
-		writeConstString("{\"type\":\"Feature\",");
-		writeId(feature);
-		// TODO: bbox
-		writeConstString("\"geometry\":");
+		writeConstString("{\"type\":\"Feature\",\"id\":");
+		writeId(store, feature);
+		// TODO: bbox?
+		writeConstString(",\"geometry\":");
 		writeFeatureGeometry(store, feature);
 		writeConstString(",\"properties\":");
 		writeTags(tagIter);

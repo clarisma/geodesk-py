@@ -21,7 +21,7 @@ public:
 	void writeTags(TagIterator& iter);
 
 protected:
-	void writeId(FeatureRef feature);
+	// void writeId(FeatureRef feature);
 	void writeNodeGeometry(NodeRef node) override;
 	void writeWayGeometry(WayRef way) override;
 	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation) override;

@@ -133,3 +133,21 @@ uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationRef r
 	}
 	return count;
 }
+
+
+void FeatureWriter::writeDefaultId(FeatureWriter* writer,
+	FeatureStore* store, FeatureRef feature, void* closure)
+{
+	char quoteChar = writer->quoteChar_;
+	if (quoteChar) writer->writeByte(quoteChar);
+	writer->writeByte("NWRS"[feature.typeCode()]);
+	writer->formatInt(feature.id());		// TODO: rename, is long in reality
+	if (quoteChar) writer->writeByte(quoteChar);
+
+}
+
+
+void FeatureWriter::writeId(FeatureStore* store, FeatureRef feature)
+{
+	writeIdFunction_(this, store, feature, writeIdClosure_);
+}

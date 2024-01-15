@@ -125,4 +125,17 @@ def test_geojsonl(features):
     geojsonl = str(features("w[highway]").geojsonl(limit=10))
     print(geojsonl)
     # geojsonl_lines = geojsonl.strip().split('\n')
-    
+
+def test_maproulette(features):
+    suspects = features("na[amenity=waste_basket,toilets,bench][name]")
+    with open('c:\\geodesk\\tests\\challenge.geojsonl', 'w', encoding='utf-8') as file:
+        for feature in suspects:
+            # Write each task as a FeatureCollection (which in this case
+            # only contains a single suspect features)
+            file.write('\x1E{"type":"FeatureCollection","features":[')
+            file.write(str(feature.geojson(id=lambda f: f"{f.osm_type}/{f.id}")))
+            file.write(']}\n')
+
+def test_pretty_geojson_save(features):    
+    features("a[leisure=park]").geojson(limit=20, pretty=True).save(
+        "c:\\geodesk\\tests\\pretty.geojson")

@@ -60,7 +60,8 @@ PyObject* PyFormatter::call(PyFormatter* self, PyObject* args, PyObject* kwargs)
 
 void PyFormatter::dealloc(PyFormatter* self)
 {
-	Py_DECREF(self->target);
+	Py_DECREF(self->target);		// never null
+	Py_XDECREF(self->idSchema);		// may be null	
 }
 
 int PyFormatter::lookupAttr(PyObject* key)
@@ -80,6 +81,9 @@ PyObject* PyFormatter::getattro(PyFormatter* self, PyObject* attr)
 	int index = self->lookupAttr(attr);
 	switch (index)
 	{
+	case ID:
+		if (self->idSchema) return Python::newRef(self->idSchema);
+		return PyUnicode_FromString("{T}{id}");
 	case LIMIT:
 		return PyLong_FromLong(self->limit);
 	case LINEWISE:
@@ -101,6 +105,8 @@ int PyFormatter::setAttribute(PyObject* attr, PyObject* value)
 	int index = lookupAttr(attr);
 	switch (index)
 	{
+	case ID:
+		return setId(value);
 	case LIMIT:
 		if (value == Py_None)
 		{
@@ -121,6 +127,24 @@ int PyFormatter::setAttribute(PyObject* attr, PyObject* value)
 	return -1;
 }
 
+int PyFormatter::setId(PyObject* value)
+{
+	if (value == Py_None)
+	{
+		Py_XDECREF(idSchema);
+		idSchema = nullptr;
+		return 0;
+		// TODO: "None" means "no ID", not "use default"
+	}
+	if (!PyCallable_Check(value))
+	{
+		PyErr_Format(PyExc_ValueError, 
+			"Must be a callable (instead of %s)", Py_TYPE(value)->tp_name);
+		return -1;
+	}
+	Python::set(&idSchema, value);
+	return 0;
+}
 
 
 PyObject* PyFormatter::repr(PyFormatter* self)
@@ -230,6 +254,10 @@ void PyFormatter::writeGeoJson(PyFormatter* self, Buffer* buf)
 	writer.precision(self->precision);
 	writer.pretty(self->pretty && !self->linewise);
 		// pretty must be false for line-wise GeoJSON
+	if (self->idSchema)
+	{
+		writer.writeIdFunction(writeIdViaCallable, self->idSchema);
+	}
 	self->write(&writer);
 }
 
@@ -258,3 +286,57 @@ PyObject* PyFormatter::wkt(PyObject* obj)
 	return create(obj, &writeWkt, ".wkt");
 }
 
+void PyFormatter::writeIdViaCallable(FeatureWriter* writer,
+	FeatureStore* store, FeatureRef feature, /* PyObject */ void* closure)
+{
+	PyObject* callable = (PyObject*)closure;
+	// TODO: We need to re-create the Feature based on FeatureStore and FeatureRef
+	//  This is inefficient, and only used because the Formatter classes are 
+	//  Python-agnostic. Consider re-design
+	PyObject* featureObj = PyFeature::create(store, feature, Py_None);
+	// TODO: We need a way to report errors
+	if (!featureObj)
+	{
+		PyErr_Clear(); // TODO
+		return;
+	}
+	PyObject* value = PyObject_CallOneArg(callable, featureObj);
+	if (!value)
+	{
+		PyErr_Clear(); // TODO
+		Py_DECREF(featureObj);
+		return;
+	}
+	if (PyUnicode_Check(value))
+	{
+		char quoteChar = writer->quoteChar();
+		if (quoteChar) writer->writeByte(quoteChar);
+		writer->writeString(value);
+		if (quoteChar) writer->writeByte(quoteChar);
+	}
+	else if (PyLong_Check(value))
+	{
+		writer->formatInt(PyLong_AsLongLong(value));
+		// TODO: Can we assume PyFloat_AsDouble will not fail in this case?
+	}
+	else if (PyFloat_Check(value))
+	{
+		writer->formatDouble(PyFloat_AsDouble(value));
+		// TODO: Can we assume PyFloat_AsDouble will not fail in this case?
+	}
+	else
+	{
+		PyObject* str = PyObject_Str(value);
+		if (!str)
+		{
+			PyErr_Clear(); // TODO
+			Py_DECREF(featureObj);
+			return;
+		}
+		char quoteChar = writer->quoteChar();
+		if (quoteChar) writer->writeByte(quoteChar);
+		writer->writeString(value);
+		if (quoteChar) writer->writeByte(quoteChar);
+	}
+	Py_DECREF(featureObj);
+}
