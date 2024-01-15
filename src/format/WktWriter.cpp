@@ -9,17 +9,28 @@
 WktWriter::WktWriter(Buffer* buf) : FeatureWriter(buf)
 {
 	coordValueSeparatorChar_ = ' ';
-	coordStartChar_ = '(';
-	coordEndChar_ = ')';
+	coordStartChar_ = 0;
+	coordEndChar_ = 0;
 	coordGroupStartChar_ = '(';
 	coordGroupEndChar_ = ')';
 }
 
 
+void WktWriter::writeAnonymousNodeNode(Coordinate point)
+{
+	if (!firstFeature_) writeConstString(", ");
+	writeConstString("POINT(");
+	writeCoordinate(point);
+	writeByte(')');
+	firstFeature_ = false;
+}
+
+
 void WktWriter::writeNodeGeometry(NodeRef node)
 {
-	writeConstString("POINT");
+	writeConstString("POINT(");
 	writeCoordinate(node.xy());
+	writeByte(')');
 }
 
 void WktWriter::writeWayGeometry(WayRef way)
@@ -32,7 +43,7 @@ void WktWriter::writeWayGeometry(WayRef way)
 	{
 		writeConstString("LINESTRING");
 	}
-	writeWayCoordinates(way);
+	writeWayCoordinates(way, way.isArea());
 }
 
 void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relation)
@@ -61,42 +72,19 @@ void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relat
 }
 
 
-void WktWriter::writeMemberGeometries(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+void WktWriter::writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation)
 {
-	// TODO
+	writeConstString("GEOMETRYCOLLECTION");
+	if (writeMemberGeometries(store, relation) == 0) writeConstString(" EMPTY");
 }
+
 
 
 void WktWriter::writeFeature(FeatureStore* store, FeatureRef feature)
 {
-	if (!firstFeature_)
-	{
-		writeConstString(", ");
-	}
-	if (feature.isWay())
-	{
-		writeWayGeometry(WayRef(feature));
-	}
-	else if (feature.isNode())
-	{
-		writeNodeGeometry(NodeRef(feature));
-	}
-	else
-	{
-		assert(feature.isRelation());
-		RelationRef relation(feature);
-		if (relation.isArea())
-		{
-			writeAreaRelationGeometry(store, relation);
-		}
-		else
-		{
-			RecursionGuard guard(relation);
-			writeConstString("GEOMETRYCOLLECTION(");
-			writeMemberGeometries(store, relation, guard);
-			writeByte(')');
-		}
-	}
+	if (!firstFeature_) writeConstString(", ");
+	writeFeatureGeometry(store, feature); 
+	firstFeature_ = false;
 }
 
 

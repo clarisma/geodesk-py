@@ -33,7 +33,8 @@ namespace Python
 	extern PyObject* checkSingleArg(PyObject* args, PyObject* kwargs, PyTypeObject* type);
 
 	extern PyObject* checkType(PyObject* arg, PyTypeObject* type);
-	PyObject* checkType(PyObject* arg, PyTypeObject* type, const char* what);
+	extern PyObject* checkType(PyObject* arg, PyTypeObject* type, const char* what);
+	extern PyObject* checkNumeric(PyObject* arg);
 
 	inline PyObject* badKeyword(const char* str)
 	{
@@ -97,6 +98,39 @@ namespace Python
 	inline PyObject* getObjectOrNone(PyObject* obj)
 	{
 		return newRef(obj ? obj : Py_None);
+	}
+
+	inline int setBool(PyObject* obj, bool* pv)
+	{
+		if (!Python::checkType(obj, &PyBool_Type)) return -1;
+		*pv = PyObject_IsTrue(obj);
+		return 0;
+	}
+
+	inline int setLong(PyObject* obj, int64_t* pv, int64_t min, int64_t max)
+	{
+		if (!Python::checkNumeric(obj)) return -1;
+		int64_t value = PyLong_AsLong(obj);
+		if (value < min)
+		{
+			PyErr_Format(PyExc_ValueError, "Must be at least %d", min);
+			return -1;
+		}
+		if (value > max)
+		{
+			PyErr_Format(PyExc_ValueError, "Must not exceed %d", max);
+			return -1;
+		}
+		*pv = value;
+		return 0;
+	}
+
+	inline int setInt(PyObject* obj, int* pv, int min, int max)
+	{
+		int64_t value;
+		if (setLong(obj, &value, min, max) < 0) return -1;
+		*pv = (int)value;
+		return 0;
 	}
 
 	typedef PyObject* (*Getter)(PyObject*);

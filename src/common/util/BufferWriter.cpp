@@ -16,8 +16,10 @@ void BufferWriter::formatDouble(double d, int precision, bool zeroFill)
 	assert(precision >= 0 && precision <= 15);
 	char buf[64];
 	double multiplier = Math::POWERS_OF_10[precision];
-	long long intPart = (long long)(round(d * multiplier) / multiplier);
-	unsigned long long fracPart = (unsigned long long)(abs(d - intPart) * multiplier);
+	long long roundedScaled = static_cast<long long>(round(d * multiplier));
+	long long intPart = static_cast<long long>(roundedScaled / multiplier);
+	unsigned long long fracPart = static_cast<unsigned long long>(
+		abs(roundedScaled - intPart * multiplier));
 	char* end = buf + sizeof(buf);
 	char* start = formatFractionalReverse(fracPart, &end, precision, zeroFill);
 	if (start != end) *(--start) = '.';
