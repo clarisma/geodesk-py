@@ -44,10 +44,15 @@ public:
         }
     }
 
-protected:
-    void postWork(const WorkTask& task)
+    void postOutput(OutputTask&& task)
     {
-        workQueue_.post(task);
+        outputQueue_.post(std::move(task));
+    }
+
+protected:
+    void postWork(WorkTask&& task)
+    {
+        workQueue_.post(std::move(task));
     }
 
 private:

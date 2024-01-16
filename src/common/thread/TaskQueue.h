@@ -23,25 +23,25 @@ public:
     }
 
     
-    void post(const Task& task)
+    void post(Task&& task)
     {
         std::unique_lock<std::mutex> lock(mutex_);
         if (count_ == size_)
         {
             notFull_.wait(lock, [this] { return count_ < size_; });
         }
-        queue_[rear_] = task;
+        queue_[rear_] = std::move(task);
         rear_ = (rear_ + 1) % size_;
         count_++;
         notEmpty_.notify_one();
     }
 
 
-    bool tryPost(const Task& task)
+    bool tryPost(Task&& task)
     {
         std::unique_lock<std::mutex> lock(mutex_);
         if (count_ == size_) return false;
-        queue_[rear_] = task;
+        queue_[rear_] = std::move(task);
         rear_ = (rear_ + 1) % size_;
         count_++;
         notEmpty_.notify_one();

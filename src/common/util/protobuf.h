@@ -17,25 +17,24 @@ namespace protobuf
 
 	struct Message
 	{
-		Message() : p(nullptr), pEnd(nullptr) {}
-		Message(const uint8_t* start, uint8_t* end) : p(start), pEnd(end) {}
+		Message() : start(nullptr), end(nullptr) {}
+		Message(const uint8_t* start_, const uint8_t* end_) : 
+			start(start_), end(end_) {}
 
-		bool isEmpty() const { return p == pEnd; }
+		bool isEmpty() const { return start == end; }
 
-		const uint8_t* p;
-		const uint8_t* pEnd;
+		const uint8_t* start;
+		const uint8_t* end;
 	};
 
 	using Field = uint32_t;
 
 	inline Message readMessage(const uint8_t*& p)
 	{
-		Message msg;
 		uint32_t size = readVarint32(p);
-		msg.p = p;
+		const uint8_t* start = p;
 		p += size;
-		msg.pEnd = p;
-		return msg;
+		return Message(start, p);
 	}
 
 	inline Field readField(const uint8_t*& p)

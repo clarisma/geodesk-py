@@ -37,7 +37,7 @@
 /out/
 /_skbuild/
 /dist/
-/third-party/
+/third_party/
 .idea/
 cmake-build-*/
 geodesk.egg-info/

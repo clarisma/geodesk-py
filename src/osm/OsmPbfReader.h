@@ -126,7 +126,11 @@ public:
 	const uint8_t* toDelete;
 };
 
-
+/**
+ * stringTable()
+ * startBlock()
+ * endBlock()
+ */
 template <typename Derived, typename Reader>
 class OsmPbfContext
 {
@@ -135,13 +139,15 @@ public:
 		reader_(reinterpret_cast<Reader*>(reader))
 	{}
 
-	void* engine() const { return reader_; };
+	Reader* reader() const { return reader_; };
 
 	void processTask(OsmPbfBlock& block)
 	{
 		UncompressedBlock uncompressed = Reader::uncompressBlock(block);
 		const uint8_t* p = uncompressed.data;
 		const uint8_t* pEnd = p + uncompressed.dataSize;
+
+		self()->startBlock();
 
 		granularity_ = 100;
 		uint32_t dateGranularity = 1000;
@@ -154,8 +160,8 @@ public:
 			switch (field)
 			{
 			case BLOCK_STRINGTABLE:
-				assert(strings_.empty());
-				readStringTable(protobuf::readMessage(p));
+				// assert(strings_.empty());
+				self()->stringTable(protobuf::readMessage(p));
 				break;
 			case BLOCK_GROUP:
 				groups_.push_back(protobuf::readMessage(p));
@@ -185,42 +191,54 @@ public:
 		{
 			decodePrimitiveGroup(group);
 		}
-
-		strings_.clear();
 		groups_.clear();
+		self()->endBlock();
 	}
 
 protected:
+	/*
 	const uint8_t* string(uint32_t index) const
 	{
 		return strings_[index];		// TODO: bounds check
 	}
+	*/
 
-private:
-	Derived* self() { return reinterpret_cast<Derived*>(this); }
-
-	void readStringTable(protobuf::Message strings)
+	void stringTable(protobuf::Message strings)  // CRTP override
 	{
+		// by default, do nothing
+		/*
 		// assert(_CrtCheckMemory());
-		const uint8_t* p = strings.p;
-		while (p < strings.pEnd)
+		const uint8_t* p = strings.start;
+		while (p < strings.end)
 		{
 			uint32_t marker = readVarint32(p);
 			if (marker != STRINGTABLE_ENTRY)
 			{
-				throw OsmPbfException("Bad string table. Unexpected field:  %d", marker);
+				throw OsmPbfException("Bad string table. Unexpected field: %d", marker);
 			}
 			const uint8_t* pString = p;
 			p += readVarint32(p);
 			strings_.push_back(pString);
 		}
-		assert(p == strings.pEnd);
+		assert(p == strings.end);
+		*/
 	}
+
+	void startBlock()	// CRTP override
+	{
+	}
+
+	void endBlock()		// CRTP override
+	{
+	}
+
+private:
+	Derived* self() { return reinterpret_cast<Derived*>(this); }
 
 	void decodePrimitiveGroup(protobuf::Message group)
 	{
-		const uint8_t* p = group.p;
-		while (p < group.pEnd)
+		const uint8_t* p = group.start;
+		while (p < group.end)
 		{
 			uint32_t field = readVarint32(p);
 			switch (field)
@@ -248,18 +266,18 @@ private:
 				break;
 			}
 		}
-		assert(p == group.pEnd);
+		assert(p == group.end);
 	}
 
 	void decodeDenseNodes(protobuf::Message data)
 	{
-		const uint8_t* p = data.p;
+		const uint8_t* p = data.start;
 		protobuf::Message ids;
 		protobuf::Message lats;
 		protobuf::Message lons;
 		protobuf::Message tags;
 
-		while (p < data.pEnd)
+		while (p < data.end)
 		{
 			protobuf::Field field = protobuf::readField(p);
 			switch (field)
@@ -284,27 +302,29 @@ private:
 				break;
 			}
 		}
-		assert(p == data.pEnd);
-		if (ids.p)
+		assert(p == data.end);
+		if (ids.start)
 		{
 			// TODO: check other messages are present
-
+			p = ids.start;
+			const uint8_t* pLat = lats.start;
+			const uint8_t* pLon = lons.start;
 			int64_t id = 0;
 			int64_t lat = 0;
 			int64_t lon = 0;
-			while (ids.p < ids.pEnd)
+			while (p < ids.end)
 			{
-				id += readSignedVarint64(ids.p);
-				lat += readSignedVarint64(lats.p);
-				lon += readSignedVarint64(lons.p);
+				id += readSignedVarint64(p);
+				lat += readSignedVarint64(pLat);
+				lon += readSignedVarint64(pLon);
 				int64_t latInNanoDeg = (latOffset_ + (granularity_ * lat));
 				int64_t lonInNanoDeg = (lonOffset_ + (granularity_ * lon));
 
 				self()->node(id, static_cast<int32_t>(lonInNanoDeg / 100),
 					static_cast<int32_t>(latInNanoDeg / 100), tags);
 			}
-			assert(lats.isEmpty());
-			assert(lons.isEmpty());
+			assert(pLat == lats.end);
+			assert(pLon == lons.end);
 			// assert(tags.isEmpty());
 		}
 	}
@@ -316,8 +336,8 @@ private:
 		protobuf::Message values;
 		protobuf::Message nodes;
 
-		const uint8_t* p = data.p;
-		while (p < data.pEnd)
+		const uint8_t* p = data.start;
+		while (p < data.end)
 		{
 			protobuf::Field field = protobuf::readField(p);
 			switch (field)
@@ -354,8 +374,8 @@ private:
 		protobuf::Message memberIds;
 		protobuf::Message memberTypes;
 
-		const uint8_t* p = data.p;
-		while (p < data.pEnd)
+		const uint8_t* p = data.start;
+		while (p < data.end)
 		{
 			protobuf::Field field = protobuf::readField(p);
 			switch (field)
@@ -390,7 +410,7 @@ private:
 	}
 
 	Reader* reader_;
-	std::vector<const uint8_t*> strings_;
+	// std::vector<const uint8_t*> strings_;
 	std::vector<protobuf::Message> groups_;
 	int64_t latOffset_;
 	int64_t lonOffset_;
@@ -467,7 +487,7 @@ public:
 			if (blockType == "OSMData")
 			{
 				LOG("Block with %d bytes", block.blockSize);
-				this->postWork(block);
+				this->postWork(std::move(block));
 			}
 			else if (blockType == "OSMHeader")
 			{
@@ -488,9 +508,6 @@ public:
 	{
 		// do nothing
 	}
-
-protected:
-	
 
 private:
 	static UncompressedBlock uncompressBlock(const OsmPbfBlock& block)
