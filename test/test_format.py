@@ -139,3 +139,9 @@ def test_maproulette(features):
 def test_pretty_geojson_save(features):    
     features("a[leisure=park]").geojson(limit=20, pretty=True).save(
         "c:\\geodesk\\tests\\pretty.geojson")
+    
+def test_numeric_custom_ids(features):    
+    features("a[leisure=park]").geojson(limit=20, 
+        id = lambda f: f.id * 2 + (0 if f.is_way else 1)).save(
+        "c:\\geodesk\\tests\\mumeric_ids.geojson")
+    
