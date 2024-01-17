@@ -3,14 +3,17 @@
 
 #pragma once
 #include "TaskQueue.h"
+#include <common/thread/Threads.h>
+#include <common/text/Format.h>
+#include <common/util/log.h>
 
 template <typename Derived, typename WorkContext, typename WorkTask, typename OutputTask>
 class TaskEngine
 {
 public:
     TaskEngine(int numberOfThreads, int workQueueSize = 0, int outputQueueSize = 0) :
-        workQueue_(workQueueSize == 0 ? (numberOfThreads * 4) : workQueueSize),
-        outputQueue_(outputQueueSize == 0 ? (numberOfThreads * 4) : outputQueueSize)
+        workQueue_(workQueueSize == 0 ? (numberOfThreads * 2) : workQueueSize),
+        outputQueue_(outputQueueSize == 0 ? (numberOfThreads * 2) : outputQueueSize)
     {
         workContexts_.reserve(numberOfThreads);
         threads_.reserve(numberOfThreads+1);
@@ -24,24 +27,36 @@ public:
 
     ~TaskEngine()
     {
-        // TODO: Check if alread shut down (more efficient)
+        // TODO: Check if already shut down (more efficient)
         end();
     }
 
 
     void end()
     {
+        LOG("Shutting down workQueue (%p) ...", &workQueue_);
         workQueue_.awaitCompletion();
-        outputQueue_.awaitCompletion();
         workQueue_.shutdown();
-        outputQueue_.shutdown();
-        for (auto& th : threads_)
+        LOG("Waiting for worker threads to end...");
+        for (auto it = threads_.begin() + 1; it != threads_.end(); ++it) 
         {
-            if (th.joinable())
-            {
-                th.join();
-            }
+            LOG("  Waiting for worker thread %s...", Format::format(it->get_id()).c_str());
+            if (it->joinable()) it->join();
+            LOG("    Ended.");
         }
+
+        // Now that all worker threads are completed, all remaining output
+        // tasks are enqueued. We'll wait for the output thread to pick
+        // up the output tasks, then mark the queue as finished and wait
+        // for the output thread to end
+
+        LOG("Shutting down outputQueue (%p)...", &outputQueue_);
+        outputQueue_.awaitCompletion();
+        outputQueue_.shutdown();
+        LOG("Waiting for output thread (%s)...", Format::format(threads_[0].get_id()).c_str());
+        if (threads_[0].joinable()) threads_[0].join();
+        LOG("  Ended.");
+
     }
 
     void postOutput(OutputTask&& task)
@@ -59,6 +74,7 @@ private:
     void process(WorkContext* ctx)
     {
         workQueue_.process(ctx);
+        ctx->afterTasks();
     }
     
     void processOutput()

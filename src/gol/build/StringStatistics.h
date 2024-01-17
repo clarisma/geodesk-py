@@ -46,6 +46,7 @@ public:
 
 	StringStatistics(uint32_t tableSize, uint32_t arenaSize);
 
+	size_t counterCount() const { return counterCount_; }
 	// CounterOfs addString(const uint8_t* bytes, StringCount keys, StringCount values);
 	CounterOfs addString(const Counter* pCounter);
 	void removeStrings(uint32_t minCount);
@@ -108,4 +109,5 @@ private:
 	const uint8_t* arenaEnd_;
 	uint8_t* p_;
 	size_t tableSize_;
+	size_t counterCount_;
 };

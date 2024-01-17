@@ -7,6 +7,8 @@
 #include <thread>
 #include <condition_variable>
 #include <atomic>
+#include <common/thread/Threads.h>
+#include <common/util/log.h>
 
 template <typename Context, typename Task>
 class TaskQueue
@@ -28,6 +30,8 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
         if (count_ == size_)
         {
+            LOG("Thread %s: Queue %p full, waiting for space...",
+                Threads::currentThreadId().c_str(), this);
             notFull_.wait(lock, [this] { return count_ < size_; });
         }
         queue_[rear_] = std::move(task);
@@ -69,6 +73,8 @@ public:
                 {
                     if (!running_) return;
                     if (count_ > 0) break;
+                    LOG("Thread %s: Waiting for tasks in queue %p...", 
+                        Threads::currentThreadId().c_str(), this);
                     notEmpty_.wait(lock);
                 }
                 task = std::move(queue_[front_]);
@@ -78,20 +84,25 @@ public:
             }
             ctx->processTask(task);
         }
+        LOG("Thread %s: Finished processing queue %p.", Threads::currentThreadId().c_str(), this);
     }
 
 
     void awaitCompletion()
     {
+        LOG("Awaiting completion of queue %p...", this);
         std::unique_lock<std::mutex> lock(mutex_);
         while (count_ != 0)
         {  // Continue to wait as long as there are tasks in the queue
+            LOG("There are still %d task(s) in queue %p...", count_, this);
             notFull_.wait(lock);  // Wait for a signal that a task has been completed
         }
+        LOG("Queue %p is empty.", this);
     }
 
     void shutdown()
     {
+        LOG("Shutting down queue %p...", this);
         running_.store(false);
         notEmpty_.notify_all();
     }

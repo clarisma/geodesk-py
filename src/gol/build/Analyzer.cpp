@@ -12,7 +12,8 @@
 Analyzer::Analyzer(int numberOfThreads) : 
 	OsmPbfReader(numberOfThreads),
 	strings_(outputTableSize(), outputArenaSize()),
-	minStringCount_(2)
+	minStringCount_(2),
+	progress_("Analyzing")
 {
 }
 
@@ -28,7 +29,7 @@ AnalyzerContext::AnalyzerContext(Analyzer* analyzer) :
 
 void AnalyzerContext::flush()
 {
-	LOG("== Flushing ==");
+	LOG("== Flushing context %p with %d strings", this, strings_.counterCount());
 	std::unique_ptr<uint8_t[]> strings = strings_.takeStrings();
 
 	// Now that we've reset the String Statistics, the lookup table entries
@@ -40,7 +41,8 @@ void AnalyzerContext::flush()
 		entry.counterOfs = 0;
 	}
 	 
-	reader()->postOutput(AnalyzerOutputTask(strings.release()));
+	reader()->postOutput(AnalyzerOutputTask(strings.release(), blockBytesProcessed()));
+	resetBlockBytesProcessed();
 }
 
 void AnalyzerContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
@@ -150,6 +152,11 @@ void AnalyzerContext::endBlock()	// CRTP override
 	stringCodeLookup_.clear();
 }
 
+void AnalyzerContext::afterTasks()
+{
+	LOG("Context %p: flushing remaining strings...", this);
+	flush();
+}
 
 void Analyzer::processTask(AnalyzerOutputTask& task)
 {
@@ -172,8 +179,16 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 				strings_.counterAt(ofs)->add(counter->keys, counter->values);
 				break;
 			}
+			LOG("==== Global string arena full, culling strings < %d...", minStringCount_);
 			strings_.removeStrings(minStringCount_++);
 		}
 		p += StringStatistics::Counter::grossSize(stringSize);
 	}
+	progress_.progress(task.blockBytesProcessed());
+}
+
+
+void Analyzer::analyze(const char* fileName)
+{
+	read(fileName, &progress_);
 }

@@ -20,7 +20,7 @@ public:
 	void way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes);
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
-	
+	void afterTasks();
 	
 private:
 	void flush();
@@ -67,15 +67,19 @@ class AnalyzerOutputTask : public OsmPbfOutputTask
 {
 public:
 	AnalyzerOutputTask() {} // TODO: not needed, only to satisfy compiler
-	AnalyzerOutputTask(const uint8_t* strings) :
-		strings_(strings)
+	AnalyzerOutputTask(const uint8_t* strings, uint64_t blockBytesProcessed) :
+		strings_(strings),
+		blockBytesProcessed_(blockBytesProcessed)
 	{
 	}
 
 	const uint8_t* strings() const { return strings_.get(); }
+	const uint64_t blockBytesProcessed() const { return blockBytesProcessed_; }
 
 private:
 	std::unique_ptr<const uint8_t[]> strings_;
+	// size_t currentBatchStringCount_;
+	uint64_t blockBytesProcessed_;
 };
 
 class Analyzer : public OsmPbfReader<Analyzer, AnalyzerContext, AnalyzerOutputTask>
@@ -84,13 +88,16 @@ public:
 	Analyzer(int numberOfThreads);
 
 	uint32_t workerTableSize() { return 2 * 1024 * 1024; }
-	uint32_t workerArenaSize() { return 32 * 1024 * 1024; }
+	uint32_t workerArenaSize() { return 16 * 1024 * 1024; }
 	uint32_t outputTableSize() { return 4 * 1024 * 1024; }
-	uint32_t outputArenaSize() { return 64 * 1024 * 1024; }
+	uint32_t outputArenaSize() { return 32 * 1024 * 1024; }
 
+	void analyze(const char* fileName);
 	void processTask(AnalyzerOutputTask& task);
+	ProgressReporter* progress() { return &progress_; }
 
 private:
 	StringStatistics strings_;
 	int minStringCount_;
+	ProgressReporter progress_;
 };

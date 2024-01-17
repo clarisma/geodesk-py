@@ -8,7 +8,8 @@
 StringStatistics::StringStatistics(uint32_t tableSize, uint32_t arenaSize) :
 	tableSize_(tableSize),
 	table_(new CounterOfs[tableSize]),
-	arena_(new uint8_t[arenaSize])
+	arena_(new uint8_t[arenaSize]),
+	counterCount_(0)
 {
 	reset(arenaSize);
 }
@@ -55,6 +56,7 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 	CounterOfs ofs = p_ - arena_.get();
 	table_[slot] = ofs;
 	p_ += counterSize;
+	counterCount_++;
 	return ofs;
 }
 
@@ -123,13 +125,14 @@ std::unique_ptr<uint8_t[]> StringStatistics::takeStrings()
 void StringStatistics::removeStrings(uint32_t minCount)
 {
 	clearTable();
+	counterCount_ = 0;
 	uint8_t* pSource = arena_.get() + sizeof(uint32_t);		// skip to pos 4
 	uint8_t* pDest = pSource;
 
 	// TODO: Stop at a point before arenaEnd_ so recently added strings have a chance
 	// to catch up?
 
-	while (pSource < arenaEnd_)
+	while (pSource < p_)
 	{
 		Counter* pCounter = reinterpret_cast<Counter*>(pSource);
 		uint32_t counterSize = Counter::grossSize(stringSize(pCounter->bytes));
@@ -144,6 +147,7 @@ void StringStatistics::removeStrings(uint32_t minCount)
 			pCounter->next = table_[slot];
 			table_[slot] = pDest - arena_.get();
 			pDest += counterSize;
+			counterCount_++;
 		}
 		pSource += counterSize;
 	}

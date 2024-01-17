@@ -34,7 +34,7 @@ void BuildCommand::run(char* argv[])
 	int threads = std::thread::hardware_concurrency();
 	auto startTime = std::chrono::high_resolution_clock::now();
 	Analyzer analyzer(threads);
-	analyzer.read(sourcePath_.c_str());
+	analyzer.analyze(sourcePath_.c_str());
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 	printf("Built %s in %.3f seconds\n", golPath_.c_str(), duration.count() / 1e6);

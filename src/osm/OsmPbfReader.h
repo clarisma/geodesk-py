@@ -4,6 +4,7 @@
 #pragma once
 #include <string_view>
 #include <common/io/File.h>
+#include <common/thread/ProgressReporter.h>
 #include <common/thread/TaskEngine.h>
 #include <common/util/Bits.h>
 #include <common/util/log.h>
@@ -136,8 +137,13 @@ class OsmPbfContext
 {
 public:
 	OsmPbfContext(void* reader) :
-		reader_(reinterpret_cast<Reader*>(reader))
-	{}
+		reader_(reinterpret_cast<Reader*>(reader)),
+		blockBytesProcessed_(0),
+		latOffset_(0),
+		lonOffset_(0),
+		granularity_(100)
+	{
+	}
 
 	Reader* reader() const { return reader_; };
 
@@ -147,6 +153,7 @@ public:
 		const uint8_t* p = uncompressed.data;
 		const uint8_t* pEnd = p + uncompressed.dataSize;
 
+		blockBytesProcessed_ += block.blockSize;
 		self()->startBlock();
 
 		granularity_ = 100;
@@ -196,6 +203,8 @@ public:
 	}
 
 protected:
+	uint64_t blockBytesProcessed() const { return blockBytesProcessed_; }
+	void resetBlockBytesProcessed() { blockBytesProcessed_ = 0; }
 	/*
 	const uint8_t* string(uint32_t index) const
 	{
@@ -415,6 +424,7 @@ private:
 	int64_t latOffset_;
 	int64_t lonOffset_;
 	uint32_t granularity_;
+	uint64_t blockBytesProcessed_;
 };
 
 
@@ -432,11 +442,12 @@ public:
 	{
 	}
 
-	void read(const char* fileName)
+	void read(const char* fileName, ProgressReporter* progress=nullptr)
 	{
 		File file;
 		file.open(fileName, File::OpenMode::READ);
 		uint64_t fileSize = file.size();
+		if (progress) progress->start(fileSize);
 
 		size_t totalBytesRead = 0;
 		while (totalBytesRead < fileSize)
@@ -486,7 +497,7 @@ public:
 			file.read(data, dataLen);
 			if (blockType == "OSMData")
 			{
-				LOG("Block with %d bytes", block.blockSize);
+				// LOG("Block with %d bytes", block.blockSize);
 				this->postWork(std::move(block));
 			}
 			else if (blockType == "OSMHeader")
