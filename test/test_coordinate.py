@@ -56,3 +56,19 @@ def test_lonlat_errors():
         bad = latlon("apple", "banana")
     with pytest.raises(TypeError):            
         bad = latlon(12)
+
+def check_rounded(lon, lat):
+    c = lonlat(lon, lat)
+    assert c.lon == lon
+    assert c.lat == lat
+
+def test_rounded():
+    check_rounded(-176.4321, 68.3921)
+    minlat = -85.0511288 # Coordinate(0,-2147483648).lat
+    maxlat = 85.0511287 # Coordinate(0,2147483647).lat (must be int_max-1)
+    # print(f"minlat = {minlat}")
+    # print(f"maxlat = {maxlat}")
+    check_rounded(-180,minlat)
+    check_rounded(180,maxlat)
+    check_rounded(0,0)
+    

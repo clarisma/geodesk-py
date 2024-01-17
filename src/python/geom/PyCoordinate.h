@@ -76,6 +76,12 @@ public:
         return v;
     }
 
+    static double precision7(double value)
+    {
+        static double factor = 10'000'000.0;
+        return std::round(value * factor) / factor;
+    }
+
     Coordinate coordinate() const { return Coordinate(x, y); }
 };
 
