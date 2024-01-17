@@ -13,10 +13,11 @@ Analyzer::Analyzer(int numberOfThreads) :
 	OsmPbfReader(numberOfThreads),
 	strings_(outputTableSize(), outputArenaSize()),
 	minStringCount_(2),
-	progress_("Analyzing")
+	progress_("Analyzing"),
+	minLat_(Mercator::latFromY(INT_MIN+1)),
+	maxLat_(Mercator::latFromY(INT_MAX-1))
 {
 }
-
 
 AnalyzerContext::AnalyzerContext(Analyzer* analyzer) :
 	OsmPbfContext<AnalyzerContext, Analyzer>(analyzer),
@@ -187,8 +188,13 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 	progress_.progress(task.blockBytesProcessed());
 }
 
+void Analyzer::calculateRowLats()
+{
+	int32_t minLat = 
+}
 
 void Analyzer::analyze(const char* fileName)
 {
+	calculateRowLats();
 	read(fileName, &progress_);
 }

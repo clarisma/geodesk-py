@@ -97,7 +97,12 @@ public:
 	ProgressReporter* progress() { return &progress_; }
 
 private:
+	void calculateRowLats();
+
 	StringStatistics strings_;
+	std::vector<uint16_t> rows_;
 	int minStringCount_;
+	int32_t MIN_LAT = -850511288;
+	int32_t MAX_LAT = 850511287;
 	ProgressReporter progress_;
 };

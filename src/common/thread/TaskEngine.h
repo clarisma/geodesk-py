@@ -3,6 +3,7 @@
 
 #pragma once
 #include "TaskQueue.h"
+#include "TaskStatus.h"
 #include <common/thread/Threads.h>
 #include <common/text/Format.h>
 #include <common/util/log.h>
@@ -27,8 +28,8 @@ public:
 
     ~TaskEngine()
     {
-        // TODO: Check if already shut down (more efficient)
-        end();
+        // If thread list is empty, this means processing has already ended
+        if(!threads_.empty()) end();
     }
 
 
@@ -56,7 +57,8 @@ public:
         LOG("Waiting for output thread (%s)...", Format::format(threads_[0].get_id()).c_str());
         if (threads_[0].joinable()) threads_[0].join();
         LOG("  Ended.");
-
+        threads_.clear();
+        workContexts_.clear();
     }
 
     void postOutput(OutputTask&& task)
@@ -82,10 +84,10 @@ private:
         outputQueue_.process((Derived*)this);
     }
 
-
 	std::vector<std::thread> threads_;
     std::vector<WorkContext> workContexts_;
 	TaskQueue<WorkContext, WorkTask> workQueue_;
 	TaskQueue<Derived, OutputTask> outputQueue_;
+    TaskStatus status_;
 };
 
