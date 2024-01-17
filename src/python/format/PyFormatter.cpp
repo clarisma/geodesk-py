@@ -300,7 +300,7 @@ void PyFormatter::writeIdViaCallable(FeatureWriter* writer,
 		PyErr_Clear(); // TODO
 		return;
 	}
-	PyObject* value = PyObject_CallOneArg(callable, featureObj);
+	PyObject* value = Python::callOneArg(callable, featureObj);
 	if (!value)
 	{
 		PyErr_Clear(); // TODO
