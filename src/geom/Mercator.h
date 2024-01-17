@@ -15,8 +15,12 @@ namespace Mercator
 {
 	constexpr double MAP_WIDTH = 4'294'967'294.9999;
 	constexpr double EARTH_CIRCUMFERENCE = 40'075'016.68558;
+    constexpr double MIN_LAT = -85.0511288;
+    constexpr double MAX_LAT =  85.0511287;
     constexpr int32_t MIN_LAT_100ND = -850511288;
-    constexpr int32_t MAX_LAT_100ND = 850511287;
+    constexpr int32_t MAX_LAT_100ND =  850511287;
+    constexpr int32_t MIN_Y = INT_MIN;
+    constexpr int32_t MAX_Y = INT_MAX - 1;
 
     inline int32_t xFromLon(double lon)
     {
