@@ -56,3 +56,12 @@ def test_lonlat_errors():
         bad = latlon("apple", "banana")
     with pytest.raises(TypeError):            
         bad = latlon(12)
+
+def check_rounded(lon, lat):
+    c = lonlat(lon, lat)
+    assert c.lon == lon
+    assert c.lat == lat
+    
+def test_rounded():
+    check_rounded(-176.4321, 68.3921)
+    

@@ -131,11 +131,11 @@ PyObject* PyCoordinate::getattr(PyCoordinate* self, PyObject* name)
     if (strcmp(attr, "y") == 0) return PyLong_FromLong(self->y);
     if (strcmp(attr, "lon") == 0) 
     {
-        return PyFloat_FromDouble(Mercator::lonFromX(self->x));
+        return PyFloat_FromDouble(precision7(Mercator::lonFromX(self->x)));
     }
     if (strcmp(attr, "lat") == 0) 
     {
-        return PyFloat_FromDouble(Mercator::latFromY(self->y));
+        return PyFloat_FromDouble(precision7(Mercator::latFromY(self->y)));
     }
     return PyObject_GenericGetAttr((PyObject*)self, name);
 }
