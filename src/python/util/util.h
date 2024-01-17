@@ -133,6 +133,20 @@ namespace Python
 		return 0;
 	}
 
+	inline PyObject* callOneArg(PyObject* callable, PyObject* arg)
+	{
+		#if PY_VERSION_HEX >= 0x03090000
+		// Function introduced in Python 3.9
+		return PyObject_CallOneArg(callable, arg);
+		#else
+		// Code for earlier versions
+		PyObject* args = PyTuple_Pack(1, arg);
+		PyObject* result = PyObject_CallObject(callable, args);
+		Py_DECREF(args);
+		return result;
+		#endif
+	}
+
 	typedef PyObject* (*Getter)(PyObject*);
 
 	class AttrRef
