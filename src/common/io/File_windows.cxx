@@ -31,7 +31,7 @@ void File::open(const char* filename, int mode)
     // TODO: set a share mode instead of `0`
     //  Should use (FILE_SHARE_READ | FILE_SHARE_WRITE) unless file is 
     //  expressively opened as exclusive? or other way around, make shared access explicit?
-    //  (Linux does not have exclusive access mode, multiple processes can read/write
+    //  (Linux does not have exclusive access mode, multiple processes can read/write)
     // For now, we enable shared access implicitly to match Linux behavior
     fileHandle_ = CreateFileA(filename, access, FILE_SHARE_READ | FILE_SHARE_WRITE, 
         NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);

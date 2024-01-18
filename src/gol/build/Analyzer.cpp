@@ -13,15 +13,14 @@ Analyzer::Analyzer(int numberOfThreads) :
 	OsmPbfReader(numberOfThreads),
 	strings_(outputTableSize(), outputArenaSize()),
 	minStringCount_(2),
-	progress_("Analyzing"),
-	minLat_(Mercator::latFromY(INT_MIN+1)),
-	maxLat_(Mercator::latFromY(INT_MAX-1))
+	progress_("Analyzing")
 {
 }
 
 AnalyzerContext::AnalyzerContext(Analyzer* analyzer) :
 	OsmPbfContext<AnalyzerContext, Analyzer>(analyzer),
-	nodeCounts_(new uint32_t[4096 * 4096]),
+	nodeCounts_(new uint32_t[FastTileCalculator::GRID_CELL_COUNT + 1]),		
+		// +1 to count any rejected nodes outside of range
 	strings_(analyzer->workerTableSize(), analyzer->workerArenaSize())
 {
 	memset(nodeCounts_.get(), 0, 4096 * 4096 * sizeof(uint32_t));
@@ -58,6 +57,8 @@ void AnalyzerContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, proto
 	int row = Tile::rowFromYZ(y, 12);
 	nodeCounts_[row * 4096 + col]++;
 	*/
+	uint32_t cell = reader()->tileCalculator()->calculateCell(lon100nd, lat100nd);
+	nodeCounts_[cell]++;
 
 	const uint8_t* p = tags.start;
 	while (p < tags.end)
@@ -188,13 +189,7 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 	progress_.progress(task.blockBytesProcessed());
 }
 
-void Analyzer::calculateRowLats()
-{
-	int32_t minLat = 
-}
-
 void Analyzer::analyze(const char* fileName)
 {
-	calculateRowLats();
 	read(fileName, &progress_);
 }

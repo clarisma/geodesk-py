@@ -3,6 +3,7 @@
 
 #pragma once
 #include "osm/OsmPbfReader.h"
+#include "FastTileCalculator.h"
 #include "StringStatistics.h"
 #include "OsmStatistics.h"
 
@@ -95,14 +96,13 @@ public:
 	void analyze(const char* fileName);
 	void processTask(AnalyzerOutputTask& task);
 	ProgressReporter* progress() { return &progress_; }
+	const FastTileCalculator* tileCalculator() const { return &tileCalculator_; }
 
 private:
 	void calculateRowLats();
 
 	StringStatistics strings_;
-	std::vector<uint16_t> rows_;
+	const FastTileCalculator tileCalculator_;
 	int minStringCount_;
-	int32_t MIN_LAT = -850511288;
-	int32_t MAX_LAT = 850511287;
 	ProgressReporter progress_;
 };

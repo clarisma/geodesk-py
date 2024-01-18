@@ -315,15 +315,19 @@ private:
 		if (ids.start)
 		{
 			// TODO: check other messages are present
-			p = ids.start;
+			const uint8_t* pId = ids.start;
 			const uint8_t* pLat = lats.start;
 			const uint8_t* pLon = lons.start;
 			int64_t id = 0;
 			int64_t lat = 0;
 			int64_t lon = 0;
-			while (p < ids.end)
+
+			// TODO: base iteration on lon or lat because 
+			// Analyzer doesn't use ID, so the compiler may
+			// simply eliminate the ID decoding
+			while (pId < ids.end)
 			{
-				id += readSignedVarint64(p);
+				id += readSignedVarint64(pId);
 				lat += readSignedVarint64(pLat);
 				lon += readSignedVarint64(pLon);
 				int64_t latInNanoDeg = (latOffset_ + (granularity_ * lat));
@@ -332,6 +336,7 @@ private:
 				self()->node(id, static_cast<int32_t>(lonInNanoDeg / 100),
 					static_cast<int32_t>(latInNanoDeg / 100), tags);
 			}
+			assert(pId == ids.end);
 			assert(pLat == lats.end);
 			assert(pLon == lons.end);
 			// assert(tags.isEmpty());
