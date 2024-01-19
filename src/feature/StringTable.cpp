@@ -104,6 +104,7 @@ bool StringTable::isValidCode(int code)
 	return code >= 0 && code < stringCount_;
 }
 
+// TODO: toStringObject() may return NULL in case of failure!
 #ifdef GEODESK_PYTHON
 PyObject* StringTable::getStringObject(int code)
 {

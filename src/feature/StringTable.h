@@ -14,6 +14,10 @@ public:
     StringTable();
     ~StringTable();
 
+    // Prevent copy and assignment 
+    StringTable(const StringTable&) = delete;
+    StringTable& operator=(const StringTable&) = delete;
+
     #ifdef GEODESK_PYTHON
     using HashCode = Py_hash_t;
     #else
@@ -37,7 +41,7 @@ public:
     bool isValidCode(int code);
     int getCode(PyObject* strObj) const;
     int getCode(const char* str, int len) const;
-
+    uint32_t stringCount() const { return stringCount_; }
 
 private:
     struct Entry

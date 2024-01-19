@@ -857,11 +857,6 @@ PyObject* PyFeatures::guid(PyFeatures* self)
     Py_RETURN_NONE;
 }
 
-PyObject* PyFeatures::indexed_keys(PyFeatures* self)
-{
-    // TODO
-    Py_RETURN_NONE;
-}
 
 PyObject* PyFeatures::length(PyFeatures* self)
 {
@@ -975,9 +970,44 @@ PyObject* PyFeatures::shape(PyFeatures* self)
 
 PyObject* PyFeatures::strings(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    StringTable& strings = self->store->strings();
+    uint32_t count = strings.stringCount();
+    PyObject* list = PyList_New(count);
+    if (!list) return NULL;
+    for (uint32_t i = 0; i < count; ++i) 
+    {
+        PyObject* str = strings.getStringObject(i);
+        if(!str)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        PyList_SetItem(list, i, str);
+    }
+    return list;
 }
+
+PyObject* PyFeatures::indexed_keys(PyFeatures* self)
+{
+    StringTable& strings = self->store->strings();
+    const FeatureStore::IndexedKeyMap& keysToCategories = 
+        self->store->keysToCategories();
+    PyObject* list = PyList_New(keysToCategories.size());
+    if (!list) return NULL;
+    int i = 0;
+    for (auto it = keysToCategories.begin(); it != keysToCategories.end(); ++it)
+    {
+        PyObject* str = strings.getStringObject(it->first);
+        if (!str)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        PyList_SetItem(list, i++, str);
+    }
+    return list;
+}
+
 
 PyObject* PyFeatures::getTiles(PyFeatures* self)
 {
