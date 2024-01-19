@@ -40,6 +40,9 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 		Counter* pCounter = counterAt(counterOfs);
 		if (pCounter->hash == hash)
 		{
+			// TODO: check this for possible overrun
+			// but if mismatch of len, should terminate early?
+			// No, memcmp() may read entire words
 			if (memcmp(&pCounter->bytes, bytes, size) == 0)
 			{
 				return counterOfs;

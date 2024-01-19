@@ -5,6 +5,8 @@
 #include "MappedFile.h"
 #include <mutex>
 
+// TODO: Allow setting initial size, may be more efficient to access?
+
 /**
  * A MappedFile that grows on demand (if opened in writable mode).
  * The main mapping covers the entire current file (rounded up to nearest 1 GB
