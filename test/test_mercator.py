@@ -1,6 +1,7 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
+from shapely import *
 from geodesk import *
 import pytest
 
@@ -40,4 +41,45 @@ def test_length_to_mercator():
 
 def test_invalid_to_mercator():
     bad = to_mercator([Coordinate(lon=-120,lat=90), Coordinate(lon=-180,lat=-90)])
+
+
+def extract_coords(geom):
+    """
+    Recursively extract all coordinates from a Shapely geometry.
+    """
+    if geom.is_empty:
+        return []
+    if isinstance(geom, (Point, LineString, LinearRing)):
+        return list(geom.coords)
+    elif isinstance(geom, Polygon):
+        # Extracting exterior and interior coordinates
+        coords = list(geom.exterior.coords) 
+        for interior in geom.interiors:
+            coords.extend(interior.coords)
+        return coords    
+    elif isinstance(geom, (MultiPoint, MultiLineString, MultiPolygon, GeometryCollection)):
+        # Recursively extract coordinates from each part
+        coords = []
+        for part in geom.geoms:
+            coords.extend(extract_coords(part))
+        return coords
+    else:
+        raise ValueError(f"Unsupported geometry type: {type(geom)}")
+
+def test_convert_shape(features):
+    f = features("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+    shape_wgs84 = from_mercator(f.shape)
+    coords = extract_coords(shape_wgs84)
+    for c in coords:
+        lon, lat = c
+        assert lon >= -180 and lon <= 180
+        assert lat >= -86 and lat <= 86
+    assert to_mercator(shape_wgs84).equals(f.shape)
+
+def test_convert_shape_performance(features):
+    f = features("a[boundary=administrative][admin_level=2][name:en=Germany]").one
+    shape = f.shape
+    for i in range(0,10000):
+        from_mercator(shape)
+    
     
