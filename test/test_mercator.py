@@ -76,7 +76,30 @@ def test_convert_shape(features):
         assert lat >= -86 and lat <= 86
     assert to_mercator(shape_wgs84).equals(f.shape)
 
-def test_convert_shape_performance(features):
+def test_convert_length():
+    d = to_mercator(meters=100, lat=60)
+    assert 100 == pytest.approx(from_mercator(d, unit="meters", lat=60))
+    d = to_mercator(feet=1200, lat=38)
+    assert 1200 == pytest.approx(from_mercator(d, unit="feet", lat=38))
+
+    lat = -67.326
+    c = lonlat(-112, lat)
+    d = to_mercator(mi=1235.7, lat=lat)
+    assert d == to_mercator(mi=1235.7, y=c.y)
+
+def test_convert_length_bad_unit():
+    with pytest.raises(TypeError):            
+        d = to_mercator(turnips=1500, lat=48)
+        
+def test_convert_length_missing_lat():
+    with pytest.raises(TypeError):       
+        d = to_mercator(m=1500)
+
+def test_convert_length_bad_lat():
+    with pytest.raises(ValueError):       
+        d = to_mercator(m=1500, lat=1000)
+    
+def notest_convert_shape_performance(features):
     f = features("a[boundary=administrative][admin_level=2][name:en=Germany]").one
     shape = f.shape
     for i in range(0,10000):

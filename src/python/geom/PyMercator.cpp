@@ -312,10 +312,12 @@ PyObject* PyMercator::coordinatesToMercator(PyObject* seq, CoordinateOrder order
  *   to_mercator(<units>, units=<units>, lat=|y=) -> float
  */
 
+// TODO: Should this be able to take a Feature? This avoids need to create
+//  a second copy vs. calling from_mercator(f.shape)
 
 PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kwargs)
 {
-	static const char* KEYWORDS[] = { "geom", "units", "lat", "y", NULL };
+	static const char* KEYWORDS[] = { "geom", "unit", "lat", "y", NULL };
 	static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 	PyObject* arg;
 	const char* units;
@@ -362,8 +364,16 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 		geos::geom::Geometry* geom;
 		if (Environment::get().getGeosGeometry(arg, (GEOSGeometry**)&geom))
 		{
-			// TODO: should we return a new copy, instead of transforming in-place?
 			FromMercatorCoordinateFilter filter;
+			/*
+			geos::geom::Geometry* copy = geom->clone().release();
+				// TODO: error check
+			copy->apply_rw(&filter);
+			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
+			*/
+			
+			// TODO: should we return a new copy, instead of transforming in-place?
+			//  Creating a copy first, unsurprisingly, more than doubles runtime
 			geom->apply_rw(&filter);
 			return Python::newRef(arg);
 		}
