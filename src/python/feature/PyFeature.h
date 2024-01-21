@@ -81,6 +81,7 @@ public:
     static PyObject* is_placeholder(PyFeature* self);
     static PyObject* lat(PyFeature* self);
     static PyObject* lon(PyFeature* self);
+    static PyObject* parents(PyFeature* self);
     static PyObject* shape(PyFeature* self);
     static PyObject* type(PyFeature* self);
     static PyObject* x(PyFeature* self);

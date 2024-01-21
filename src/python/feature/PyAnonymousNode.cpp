@@ -6,6 +6,7 @@
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
+#include "python/query/PyFeatures.h"
 #include "feature/GeometryBuilder.h"
 #include "geom/Mercator.h"
 
@@ -63,10 +64,8 @@ PyObject* PyAnonymousNode::osm_type(PyFeature* self)
 
 PyObject* PyAnonymousNode::parents(PyAnonymousNode* self)
 {
-    // TODO
-    return PyFeature::return_empty(NULL);
+    return PyFeatures::Parents::create(self);
 }
-
 
 PyObject* PyAnonymousNode::shape(PyAnonymousNode* self)
 {

@@ -7,7 +7,7 @@
 #include "PyFeatures.h"
 #include "PyQueryFinalizer.h"
 
-PyObject* PyQuery::create(PyFeatures* features)
+PyQuery* PyQuery::create(PyFeatures* features)
 {
     LOG("PyQuery::create(PyFeatures*)");
     PyQuery* self = (PyQuery*)TYPE.tp_alloc(&TYPE, 0);
@@ -23,8 +23,9 @@ PyObject* PyQuery::create(PyFeatures* features)
             features->matcher,
             features->filter);
     }
-    return (PyObject*)self;
+    return self;
 }
+
 
 void PyQuery::dealloc(PyQuery* self)
 {

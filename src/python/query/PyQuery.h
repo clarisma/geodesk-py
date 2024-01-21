@@ -19,16 +19,15 @@
 
 class PyFeatures;
 
-class PyQuery
+class PyQuery : public PyObject
 {
 public:
-    PyObject_HEAD
     PyFeatures* target;
     Query query;
 
     static PyTypeObject TYPE;
 
-    static PyObject* create(PyFeatures* features);
+    static PyQuery* create(PyFeatures* features);
     static void dealloc(PyQuery* self);
     static PyObject* iter(PyQuery* self);
     static PyObject* next(PyQuery* self);

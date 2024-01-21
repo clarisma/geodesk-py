@@ -100,6 +100,7 @@ extern "C" PyMODINIT_FUNC PyInit_geodesk()
     if (createPrivateType(module, &PyMemberIterator::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyWayNodeIterator::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyParentRelationIterator::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyNodeParentIterator::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyAnonymousNode::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFastMethod::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyBinder::TYPE) < 0) return nullptr;
