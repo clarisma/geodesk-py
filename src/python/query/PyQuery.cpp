@@ -27,6 +27,23 @@ PyQuery* PyQuery::create(PyFeatures* features)
 }
 
 
+PyQuery* PyQuery::create(PyFeatures* features,
+    const Box& box, FeatureTypes types,
+    const MatcherHolder* matcher, const Filter* filter)
+{
+    PyQuery* self = (PyQuery*)TYPE.tp_alloc(&TYPE, 0);
+    if (self != nullptr)
+    {
+        Py_INCREF(features);
+        self->target = features;
+        // initialize Query in-place
+        new(&self->query)Query(features->store, box, types, matcher, filter);
+    }
+    return self;
+}
+
+
+
 void PyQuery::dealloc(PyQuery* self)
 {
     LOG("Deallocating PyQuery...");

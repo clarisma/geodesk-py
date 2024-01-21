@@ -145,6 +145,7 @@ bool FeatureNodeFilter::accept(FeatureStore* store, FeatureRef feature, FastFilt
 {
     // TODO: Ignore missing tiles; by definition, we cannot find the
     // candidate node in a missing tile
+    // LOG("Checking %s...", feature.toString().c_str());
     assert(feature.isWay());
     WayRef way(feature);
     FeatureNodeIterator iter(store);
@@ -163,14 +164,20 @@ bool WayNodeFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHi
 {
     assert(feature.isWay());
     WayRef way(feature);
+    // LOG("Checking way/%llu", way.id());
     WayCoordinateIterator iter;
     iter.start(way, 0);
     for (;;)
     {
         Coordinate c = iter.next();
-        if (c.isNull()) return false;
+        if (c.isNull())
+        {
+            // LOG("  Not accepted.");
+            return false;
+        }
         if (c == coord_) break;
     }
+    // LOG("  Accepted (prior to secondary filter)!");
     return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
 }
 
@@ -193,12 +200,9 @@ PyObject* PyNodeParentIterator::create(PyFeatures* features, Coordinate wayNodeX
         // be assured that is alive as long as this iterator is alive (because
         // `target` holds a strong reference to Features)
         features->filter = &self->wayNodeFilter;
-        // We temporarily substitute filter of Features so we can create 
-        // the PyQuery object 
-        // TODO: Check if this is safe!
-        self->wayQuery = PyQuery::create(features);
+        self->wayQuery = PyQuery::create(features, Box(wayNodeXY),
+            features->acceptedTypes, features->matcher, &self->wayNodeFilter);
         // TODO: handle PyQuery allocation failure
-        features->filter = secondaryFilter;
     }
     return (PyObject*)self;
 }
@@ -226,13 +230,15 @@ PyObject* PyNodeParentIterator::create(PyFeatures* features, NodeRef node, int s
         // We don't change refcount of the secondary filter, since we can
         // be assured that is alive as long as this iterator is alive (because
         // `target` holds a strong reference to Features)
-        features->filter = &self->featureNodeFilter;
-        // We temporarily substitute filter of Features so we can create 
-        // the PyQuery object 
-        // TODO: Check if this is safe!
-        self->wayQuery = PyQuery::create(features);
+        self->wayQuery = PyQuery::create(features, node.bounds(),
+            features->acceptedTypes & 
+                (FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED), 
+                features->matcher, &self->featureNodeFilter);
+        // We restrain acceptedTypes, because it may include relations
+        // (We don't set it to (FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED),
+        // because the acceptedTypes of Features may be stricter, such as
+        // "only areas" or "only relation members")
         // TODO: handle PyQuery allocation failure
-        features->filter = secondaryFilter;
     }
     return (PyObject*)self;
 }

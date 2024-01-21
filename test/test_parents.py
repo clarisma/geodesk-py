@@ -36,11 +36,14 @@ def test_parent_ways(features):
     """
     streets=features("w[highway=primary]")
     for street in streets:
+        # print(f"Checking {street}:")
         for node in street:
+            # print(f"  Checking {node}:")
             assert node.parents
             assert node.parents.ways
             assert street in node.parents
             assert street in node.parents.ways
             for parent in node.parents.ways:
+                # print(f"    {node} must be in {parent}")
                 assert node in parent.nodes
             

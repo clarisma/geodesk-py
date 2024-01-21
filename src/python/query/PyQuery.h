@@ -28,6 +28,9 @@ public:
     static PyTypeObject TYPE;
 
     static PyQuery* create(PyFeatures* features);
+    static PyQuery* create(PyFeatures* features,
+        const Box& box, FeatureTypes types,
+        const MatcherHolder* matcher, const Filter* filter);
     static void dealloc(PyQuery* self);
     static PyObject* iter(PyQuery* self);
     static PyObject* next(PyQuery* self);
