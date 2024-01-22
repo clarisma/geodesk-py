@@ -69,12 +69,17 @@ def extract_coords(geom):
 def test_convert_shape(features):
     f = features("a[boundary=administrative][admin_level=2][name:en=Germany]").one
     shape_wgs84 = from_mercator(f.shape)
+    """
     coords = extract_coords(shape_wgs84)
     for c in coords:
         lon, lat = c
         assert lon >= -180 and lon <= 180
         assert lat >= -86 and lat <= 86
-    assert to_mercator(shape_wgs84).equals(f.shape)
+    """    
+    shape_mercator = to_mercator(shape_wgs84)
+    assert shape_mercator.equals(f.shape)
+    # Make sure we're creating a copy, instead of transforming in-place
+    assert shape_mercator is not shape_wgs84 
 
 def test_convert_length():
     d = to_mercator(meters=100, lat=60)

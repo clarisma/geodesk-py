@@ -46,7 +46,9 @@ PyQuery* PyQuery::create(PyFeatures* features,
 
 void PyQuery::dealloc(PyQuery* self)
 {
-    LOG("Deallocating PyQuery...");
+    // TODO
+     
+    // LOG("Deallocating PyQuery...");
 
     // Check if query is still running, and if so, attempt to cancel it
     // (but don't await its completion)

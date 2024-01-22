@@ -53,6 +53,8 @@ def test_street_endpoints(features):
     primary streets have at least two streets as parents
     (If this test fails, could also imply bad OSM data --
     secondary streets are not expected to simply end)
+    TODO: ^^^ Not necessarily -- major street could end at
+    a ferry terminal etc. / disabling for now
     """
     highways=features("w[highway]")
     streets=features("w[highway=primary]")[:100]
@@ -70,4 +72,23 @@ def test_street_endpoints(features):
         assert nodes[-1].parents.count >= 2
         assert nodes[0].parents("w[highway]").count >= 2
         assert nodes[-1].parents("w[highway]").count >= 2
+
+def test_both_parent_types(features):
+    """
+    Ensures that node.parents works if node is part of ways as well
+    as relations
+    """
+    test_done = False
+    for way in features.ways:
+        for node in way:
+            rel_count = node.parents.relations.count
+            way_count = node.parents.ways.count
+            assert node.parents.count == rel_count + way_count
+            if rel_count and way_count:
+                print(f"Found {node} with both relations and ways as parent; test passed")
+                test_done = True
+                break
+        if test_done:
+            break
+
 

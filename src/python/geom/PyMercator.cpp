@@ -11,6 +11,10 @@
 #include "python/util/util.h"
 #include <string.h>
 
+// For now, we return a copies of transformed shapes, to conform
+// to what the Shapely library does
+// #define GEODESK_MERCATOR_TRANSFORM_INPLACE 1
+
 // TODO: What should happen to Coordinate objects if passed to to_mercator?
 
 /**
@@ -163,10 +167,17 @@ PyObject* PyMercator::to_mercator(PyObject* self, PyObject* args, PyObject* kwar
 		geos::geom::Geometry* geom;
 		if (Environment::get().getGeosGeometry(arg, (GEOSGeometry**)&geom))
 		{
-			// TODO: should we return a new copy, instead of transforming in-place?
 			ToMercatorCoordinateFilter filter;
+			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
 			return Python::newRef(arg);
+			#else			
+			geos::geom::Geometry* copy = geom->clone().release();
+			// TODO: error check (e.g. out of memory)
+			copy->apply_rw(&filter);
+			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
+			#endif			
+			// Creating a copy first, unsurprisingly, more than doubles runtime
 		}
 		else
 		{
@@ -365,17 +376,16 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 		if (Environment::get().getGeosGeometry(arg, (GEOSGeometry**)&geom))
 		{
 			FromMercatorCoordinateFilter filter;
-			/*
-			geos::geom::Geometry* copy = geom->clone().release();
-				// TODO: error check
-			copy->apply_rw(&filter);
-			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
-			*/
-			
-			// TODO: should we return a new copy, instead of transforming in-place?
-			//  Creating a copy first, unsurprisingly, more than doubles runtime
+			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
 			return Python::newRef(arg);
+			#else			
+			geos::geom::Geometry* copy = geom->clone().release();
+				// TODO: error check (e.g. out of memory)
+			copy->apply_rw(&filter);
+			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
+			#endif		
+			//  Creating a copy first, unsurprisingly, more than doubles runtime
 		}
 		else
 		{
