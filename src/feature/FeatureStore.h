@@ -107,7 +107,8 @@ private:
     MatcherCompiler matchers_;
     MatcherHolder allMatcher_;
     #ifdef GEODESK_PYTHON
-    PyObject* emptyFeatures_;       
+    PyObject* emptyTags_;
+    // PyObject* emptyFeatures_;       
         // Not ideal, should have global singleton instead of per-store,
         // but PyFeatures requires a non-null MatcherHolder, which in turn
         // requires a FeatureStore

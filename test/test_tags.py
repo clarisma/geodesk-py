@@ -21,3 +21,19 @@ def test_tag_count(features):
             # print(f"{k} = {v}")
             my_count += 1
         assert count == my_count    
+
+def test_empty_tags(features):
+    """
+    Calling `tags` on an anonymous node must return an empty tag set 
+    """
+    for way in feature.ways:
+        for node in way.nodes:
+            if node.id == 0:
+                # Found an empty node
+                tags = node.tags
+                assert len(tags) == 0
+                assert tags["highway"] is None
+                assert str("highway") == ""
+                assert num("whatever") == 0
+                assert node.highway is None
+                break

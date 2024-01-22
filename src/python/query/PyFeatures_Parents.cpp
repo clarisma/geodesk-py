@@ -6,6 +6,7 @@
 #include "python/feature/PyFeature.h"
 #include "python/query/PyQuery.h"
 
+// TODO: nodes.parents("w[highway]").count returns 0 if node is a feature node
 
 // ... can have ... as parents:
 // feature nodes:   

@@ -4,6 +4,13 @@
 #include "Tags.h"
 #include <common/util/StringBuilder.h>
 
+/**
+ * A construct that simulates a pointer to an empty tag-table.
+ * The first word is a relative pointer to the second word (4),
+ * the second word is the empty-table marker itself.
+ */
+const uint32_t TagsRef::EMPTY_TABLE_STRUCT[2] = { 4, EMPTY_TABLE_MARKER };
+
 #ifdef GEODESK_PYTHON
 PyObject* TagsRef::getValue(PyObject* key, StringTable& strings) const
 {
