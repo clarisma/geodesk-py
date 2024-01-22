@@ -198,7 +198,6 @@ PyObject* PyNodeParentIterator::create(PyFeatures* features, Coordinate wayNodeX
         // We don't change refcount of the secondary filter, since we can
         // be assured that is alive as long as this iterator is alive (because
         // `target` holds a strong reference to Features)
-        features->filter = &self->wayNodeFilter;
         self->wayQuery = PyQuery::create(features, Box(wayNodeXY),
             features->acceptedTypes, features->matcher, &self->wayNodeFilter);
         // TODO: handle PyQuery allocation failure

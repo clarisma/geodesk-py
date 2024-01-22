@@ -157,6 +157,8 @@ PyFeatures* filters::filter(PyFeatures* self, PyObject* args, PyObject* kwargs, 
 	else if (Environment::get().getGeosGeometry(arg, &geom))
 	{
 		GEOSContextHandle_t context = Environment::get().getGeosContext();
+		// TODO: This may return with an exception set if GEOS library
+		// cannot be initialized
 		filter = factory.forGeometry(context, geom);
 	}
 	else if (type == &PyBox::TYPE)
@@ -168,6 +170,11 @@ PyFeatures* filters::filter(PyFeatures* self, PyObject* args, PyObject* kwargs, 
 	{
 		PyCoordinate* coord = (PyCoordinate*)arg;
 		filter = factory.forCoordinate(Coordinate(coord->x, coord->y));
+	}
+	else if (type == &PyAnonymousNode::TYPE)
+	{
+		PyAnonymousNode* node = (PyAnonymousNode*)arg;
+		filter = factory.forCoordinate(Coordinate(node->x_, node->y_));
 	}
 	else
 	{

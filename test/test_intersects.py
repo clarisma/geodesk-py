@@ -3,7 +3,7 @@
 
 import geodesk
 import json
-from shapely.geometry import shape
+# from shapely.geometry import shape
 
 def test_intersects(features):
     """
@@ -37,3 +37,25 @@ def test_intersects_contains_mp(features):
     assert geom.intersects(bavaria.one.shape)
     assert bavaria.one.shape.intersects(geom)
     assert bavaria.intersects(geom)
+    
+def test_intersects_waynode(features):
+    """
+    Each parent way of a node by definition must intersect the node.
+    (Issue #44)
+    """
+    streets = features("w[highway]")
+    for street in streets[:100]:
+        for node in street:
+            # print(f"Checking {node}:")
+            intersecting_features = features.intersects(node) 
+            intersecting_streets = streets.intersects(node) 
+            parent_ways = node.parents.ways
+            # print(f"  {parent_ways.count} parents")
+            # print(f"  {parent_ways.count} parents")
+            # print(f"  {intersecting_features.count} intersecting features")
+            # print(f"  {intersecting_streets.count} intersecting streets")
+            assert street in intersecting_features
+            assert street in intersecting_streets
+            for parent in parent_ways:
+                assert parent in intersecting_features
+                                
