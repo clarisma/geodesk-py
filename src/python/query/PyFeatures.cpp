@@ -282,6 +282,7 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
     }
     else if (argCount == 0)
     {
+        // TODO: check kwargs!
         return Python::newRef(self);
     }
     PyErr_SetString(PyExc_TypeError, "Expected query|Box|Features");
