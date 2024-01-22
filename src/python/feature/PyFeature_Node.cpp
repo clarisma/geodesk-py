@@ -38,13 +38,13 @@ PyObject* PyFeature::Node::is_placeholder(PyFeature* self)
 PyObject* PyFeature::Node::lat(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::latFromY(p.getInt(-4)));
+    return PyCoordinate::niceLatFromY(p.getInt(-4));
 }
 
 PyObject* PyFeature::Node::lon(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::lonFromX(p.getInt(-8)));
+    return PyCoordinate::niceLonFromX(p.getInt(-8));
 }
 
 PyObject* PyFeature::Node::parents(PyFeature* self)

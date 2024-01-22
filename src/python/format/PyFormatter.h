@@ -60,6 +60,7 @@ public:
 	static PyObject* call(PyFormatter* self, PyObject* args, PyObject* kwargs);
 	static void dealloc(PyFormatter* self);
 	static PyObject* getattro(PyFormatter* self, PyObject *attr);
+	static int setattro(PyFormatter* self, PyObject* attr, PyObject* value);
 	static PyObject* repr(PyFormatter* self);
 	static PyObject* str(PyFormatter* self);
 

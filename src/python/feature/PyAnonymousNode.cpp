@@ -50,12 +50,12 @@ PyObject* PyAnonymousNode::centroid(PyAnonymousNode* self)
 
 PyObject* PyAnonymousNode::lat(PyAnonymousNode* self)
 {
-    return PyFloat_FromDouble(Mercator::latFromY(self->y_));
+    return PyCoordinate::niceLatFromY(self->y_);
 }
 
 PyObject* PyAnonymousNode::lon(PyAnonymousNode* self)
 {
-    return PyFloat_FromDouble(Mercator::lonFromX(self->x_));
+    return PyCoordinate::niceLonFromX(self->x_);
 }
 
 PyObject* PyAnonymousNode::zeroValue(PyFeature* self, PyObject* args, PyObject* kwargs)

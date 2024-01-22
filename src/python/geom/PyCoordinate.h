@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <Python.h>
 #include "geom/Coordinate.h"
+#include "geom/Mercator.h"
 
 
 class PyCoordinate : public PyObject
@@ -80,6 +81,16 @@ public:
     {
         static double factor = 10'000'000.0;
         return std::round(value * factor) / factor;
+    }
+
+    static PyObject* niceLonFromX(int32_t x)
+    {
+        return PyFloat_FromDouble(precision7(Mercator::lonFromX(x)));
+    }
+
+    static PyObject* niceLatFromY(int32_t y)
+    {
+        return PyFloat_FromDouble(precision7(Mercator::latFromY(y)));
     }
 
     Coordinate coordinate() const { return Coordinate(x, y); }
