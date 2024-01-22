@@ -231,13 +231,13 @@ PyObject* PyFeature::tags(PyFeature* self)
 PyObject* PyFeature::x(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyLong_FromLong((p.getInt(-16) + p.getInt(-8)) / 2);
+    return PyLong_FromLong(Math::avg(p.getInt(-16), p.getInt(-8)));
 }
 
 PyObject* PyFeature::y(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyLong_FromLong((p.getInt(-12) + p.getInt(-4)) / 2);
+    return PyLong_FromLong(Math::avg(p.getInt(-12), p.getInt(-4)));
 }
 
 
