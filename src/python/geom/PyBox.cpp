@@ -277,7 +277,7 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
         {
             double wgs84value = (coordIndex & 1) ? Mercator::latFromY(coordValue) :
                 Mercator::lonFromX(coordValue);
-            return PyFloat_FromDouble(wgs84value);
+            return PyFloat_FromDouble(PyCoordinate::precision7(wgs84value));
         }
         return PyLong_FromLong(coordValue);
     }
