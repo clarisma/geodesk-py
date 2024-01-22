@@ -6,8 +6,6 @@
 #include "python/feature/PyFeature.h"
 #include "python/query/PyQuery.h"
 
-// TODO: nodes.parents("w[highway]").count returns 0 if node is a feature node
-
 // ... can have ... as parents:
 // feature nodes:   
 //   - ways
@@ -54,7 +52,7 @@ PyFeatures* PyFeatures::Parents::create(PyAnonymousNode* relatedNode)
 
 PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
 {
-    if (features->flags && SelectionFlags::USES_BOUNDS)
+    if (features->flags & SelectionFlags::USES_BOUNDS)
     {
         // for anonymous nodes, we use bounds (a single-pixel bbox
         // that describes the nodes location) rather than relatedFeature
