@@ -7,6 +7,7 @@
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/query/PyFeatures.h"
+#include "python/util/PyFastMethod.h"
 #include "feature/GeometryBuilder.h"
 #include "geom/Mercator.h"
 
@@ -57,6 +58,17 @@ PyObject* PyAnonymousNode::lon(PyAnonymousNode* self)
     return PyFloat_FromDouble(Mercator::lonFromX(self->x_));
 }
 
+PyObject* PyAnonymousNode::zeroValue(PyFeature* self, PyObject* args, PyObject* kwargs)
+{
+    return PyFeature::return_zero(self);
+}
+
+
+PyObject* PyAnonymousNode::num_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, (PyCFunctionWithKeywords)&zeroValue);
+}
+
 PyObject* PyAnonymousNode::osm_type(PyFeature* self)
 {
     return Environment::get().getString(Environment::Strings::NODE);
@@ -73,6 +85,16 @@ PyObject* PyAnonymousNode::shape(PyAnonymousNode* self)
     GEOSContextHandle_t geosContext = env.getGeosContext();
     GEOSGeometry* geom = GeometryBuilder::buildPointGeometry(self->x_, self->y_, geosContext);
     return env.buildShapelyGeometry(geom);
+}
+
+PyObject* PyAnonymousNode::blankValue(PyFeature* self, PyObject* args, PyObject* kwargs)
+{
+    return PyFeature::return_blank(self);
+}
+
+PyObject* PyAnonymousNode::str_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, (PyCFunctionWithKeywords)&blankValue);
 }
 
 PyObject* PyAnonymousNode::tags(PyAnonymousNode* self)
@@ -175,12 +197,12 @@ AttrFunctionPtr const PyAnonymousNode::FEATURE_METHODS[] =
     PyFeature::map,                // map -- TODO
     PyFeature::return_empty,       // members
     PyFeature::return_empty,       // nodes
-    PyFeature::return_zero,        // num
+    num_method,                    // num
     (AttrFunctionPtr)osm_type,     // osm_type
     (AttrFunctionPtr)parents,      // parents
     PyFeature::return_none,        // role
     (AttrFunctionPtr)shape,        // shape 
-    PyFeature::return_blank,       // str
+    str_method,                    // str
     (AttrFunctionPtr)tags,         // tags
     (AttrFunctionPtr)PyFormatter::wkt,              // wkt -- TODO
     (AttrFunctionPtr)x,            // x

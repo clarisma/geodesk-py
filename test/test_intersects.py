@@ -3,7 +3,7 @@
 
 import geodesk
 import json
-# from shapely.geometry import shape
+from shapely.geometry import shape
 
 def test_intersects(features):
     """
