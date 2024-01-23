@@ -134,7 +134,9 @@ GEOSGeometry* RelationGeometryBuilder::build()
 	// TODO: different collection types
 
 	return GEOSGeom_createCollection_r(context_, GEOS_GEOMETRYCOLLECTION, 
-		geoms_.data(), geoms_.size());
+		geoms_.data(), static_cast<unsigned int>(geoms_.size()));
+		// TODO: Update this if GEOSGeom_createCollection_r is ever
+		// updated to use size_t for ngeoms 
 }
 
 

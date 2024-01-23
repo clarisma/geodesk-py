@@ -32,7 +32,7 @@ void MatcherEmitter::emit()
 		pOpcode = p;
 		p++;
 		assert(node->address == 0);
-		node->address = (pOpcode - pCode_) * 2;	// in bytes
+		node->address = static_cast<uint32_t>((pOpcode - pCode_) * 2);	// in bytes
 		int opcode = node->opcode;
 		switch (opcode)
 		{

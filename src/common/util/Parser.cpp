@@ -59,7 +59,7 @@ ParsedString Parser::string()
 		if (ch == quoteChar)
 		{
 			parsed.str = pStart;
-			parsed.len = (pNext_ - pStart);
+			parsed.len = static_cast<uint32_t>(pNext_ - pStart);
 			pNext_++;
 			return parsed;
 		}
@@ -74,7 +74,7 @@ ParsedString Parser::string()
 			if (*pNext_ == 0)
 			{
 				parsed.str = nullptr;
-				parsed.len = pNext_ - pStart;
+				parsed.len = static_cast<uint32_t>(pNext_ - pStart);
 				return parsed;
 			}
 		}

@@ -85,7 +85,7 @@ PyObject* PyFormatter::getattro(PyFormatter* self, PyObject* attr)
 		if (self->idSchema) return Python::newRef(self->idSchema);
 		return PyUnicode_FromString("{T}{id}");
 	case LIMIT:
-		return PyLong_FromLong(self->limit);
+		return PyLong_FromLongLong(self->limit);
 	case LINEWISE:
 		return Python::boolValue(self->linewise);
 	case MERCATOR:

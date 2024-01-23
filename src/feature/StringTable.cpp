@@ -50,8 +50,8 @@ void StringTable::create(const uint8_t* pStrings)
 
 	for (uint32_t i = 1; i < stringCount_; i++)
 	{
-		entries_[i].relPointer = data.pointer() - pStrings;
-		// next has already been initialized with 0
+		entries_[i].relPointer = static_cast<uint32_t>(data.pointer() - pStrings);
+		// next has already been initialzied with 0
 		uint32_t len = data.readVarint32();
 		data.skip(len);
 	}
