@@ -29,7 +29,7 @@ int64_t TagsRef::getKeyValue(PyObject* key, const StringTable& strings) const
 	const char* str;
 	Py_ssize_t len;
 	str = PyUnicode_AsUTF8AndSize(key, &len);
-	return getLocalKeyValue(str, len);
+	return getLocalKeyValue(str, static_cast<int>(len));
 }
 
 

@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <common/util/log.h>
+#include <common/util/math.h>
 #include "Coordinate.h"
 
 #ifndef M_PI
@@ -89,6 +90,6 @@ namespace Mercator
         double xDelta = (double)p1.x - p2.x;
         double yDelta = (double)p1.y - p2.y;
         double d = sqrt(xDelta * xDelta + yDelta * yDelta);
-        return d * metersPerUnitAtY((static_cast<int64_t>(p1.y) + p2.y) / 2);
+        return d * metersPerUnitAtY(static_cast<double>(Math::avg(p1.y, p2.y)));
     }
 }
