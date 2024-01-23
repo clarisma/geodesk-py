@@ -11,6 +11,10 @@
 #include "python/util/util.h"
 #include <string.h>
 
+// For now, we return a copies of transformed shapes, to conform
+// to what the Shapely library does
+// #define GEODESK_MERCATOR_TRANSFORM_INPLACE 1
+
 // TODO: What should happen to Coordinate objects if passed to to_mercator?
 
 /**
@@ -163,10 +167,17 @@ PyObject* PyMercator::to_mercator(PyObject* self, PyObject* args, PyObject* kwar
 		geos::geom::Geometry* geom;
 		if (Environment::get().getGeosGeometry(arg, (GEOSGeometry**)&geom))
 		{
-			// TODO: should we return a new copy, instead of transforming in-place?
 			ToMercatorCoordinateFilter filter;
+			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
 			return Python::newRef(arg);
+			#else			
+			geos::geom::Geometry* copy = geom->clone().release();
+			// TODO: error check (e.g. out of memory)
+			copy->apply_rw(&filter);
+			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
+			#endif			
+			// Creating a copy first, unsurprisingly, more than doubles runtime
 		}
 		else
 		{
@@ -311,15 +322,76 @@ PyObject* PyMercator::coordinatesToMercator(PyObject* seq, CoordinateOrder order
  *   from_mercator(<coord-sequence>)   -> Coordinate/Sequence of Coordinate
  *   to_mercator(<units>, units=<units>, lat=|y=) -> float
  */
+
+// TODO: Should this be able to take a Feature? This avoids need to create
+//  a second copy vs. calling from_mercator(f.shape)
+
 PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kwargs)
 {
-	Py_ssize_t argCount = PySequence_Length(args);
-	if (kwargs)
+	static const char* KEYWORDS[] = { "geom", "unit", "lat", "y", NULL };
+	static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
+	PyObject* arg;
+	const char* units;
+	double lat = DOUBLE_MIN;
+	long long y = LLONG_MIN;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|sdL", const_cast<char**>(KEYWORDS),
+		&arg, &units, &lat, &y)) 
 	{
+		return NULL;  // If parsing fails, return NULL
 	}
-	// TODO
-	Py_RETURN_NONE;
+
+	if (PyNumber_Check(arg))
+	{
+		// Scalar value (length)
+		double length = PyFloat_AsDouble(arg);
+		int unit = LengthUnit::unitFromString(std::string_view(units));
+		if (unit < 0)
+		{
+			PyErr_Format(PyExc_ValueError, "Invalid units: %s (Must be %s)", 
+				units, LengthUnit::VALID_UNITS);
+			return NULL;
+		}
+		// TODO: Right now, lat takes precendence over y if both
+		//   are specified; raise exception instead?
+		if (lat > DOUBLE_MIN)
+		{
+			// TODO: lat range check & clamp
+			y = Mercator::yFromLat(lat);
+		}
+		else if (y == LLONG_MIN)
+		{
+			PyErr_SetString(PyExc_TypeError, "Requires 'lat' or 'y' because scale depends on latitude");
+			return NULL;
+		}
+		return PyFloat_FromDouble(
+			LengthUnit::fromMeters(Mercator::metersPerUnitAtY(y) * length, unit));
+	}
+	else
+	{
+		// units and lat/y are ignored -- TODO: Should it be an error
+		// if user supplies them?
+
+		geos::geom::Geometry* geom;
+		if (Environment::get().getGeosGeometry(arg, (GEOSGeometry**)&geom))
+		{
+			FromMercatorCoordinateFilter filter;
+			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
+			geom->apply_rw(&filter);
+			return Python::newRef(arg);
+			#else			
+			geos::geom::Geometry* copy = geom->clone().release();
+				// TODO: error check (e.g. out of memory)
+			copy->apply_rw(&filter);
+			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
+			#endif		
+			//  Creating a copy first, unsurprisingly, more than doubles runtime
+		}
+		else
+		{
+			PyErr_Clear(); // TODO
+			return Python::badArgumentType(Py_TYPE(arg));
+		}
+	}
 }
-
-
 

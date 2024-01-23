@@ -35,5 +35,7 @@ public:
 
 	static const double METERS_TO_UNIT[];
 	static const double UNITS_TO_METERS[];
+
+	static const char* VALID_UNITS;
 };
 

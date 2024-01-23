@@ -7,7 +7,10 @@
 // #include <unicodeobject.h>
 #include <common/util/log.h>
 #include <common/util/PbfDecoder.h>
-// #include "python/query/PyFeatures.h"
+#ifdef GEODESK_PYTHON
+#include "python/feature/PyTags.h"
+#include "python/util/util.h"
+#endif
 
 // TODO: std::thread::hardware_concurrency() can return 0, so use
 // a default value in that case (e.g. 4 threads)
@@ -17,6 +20,9 @@ std::unordered_map<std::string, FeatureStore*> FeatureStore::openStores_;
 FeatureStore::FeatureStore()
   : refcount_(1),
 	matchers_(this),	// TODO: this not initialized yet!
+	#ifdef GEODESK_PYTHON
+	emptyTags_(nullptr),
+	#endif
 	executor_(/* 1 */ std::thread::hardware_concurrency(), 0)  // TODO: disabled for testing
 {
 }
@@ -68,6 +74,9 @@ void FeatureStore::initialize()
 FeatureStore::~FeatureStore()
 {
 	LOG("Destroying FeatureStore...");
+	#ifdef GEODESK_PYTHON
+	Py_XDECREF(emptyTags_);
+	#endif
 	LOG("Destroyed FeatureStore.");
 	openStores_.erase(fileName());
 }
@@ -125,8 +134,12 @@ PyObject* FeatureStore::emptyString()
 
 PyObject* FeatureStore::emptyTags()
 {
-	// TODO
-	Py_RETURN_NONE;
+	if (!emptyTags_)
+	{
+		emptyTags_ = PyTags::create(this, TagsRef::empty());
+		if (!emptyTags_) return NULL;
+	}
+	return Python::newRef(emptyTags_);
 }
 
 #endif

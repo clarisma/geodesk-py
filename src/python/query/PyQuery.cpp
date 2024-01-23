@@ -7,7 +7,7 @@
 #include "PyFeatures.h"
 #include "PyQueryFinalizer.h"
 
-PyObject* PyQuery::create(PyFeatures* features)
+PyQuery* PyQuery::create(PyFeatures* features)
 {
     LOG("PyQuery::create(PyFeatures*)");
     PyQuery* self = (PyQuery*)TYPE.tp_alloc(&TYPE, 0);
@@ -23,12 +23,32 @@ PyObject* PyQuery::create(PyFeatures* features)
             features->matcher,
             features->filter);
     }
-    return (PyObject*)self;
+    return self;
 }
+
+
+PyQuery* PyQuery::create(PyFeatures* features,
+    const Box& box, FeatureTypes types,
+    const MatcherHolder* matcher, const Filter* filter)
+{
+    PyQuery* self = (PyQuery*)TYPE.tp_alloc(&TYPE, 0);
+    if (self != nullptr)
+    {
+        Py_INCREF(features);
+        self->target = features;
+        // initialize Query in-place
+        new(&self->query)Query(features->store, box, types, matcher, filter);
+    }
+    return self;
+}
+
+
 
 void PyQuery::dealloc(PyQuery* self)
 {
-    LOG("Deallocating PyQuery...");
+    // TODO
+     
+    // LOG("Deallocating PyQuery...");
 
     // Check if query is still running, and if so, attempt to cancel it
     // (but don't await its completion)

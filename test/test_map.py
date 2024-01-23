@@ -89,3 +89,11 @@ def test_basemap_performance():
     m2 = Map(basemap="https://tile.openstreetmap.org/{z}/{x}/{y}.png")
     m2.show()
     
+def test_waynodes(features):
+    m = Map()
+    streets = features("w[highway]")
+    for street in streets[:100]:
+        m.add(street)
+        for node in street:
+            m.add(node, color="red")
+    m.show()        

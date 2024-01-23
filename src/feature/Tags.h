@@ -28,6 +28,8 @@ class TagsRef
 public:
 	TagsRef(pointer ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
 
+	static TagsRef empty() { return TagsRef(&EMPTY_TABLE_STRUCT); }
+
 	uint32_t count() const;
 	TagBits getKeyValue(PyObject* key, const StringTable& strings) const;
 	TagBits getKeyValue(const char* key, int len,
@@ -60,6 +62,7 @@ public:
 
 	// TODO: This value may change!
 	static const uint32_t EMPTY_TABLE_MARKER = 0xffff'ffff;
+	static const uint32_t EMPTY_TABLE_STRUCT[2];
 
 private:
 	// Note: wideNumber / localString rely on tagPtr_, hence cannot be static

@@ -9,6 +9,7 @@
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
+#include "python/query/PyFeatures.h"
 #include "python/util/util.h"
 
 
@@ -37,13 +38,28 @@ PyObject* PyFeature::Node::is_placeholder(PyFeature* self)
 PyObject* PyFeature::Node::lat(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::latFromY(p.getInt(-4)));
+    return PyCoordinate::niceLatFromY(p.getInt(-4));
 }
 
 PyObject* PyFeature::Node::lon(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::lonFromX(p.getInt(-8)));
+    return PyCoordinate::niceLonFromX(p.getInt(-8));
+}
+
+PyObject* PyFeature::Node::parents(PyFeature* self)
+{
+    int featureFlags = self->feature.flags();
+    uint32_t acceptedTypes = (featureFlags & FeatureFlags::RELATION_MEMBER) ?
+        FeatureTypes::RELATIONS : 0;
+    acceptedTypes |= (featureFlags & FeatureFlags::WAYNODE) ?
+        (FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED) : 0;
+    if (acceptedTypes == 0)
+    {
+        return return_empty(self);
+    }
+    return PyFeatures::create(&PyFeatures::Parents::SUBTYPE,
+        self->store, self->feature, acceptedTypes);
 }
 
 PyObject* PyFeature::Node::shape(PyFeature* self)

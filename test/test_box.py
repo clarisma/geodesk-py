@@ -9,7 +9,23 @@ INT_MIN = -2147483648
 INT_MAX =  2147483647
 
 def assert_coord_equal(actual, expected):
-    assert abs(actual - expected) < 1e-7  # assuming 1e-7 as the tolerance, adjust as necessary
+    assert actual == expected
+    # assert abs(actual - expected) < 1e-7  # assuming 1e-7 as the tolerance, adjust as necessary
+
+def check_box_single_coord(lon, lat):
+    box = Box(lon=lon, lat=lat)
+    assert_coord_equal(box.west, lon)
+    assert_coord_equal(box.south, lat)
+    assert_coord_equal(box.east, lon)
+    assert_coord_equal(box.north, lat)
+    assert_coord_equal(box.w, lon)
+    assert_coord_equal(box.s, lat)
+    assert_coord_equal(box.e, lon)
+    assert_coord_equal(box.n, lat)
+    assert_coord_equal(box.minlon, lon)
+    assert_coord_equal(box.minlat, lat)
+    assert_coord_equal(box.maxlon, lon)
+    assert_coord_equal(box.maxlat, lat)
 
 def test_init():
     box = Box(100,200,300,400)
@@ -22,19 +38,8 @@ def test_init():
     assert box.maxx == 300
     assert box.maxy == 400
 
-    box = Box(lon=82, lat=5)
-    assert_coord_equal(box.west, 82)
-    assert_coord_equal(box.south, 5)
-    assert_coord_equal(box.east, 82)
-    assert_coord_equal(box.north, 5)
-    assert_coord_equal(box.w, 82)
-    assert_coord_equal(box.s, 5)
-    assert_coord_equal(box.e, 82)
-    assert_coord_equal(box.n, 5)
-    assert_coord_equal(box.minlon, 82)
-    assert_coord_equal(box.minlat, 5)
-    assert_coord_equal(box.maxlon, 82)
-    assert_coord_equal(box.maxlat, 5)
+    check_box_single_coord(82, 5)
+    check_box_single_coord(-111.37245, -82.438192)
 
 def test_init_partial():
     box = Box(north=30)

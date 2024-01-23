@@ -100,6 +100,11 @@ PyObject* PyFormatter::getattro(PyFormatter* self, PyObject* attr)
 	return PyObject_GenericGetAttr(self, attr);
 }
 
+int PyFormatter::setattro(PyFormatter* self, PyObject* attr, PyObject* value)
+{
+	return self->setAttribute(attr, value);
+}
+
 int PyFormatter::setAttribute(PyObject* attr, PyObject* value)
 {
 	int index = lookupAttr(attr);
@@ -126,6 +131,7 @@ int PyFormatter::setAttribute(PyObject* attr, PyObject* value)
 	PyErr_SetObject(PyExc_AttributeError, attr);
 	return -1;
 }
+
 
 int PyFormatter::setId(PyObject* value)
 {
@@ -241,6 +247,7 @@ PyTypeObject PyFormatter::TYPE =
 	.tp_call = (ternaryfunc)call,
 	.tp_str = (reprfunc)str,
 	.tp_getattro = (getattrofunc)getattro,
+	.tp_setattro = (setattrofunc)setattro,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "Formatter objects",
 	// .tp_methods = METHODS,

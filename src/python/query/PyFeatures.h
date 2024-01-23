@@ -14,8 +14,10 @@
 class FeatureStore;
 class Filter;
 class Matcher;
+class PyAnonymousNode;
 class PyFeature;
 class PyFeatures;
+class PyQuery;
 
 // Must bePyObject to support both PyFeature and PyAnonymousNode
 typedef const std::function<void(PyObject* feature)>& FeatureFunction;
@@ -232,6 +234,7 @@ class PyFeatures::Parents : public PyFeatures
 {
 public:
     static SelectionType SUBTYPE;
+    static PyFeatures* create(PyAnonymousNode* relatedNode);
     static PyObject* iterFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
 };
@@ -281,5 +284,79 @@ public:
     static PyObject* create(PyFeatures* features, pointer pRelTable);
     static void dealloc(PyParentRelationIterator* self);
     static PyObject* next(PyParentRelationIterator* self);
+};
+
+
+class FeatureNodeFilter : public Filter
+{
+public:
+    // We don't need to set acceptedTypes because this Filter
+    // will never be combined with others; it is only used for
+    // finding ways that contain a specific node
+    FeatureNodeFilter(NodeRef node, const Filter* filter) :
+        node_(node),
+        secondaryFilter_(filter)
+    {
+    }
+
+    bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+
+private:
+    NodeRef node_;
+    const Filter* secondaryFilter_;
+};
+
+
+class WayNodeFilter : public Filter
+{
+public:
+    // We don't need to set acceptedTypes because this Filter
+    // will never be combined with others; it is only used for
+    // finding ways that contain a specific node
+    WayNodeFilter(Coordinate coord, const Filter* filter) :
+        coord_(coord),
+        secondaryFilter_(filter)
+    {
+    }
+
+    bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+
+private:
+    Coordinate coord_;
+    const Filter* secondaryFilter_;
+};
+
+
+class PyNodeParentIterator : public PyObject
+{
+public:
+    // We always return parent relations first (if node has any),
+    // to allow the way query to find parent ways asynchronously
+    enum IterationStatus
+    {
+        RELATIONS = 0,
+        WAYS = 1,
+        DONE = 2
+    };
+
+    PyFeatures* target;
+    PyQuery* wayQuery;
+    ParentRelationIterator relationIter;
+    // TODO: Ensure that ParentRelationIterator does not use a destructor,
+    // because it won't be called by dealloc (since we skip relation iteration
+    // if the node is not a relation member)
+    union
+    {
+        FeatureNodeFilter featureNodeFilter;
+        WayNodeFilter wayNodeFilter;
+    };
+    int status;
+    
+    static PyTypeObject TYPE;
+
+    static PyObject* create(PyFeatures* features, Coordinate wayNodeXY);
+    static PyObject* create(PyFeatures* features, NodeRef node, int startWith);
+    static void dealloc(PyNodeParentIterator* self);
+    static PyObject* next(PyNodeParentIterator* self);
 };
 

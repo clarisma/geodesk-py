@@ -50,7 +50,7 @@ def notest_intersects_and_within(features):
     
 def test_nearby_hotels(features):
     state = features("a[boundary=administrative][admin_level=4][name:en=Bavaria]").one
-    bike_routes = features("r[route=bicycle][network=icn]").intersects(state)
+    bike_routes = features("r[route=bicycle][network=ncn]").intersects(state)
     hotels = features("na[tourism=hotel,guest_house,hostel]")
     m = Map()
     s = bike_routes.shape

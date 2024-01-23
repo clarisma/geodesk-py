@@ -3,7 +3,6 @@
 
 #include "PyCoordinate.h"
 #include "python/Environment.h"
-#include "geom/Mercator.h"
 
 // TODO: Since coordinates can be compared to simple tuples, 
 // should be hash(coord) == hash(tuple) if coord == tuple
@@ -131,11 +130,11 @@ PyObject* PyCoordinate::getattr(PyCoordinate* self, PyObject* name)
     if (strcmp(attr, "y") == 0) return PyLong_FromLong(self->y);
     if (strcmp(attr, "lon") == 0) 
     {
-        return PyFloat_FromDouble(precision7(Mercator::lonFromX(self->x)));
+        return niceLonFromX(self->x);
     }
     if (strcmp(attr, "lat") == 0) 
     {
-        return PyFloat_FromDouble(precision7(Mercator::latFromY(self->y)));
+        return niceLatFromY(self->y);
     }
     return PyObject_GenericGetAttr((PyObject*)self, name);
 }

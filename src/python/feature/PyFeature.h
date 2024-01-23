@@ -81,6 +81,7 @@ public:
     static PyObject* is_placeholder(PyFeature* self);
     static PyObject* lat(PyFeature* self);
     static PyObject* lon(PyFeature* self);
+    static PyObject* parents(PyFeature* self);
     static PyObject* shape(PyFeature* self);
     static PyObject* type(PyFeature* self);
     static PyObject* x(PyFeature* self);
@@ -136,14 +137,22 @@ public:
     static PyObject* str(PyAnonymousNode* self);
     static PyObject* subscript(PyAnonymousNode* self, PyObject* key);
 
+    // These are different from return_zero and return_blank, since they
+    // are callable with args and kwards and hence can be used as a fucntion
+    // for PyFastMethod
+    static PyObject* zeroValue(PyFeature* self, PyObject* args, PyObject* kwargs);
+    static PyObject* blankValue(PyFeature* self, PyObject* args, PyObject* kwargs);
+
+
     static PyObject* bounds(PyAnonymousNode* self);
     static PyObject* centroid(PyAnonymousNode* self);
     static PyObject* lat(PyAnonymousNode* self);
     static PyObject* lon(PyAnonymousNode* self);
-    static PyObject* emptyString(PyAnonymousNode* self);
+    static PyObject* num_method(PyFeature* self);
     static PyObject* osm_type(PyFeature* self);
     static PyObject* parents(PyAnonymousNode* self);
     static PyObject* shape(PyAnonymousNode* self);
+    static PyObject* str_method(PyFeature* self);
     static PyObject* tags(PyAnonymousNode* self);
     static PyObject* x(PyAnonymousNode* self);
     static PyObject* y(PyAnonymousNode* self);

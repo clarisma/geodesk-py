@@ -6,6 +6,7 @@
 
 #include "LengthUnit_attr.cxx"
 
+const char* LengthUnit::VALID_UNITS = "meters (m), kilometers (km), feet (ft), yards (yd) or miles (mi)";
 
 int LengthUnit::unitFromString(std::string_view unit)
 {

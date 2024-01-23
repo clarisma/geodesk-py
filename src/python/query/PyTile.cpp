@@ -140,7 +140,12 @@ PyObject* PyTile::row(PyTile* self)
 
 PyObject* PyTile::size(PyTile* self)
 {
-	Py_RETURN_NONE;
+	// pointer tileIndex(self->store->tileIndex());
+	// TODO: Don't fetch tile, return 0 if tile is missing
+	pointer pTile = self->store->fetchTile(self->tip);
+	// TODO: stale/missing tiles
+	// TODO: Blob header will change in 2.0
+	return PyLong_FromLong(pTile.getUnsignedInt() & 0x3fff'ffff);
 }
 
 PyObject* PyTile::zoom(PyTile* self)

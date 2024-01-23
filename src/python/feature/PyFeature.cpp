@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
+#include <common/util/log.h>
+#include <common/util/math.h>
 #include "python/Environment.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"
+#include "python/geom/PyCoordinate.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
 #include "PyTags.h"
 #include "geom/Mercator.h"
-#include <common/util/log.h>
 
 #include "PyFeature_lookup.cxx"
 
@@ -164,13 +166,13 @@ PyObject* PyFeature::is_area(PyFeature* self)
 PyObject* PyFeature::lat(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::latFromY((p.getInt(-12) + p.getInt(-4)) / 2));
+    return PyCoordinate::niceLatFromY(Math::avg(p.getInt(-12), p.getInt(-4)));
 }
 
 PyObject* PyFeature::lon(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyFloat_FromDouble(Mercator::lonFromX((p.getInt(-16) + p.getInt(-8)) / 2));
+    return PyCoordinate::niceLonFromX(Math::avg(p.getInt(-16), p.getInt(-8)));
 }
 
 PyObject* PyFeature::map(PyFeature* self)
@@ -229,13 +231,13 @@ PyObject* PyFeature::tags(PyFeature* self)
 PyObject* PyFeature::x(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyLong_FromLong((p.getInt(-16) + p.getInt(-8)) / 2);
+    return PyLong_FromLong(Math::avg(p.getInt(-16), p.getInt(-8)));
 }
 
 PyObject* PyFeature::y(PyFeature* self)
 {
     pointer p = self->feature.ptr();
-    return PyLong_FromLong((p.getInt(-12) + p.getInt(-4)) / 2);
+    return PyLong_FromLong(Math::avg(p.getInt(-12), p.getInt(-4)));
 }
 
 
