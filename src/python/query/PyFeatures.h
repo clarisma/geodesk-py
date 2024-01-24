@@ -235,6 +235,7 @@ class PyFeatures::Parents : public PyFeatures
 public:
     static SelectionType SUBTYPE;
     static PyFeatures* create(PyAnonymousNode* relatedNode);
+    static PyFeatures* create(PyFeatures* base, PyAnonymousNode* relatedNode);
     static PyObject* iterFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
 };
@@ -353,6 +354,11 @@ public:
     int status;
     
     static PyTypeObject TYPE;
+
+    // The lifecycle of Python objects is managed via create/dealloc,
+    // a destructor will never be called; TODO: ensure that the objects
+    // above are destoryed explicitly, if needed 
+    ~PyNodeParentIterator() = delete;
 
     static PyObject* create(PyFeatures* features, Coordinate wayNodeXY);
     static PyObject* create(PyFeatures* features, NodeRef node, int startWith);

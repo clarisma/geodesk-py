@@ -80,30 +80,6 @@ PyFeatures* filters::nearest_to(PyFeatures* self, PyObject* args, PyObject* kwar
 	return NULL;
 }
 
-PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyObject* arg = Python::checkSingleArg(args, kwargs, "Feature");
-	if (!arg) return NULL;
-
-	if (Py_TYPE(arg) != &PyFeature::TYPE)
-	{
-		if (Python::checkType(arg, &PyAnonymousNode::TYPE, "Feature") == NULL)
-		{
-			return NULL;
-		}
-		return PyFeatures::getEmpty();
-	}
-
-	PyFeature* feature = (PyFeature*)arg;
-	if (self->selectionType == &PyFeatures::World::SUBTYPE)
-	{
-		return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
-			feature->feature, FeatureTypes::NODES);
-	}
-	PyErr_SetString(PyExc_NotImplementedError,
-		"nodes_of is not implemented for this type of feature set");
-	return NULL;
-}
 
 PyFeatures* filters::overlaps(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
@@ -112,12 +88,6 @@ PyFeatures* filters::overlaps(PyFeatures* self, PyObject* args, PyObject* kwargs
 	return NULL;
 }
 
-PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"parents_of will be available in Version 0.2.0");
-	return NULL;
-}
 
 PyFeatures* filters::pythonFilter(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
