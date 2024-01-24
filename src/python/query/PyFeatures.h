@@ -235,6 +235,7 @@ class PyFeatures::Parents : public PyFeatures
 public:
     static SelectionType SUBTYPE;
     static PyFeatures* create(PyAnonymousNode* relatedNode);
+    static PyFeatures* create(PyFeatures* base, PyAnonymousNode* relatedNode);
     static PyObject* iterFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
 };
