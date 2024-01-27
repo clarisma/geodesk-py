@@ -24,6 +24,11 @@ public:
         return Bits::bitCount(m_levels);
     }
 
+    bool isValidZoomLevel(int zoom)
+    {
+        return (m_levels & (1 << zoom)) != 0;
+    }
+
 private:
     uint32_t m_levels;
 };

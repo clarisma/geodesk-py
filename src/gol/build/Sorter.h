@@ -6,6 +6,7 @@
 #include <common/util/ChunkedBuffer.h>
 #include "geom/Coordinate.h"
 #include "osm/OsmPbfReader.h"
+#include "ProtoStringTable.h"
 
 class GroupEncoder
 {
@@ -61,7 +62,7 @@ class SorterOutputTask : public OsmPbfOutputTask
 {
 };
 
-class Sorter
+class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
 {
 public:
 	Sorter();

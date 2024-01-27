@@ -5,6 +5,12 @@
 #include <cstdint>
 #include <memory>
 
+
+/*
+ We need to create:
+ - A lookup table that tells the Sorter which OSM string has a proto-GOL
+   string code for keys and/or values
+*/
 class ProtoStringLookup
 {
 public:

@@ -124,6 +124,24 @@ public:
 		return std::string(buf);
 	}
 
+	/**
+	 * Returns the tile that contains this tile at the specified
+	 * (lower) zoom level. If the zoom level is the same, the
+	 * tile itself is returned.
+	 *
+	 * @param tile	the tile
+	 * @param zoom	zoom level of the parent tile
+	 *              (must be <= the tile's zoom level)
+	 * @return	the lower-zoom tile that contains the tile
+	 */
+	Tile zoomedOut(int lowerZoom) const
+	{
+		int currentZoom = this->zoom();
+		assert(lowerZoom <= currentZoom); // Can't zoom out to higher level
+		int delta = currentZoom - lowerZoom;
+		return fromColumnRowZoom(column() >> delta, row() >> delta, lowerZoom);
+	}
+
 private:
 	inline Tile(int col, int row, ZoomLevel zoom)
 		: tile_((zoom << 24) | (row << 12) | col) {}
