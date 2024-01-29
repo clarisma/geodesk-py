@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdint>
 #include <string_view>
+#include <common/util/Bits.h>
 
 inline uint32_t readVarint32(const uint8_t*& p)
 {
@@ -125,4 +126,14 @@ inline void writeVarint(uint8_t*& p, uint64_t val)
 inline void writeSignedVarint(uint8_t*& p, int64_t val)
 {
 	writeVarint(p, (val << 1) ^ (val >> 63));
+}
+
+/**
+ * Returns the number of bytes required to encode the given 
+ * unsigned value as a varint (A varint requires one byte for
+ * each complete or partial run of 7 significant bits)
+ */
+inline unsigned int varintSize(uint64_t v)
+{
+	return (64 - Bits::countLeadingZerosInNonZero64(v | 1) + 6) / 7;
 }

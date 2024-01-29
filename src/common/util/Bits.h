@@ -50,7 +50,7 @@ namespace Bits
 #elif defined(_MSC_VER)
         unsigned long index;  // Note: 'long' in this context is always 32 bits on Windows, even in 64-bit compilations.
         _BitScanReverse64(&index, i);
-        return 31 - index;
+        return 63 - index;
 #else
         // Fallback version for other compilers, not as efficient.
         int count = 0;

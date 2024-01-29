@@ -3,7 +3,13 @@
 
 #pragma once
 #include <cstdint>
-#include <memory>
+#include <common/util/BufferWriter.h>
+
+enum class ProtoStringType
+{
+	KEY = 0,
+	VALUE = 1
+};
 
 /**
  * A pair of pre-encoded varints for a single proto-string.
@@ -23,10 +29,46 @@
  *   and literal string; this leaves 25 bits = 32M possible values
  */
 
-struct ProtoStringEncoding
+class ProtoStringEncoding
 {
-	uint32_t keyVarint;
-	uint32_t valueVarint;
+public:	
+	ProtoStringEncoding(uint32_t keyCode, uint32_t valueCode)
+	{
+		varints_[static_cast<int>(ProtoStringType::KEY)] = encode(keyCode);
+		varints_[static_cast<int>(ProtoStringType::VALUE)] = encode(valueCode);
+	}
+
+	ProtoStringEncoding(uint32_t offset)
+	{
+		uint32_t v = (offset << 3);
+		varints_[0] = v;
+		varints_[1] = v;
+	}
+
+	void writeTo(BufferWriter* writer, ProtoStringType keyOrValue)
+	{
+		uint32_t v = varints_[static_cast<int>(keyOrValue)];
+		assert(v != 0); 
+			// 0 is not a valid string reference, since it means
+			// "string is not in the proto-string table"
+		uint32_t len = (v & 3) + 1;		// lowest 2 bits
+		v >>= 2;
+		writer->writeBytes(reinterpret_cast<const char*>(&v), len);
+	}
+
+private:
+	static uint32_t encode(uint32_t v)
+	{
+		assert(v < (1 << 25));	// we can encode maximum of 25 sig bits
+		v = (v << 1) | 1;		// set the global-string marker (Bit 0)
+		assert(varintSize(v) <= 4);
+		uint32_t varint;
+		uint8_t* p = reinterpret_cast<uint8_t*>(&varint);
+		writeVarint(p, v);
+		uint32_t size = static_cast<uint32_t>(p - reinterpret_cast<uint8_t*>(&varint));
+		return (varint << 2) | (size - 1);
+	}
+	uint32_t varints_[2];
 };
 
 /*
