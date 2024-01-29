@@ -87,6 +87,9 @@ public:
     static const MatcherHolder* createMatchKeyValue(FeatureTypes types, 
         uint32_t indexBits, int keyCode, int valueCode);
 
+    static const MatcherHolder* combine(
+        const MatcherHolder* a, const MatcherHolder* b);
+
     void dealloc() const;
     void addref() const { ++refcount_; }
     void release() const { if (--refcount_ == 0) dealloc(); }
@@ -110,6 +113,9 @@ private:
     FeatureTypes acceptedTypes_;
     uint32_t resourcesLength_;
     uint32_t referencedMatcherHoldersCount_;
+        // number of other MatcherHolder objects referenced
+        // Their pointers are stored at the beginning of the <resources>
+        // section (see above) and must be managed via addref() and release()
     uint32_t regexCount_;           // number of regexes in resources
     uint32_t roleMatcherOffset_;    // where to find role Matcher
     IndexMask indexMasks_[4];       // one for each: Nodes, Ways, areas, Relations
@@ -117,5 +123,6 @@ private:
     Matcher mainMatcher_;
 
     friend class MatcherCompiler;
+    friend class ComboMatcher;
 };
 

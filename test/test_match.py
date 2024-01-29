@@ -5,6 +5,7 @@ def notest_parser_errors(monaco):
     monaco("a[boundary")    # deliberately omits closing ]   
     
 def test_parse(features):
+    features("ar[boundary=administrative][admin_level=2][type!=multilinestring][name:en=Germany]")
     features("n")
     # state = features("a[boundary=administrative][admin_level=4][name:en=Bavaria]")[0]
     # country = features("a[boundary=administrative][admin_level=2][name:en=Germany]")[0]
