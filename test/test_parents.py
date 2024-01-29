@@ -14,6 +14,9 @@ def test_parent_relations(features):
         assert route in member.parents.relations
         for parent in member.parents.relations:
             assert member in parent.members
+        assert features.parents_of(member).count == member.parents.count
+        assert features.relations.parents_of(member).count == member.parents.relations.count
+        
 
 def test_nonmember(features):
     """
@@ -46,6 +49,10 @@ def test_parent_ways(features):
             for parent in node.parents.ways:
                 # print(f"    {node} must be in {parent}")
                 assert node in parent.nodes
+            # print(f"  parents_of(node): {list(features.parents_of(node))}")
+            # print(f"  node.parents:     {list(node.parents)}")
+            assert features.parents_of(node).count == node.parents.count
+            assert features.ways.parents_of(node).count == node.parents.ways.count
             
 def test_street_endpoints(features):
     """

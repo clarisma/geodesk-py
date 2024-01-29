@@ -553,6 +553,12 @@ PyFeatures* PyFeatures::withQuery(const char* query)
             newMatcher->release();
             return getEmpty();
         }
+        if (flags & USES_MATCHER)
+        {
+            matcher->addref();
+            newMatcher = MatcherHolder::combine(matcher, newMatcher);
+                // combine() steals references
+        }
 
         // TODO: combine newMatcher with any existing matcher
         if(filter) filter->addref();     // need to addref filter because createWith steals the ref
@@ -614,12 +620,16 @@ PyFeatures* PyFeatures::withOther(PyFeatures* other)
     {
         if (other->flags & USES_MATCHER)
         {
-            PyErr_SetString(PyExc_NotImplementedError,
-                "This type of query will be supported in Version 0.2.0");
-            return NULL;
+            matcher->addref();
+            other->matcher->addref();
+            newMatcher = MatcherHolder::combine(matcher, other->matcher);
+                // combine() steals the references
         }
-        newMatcher = matcher;
-        newMatcher->addref();
+        else
+        {
+            newMatcher = matcher;
+            newMatcher->addref();
+        }
     }
     else
     {

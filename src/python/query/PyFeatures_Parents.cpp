@@ -50,6 +50,34 @@ PyFeatures* PyFeatures::Parents::create(PyAnonymousNode* relatedNode)
 }
 
 
+PyFeatures* PyFeatures::Parents::create(PyFeatures* base, PyAnonymousNode* relatedNode)
+{
+    FeatureTypes acceptedTypes = base->acceptedTypes & FeatureTypes::WAYS;
+    if (!acceptedTypes) return getEmpty();
+    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
+    if (self)
+    {
+        self->selectionType = &SUBTYPE;
+        self->acceptedTypes = acceptedTypes;
+        self->store = base->store;
+        self->flags = base->flags |= SelectionFlags::USES_BOUNDS;
+            // TODO: Fix! We set USES_BOUNDS to signal that the related feature
+            // is an anonymous node (coordinates only) instead of a real Feature
+            // But if bounding box is already in use, we have to convert it
+            // to a Filter
+        self->bounds = Box(Coordinate(relatedNode->x_, relatedNode->y_));
+        self->matcher = base->matcher;
+        self->filter = base->filter;
+        self->store->addref();
+        self->matcher->addref();
+        if (self->filter) self->filter->addref();
+
+        // TODO: if bbox-constrained, create a bbox filter
+    }
+    return self;
+}
+
+
 PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
 {
     if (features->flags & SelectionFlags::USES_BOUNDS)

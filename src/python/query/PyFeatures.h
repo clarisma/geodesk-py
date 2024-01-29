@@ -112,6 +112,13 @@ public:
         return Environment::get().getEmptyFeatures();
     }
 
+    /*
+    bool hasMatcher() const
+    {
+        return matcher != store->borrowAllMatcher();
+    }
+    */
+
     static void dealloc(PyFeatures* self);
     static PyObject* dir(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* call(PyFeatures* self, PyObject* args, PyObject* kwargs);
@@ -235,6 +242,7 @@ class PyFeatures::Parents : public PyFeatures
 public:
     static SelectionType SUBTYPE;
     static PyFeatures* create(PyAnonymousNode* relatedNode);
+    static PyFeatures* create(PyFeatures* base, PyAnonymousNode* relatedNode);
     static PyObject* iterFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
 };

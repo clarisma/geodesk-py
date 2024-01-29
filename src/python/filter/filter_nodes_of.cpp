@@ -4,30 +4,24 @@
 #include "filters.h"
 #include "python/feature/PyFeature.h"
 
-
-PyFeatures* filters::members_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
+PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
-	PyObject* arg = (PyFeature*)Python::checkSingleArg(args, kwargs, "Feature");
-	if (arg == NULL) return NULL;
+	PyObject* arg = Python::checkSingleArg(args, kwargs, "Feature");
+	if (!arg) return NULL;
 
 	if (self->selectionType != &PyFeatures::World::SUBTYPE)
 	{
 		PyErr_SetString(PyExc_NotImplementedError,
-			"members_of is not implemented for this type of feature set");
+			"nodes_of is not implemented for this type of feature set");
 		return NULL;
 	}
 
 	if (arg->ob_type == &PyFeature::TYPE)
 	{
 		PyFeature* feature = (PyFeature*)arg;
-		if (feature->feature.isRelation())
-		{
-			return PyFeatures::createRelated(self, &PyFeatures::Members::SUBTYPE,
-				feature->feature, FeatureTypes::ALL & FeatureTypes::RELATION_MEMBERS);
-		}
+		// TODO: What does "nodes" return for a relation? (Right now, an empty set)
 		if (feature->feature.isWay())
 		{
-			// TODO: Should this only return feature nodes?
 			return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
 				feature->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
 		}

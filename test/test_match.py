@@ -5,6 +5,7 @@ def notest_parser_errors(monaco):
     monaco("a[boundary")    # deliberately omits closing ]   
     
 def test_parse(features):
+    features("ar[boundary=administrative][admin_level=2][type!=multilinestring][name:en=Germany]")
     features("n")
     # state = features("a[boundary=administrative][admin_level=4][name:en=Bavaria]")[0]
     # country = features("a[boundary=administrative][admin_level=2][name:en=Germany]")[0]
@@ -23,3 +24,22 @@ def test_parse(features):
     # features("w[highway != residential]")  
     # features("w[maxspeed>20][highway=residential,primary,secondary,*ary][maxspeed<90]")  
     
+def test_combined(features):
+    hotels = features("na[tourism=hotel]")
+    restaurants = features("na[amenity=restaurant]")
+    both = hotels & restaurants
+    both2 = hotels("na[amenity=restaurant]")
+    hotel_count = hotels.count
+    restaurant_count = restaurants.count
+    both_count = both.count
+    assert both_count > 1           # May fail depending on data
+    assert both_count < hotel_count
+    assert both_count < restaurant_count
+    assert both_count == both2.count
+    print(f"{hotel_count} hotels")
+    print(f"{restaurant_count} restaurants")
+    print(f"{both_count} hotels that are also restaurants")
+    
+def test_issue_45(features):
+    countries = features('ar[boundary=administrative][admin_level=2][type!=multilinestring]').relations
+    countries('*[name:en=Germany]').one
