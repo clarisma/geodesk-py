@@ -87,6 +87,11 @@ public:
     static const MatcherHolder* createMatchKeyValue(FeatureTypes types, 
         uint32_t indexBits, int keyCode, int valueCode);
 
+    /**
+     * Returns a matcher that must match both a and b.
+     * (This function steals the references to a and b, which means
+     * the caller is responsible for calling addref() if needed)
+     */
     static const MatcherHolder* combine(
         const MatcherHolder* a, const MatcherHolder* b);
 

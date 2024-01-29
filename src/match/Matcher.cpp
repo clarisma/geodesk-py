@@ -223,9 +223,9 @@ const MatcherHolder* MatcherHolder::combine(
 	self->referencedMatcherHoldersCount_ = 2;
 	const MatcherHolder** pChildMatcher = 
 		reinterpret_cast<const MatcherHolder**>(matcherData);
-	a->addref();
+	// a->addref();    // Don't addref, just steal the matcher
 	*pChildMatcher = a;
-	b->addref();
+	// b->addref();		// Don't addref, just steal the matcher
 	*(pChildMatcher+1) = b;
 	return self;
 }

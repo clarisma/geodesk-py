@@ -112,6 +112,13 @@ public:
         return Environment::get().getEmptyFeatures();
     }
 
+    /*
+    bool hasMatcher() const
+    {
+        return matcher != store->borrowAllMatcher();
+    }
+    */
+
     static void dealloc(PyFeatures* self);
     static PyObject* dir(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* call(PyFeatures* self, PyObject* args, PyObject* kwargs);
