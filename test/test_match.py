@@ -29,6 +29,7 @@ def test_combined(features):
     restaurants = features("na[amenity=restaurant]")
     both = hotels & restaurants
     both2 = hotels("na[amenity=restaurant]")
+    both_explicit = features("na[tourism=hotel][amenity=restaurant]")
     hotel_count = hotels.count
     restaurant_count = restaurants.count
     both_count = both.count
@@ -36,6 +37,7 @@ def test_combined(features):
     assert both_count < hotel_count
     assert both_count < restaurant_count
     assert both_count == both2.count
+    assert both_count == both_explicit.count
     print(f"{hotel_count} hotels")
     print(f"{restaurant_count} restaurants")
     print(f"{both_count} hotels that are also restaurants")
@@ -43,3 +45,50 @@ def test_combined(features):
 def test_issue_45(features):
     countries = features('ar[boundary=administrative][admin_level=2][type!=multilinestring]').relations
     countries('*[name:en=Germany]').one
+    
+def test_negative(features):
+    features("w[!highway]")                 # ok
+    features("w[highway != primary]")       # ok
+    features("w[highway][name != 'Main Street']")  # ok
+    features("w[!highway][name = 'Main Street']")  # ok 
+    features("w[!highway][name != 'Apple Street']")    # ok 
+    features("na[!tourism][!amenity]")  # ok
+    features("na[tourism != hotel][amenity != restaurant]")  # ok
+    features("na[tourism != hotel][amenity != restaurant]")  # ok
+    features("w[highway != primary,secondary]")  # ok
+    """
+     0  NOT FIRST_GLOBAL_KEY highway (3) -> 12
+     3  NOT LOAD_CODE -> 12
+     5  EQ_CODE secondary (202) -> 11
+     8  NOT EQ_CODE primary (301) -> 12
+    11  RETURN FALSE
+    12  RETURN TRUE
+    """
+    features("w[highway][highway != motorway]")  
+    # ... produces bad opcodes:
+    """
+     0  NOT FIRST_GLOBAL_KEY highway (3) -> 12
+     3  NOT LOAD_CODE -> 8     <-- !!! This should branch to 11 !!!
+     5  EQ_CODE no (1) -> 12
+     8  EQ_CODE motorway (579) -> 12
+    11  RETURN TRUE
+    12  RETURN FALSE
+    """
+    # features("w[highway != primary,secondary,1,2]") 
+    # causes assertion failure
+    # features("w[highway != motorway, monkey_bananas]")  
+    # causes assertion failure
+        
+
+def test_negated_unary(features):    
+    area = features("a[boundary=administrative][admin_level=9][name='Altstadt-Lehel']").one
+    nodes = features.nodes(area)
+    tourism = nodes("n[tourism]")
+    tourism.map.show()
+    not_tourism = nodes("n[!tourism]")
+    not_tourism.map.show()
+    for f in tourism:
+        assert f not in not_tourism
+    for f in not_tourism:
+        assert f not in tourism
+    assert nodes.count == tourism.count + not_tourism.count
