@@ -8,24 +8,24 @@
 #ifdef GEODESK_PYTHON
 #include "python/util/util.h"
 
-const BuildSettings::SetterMethod SETTER_METHODS[] =
+const BuildSettings::SetterMethod BuildSettings::SETTER_METHODS[] =
 {
-    &BuildSettings::setAreaTags,
-    &BuildSettings::setExcludedKeys,
-    &BuildSettings::setIdIndexing,
-    &BuildSettings::setIndexedKeys,
-    &BuildSettings::setKeyIndexMinFeatures,
-    &BuildSettings::setMaxKeyIndexes,
-    &BuildSettings::setMaxStrings,
-    &BuildSettings::setMaxTiles,
-    &BuildSettings::setMinStringUsage,
-    &BuildSettings::setMinTileDensity,
-    &BuildSettings::setProperties,
-    &BuildSettings::setRTreeBranchSize,
-    &BuildSettings::setSource,
-    &BuildSettings::setThreads,
-    &BuildSettings::setUpdatable,
-    &BuildSettings::setZoomLevels,
+    &setAreaTags,
+    &setExcludedKeys,
+    &setIdIndexing,
+    &setIndexedKeys,
+    &setKeyIndexMinFeatures,
+    &setMaxKeyIndexes,
+    &setMaxStrings,
+    &setMaxTiles,
+    &setMinStringUsage,
+    &setMinTileDensity,
+    &setProperties,
+    &setRTreeBranchSize,
+    &setSource,
+    &setThreads,
+    &setUpdatable,
+    &setZoomLevels,
 };
 
 int BuildSettings::setAreaTags(PyObject* arg)
@@ -89,6 +89,9 @@ int BuildSettings::setSource(PyObject* arg)
 
 int BuildSettings::setThreads(PyObject* arg)
 {
+    int64_t v = PyLong_AsLongLong(arg);
+    if (v < 0 && PyErr_Occurred()) return -1;
+    setThreadCount(v);
     return 0;
 }
 
@@ -216,7 +219,7 @@ int BuildSettings::setOptions(PyObject* dict)
         }
         try
         {
-            if ((this->*SETTER_METHODS[attr->attr])(value) < 0)
+            if ((this->*SETTER_METHODS[attr->index])(value) < 0)
             {
                 PyObject* msg = Python::getCurrentExceptionMessage();
                 PyErr_Format(PyExc_ValueError, "%s: %s", keyStr, PyUnicode_AsUTF8(msg));

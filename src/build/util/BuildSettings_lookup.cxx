@@ -36,7 +36,7 @@
 #include "build/util/BuildSettings.h"
 
 #line 7 "BuildSettings_attr.txt"
-struct Attribute { const char *name; int attr; };
+struct Attribute { const char *name; int index; };
 
 #define TOTAL_KEYWORDS 16
 #define MIN_WORD_LENGTH 6
@@ -95,43 +95,43 @@ BuildSettings_AttrHash::lookup (const char *str, size_t len)
     {
       {""}, {""}, {""}, {""}, {""}, {""},
 #line 21 "BuildSettings_attr.txt"
-      {"source"},
+      {"source", BuildSettings::SOURCE},
       {""}, {""},
 #line 9 "BuildSettings_attr.txt"
-      {"area_tags"},
+      {"area_tags", BuildSettings::AREA_TAGS},
 #line 19 "BuildSettings_attr.txt"
-      {"properties"},
+      {"properties", BuildSettings::PROPERTIES},
 #line 15 "BuildSettings_attr.txt"
-      {"max_strings"},
+      {"max_strings", BuildSettings::MAX_STRINGS},
 #line 12 "BuildSettings_attr.txt"
-      {"indexed_keys"},
+      {"indexed_keys", BuildSettings::INDEXED_KEYS},
       {""},
 #line 23 "BuildSettings_attr.txt"
-      {"updatable"},
+      {"updatable", BuildSettings::UPDATABLE},
 #line 14 "BuildSettings_attr.txt"
-      {"max_key_indexes"},
+      {"max_key_indexes", BuildSettings::MAX_KEY_INDEXES},
 #line 17 "BuildSettings_attr.txt"
-      {"min_string_usage"},
+      {"min_string_usage", BuildSettings::MIN_STRING_USAGE},
 #line 22 "BuildSettings_attr.txt"
-      {"threads"},
+      {"threads", BuildSettings::THREADS},
       {""},
 #line 16 "BuildSettings_attr.txt"
-      {"max_tiles"},
+      {"max_tiles", BuildSettings::MAX_TILES},
       {""},
 #line 11 "BuildSettings_attr.txt"
-      {"id_indexing"},
+      {"id_indexing", BuildSettings::ID_INDEXING},
 #line 13 "BuildSettings_attr.txt"
-      {"key_index_min_features"},
+      {"key_index_min_features", BuildSettings::KEY_INDEX_MIN_FEATURES},
 #line 10 "BuildSettings_attr.txt"
-      {"excluded_keys"},
+      {"excluded_keys", BuildSettings::EXCLUDED_KEYS},
       {""}, {""},
 #line 18 "BuildSettings_attr.txt"
-      {"min_tile_density"},
+      {"min_tile_density", BuildSettings::MIN_TILE_DENSITY},
 #line 20 "BuildSettings_attr.txt"
-      {"rtree_branch_size"},
+      {"rtree_branch_size", BuildSettings::RTREE_BRANCH_SIZE},
       {""}, {""}, {""},
 #line 24 "BuildSettings_attr.txt"
-      {"zoom_levels"}
+      {"zoom_levels", BuildSettings::ZOOM_LEVELS}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

@@ -4,7 +4,7 @@
 #include "build/util/BuildSettings.h"
 
 %}
-struct Attribute { const char *name; int attr; };
+struct Attribute { const char *name; int index; };
 %%
 area_tags, BuildSettings::AREA_TAGS
 excluded_keys, BuildSettings::EXCLUDED_KEYS
@@ -22,4 +22,3 @@ source, BuildSettings::SOURCE
 threads, BuildSettings::THREADS
 updatable, BuildSettings::UPDATABLE
 zoom_levels, BuildSettings::ZOOM_LEVELS
-

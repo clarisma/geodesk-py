@@ -95,7 +95,14 @@ public:
 		minStringUsage_ = v;
 	}
 
+	void setThreadCount(int64_t v)
+	{
+		if (v < 0) v = 0;
+		threadCount_ = v;
+	}
+
 	const std::string& sourcePath() const { return sourcePath_; }
+	int threadCount() const { return threadCount_; }
 
 private:
 	#ifdef GEODESK_PYTHON
@@ -109,6 +116,7 @@ private:
 	uint32_t maxStrings_ = 300;
 	uint32_t minStringUsage_ = 300;
 	uint32_t minTileDensity_ = 75'000;
+	int threadCount_ = 0;
 	std::vector<std::string_view> indexedKeyStrings_;
 	std::vector<uint8_t> indexedKeyCategories_;
 };

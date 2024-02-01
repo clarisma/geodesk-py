@@ -12,7 +12,16 @@ GolBuilder::GolBuilder()
 
 void GolBuilder::build(const char* golPath)
 {
-	int threads = std::thread::hardware_concurrency();
+	int cores = std::thread::hardware_concurrency();
+	int threads = settings_.threadCount();
+	if (threads == 0)
+	{
+		threads = cores;
+	}
+	else if (threads > 4 * cores)
+	{
+		threads = 4 * cores;
+	}
 	auto startTime = std::chrono::high_resolution_clock::now();
 	Analyzer analyzer(threads);
 	analyzer.analyze(settings_.sourcePath().c_str());
