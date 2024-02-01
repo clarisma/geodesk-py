@@ -110,7 +110,7 @@ if(NOT BUILD_WHEELS)
 	add_executable (geodesk-py "src/main.cxx" ${SOURCE_FILES})
 	target_include_directories(geodesk-py PRIVATE ${INCLUDES})
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
-	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON=1)
+	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
 
 	set(GOL_SOURCE_FILES ${SOURCE_FILES})
@@ -134,9 +134,8 @@ else()
 endif()
 
 # message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
-
-target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON=1)
-target_compile_definitions(geodesk PRIVATE _WIN32_WINNT=0x0601)
+ 
+target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON)
 # TODO: Add tests and install targets if needed.
 
 if(BUILD_WHEELS)

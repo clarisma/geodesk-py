@@ -170,3 +170,15 @@ void Python::createDirMethod(PyTypeObject* type, PyCFunctionWithKeywords dirFunc
         Py_DECREF(method);
     }
 }
+
+
+PyObject* Python::getCurrentExceptionMessage()
+{
+    PyObject* exc_type, * exc_value, * exc_traceback;
+    PyErr_Fetch(&exc_type, &exc_value, &exc_traceback);
+    PyObject* exc_value_str = PyObject_Str(exc_value);
+    Py_XDECREF(exc_type);
+    Py_XDECREF(exc_value);
+    Py_XDECREF(exc_traceback);
+    return exc_value_str;
+}

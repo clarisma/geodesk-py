@@ -17,6 +17,7 @@ public:
 	char* end() const { return end_; }
 	size_t length() const { return p_ - buf_; }
 	size_t capacity() const { return end_ - buf_; }
+	bool isEmpty() const { return p_ == buf_; }
 
 	virtual void filled(char *p) = 0;
 	virtual void flush(char* p) = 0;

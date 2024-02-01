@@ -90,8 +90,8 @@ void TileIndexBuilder::addParentTiles()
 		pChildTiles = &childTiles;
 		parentZoom--;
 	}
-	// Create the root tile (set its count at the maximum to ensure it
-	// is always included in the tile pyramid)
+	// Create the root tile (set its node count to the maximum 
+	// to ensure it is always included in the tile pyramid)
 	tiles_.push_back(arena_.create<STile>(Tile::fromColumnRowZoom(0,0,0), 
 		std::numeric_limits<uint64_t>::max()));
 }

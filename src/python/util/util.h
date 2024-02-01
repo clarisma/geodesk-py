@@ -36,6 +36,17 @@ namespace Python
 	extern PyObject* checkType(PyObject* arg, PyTypeObject* type, const char* what);
 	extern PyObject* checkNumeric(PyObject* arg);
 
+	std::string_view getStringView(PyObject* arg)
+	{
+		if (checkType(arg, &PyUnicode_Type))
+		{
+			Py_ssize_t len;
+			const char* s = PyUnicode_AsUTF8AndSize(arg, &len);
+			if (s) return std::string_view(s, len);
+		}
+		return std::string_view();
+	}
+
 	inline PyObject* badKeyword(const char* str)
 	{
 		PyErr_Format(PyExc_TypeError, "%s: invalid keyword argument", str);
@@ -146,6 +157,8 @@ namespace Python
 		return result;
 		#endif
 	}
+
+	PyObject* getCurrentExceptionMessage();
 
 	typedef PyObject* (*Getter)(PyObject*);
 

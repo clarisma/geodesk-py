@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <common/store/BlobStore.h>
-#include <common/util/Bits.h>
 #include <common/util/ThreadPool.h>
 
 #include "StringTable.h"
@@ -15,23 +14,6 @@
 #include "query/TileQueryTask.h"
 
 class MatcherHolder;
-
-class ZoomLevels
-{
-public:
-    inline int count()
-    {
-        return Bits::bitCount(m_levels);
-    }
-
-    bool isValidZoomLevel(int zoom)
-    {
-        return (m_levels & (1 << zoom)) != 0;
-    }
-
-private:
-    uint32_t m_levels;
-};
 
 
 //  Possible threadpool alternatives:

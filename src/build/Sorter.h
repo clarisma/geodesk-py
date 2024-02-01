@@ -47,7 +47,7 @@ public:
 
 private:
 	GroupEncoder* getEncoder(int pile, int startMarker);
-	int encodeTags(protobuf::Message keys, protobuf::Message values);
+	void encodeTags(protobuf::Message keys, protobuf::Message values);
 	void encodePackedString(uint32_t blockStringCode, ProtoStringType keyOrValue);
 
 	/**
@@ -75,5 +75,8 @@ class SorterOutputTask : public OsmPbfOutputTask
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
 {
 public:
-	Sorter();
+	Sorter(int numberOfThreads);
+
+private:
+	ProgressReporter progress_;
 };

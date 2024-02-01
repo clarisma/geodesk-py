@@ -131,6 +131,7 @@ public:
  * stringTable()
  * startBlock()
  * endBlock()
+ * afterTasks()
  */
 template <typename Derived, typename Reader>
 class OsmPbfContext
@@ -200,6 +201,10 @@ public:
 		}
 		groups_.clear();
 		self()->endBlock();
+	}
+
+	void afterTasks()	// CRTP override
+	{
 	}
 
 protected:

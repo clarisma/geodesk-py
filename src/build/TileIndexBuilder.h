@@ -4,7 +4,7 @@
 #pragma once
 
 #include <common/alloc/Arena.h>
-#include "feature/FeatureStore.h"
+#include "feature/ZoomLevels.h"
 #include "geom/Tile.h"
 
 

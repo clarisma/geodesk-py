@@ -114,45 +114,52 @@ PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selection
 
 PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-    const char* fileName;
-    if (!PyArg_ParseTuple(args, "s", &fileName))
+    Py_ssize_t argCount = PySequence_Length(args);
+    if (argCount < 1)
     {
+        PyErr_SetString(PyExc_TypeError, "Missing argument <gol_file>");
         return NULL;
     }
-    FeatureStore* store;
-    try
+    if (argCount == 1 && !kwds)
     {
-        store = FeatureStore::openSingle(std::string_view(fileName, strlen(fileName)));
-        // TODO: get string_view directly from param
+        PyObject* arg = PyTuple_GetItem(args, 0);
+        std::string_view fileName = Python::getStringView(arg);
+        if (!fileName.data()) return NULL;
+        FeatureStore* store;
+        try
+        {
+            store = FeatureStore::openSingle(fileName);
+        }
+        catch (const FileNotFoundException& ex)
+        {
+            PyErr_SetString(PyExc_FileNotFoundError, ex.what());
+            return NULL;
+        }
+        catch (const std::bad_alloc&)
+        {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        catch (const std::exception& ex)
+        {
+            PyErr_SetString(PyExc_RuntimeError, ex.what());
+            return NULL;
+        }
+        PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
+        if (self)
+        {
+            self->selectionType = &World::SUBTYPE;
+            store->addref();
+            self->store = store;
+            self->flags = SelectionFlags::USES_BOUNDS;
+            self->acceptedTypes = FeatureTypes::ALL;
+            self->matcher = store->getAllMatcher();
+            self->filter = NULL;
+            self->bounds = Box::ofWorld();
+        }
+        return self;
     }
-    catch (const FileNotFoundException& ex)
-    {
-        PyErr_SetString(PyExc_FileNotFoundError, ex.what());
-        return NULL;
-    }
-    catch (const std::bad_alloc&)
-    {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    catch (const std::exception& ex)
-    {
-        PyErr_SetString(PyExc_RuntimeError, ex.what());
-        return NULL;
-    }
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = &World::SUBTYPE;
-        store->addref();
-        self->store = store;
-        self->flags = SelectionFlags::USES_BOUNDS;
-        self->acceptedTypes = FeatureTypes::ALL;
-        self->matcher = store->getAllMatcher();
-        self->filter = NULL;
-        self->bounds = Box::ofWorld();
-    }
-    return self;
+    return build(args, kwds); // TODO
 }
 
 

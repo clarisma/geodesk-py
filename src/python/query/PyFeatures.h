@@ -91,6 +91,7 @@ public:
     static PyFeatures* createRelated(PyFeatures* base, SelectionType* selectionType, 
         FeatureRef relatedFeature, FeatureTypes acceptedTypes);
     static PyFeatures* createEmpty(const MatcherHolder* matcher);
+    static PyFeatures* build(PyObject* args, PyObject* kwds);
 
     /**
      * Creates a new PyFeatures instance based on an existing one.

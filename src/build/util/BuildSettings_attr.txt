@@ -1,0 +1,25 @@
+%{
+// Keywords
+#include <assert.h>
+#include "build/util/BuildSettings.h"
+
+%}
+struct Attribute { const char *name; int attr; };
+%%
+area_tags, BuildSettings::AREA_TAGS
+excluded_keys, BuildSettings::EXCLUDED_KEYS
+id_indexing, BuildSettings::ID_INDEXING
+indexed_keys, BuildSettings::INDEXED_KEYS
+key_index_min_features, BuildSettings::KEY_INDEX_MIN_FEATURES
+max_key_indexes, BuildSettings::MAX_KEY_INDEXES
+max_strings, BuildSettings::MAX_STRINGS
+max_tiles, BuildSettings::MAX_TILES
+min_string_usage, BuildSettings::MIN_STRING_USAGE
+min_tile_density, BuildSettings::MIN_TILE_DENSITY
+properties, BuildSettings::PROPERTIES
+rtree_branch_size, BuildSettings::RTREE_BRANCH_SIZE
+source, BuildSettings::SOURCE
+threads, BuildSettings::THREADS
+updatable, BuildSettings::UPDATABLE
+zoom_levels, BuildSettings::ZOOM_LEVELS
+

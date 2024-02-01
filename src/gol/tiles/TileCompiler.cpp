@@ -8,7 +8,7 @@
 #include "TTile.h"
 #include "TIndex.h"
 #include "TesWriter.h"
-#include "gol/build/Analyzer.h"
+#include "build/Analyzer.h"
 
 #include <thread>
 #include <chrono>

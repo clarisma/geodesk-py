@@ -22,6 +22,7 @@ namespace protobuf
 			start(start_), end(end_) {}
 
 		bool isEmpty() const { return start == end; }
+		size_t length() const { return end - start; }
 
 		const uint8_t* start;
 		const uint8_t* end;
