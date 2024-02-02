@@ -22,6 +22,11 @@ void GolBuilder::build(const char* golPath)
 	{
 		threads = 4 * cores;
 	}
+
+	#ifdef _DEBUG
+	threads = 1;
+	#endif // _DEBUG
+
 	auto startTime = std::chrono::high_resolution_clock::now();
 	Analyzer analyzer(threads);
 	analyzer.analyze(settings_.sourcePath().c_str());

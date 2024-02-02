@@ -53,9 +53,7 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 	uint32_t counterSize = Counter::grossSize(size);
 	if (p_ + counterSize > arenaEnd_) return 0;
 	Counter* pCounter = reinterpret_cast<Counter*>(p_);
-	pCounter->next = table_[slot];
-	pCounter->hash = hash;
-	memcpy(&pCounter->bytes, bytes, size);
+	new(pCounter) Counter(table_[slot], hash, size, bytes);
 	CounterOfs ofs = p_ - arena_.get();
 	table_[slot] = ofs;
 	p_ += counterSize;
@@ -135,11 +133,15 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	// TODO: Stop at a point before arenaEnd_ so recently added strings have a chance
 	// to catch up?
 
+	printf("Evicting strings with usage of less than %d...\n", minCount);
+
+	uint64_t totalCount = 0;
+	uint64_t evictionCount = 0;
 	while (pSource < p_)
 	{
 		Counter* pCounter = reinterpret_cast<Counter*>(pSource);
 		uint32_t counterSize = Counter::grossSize(stringSize(pCounter->bytes));
-		if (pCounter->keys + pCounter->values >= minCount)
+		if (pCounter->total() >= minCount)
 		{
 			// If the string counter meets the minimum requirement,
 			// we'll keep it and re-index it
@@ -152,7 +154,15 @@ void StringStatistics::removeStrings(uint32_t minCount)
 			pDest += counterSize;
 			counterCount_++;
 		}
+		else
+		{
+			evictionCount++;
+		}
+		totalCount++;
 		pSource += counterSize;
 	}
 	p_ = pDest;
+
+	printf("Evicted %llu of %llu strings; minCount is now %d\n", 
+		evictionCount, totalCount, minCount);
 }

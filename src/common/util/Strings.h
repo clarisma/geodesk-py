@@ -31,6 +31,8 @@ public:
 
     uint32_t length() const { return len_; }
 
+    const char* data() const { return chars_; }
+
     uint32_t totalSize() const
     {
         return len_ + sizeof(len_);
@@ -63,6 +65,12 @@ public:
         return (len & 0x80) ? ((static_cast<uint32_t>(bytes_[1]) << 7) | (len & 0x7f)) : len;
     }
 
+    const char* data() const 
+    { 
+        uint32_t ofs = (bytes_[0] >> 7) + 1;
+        return reinterpret_cast<const char*>(&bytes_[ofs]); 
+    }
+
     uint32_t totalSize() const
     {
         uint32_t lenSize = (bytes_[0] >> 7) + 1;
@@ -83,6 +91,56 @@ public:
         uint32_t ofs = (bytes_[0] >> 7) + 1;
         return memcmp(&bytes_[ofs], &other.bytes_[ofs], len) == 0;
     }
+
+    std::string_view toStringView() const
+    {
+        uint32_t ofs = (bytes_[0] >> 7) + 1;
+        return std::string_view(reinterpret_cast<const char*>(&bytes_[ofs]), length());
+    }
+
+private:
+    uint8_t bytes_[1];
+};
+
+
+class TinyString
+{
+public:
+    uint32_t length() const
+    {
+        return bytes_[0];
+    }
+
+    const char* data() const
+    {
+        return reinterpret_cast<const char*>(&bytes_[1]);
+    }
+
+    uint32_t totalSize() const
+    {
+        return length() + 1;
+    }
+
+    template<int Alignment>
+    uint32_t alignedTotalSize() const
+    {
+        static_assert(Alignment && !(Alignment & (Alignment - 1)), "Alignment must be a power of 2");
+        return (totalSize() + Alignment - 1) & ~(Alignment - 1);
+    }
+
+    bool operator==(const TinyString& other) const
+    {
+        uint32_t len = length();
+        if (len != other.length()) return false;
+        return memcmp(&bytes_[1], &other.bytes_[1], len) == 0;
+    }
+
+    std::string_view toStringView() const
+    {
+        uint32_t ofs = (bytes_[0] >> 7) + 1;
+        return std::string_view(reinterpret_cast<const char*>(&bytes_[ofs]), length());
+    }
+
 private:
     uint8_t bytes_[1];
 };

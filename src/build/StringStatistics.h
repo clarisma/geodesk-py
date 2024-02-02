@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <common/util/protobuf.h>
+#include <common/util/Strings.h>
 
 
 class StringStatistics
@@ -28,6 +29,15 @@ public:
 	{
 		uint8_t bytes[1];
 
+		Counter(uint32_t next, uint32_t hash, uint32_t stringSize, const uint8_t* b)
+		{
+			this->next = next;
+			this->hash = hash;
+			this->keys = 0;
+			this->values = 0;
+			memcpy(bytes, b, stringSize);
+		}
+
 		void add(int64_t keys, int64_t values)
 		{
 			this->keys += keys;
@@ -42,6 +52,11 @@ public:
 			// TODO: 4 not portable since we are using 64-bit StringCount
 			// Should align on 8 bytes instead?
 		}
+
+		std::string_view stringView() const
+		{
+			return reinterpret_cast<const ShortVarString*>(&bytes)->toStringView();
+		}
 	};
 
 	class Iterator
@@ -49,15 +64,15 @@ public:
 	public:
 		Iterator(const StringStatistics& stats)
 		{
-			p_ = reinterpret_cast<Counter*>(stats.arena_.get() + sizeof(uint32_t));
-			pEnd_ = reinterpret_cast<const Counter*>(stats.arenaEnd_);
+			p_ = stats.arena_.get() + sizeof(uint32_t);
+			pEnd_ = stats.arenaEnd_;
 		}
 
 		const Counter* next()
 		{
 			if (p_ < pEnd_)
 			{
-				const Counter* current = p_;
+				const Counter* current = reinterpret_cast<const Counter*>(p_);
 				p_ += current->grossSize(
 					StringStatistics::stringSize(current->bytes));
 				return current;
@@ -66,8 +81,8 @@ public:
 		}
 
 	private:
-		const Counter* p_;
-		const Counter* pEnd_;
+		const uint8_t* p_;
+		const uint8_t* pEnd_;
 	};
 
 	StringStatistics(uint32_t tableSize, uint32_t arenaSize);

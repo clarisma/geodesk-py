@@ -235,6 +235,8 @@ void Analyzer::analyze(const char* fileName)
 		uint64_t subTotal = counter->total();
 		if (subTotal >= 300)
 		{
+			std::string_view s = counter->stringView();
+			// printf("%12llu %.*s\n", subTotal, static_cast<int>(s.size()), s.data());
 			totalStringCount++;
 			totalStringUsageCount += subTotal;
 		}
@@ -243,14 +245,14 @@ void Analyzer::analyze(const char* fileName)
 	uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
 		- totalStringUsageCount;
 
-	printf("  %'12llu nodes\n", totalStats_.nodeCount);
-	printf("  %'12llu ways\n", totalStats_.wayCount);
-	printf("  %'12llu relations\n", totalStats_.relationCount);
-	printf("  %'12llu members\n", totalStats_.memberCount);
-	printf("  %'12llu tags\n", totalStats_.tagCount);
-	printf("  %'12llu unique strings in string table\n", totalStringCount);
-	printf("    %'llu occurrences\n", totalStringUsageCount);
-	printf("    %'llu literals\n", literalsCount);
+	printf("  %12llu nodes\n", totalStats_.nodeCount);
+	printf("  %12llu ways\n", totalStats_.wayCount);
+	printf("  %12llu relations\n", totalStats_.relationCount);
+	printf("  %12llu members\n", totalStats_.memberCount);
+	printf("  %12llu tags\n", totalStats_.tagCount);
+	printf("  %12llu unique strings in string table\n", totalStringCount);
+	printf("    %llu occurrences\n", totalStringUsageCount);
+	printf("  %llu literal strings\n", literalsCount);
 }
 
 
