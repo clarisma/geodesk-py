@@ -22,6 +22,7 @@ public:
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
 	void afterTasks();
+	void harvestResults();
 	
 private:
 	void flush();
@@ -97,12 +98,19 @@ public:
 	void processTask(AnalyzerOutputTask& task);
 	ProgressReporter* progress() { return &progress_; }
 	const FastTileCalculator* tileCalculator() const { return &tileCalculator_; }
+	
+	/**
+	 * Adds the given node counts to the total. This method takes ownership
+	 * of the pointer.
+	 */
+	void mergeNodeCounts(uint32_t* counts);
+	void mergeStats(const OsmStatistics& stats);
 
 private:
-	void calculateRowLats();
-
 	StringStatistics strings_;
 	const FastTileCalculator tileCalculator_;
 	int minStringCount_;
 	ProgressReporter progress_;
+	std::unique_ptr<uint32_t[]> totalNodeCounts_;
+	OsmStatistics totalStats_;
 };

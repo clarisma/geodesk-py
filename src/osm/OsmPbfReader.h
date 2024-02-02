@@ -207,6 +207,10 @@ public:
 	{
 	}
 
+	void harvestResults()	// CRTP override
+	{
+	}
+
 protected:
 	uint64_t blockBytesProcessed() const { return blockBytesProcessed_; }
 	void resetBlockBytesProcessed() { blockBytesProcessed_ = 0; }

@@ -115,7 +115,7 @@ private:
 	uint32_t maxTiles_ = (1 << 16) - 1;
 	uint32_t maxStrings_ = 300;
 	uint32_t minStringUsage_ = 300;
-	uint32_t minTileDensity_ = 75'000;
+	uint32_t minTileDensity_ = 25'000;
 	int threadCount_ = 0;
 	std::vector<std::string_view> indexedKeyStrings_;
 	std::vector<uint8_t> indexedKeyCategories_;

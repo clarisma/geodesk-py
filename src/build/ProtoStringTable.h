@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <common/util/BufferWriter.h>
+#include <common/util/Strings.h>
 
 enum class ProtoStringType
 {
@@ -68,6 +69,7 @@ private:
 		uint32_t size = static_cast<uint32_t>(p - reinterpret_cast<uint8_t*>(&varint));
 		return (varint << 2) | (size - 1);
 	}
+
 	uint32_t varints_[2];
 };
 
@@ -97,4 +99,25 @@ struct ProtoStringMapping
 	uint16_t keyCode;
 	uint16_t valueCode;
 	uint32_t value;
+};
+
+
+class ProtoStringManager
+{
+public:
+	/**
+	 * Returns the encoded varint of the proto-string code for the
+	 * given string, or 0 if the string should be written as a 
+	 * literal string.
+	 * 
+	 * @param string     UTF-8 encoded string with a varint length
+	 *                   (maximum 16K-1 bytes)
+	 * @param keyOrValue indicates whether the string is used as 
+	 *					 a key or value (role is considered "value")
+	 */
+	uint32_t encodedProtoCode(const ShortVarString* string, 
+		ProtoStringType keyOrValue);
+
+private:
+
 };

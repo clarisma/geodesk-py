@@ -48,7 +48,7 @@ private:
 	private:
 		Tile tile_;
 		uint64_t totalNodeCount_;
-		// uint64_t childNodeCount_;
+		uint64_t ownNodeCount_;
 		STile* parent_;
 		STile** children_;
 	};

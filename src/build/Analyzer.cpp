@@ -23,7 +23,7 @@ AnalyzerContext::AnalyzerContext(Analyzer* analyzer) :
 		// +1 to count any rejected nodes outside of range
 	strings_(analyzer->workerTableSize(), analyzer->workerArenaSize())
 {
-	memset(nodeCounts_.get(), 0, 4096 * 4096 * sizeof(uint32_t));
+	memset(nodeCounts_.get(), 0, (FastTileCalculator::GRID_CELL_COUNT + 1) * sizeof(uint32_t));
 }
 
 
@@ -160,6 +160,13 @@ void AnalyzerContext::afterTasks()
 	flush();
 }
 
+void AnalyzerContext::harvestResults()
+{
+	Analyzer* analyzer = reader();
+	analyzer->mergeNodeCounts(nodeCounts_.release());
+	analyzer->mergeStats(stats_);
+}
+
 void Analyzer::processTask(AnalyzerOutputTask& task)
 {
 	const uint8_t* arena = task.strings();
@@ -189,7 +196,74 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 	progress_.progress(task.blockBytesProcessed());
 }
 
+
+void Analyzer::mergeNodeCounts(uint32_t* counts)
+{
+	if (!totalNodeCounts_.get())
+	{
+		totalNodeCounts_.reset(counts);
+	}
+	else
+	{
+		uint32_t* pTotals = totalNodeCounts_.get();
+		for (int i = 0; i < FastTileCalculator::GRID_CELL_COUNT + 1; i++)
+		{
+			pTotals[i] += counts[i];
+		}
+		delete[] counts;
+	}
+}
+
+
+void Analyzer::mergeStats(const OsmStatistics& stats)
+{
+	totalStats_ += stats;
+}
+
 void Analyzer::analyze(const char* fileName)
 {
 	read(fileName, &progress_);
+	// TODO: Only if verbose
+
+	uint64_t totalStringCount = 0;
+	uint64_t totalStringUsageCount = 0;
+	StringStatistics::Iterator iter = strings_.iter();
+	for (;;)
+	{
+		const StringStatistics::Counter* counter = iter.next();
+		if (!counter) break;
+		uint64_t subTotal = counter->total();
+		if (subTotal >= 300)
+		{
+			totalStringCount++;
+			totalStringUsageCount += subTotal;
+		}
+	}
+
+	uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
+		- totalStringUsageCount;
+
+	printf("  %'12llu nodes\n", totalStats_.nodeCount);
+	printf("  %'12llu ways\n", totalStats_.wayCount);
+	printf("  %'12llu relations\n", totalStats_.relationCount);
+	printf("  %'12llu members\n", totalStats_.memberCount);
+	printf("  %'12llu tags\n", totalStats_.tagCount);
+	printf("  %'12llu unique strings in string table\n", totalStringCount);
+	printf("    %'llu occurrences\n", totalStringUsageCount);
+	printf("    %'llu literals\n", literalsCount);
 }
+
+
+// TODO: Need to produce:
+// - Global String Table
+//   - hard-coded strings come first
+//   - then indexed keys
+//   - then all other keys
+//   - finally, values that aren't keys
+//   (make sure not to duplicate)
+// - Lookup string -> encoded varint for key & value
+// - Lookup of Proto-GOL String Code to GST Code, number or literal string
+
+// - Get all strings & their key counts
+// - Sort by key
+

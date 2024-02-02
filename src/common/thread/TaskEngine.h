@@ -8,6 +8,22 @@
 #include <common/text/Format.h>
 #include <common/util/log.h>
 
+// TODO: It would be better to defer initialization of the per-thread 
+// WorkContext object; this way, memory used by the main class is
+// allocated first. By allocating per-thread memory afterwards, we
+// make it more likely that the process gives back this memory to
+// the OS when the threads finish and their working set is freed
+
+/**
+ * - Before a thread shuts down, it calls afterTasks() on its context
+ *   to perform any post-processing that should run concurrently (i.e.
+ *   it cannot mutate shared state, at least not without explicit 
+ *   synchornization)
+ * - After all threads have shut down, harvestResults() is called on
+ *   each context to merge any accumulated work. harvestResults() is
+ *   synchronous, i.e. it can safely mutate shared state.
+ * 
+ */
 template <typename Derived, typename WorkContext, typename WorkTask, typename OutputTask>
 class TaskEngine
 {
@@ -58,7 +74,12 @@ public:
         if (threads_[0].joinable()) threads_[0].join();
         LOG("  Ended.");
         threads_.clear();
+        for (auto& ctx : workContexts_)
+        {
+            ctx.harvestResults();
+        }
         workContexts_.clear();
+        
     }
 
     void postOutput(OutputTask&& task)

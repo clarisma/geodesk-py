@@ -44,9 +44,36 @@ public:
 		}
 	};
 
+	class Iterator
+	{
+	public:
+		Iterator(const StringStatistics& stats)
+		{
+			p_ = reinterpret_cast<Counter*>(stats.arena_.get() + sizeof(uint32_t));
+			pEnd_ = reinterpret_cast<const Counter*>(stats.arenaEnd_);
+		}
+
+		const Counter* next()
+		{
+			if (p_ < pEnd_)
+			{
+				const Counter* current = p_;
+				p_ += current->grossSize(
+					StringStatistics::stringSize(current->bytes));
+				return current;
+			}
+			return nullptr;
+		}
+
+	private:
+		const Counter* p_;
+		const Counter* pEnd_;
+	};
+
 	StringStatistics(uint32_t tableSize, uint32_t arenaSize);
 
 	size_t counterCount() const { return counterCount_; }
+	Iterator iter() { return Iterator(*this); }
 	// CounterOfs addString(const uint8_t* bytes, StringCount keys, StringCount values);
 	CounterOfs addString(const Counter* pCounter);
 	void removeStrings(uint32_t minCount);
