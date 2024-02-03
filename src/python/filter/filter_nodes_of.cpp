@@ -11,6 +11,10 @@ PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs
 
 	if (self->selectionType != &PyFeatures::World::SUBTYPE)
 	{
+		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		{
+			return Python::newRef(self);
+		}
 		PyErr_SetString(PyExc_NotImplementedError,
 			"nodes_of is not implemented for this type of feature set");
 		return NULL;

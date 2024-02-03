@@ -12,6 +12,10 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 
 	if (self->selectionType != &PyFeatures::World::SUBTYPE)
 	{
+		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		{
+			return Python::newRef(self);
+		}
 		PyErr_SetString(PyExc_NotImplementedError,
 			"parents_of is not implemented for this type of feature set");
 		return NULL;
