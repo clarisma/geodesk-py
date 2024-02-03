@@ -153,6 +153,6 @@ PyFeatures* filters::filter(PyFeatures* self, PyObject* args, PyObject* kwargs, 
 	}
 
 	if (filter) return self->withFilter(filter);
-	return PyFeatures::getEmpty();
+	return self->getEmpty();
 }
 

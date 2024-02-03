@@ -106,7 +106,7 @@ public:
 
 	static void clearAndLogException();
 
-	PyFeatures* getEmptyFeatures();
+	// PyFeatures* getEmptyFeatures();
 	PyQueryFinalizer* getQueryFinalizer();
 	PyQueryFinalizer* peekQueryFinalizer() { return queryFinalizer_; }
 	PyObject* raiseQueryException(const char* format, ...);
@@ -117,7 +117,7 @@ private:
 	GEOSContextHandle_t geosContext_;
 	PyObject* shapelyModule_;
 	void** shapelyApiFunctions_;
-	PyFeatures* emptyFeatures_;
+	// PyFeatures* emptyFeatures_;
 	PyQueryFinalizer* queryFinalizer_;
 	PyObject* queryException_;		// not owned, don't refcount
 	MatcherHolder allMatcher_;

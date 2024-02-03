@@ -31,11 +31,11 @@ PyFeatures* filters::members_of(PyFeatures* self, PyObject* args, PyObject* kwar
 			return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
 				feature->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
 		}
-		return Environment::get().getEmptyFeatures();
+		return self->getEmpty();
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{
-		return PyFeatures::getEmpty();
+		return self->getEmpty();
 	}
 
 	PyErr_Format(PyExc_TypeError, "Expected Feature (instead of %s)", arg->ob_type->tp_name);
