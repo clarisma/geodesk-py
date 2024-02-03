@@ -14,6 +14,7 @@
 #include "query/TileQueryTask.h"
 
 class MatcherHolder;
+class PyFeatures;
 
 
 //  Possible threadpool alternatives:
@@ -63,7 +64,8 @@ public:
 
     #ifdef GEODESK_PYTHON
     // PyObject* emptyString();
-    PyObject* emptyTags();
+    PyObject* getEmptyTags();
+    PyFeatures* getEmptyFeatures();
     #endif
 
     ThreadPool<TileQueryTask>& executor() { return executor_; }
@@ -95,7 +97,9 @@ private:
     MatcherHolder allMatcher_;
     #ifdef GEODESK_PYTHON
     PyObject* emptyTags_;
-    // PyObject* emptyFeatures_;       
+    PyFeatures* emptyFeatures_;       
+        // TODO: Need to keep this here due to #46, because a feature set
+        // needs a valid reference to a FeatureStore (even if empty)
         // Not ideal, should have global singleton instead of per-store,
         // but PyFeatures requires a non-null MatcherHolder, which in turn
         // requires a FeatureStore

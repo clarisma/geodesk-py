@@ -9,6 +9,7 @@
 #include <common/util/PbfDecoder.h>
 #ifdef GEODESK_PYTHON
 #include "python/feature/PyTags.h"
+#include "python/query/PyFeatures.h"
 #include "python/util/util.h"
 #endif
 
@@ -22,6 +23,7 @@ FeatureStore::FeatureStore()
 	matchers_(this),	// TODO: this not initialized yet!
 	#ifdef GEODESK_PYTHON
 	emptyTags_(nullptr),
+	emptyFeatures_(nullptr),
 	#endif
 	executor_(/* 1 */ std::thread::hardware_concurrency(), 0)  // TODO: disabled for testing
 {
@@ -76,6 +78,7 @@ FeatureStore::~FeatureStore()
 	LOG("Destroying FeatureStore...");
 	#ifdef GEODESK_PYTHON
 	Py_XDECREF(emptyTags_);
+	Py_XDECREF(emptyFeatures_);
 	#endif
 	LOG("Destroyed FeatureStore.");
 	openStores_.erase(fileName());
@@ -132,7 +135,7 @@ PyObject* FeatureStore::emptyString()
 }
 */
 
-PyObject* FeatureStore::emptyTags()
+PyObject* FeatureStore::getEmptyTags()
 {
 	if (!emptyTags_)
 	{
@@ -140,6 +143,17 @@ PyObject* FeatureStore::emptyTags()
 		if (!emptyTags_) return NULL;
 	}
 	return Python::newRef(emptyTags_);
+}
+
+PyFeatures* FeatureStore::getEmptyFeatures()
+{
+	if (!emptyFeatures_)
+	{
+		allMatcher_.addref();
+		emptyFeatures_ = PyFeatures::createEmpty(this, &allMatcher_);
+	}
+	Py_INCREF(emptyFeatures_);
+	return emptyFeatures_;
 }
 
 #endif

@@ -53,7 +53,7 @@ PyFeatures* PyFeatures::Parents::create(PyAnonymousNode* relatedNode)
 PyFeatures* PyFeatures::Parents::create(PyFeatures* base, PyAnonymousNode* relatedNode)
 {
     FeatureTypes acceptedTypes = base->acceptedTypes & FeatureTypes::WAYS;
-    if (!acceptedTypes) return getEmpty();
+    if (!acceptedTypes) return base->getEmpty();
     PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {

@@ -11,6 +11,10 @@ PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs
 
 	if (self->selectionType != &PyFeatures::World::SUBTYPE)
 	{
+		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		{
+			return Python::newRef(self);
+		}
 		PyErr_SetString(PyExc_NotImplementedError,
 			"nodes_of is not implemented for this type of feature set");
 		return NULL;
@@ -25,11 +29,11 @@ PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs
 			return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
 				feature->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
 		}
-		return Environment::get().getEmptyFeatures();
+		return self->getEmpty();
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{
-		return PyFeatures::getEmpty();
+		return self->getEmpty();
 	}
 
 	PyErr_Format(PyExc_TypeError, "Expected Feature (instead of %s)", arg->ob_type->tp_name);

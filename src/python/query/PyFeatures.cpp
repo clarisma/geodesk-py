@@ -51,13 +51,13 @@ PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
     return self;
 }
 
-PyFeatures* PyFeatures::createEmpty(const MatcherHolder* matcher)
+PyFeatures* PyFeatures::createEmpty(FeatureStore* store, const MatcherHolder* matcher)
 {
     PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
         self->selectionType = &Empty::SUBTYPE;
-        self->store = nullptr;
+        self->store = store;
         self->flags = 0;
         self->acceptedTypes = 0;
         self->matcher = matcher;
@@ -90,7 +90,7 @@ PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selection
     FeatureRef relatedFeature, FeatureTypes acceptedTypes)
 {
     acceptedTypes &= base->acceptedTypes;
-    if (!acceptedTypes) return getEmpty();
+    if (!acceptedTypes) return base->getEmpty();
     PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
@@ -225,13 +225,13 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         if (type == &PyBox::TYPE)
         {
             Box box = ((PyBox*)arg)->box;
-            if (box.isEmpty()) return getEmpty();
+            if (box.isEmpty()) return self->getEmpty();
             if (self->flags & SelectionFlags::USES_BOUNDS)
             {
                 if (self->flags & SelectionFlags::BOUNDS_ACTIVE)
                 {
                     box = Box::simpleIntersection(box, self->bounds);
-                    if(box.isEmpty()) return getEmpty();
+                    if(box.isEmpty()) return self->getEmpty();
                 }
                 self->matcher->addref();
                 if(self->filter) self->filter->addref();
@@ -283,7 +283,7 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         
         // TODO: if (type == &PyCoordinate::TYPE)
         
-        if (arg == (PyObject*)Py_None) return getEmpty();
+        if (arg == (PyObject*)Py_None) return self->getEmpty();
 
         PyErr_Format(PyExc_TypeError, "%s is not a valid argument", type->tp_name);
     }
@@ -727,21 +727,6 @@ SelectionType PyFeatures::World::SUBTYPE =
 };
 
 
-PyObject* PyFeatures::Empty::iterFeatures(PyFeatures* self)
-{
-    // The PyFeatures itself is an empty iterator
-    return Python::newRef(self);
-}
-
-PyObject* PyFeatures::Empty::countFeatures(PyFeatures*)
-{
-    return PyLong_FromLong(0);
-}
-
-int PyFeatures::Empty::isEmpty(PyFeatures*)
-{
-    return 1;
-}
 
 /**
  * Simple (but inefficent) default implementation that checks the given
@@ -818,15 +803,6 @@ bool PyFeatures::acceptsAny(FeatureTypes types)
         matcher == store->borrowAllMatcher();
     // TODO: all-matcher should really be stored in the Environment
 }
-
-SelectionType PyFeatures::Empty::SUBTYPE =
-{
-    iterFeatures,
-    countFeatures,
-    isEmpty,
-    containsFeature,
-    getTiles
-};
 
 // === Properties ===
 

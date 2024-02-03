@@ -99,7 +99,7 @@ PyObject* PyAnonymousNode::str_method(PyFeature* self)
 
 PyObject* PyAnonymousNode::tags(PyAnonymousNode* self)
 {
-    return self->store->emptyTags();
+    return self->store->getEmptyTags();
 }
 
 PyObject* PyAnonymousNode::x(PyAnonymousNode* self)

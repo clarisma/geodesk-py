@@ -90,8 +90,7 @@ public:
         FeatureRef relatedFeature, FeatureTypes acceptedTypes);
     static PyFeatures* createRelated(PyFeatures* base, SelectionType* selectionType, 
         FeatureRef relatedFeature, FeatureTypes acceptedTypes);
-    static PyFeatures* createEmpty(const MatcherHolder* matcher);
-    static PyFeatures* build(PyObject* args, PyObject* kwds);
+    static PyFeatures* createEmpty(FeatureStore* store, const MatcherHolder* matcher);
 
     /**
      * Creates a new PyFeatures instance based on an existing one.
@@ -108,10 +107,13 @@ public:
         FeatureTypes acceptedTypes,  const Box* bounds, 
         const MatcherHolder* matcher, const Filter* filter);
 
-    static PyFeatures* getEmpty()
+    /* static */ PyFeatures* getEmpty() const
     {
-        return Environment::get().getEmptyFeatures();
+        return store->getEmptyFeatures();
+        // return Environment::get().getEmptyFeatures();
     }
+
+    static PyFeatures* build(PyObject* args, PyObject* kwds);
 
     /*
     bool hasMatcher() const

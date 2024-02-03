@@ -11,7 +11,7 @@ Environment::Environment() :
     geosContext_(nullptr),
     shapelyModule_(nullptr),
     shapelyApiFunctions_(nullptr),
-    emptyFeatures_(nullptr),
+    // emptyFeatures_(nullptr),
     queryFinalizer_(nullptr),
     queryException_(nullptr)
 {
@@ -48,6 +48,7 @@ Environment::~Environment()
     // don't dispose of queryException_, it is tracked by the module itself
 }
 
+/*
 PyFeatures* Environment::getEmptyFeatures()
 {
     if (!emptyFeatures_)
@@ -58,7 +59,7 @@ PyFeatures* Environment::getEmptyFeatures()
     Py_INCREF(emptyFeatures_);
     return emptyFeatures_;
 }
-
+*/
 
 PyQueryFinalizer* Environment::getQueryFinalizer()
 {

@@ -14,7 +14,7 @@ if __name__ == '__main__':
             print(f"- {member} as {member.role}")
     """
     
-    # pytest.main(["-rA", "-s", "--durations=9999"])
+    pytest.main(["-rA", "-s", "--durations=9999"])
     # pytest.main(["test_features.py::test_query_parser", "-rA", "--durations=9999"])
     # pytest.main(["test_rtree.py::test_rtree", "-rA", "--durations=9999"])
     # pytest.main(["test_polygonizer.py::test_polygonizer", "-rA", "-s", "--durations=9999"])
