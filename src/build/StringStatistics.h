@@ -65,7 +65,7 @@ public:
 		Iterator(const StringStatistics& stats)
 		{
 			p_ = stats.arena_.get() + sizeof(uint32_t);
-			pEnd_ = stats.arenaEnd_;
+			pEnd_ = stats.p_;
 		}
 
 		const Counter* next()
@@ -88,7 +88,7 @@ public:
 	StringStatistics(uint32_t tableSize, uint32_t arenaSize);
 
 	size_t counterCount() const { return counterCount_; }
-	Iterator iter() { return Iterator(*this); }
+	Iterator iter() const { return Iterator(*this); }
 	// CounterOfs addString(const uint8_t* bytes, StringCount keys, StringCount values);
 	CounterOfs addString(const Counter* pCounter);
 	void removeStrings(uint32_t minCount);
@@ -131,6 +131,7 @@ private:
 	*/
 	void clearTable();
 	void reset(uint32_t arenaSize);
+	void check() const;
 
 	/*
 	static uint32_t hashString(const uint8_t* p, uint32_t size)

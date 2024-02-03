@@ -233,7 +233,7 @@ void Analyzer::analyze(const char* fileName)
 		const StringStatistics::Counter* counter = iter.next();
 		if (!counter) break;
 		uint64_t subTotal = counter->total();
-		if (subTotal >= 300)
+		if (subTotal >= 100)
 		{
 			std::string_view s = counter->stringView();
 			// printf("%12llu %.*s\n", subTotal, static_cast<int>(s.size()), s.data());
@@ -251,8 +251,8 @@ void Analyzer::analyze(const char* fileName)
 	printf("  %12llu members\n", totalStats_.memberCount);
 	printf("  %12llu tags\n", totalStats_.tagCount);
 	printf("  %12llu unique strings in string table\n", totalStringCount);
-	printf("    %llu occurrences\n", totalStringUsageCount);
-	printf("  %llu literal strings\n", literalsCount);
+	printf("  %12llu unique-string occurrences\n", totalStringUsageCount);
+	printf("  %12llu literal strings\n", literalsCount);
 }
 
 

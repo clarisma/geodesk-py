@@ -125,6 +125,7 @@ std::unique_ptr<uint8_t[]> StringStatistics::takeStrings()
 
 void StringStatistics::removeStrings(uint32_t minCount)
 {
+	check();
 	clearTable();
 	counterCount_ = 0;
 	uint8_t* pSource = arena_.get() + sizeof(uint32_t);		// skip to pos 4
@@ -140,22 +141,39 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	while (pSource < p_)
 	{
 		Counter* pCounter = reinterpret_cast<Counter*>(pSource);
-		uint32_t counterSize = Counter::grossSize(stringSize(pCounter->bytes));
+		uint32_t strSize = stringSize(pCounter->bytes);
+		uint32_t counterSize = Counter::grossSize(strSize);
 		if (pCounter->total() >= minCount)
 		{
 			// If the string counter meets the minimum requirement,
 			// we'll keep it and re-index it
 
-			memmove(pDest, pSource, counterSize);
-			pCounter = reinterpret_cast<Counter*>(pDest);
+			if (strSize > 255) printf("--> Keeping long string: %d bytes.\n", strSize);
+
+			if (pCounter->total() > 1'000'000'000)
+			{
+				printf("!!!!! Problem !!!!\n");
+			}
+
 			uint32_t slot = pCounter->hash % tableSize_;
 			pCounter->next = table_[slot];
+			/*
+			if(pDest != pSource) printf("Moving %d bytes from from %p to %p, skipping %d\n", 
+				counterSize, pSource, pDest, (uint32_t)(pSource - pDest));
+			*/
+			memmove(pDest, pSource, counterSize);
+
+			if (((Counter*)pDest)->total() > 1'000'000'000)
+			{
+				printf("!!!!! Problem after move !!!!\n");
+			}
 			table_[slot] = pDest - arena_.get();
 			pDest += counterSize;
 			counterCount_++;
 		}
 		else
 		{
+			if (strSize > 255) printf("--> Evicting long string: %d bytes.\n", strSize);
 			evictionCount++;
 		}
 		totalCount++;
@@ -165,4 +183,22 @@ void StringStatistics::removeStrings(uint32_t minCount)
 
 	printf("Evicted %llu of %llu strings; minCount is now %d\n", 
 		evictionCount, totalCount, minCount);
+	check();
+}
+
+
+void StringStatistics::check() const
+{
+	Iterator it = iter();
+	for (;;)
+	{
+		const Counter* p = it.next();
+		if (!p) break;
+		if (p->total() > 1'000'000'000)
+		{
+			printf("!!! Checked; possible problem !!!\n");
+			return;
+		}
+	}
+	printf("--- Checked; all OK ---\n");
 }
