@@ -16,4 +16,3 @@ def test_empty(features):
     assert not empty.members_of(streets.first)
     assert not empty.members_of(routes.first)
     assert not empty.parents_of(streets.first)
-    

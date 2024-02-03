@@ -53,7 +53,11 @@ PyObject* PyFeature::Relation::length(PyFeature* self)
 PyObject* PyFeature::Relation::members(PyFeature* self)
 {
     pointer pBody = self->feature.bodyptr();
-    if (pBody.getInt() == 0) return (PyObject*)Environment::get().getEmptyFeatures();
+    if (pBody.getInt() == 0)
+    {
+        // return (PyObject*)Environment::get().getEmptyFeatures();
+        return self->store->getEmptyFeatures();
+    }
     return PyFeatures::create(&PyFeatures::Members::SUBTYPE, 
         self->store, self->feature, FeatureTypes::RELATION_MEMBERS);
 }
