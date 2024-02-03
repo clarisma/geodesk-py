@@ -32,6 +32,6 @@ if __name__ == '__main__':
     # pytest.main(["test_coordinate.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_format.py::test_numeric_custom_ids", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_anonymous_nodes.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["test_match.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["test_empty.py", "-rA", "-s", "--durations=9999"])
 
     
