@@ -12,9 +12,9 @@ public:
 
 	#ifdef GEODESK_PYTHON
 	static PyObject* build(PyObject* args, PyObject* kwds);
-	void setOptions(PyObject* dict)
+	int setOptions(PyObject* dict)
 	{
-		settings_.setOptions(dict);
+		return settings_.setOptions(dict);
 	}
 	#endif
 

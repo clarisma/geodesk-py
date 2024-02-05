@@ -131,41 +131,38 @@ int BuildSettings::setZoomLevels(PyObject* arg)
 }
 
 
-int BuildSettings::setIndexedKeys(PyObject* arg)
+int BuildSettings::setIndexedKeys(PyObject* list)
 {
-    PyObject* list = PySequence_Fast(arg, "Must be a sequence of strings");
-    if (!list) return -1;
-    Py_ssize_t len = PySequence_Fast_GET_SIZE(list);
+    if (!PyList_Check(list))
+    {
+        PyErr_SetString(PyExc_TypeError, "Must be a sequence of strings");
+        return -1;
+    }
+    Py_ssize_t len = PyList_GET_SIZE(list);
     for (Py_ssize_t i = 0; i < len; i++)
     {
         int category = i + 1;
-        PyObject* item = PySequence_Fast_GET_ITEM(list, i);
+        PyObject* item = PyList_GET_ITEM(list, i);
         PyTypeObject* type = Py_TYPE(item);
         if (type == &PyUnicode_Type)
         {
-            if (addIndexedKey(item, category) < 0)
-            {
-                Py_DECREF(list);
-                return -1;
-            }
+            if (addIndexedKey(item, category) < 0) return -1;
         }
         else
         {
             PyObject* tuple = PySequence_Fast(item, "Items must be strings or tuples of strings");
             Py_ssize_t tupleLen = PySequence_Fast_GET_SIZE(tuple);
-            for (Py_ssize_t i2 = 0; i2 < len; i2++)
+            for (Py_ssize_t i2 = 0; i2 < tupleLen; i2++)
             {
                 PyObject* tupleItem = PySequence_Fast_GET_ITEM(tuple, i2);
-                if (addIndexedKey(item, category) < 0)
+                if (addIndexedKey(tupleItem, category) < 0)
                 {
                     Py_DECREF(tuple);
-                    Py_DECREF(list);
                     return -1;
                 }
             }
         }
     }
-    Py_DECREF(list);
 }
 
 

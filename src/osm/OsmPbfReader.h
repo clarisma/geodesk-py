@@ -6,7 +6,7 @@
 #include <common/io/File.h>
 #include <common/thread/ProgressReporter.h>
 #include <common/thread/TaskEngine.h>
-#include <common/util/Bits.h>
+#include <common/util/Bytes.h>
 #include <common/util/log.h>
 #include <common/util/protobuf.h>
 #include <cstdarg> // For va_list, va_start, va_end
@@ -470,7 +470,7 @@ public:
 			// TODO: Code below assumes native byte order is Little-Endian
 			uint32_t rawHeaderLen;
 			file.read(&rawHeaderLen, 4);
-			uint32_t headerLen = Bits::reverseByteOrder32(rawHeaderLen);
+			uint32_t headerLen = Bytes::reverseByteOrder32(rawHeaderLen);
 
 			if (headerLen > 256)
 			{

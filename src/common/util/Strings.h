@@ -17,8 +17,18 @@ namespace Strings
         }
         return hash;
     }
+
+    template <typename S>
+    inline size_t hash(const S& str)
+    {
+        return hash(str.data(), str.length());
+    }
 }
 
+/**
+ * A string with a maximum length of 2^16-1 bytes.
+ * The string length is stored as a uint16_t.
+ */
 class ShortString
 {
 public:
@@ -29,23 +39,21 @@ public:
         memcpy(chars_, chars, len);
     }
 
-    uint32_t length() const { return len_; }
+    uint32_t length() const noexcept { return len_; }
 
-    const char* data() const { return chars_; }
+    const char* data() const noexcept { return chars_; }
 
-    uint32_t totalSize() const
+    static uint32_t totalSize(uint32_t len) noexcept
     {
-        return len_ + sizeof(len_);
+        return len + sizeof(len_);
     }
 
-    template<int Alignment>
-    uint32_t alignedTotalSize() const
+    uint32_t totalSize() const noexcept
     {
-        static_assert(Alignment && !(Alignment & (Alignment - 1)), "Alignment must be a power of 2");
-        return (totalSize() + Alignment - 1) & ~(Alignment - 1);
+        return totalSize(len_);
     }
 
-    bool operator==(const ShortString& other) const 
+    bool operator==(const ShortString& other) const noexcept
     {
         if (length() != other.length()) return false;
         return memcmp(chars_, other.chars_, length()) == 0;
@@ -56,35 +64,55 @@ private:
     char chars_[1];
 };
 
+/**
+ * A string with a maximum length of 2^14-1 bytes.
+ * The string length is stored as a 14-bit varint.
+ */
 class ShortVarString
 {
 public:
-    uint32_t length() const 
+    void init(const char* chars, size_t len)
+    {
+        int n;
+        if (len < 128)
+        {
+            bytes_[0] = len;
+            n = 1;
+        }
+        else
+        {
+            assert(len < (1 << 14));
+            bytes_[0] = static_cast<uint8_t>((len & 0x7F) | 0x80);
+            bytes_[1] = static_cast<uint8_t>(len >> 7);
+            n = 2;
+        }
+        memcpy(&bytes_[n], chars, len);
+    }
+
+    uint32_t length() const noexcept
     { 
         uint8_t len = bytes_[0];
         return (len & 0x80) ? ((static_cast<uint32_t>(bytes_[1]) << 7) | (len & 0x7f)) : len;
     }
 
-    const char* data() const 
+    const char* data() const noexcept
     { 
         uint32_t ofs = (bytes_[0] >> 7) + 1;
         return reinterpret_cast<const char*>(&bytes_[ofs]); 
     }
 
-    uint32_t totalSize() const
+    static uint32_t totalSize(uint32_t len) noexcept
+    {
+        return len + (len >= 128 ? 2 : 1);
+    }
+
+    uint32_t totalSize() const noexcept
     {
         uint32_t lenSize = (bytes_[0] >> 7) + 1;
         return length() + lenSize;
     }
 
-    template<int Alignment>
-    uint32_t alignedTotalSize() const
-    {
-        static_assert(Alignment && !(Alignment & (Alignment - 1)), "Alignment must be a power of 2");
-        return (totalSize() + Alignment - 1) & ~(Alignment - 1);
-    }
-
-    bool operator==(const ShortVarString& other) const
+    bool operator==(const ShortVarString& other) const noexcept
     {
         uint32_t len = length();
         if (len != other.length()) return false;
@@ -92,7 +120,7 @@ public:
         return memcmp(&bytes_[ofs], &other.bytes_[ofs], len) == 0;
     }
 
-    std::string_view toStringView() const
+    std::string_view toStringView() const noexcept
     {
         uint32_t ofs = (bytes_[0] >> 7) + 1;
         return std::string_view(reinterpret_cast<const char*>(&bytes_[ofs]), length());
@@ -103,39 +131,48 @@ private:
 };
 
 
+/**
+ * A string with a maximum length of 255 bytes.
+ * The string length is stored as a single byte.
+ */
 class TinyString
 {
 public:
-    uint32_t length() const
+    void init(const char* chars, size_t len)
+    {
+        assert(len < 256);
+        bytes_[0] = static_cast<uint8_t>(len);
+        memcpy(&bytes_[1], chars, len);
+    }
+
+    uint32_t length() const noexcept
     {
         return bytes_[0];
     }
 
-    const char* data() const
+    const char* data() const noexcept
     {
         return reinterpret_cast<const char*>(&bytes_[1]);
     }
 
-    uint32_t totalSize() const
+    static constexpr uint32_t totalSize(uint32_t len) noexcept
     {
-        return length() + 1;
+        return len + 1;
     }
 
-    template<int Alignment>
-    uint32_t alignedTotalSize() const
+    uint32_t totalSize() const noexcept
     {
-        static_assert(Alignment && !(Alignment & (Alignment - 1)), "Alignment must be a power of 2");
-        return (totalSize() + Alignment - 1) & ~(Alignment - 1);
+        return totalSize(length());
     }
 
-    bool operator==(const TinyString& other) const
+    bool operator==(const TinyString& other) const noexcept
     {
         uint32_t len = length();
         if (len != other.length()) return false;
         return memcmp(&bytes_[1], &other.bytes_[1], len) == 0;
     }
 
-    std::string_view toStringView() const
+    std::string_view toStringView() const noexcept
     {
         uint32_t ofs = (bytes_[0] >> 7) + 1;
         return std::string_view(reinterpret_cast<const char*>(&bytes_[ofs]), length());
@@ -145,48 +182,4 @@ private:
     uint8_t bytes_[1];
 };
 
-
-class HashedShortString
-{
-public:
-    void init(uint32_t hash, const char* chars, size_t len)
-    {
-        hash_ = hash;
-        str_.init(chars, len);
-    }
-
-    void init(const char* chars, size_t len)
-    {
-        init(Strings::hash(chars, len), chars, len);
-    }
-
-    uint32_t hash() const { return hash_; }
-
-    uint32_t length() const { return str_.length(); }
-
-    uint32_t totalSize() const
-    {
-        return str_.totalSize() + sizeof(hash_);
-    }
-
-    template<int Alignment>
-    uint32_t alignedTotalSize() const
-    {
-        static_assert(Alignment && !(Alignment & (Alignment - 1)), "Alignment must be a power of 2");
-        return (totalSize() + Alignment - 1) & ~(Alignment - 1);
-    }
-
-    bool operator==(const HashedShortString& other) const
-    {
-        // TODO: Could combine hash & length check into one comparison
-        // by reading a uint64_t and masking off the lower 48 bits
-        // But check for alignment issues and possible overread
-        if (hash_ != other.hash_) return false;
-        return str_ == other.str_;
-    }
-
-private:
-    uint32_t hash_;
-    ShortString str_;
-};
 

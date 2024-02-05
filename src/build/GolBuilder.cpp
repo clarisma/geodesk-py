@@ -43,7 +43,7 @@ PyObject* GolBuilder::build(PyObject* args, PyObject* kwds)
 	PyObject* arg = PyTuple_GetItem(args, 0);
 	const char* golFile = PyUnicode_AsUTF8(arg);
 	if (!golFile) return NULL;
-	builder.setOptions(kwds);
+	if (builder.setOptions(kwds) < 0) return NULL;
 	builder.build(golFile);
 	Py_RETURN_NONE; // TODO
 }
