@@ -28,7 +28,7 @@ void GolBuilder::build(const char* golPath)
 	#endif // _DEBUG
 
 	auto startTime = std::chrono::high_resolution_clock::now();
-	Analyzer analyzer(threads);
+	Analyzer analyzer(settings_, threads);
 	analyzer.analyze(settings_.sourcePath().c_str());
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

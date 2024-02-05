@@ -4,7 +4,7 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
-#include <cstring>
+#include <common/util/Strings.h>
 
 // TODO
 
@@ -20,11 +20,11 @@
  *     T* entryAt(uint32_t ofs)
  */
 
-template<typename Derived, typename T>
+template<typename Derived, typename S, typename T>
 class StringLookupBase
 {
 public:
-	const Derived* self() { return reinterpret_cast<const T*>(this); }
+	Derived* self() { return reinterpret_cast<Derived*>(this); }
 		
 	// TODO: this can over-read if string is "", always ensure
 	// that the byte after the first length-byte is accessible

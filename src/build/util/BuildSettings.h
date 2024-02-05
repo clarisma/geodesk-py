@@ -65,6 +65,13 @@ public:
 	int setZoomLevels(PyObject* arg);
 	#endif
 
+	const std::string& sourcePath() const { return sourcePath_; }
+	uint32_t maxTiles() const { return maxTiles_; }
+	uint32_t minTileDensity() const { return minTileDensity_; }
+	int leafZoomLevel() const { return 12; }
+	int threadCount() const { return threadCount_; }
+	ZoomLevels zoomLevels() const { return zoomLevels_; }
+
 	void setSource(const std::string_view path);
 
 	void setMaxStrings(int64_t v)
@@ -100,9 +107,6 @@ public:
 		if (v < 0) v = 0;
 		threadCount_ = v;
 	}
-
-	const std::string& sourcePath() const { return sourcePath_; }
-	int threadCount() const { return threadCount_; }
 
 private:
 	#ifdef GEODESK_PYTHON

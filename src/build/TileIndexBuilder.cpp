@@ -1,18 +1,18 @@
 #include "TileIndexBuilder.h"
 #include <unordered_map>
 
-TileIndexBuilder::TileIndexBuilder(const TileSettings& settings) :
+TileIndexBuilder::TileIndexBuilder(const BuildSettings& settings) :
 	arena_(64 * 1024),
 	settings_(settings)
 {
-	tiles_.reserve(settings.maxTiles);	// TODO: allocate more?
+	tiles_.reserve(settings.maxTiles());	// TODO: allocate more?
 }
 
 void TileIndexBuilder::build(const uint32_t* nodeCounts)
 {
 	createLeafTiles(nodeCounts);
 	addParentTiles();
-	if (tiles_.size() > settings_.maxTiles)
+	if (tiles_.size() > settings_.maxTiles())
 	{
 		// If there are too many tiles, keep only the largest
 
@@ -20,13 +20,13 @@ void TileIndexBuilder::build(const uint32_t* nodeCounts)
 			{
 				return a->count() > b->count();  // Use > for descending order
 			});
-		tiles_.erase(tiles_.begin() + settings_.maxTiles);
+		tiles_.erase(tiles_.begin() + settings_.maxTiles());
 	}
 }
 
 void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 {
-	int extent = 1 << settings_.leafZoomLevel;
+	int extent = 1 << settings_.leafZoomLevel();
 	const uint32_t* p = nodeCounts;
 	for (int row = 0; row < extent; row++)
 	{
@@ -38,7 +38,7 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 			// a node count below the minimum, so we can add that count
 			// to the next-lower tile in the pyramid
 			tiles_.push_back(arena_.create<STile>(
-				Tile::fromColumnRowZoom(col, row, settings_.leafZoomLevel),
+				Tile::fromColumnRowZoom(col, row, settings_.leafZoomLevel()),
 				nodeCount));
 		}
 	}
@@ -51,10 +51,10 @@ void TileIndexBuilder::addParentTiles()
 	std::vector<STile*> childTiles;
 	std::vector<STile*>* pChildTiles = &tiles_;
 
-	int parentZoom = settings_.leafZoomLevel;
+	int parentZoom = settings_.leafZoomLevel();
 	for (;;)
 	{
-		while (!settings_.zoomLevels.isValidZoomLevel(parentZoom)) parentZoom--;
+		while (!settings_.zoomLevels().isValidZoomLevel(parentZoom)) parentZoom--;
 		if (parentZoom == 0) break;
 		for (STile* ct : *pChildTiles)
 		{
@@ -80,7 +80,7 @@ void TileIndexBuilder::addParentTiles()
 		{
 			STile* pt = it.second;
 			childTiles.push_back(pt);
-			if (pt->count() >= settings_.minTileDensity)
+			if (pt->count() >= settings_.minTileDensity())
 			{
 				// Add parent tile to the main tile collection
 				// only if it meets the minimum node count

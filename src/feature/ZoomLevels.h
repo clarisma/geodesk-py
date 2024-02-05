@@ -29,7 +29,22 @@ public:
         {
             throw ValueException("Maximum 8 zoom levels");
         }
-        // TODO: steps
+
+        if ((levels_ & 1) == 0)
+        {
+            throw ValueException("Must include root zoom level (0)");
+        }
+        
+        uint32_t v = levels_;
+        while (v)
+        {
+            int skip = Bits::countTrailingZerosInNonZero(v);
+            if (skip > 2)
+            {
+                throw ValueException("Must not skip more than 2 levels");
+            }
+            v >>= (skip + 1);
+        }
     }
 
 private:

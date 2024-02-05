@@ -3,14 +3,14 @@
 
 #include "Analyzer.h"
 #include <string>
-#include "geom/Tile.h"
-#include "geom/Mercator.h"
+#include "TileIndexBuilder.h"
 
 // TODO: Need to flush remaining strings at end
 // TODO: race condition
 
-Analyzer::Analyzer(int numberOfThreads) : 
+Analyzer::Analyzer(const BuildSettings& settings, int numberOfThreads) :
 	OsmPbfReader(numberOfThreads),
+	settings_(settings),
 	strings_(outputTableSize(), outputArenaSize()),
 	minStringCount_(2),
 	progress_("Analyzing")
@@ -253,6 +253,12 @@ void Analyzer::analyze(const char* fileName)
 	printf("  %12llu unique strings in string table\n", totalStringCount);
 	printf("  %12llu unique-string occurrences\n", totalStringUsageCount);
 	printf("  %12llu literal strings\n", literalsCount);
+
+	TileIndexBuilder tib(settings_);
+	tib.build(totalNodeCounts_.get());
+	delete totalNodeCounts_.release();
+
+	printf("Analysis complete.\n");
 }
 
 
@@ -260,8 +266,9 @@ void Analyzer::analyze(const char* fileName)
 // - Global String Table
 //   - hard-coded strings come first
 //   - then indexed keys
-//   - then all other keys
-//   - finally, values that aren't keys
+//   - then the most common strings up to #127
+//   - then all other keys up to KEY_MAX
+//   - finally, remaining keys/values 
 //   (make sure not to duplicate)
 // - Lookup string -> encoded varint for key & value
 // - Lookup of Proto-GOL String Code to GST Code, number or literal string

@@ -33,11 +33,6 @@ int BuildSettings::setAreaTags(PyObject* arg)
     return 0;
 }
 
-int BuildSettings::setExcludedKeys(PyObject* arg)
-{
-    return 0;
-}
-
 int BuildSettings::setIdIndexing(PyObject* arg)
 {
     return 0;
@@ -171,6 +166,13 @@ int BuildSettings::setIndexedKeys(PyObject* arg)
         }
     }
     Py_DECREF(list);
+}
+
+
+int BuildSettings::setExcludedKeys(PyObject* arg)
+{
+    // TODO
+    return 0; 
 }
 
 int BuildSettings::addIndexedKey(PyObject* obj, int category)

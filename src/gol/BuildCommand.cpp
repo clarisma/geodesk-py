@@ -31,6 +31,8 @@ void BuildCommand::setOption(std::string_view name, std::string_view value)
 void BuildCommand::run(char* argv[])
 {
 	CliCommand::run(argv);
+	// TODO
+	/*
 	int threads = std::thread::hardware_concurrency();
 	auto startTime = std::chrono::high_resolution_clock::now();
 	Analyzer analyzer(threads);
@@ -38,4 +40,5 @@ void BuildCommand::run(char* argv[])
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 	printf("Built %s in %.3f seconds\n", golPath_.c_str(), duration.count() / 1e6);
+	*/
 }

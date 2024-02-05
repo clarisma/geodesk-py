@@ -4,10 +4,11 @@
 #pragma once
 
 #include <common/alloc/Arena.h>
-#include "feature/ZoomLevels.h"
+#include "build/util/BuildSettings.h"
 #include "geom/Tile.h"
 
 
+/*
 struct TileSettings
 {
 	uint32_t maxTiles = 64 * 1024 - 1;
@@ -15,11 +16,12 @@ struct TileSettings
 	int leafZoomLevel = 12;
 	ZoomLevels zoomLevels;
 };
+*/
 
 class TileIndexBuilder
 {
 public:
-	TileIndexBuilder(const TileSettings& settings);
+	TileIndexBuilder(const BuildSettings& settings);
 	void build(const uint32_t* nodeCounts);
 
 private:
@@ -55,5 +57,5 @@ private:
 
 	Arena arena_;
 	std::vector<STile*> tiles_;
-	TileSettings settings_;
+	const BuildSettings& settings_;
 };

@@ -8,6 +8,7 @@
 #include "OsmStatistics.h"
 
 class Analyzer;
+class BuildSettings;
 
 class AnalyzerContext : public OsmPbfContext<AnalyzerContext, Analyzer>
 {
@@ -87,7 +88,7 @@ private:
 class Analyzer : public OsmPbfReader<Analyzer, AnalyzerContext, AnalyzerOutputTask>
 {
 public:
-	Analyzer(int numberOfThreads);
+	Analyzer(const BuildSettings& settings, int numberOfThreads);
 
 	uint32_t workerTableSize() { return 2 * 1024 * 1024; }
 	uint32_t workerArenaSize() { return 16 * 1024 * 1024; }
@@ -107,6 +108,7 @@ public:
 	void mergeStats(const OsmStatistics& stats);
 
 private:
+	const BuildSettings& settings_;
 	StringStatistics strings_;
 	const FastTileCalculator tileCalculator_;
 	int minStringCount_;

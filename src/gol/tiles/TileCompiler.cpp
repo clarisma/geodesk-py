@@ -32,9 +32,11 @@ void TileCompiler::compile()
 #else
 	int threads = std::thread::hardware_concurrency();
 #endif
+	/* TODO
 	Analyzer reader(threads);
 	// reader.read("e:\\geodesk\\mapdata\\de-2021-01-29.osm.pbf");
 	reader.read("e:\\geodesk\\mapdata\\planet-2023-10-07.osm.pbf");
+	*/
 	return;
 
 	outFile_= std::ofstream("e:\\geodesk\\exports\\planet-tes.bin", std::ios::binary);
