@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <common/util/BitIterator.h>
 #include <common/util/Bits.h>
 #include <common/validate/Validate.h>
 
@@ -12,18 +13,24 @@ public:
     ZoomLevels(uint32_t levels) : levels_(levels) {}
 
     static const uint32_t DEFAULT = 0b1010101010101;
+    using Iterator = BitIterator<uint32_t>;
 
-    inline int count()
+    inline int count() const noexcept
     {
         return Bits::bitCount(levels_);
     }
 
-    bool isValidZoomLevel(int zoom)
+    Iterator iter() const noexcept
+    {
+        return Iterator(levels_);
+    }
+
+    bool isValidZoomLevel(int zoom) const noexcept
     {
         return (levels_ & (1 << zoom)) != 0;
     }
 
-    void check()
+    void check() const
     {
         if (count() > 8)
         {
@@ -45,6 +52,17 @@ public:
             }
             v >>= (skip + 1);
         }
+    }
+
+    /**
+     * Returns the number of levels that are skipped following the given
+     * level (0, 1 or 2 in a valid tile pyramid), or -1 for the highest 
+     * zoom level (which by definition does not have child levels).
+     */
+    int skippedAfterLevel(int zoom) const noexcept
+    {
+        uint32_t childLevels = levels_ >> (zoom + 1);
+        return childLevels ? Bits::countTrailingZerosInNonZero(childLevels) : -1;
     }
 
 private:

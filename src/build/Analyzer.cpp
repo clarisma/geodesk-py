@@ -255,7 +255,7 @@ void Analyzer::analyze(const char* fileName)
 	printf("  %12llu literal strings\n", literalsCount);
 
 	TileIndexBuilder tib(settings_);
-	tib.build(totalNodeCounts_.get());
+	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts_.get()));
 	delete totalNodeCounts_.release();
 
 	printf("Analysis complete.\n");

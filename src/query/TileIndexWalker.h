@@ -25,6 +25,7 @@ public:
 
 private:
     static const int MAX_LEVELS = 13;   // currently 0 - 12
+        // TODO: GOL 2.0 has max 8 levels
 
     // TODO: uint16 supports max level 15 (not 16, because of sign;
     //  we start at columns at -1)

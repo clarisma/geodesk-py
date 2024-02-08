@@ -34,6 +34,10 @@ set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/geos)
 add_subdirectory(third_party/zlib)
 
+# Set the CMAKE_CXX_FLAGS_RELWITHDEBINFO variable to remove the NDEBUG definition
+# This approach ensures that assertions are enabled in RelWithDebInfo configuration
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -U NDEBUG")
+
 include_directories(src)
 
 if(BUILD_WHEELS)
