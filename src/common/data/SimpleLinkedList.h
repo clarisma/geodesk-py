@@ -12,7 +12,7 @@ template <typename T>
 class SimpleLinkedList
 {
 public:
-	SimpleLinkedList() : first_(nullptr) {}
+	SimpleLinkedList() noexcept : first_(nullptr) {}
 
 	class Iterator
 	{

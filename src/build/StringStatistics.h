@@ -116,36 +116,9 @@ public:
 	}
 
 private:
-	/*
-	CounterOfs getCounterOfs(const Counter* counter) const
-	{
-		return reinterpret_cast<const uint8_t*>(counter) - arena_.get();
-	}
-	CounterOfs getCounter(const uint8_t* bytes, uint32_t size, uint32_t hash);
-	CounterOfs getCounter(const uint8_t* bytes, uint32_t size)
-	{
-		return getCounter(bytes, size, )
-	}
-	CounterOfs addString(const uint8_t* bytes, uint32_t size, uint32_t hash,
-		StringCount keys, StringCount values);
-	*/
 	void clearTable();
 	void reset(uint32_t arenaSize);
-	void check() const;
-
-	/*
-	static uint32_t hashString(const uint8_t* p, uint32_t size)
-	{
-		uint32_t hash = 0;
-		const uint8_t* end = p + size;
-		do
-		{
-			hash = hash * 31 + *p++;
-		}
-		while (p < end);
-		return hash;
-	}
-	*/
+	// void check() const;
 
 	std::unique_ptr<CounterOfs[]> table_;
 	std::unique_ptr<uint8_t[]> arena_;

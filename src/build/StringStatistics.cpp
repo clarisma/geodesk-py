@@ -71,35 +71,6 @@ StringStatistics::CounterOfs StringStatistics::getCounter(const uint8_t* bytes)
 	return getCounter(bytes, size, hash);
 }
 
-/*
-StringStatistics::CounterOfs StringStatistics::addString(
-	const uint8_t* bytes, uint32_t size, uint32_t hash,
-	StringCount keys, StringCount values)
-{
-	CounterOfs ofs = getCounter(bytes, size, hash)
-	pCounter->hash = hash;
-	pCounter->keys = keys;
-	pCounter->values = values;
-	memcpy(&pCounter->bytes, bytes, size);
-	CounterOfs ofs = p_ - arena_.get();
-	table_[slot] = ofs;
-	p_ += (counterSize + 3) & ~3;		
-		// maintain 4-byte alignment
-		// TODO: Not portable since we are using 64-bit StringCount
-		// Should align on 8 bytes instead?
-	return ofs;
-}
-
-StringStatistics::CounterOfs StringStatistics::addString(const uint8_t* bytes, StringCount keys, StringCount values)
-{
-	uint32_t size = stringSize(bytes);
-	return addString(bytes, size, Strings::hash(
-		reinterpret_cast<const char*>(bytes), size), keys, values);
-}
-
-uint32_t hash = static_cast<uint32_t>(Strings::hash(
-	reinterpret_cast<const char*>(bytes), size));
-*/
 
 StringStatistics::CounterOfs StringStatistics::addString(const Counter* pCounter)
 {
@@ -125,7 +96,7 @@ std::unique_ptr<uint8_t[]> StringStatistics::takeStrings()
 
 void StringStatistics::removeStrings(uint32_t minCount)
 {
-	check();
+	// check();
 	clearTable();
 	counterCount_ = 0;
 	uint8_t* pSource = arena_.get() + sizeof(uint32_t);		// skip to pos 4
@@ -148,12 +119,14 @@ void StringStatistics::removeStrings(uint32_t minCount)
 			// If the string counter meets the minimum requirement,
 			// we'll keep it and re-index it
 
+			/*
 			if (strSize > 255) printf("--> Keeping long string: %d bytes.\n", strSize);
 
 			if (pCounter->total() > 1'000'000'000)
 			{
 				printf("!!!!! Problem !!!!\n");
 			}
+			*/
 
 			uint32_t slot = pCounter->hash % tableSize_;
 			pCounter->next = table_[slot];
@@ -163,17 +136,19 @@ void StringStatistics::removeStrings(uint32_t minCount)
 			*/
 			memmove(pDest, pSource, counterSize);
 
+			/*
 			if (((Counter*)pDest)->total() > 1'000'000'000)
 			{
 				printf("!!!!! Problem after move !!!!\n");
 			}
+			*/
 			table_[slot] = pDest - arena_.get();
 			pDest += counterSize;
 			counterCount_++;
 		}
 		else
 		{
-			if (strSize > 255) printf("--> Evicting long string: %d bytes.\n", strSize);
+			// if (strSize > 255) printf("--> Evicting long string: %d bytes.\n", strSize);
 			evictionCount++;
 		}
 		totalCount++;
@@ -183,10 +158,11 @@ void StringStatistics::removeStrings(uint32_t minCount)
 
 	printf("Evicted %llu of %llu strings; minCount is now %d\n", 
 		evictionCount, totalCount, minCount);
-	check();
+	// check();
 }
 
 
+/*
 void StringStatistics::check() const
 {
 	Iterator it = iter();
@@ -202,3 +178,4 @@ void StringStatistics::check() const
 	}
 	printf("--- Checked; all OK ---\n");
 }
+*/
