@@ -1,13 +1,13 @@
-from os import waitid_result
 from shapely import Geometry
-from typing import Callable, Dict, Iterator, List, Sequence, Union
+from typing import Callable, Dict, Iterator, List, Sequence, Tuple, Union
 
 class Box:
     def __init__(self, /, minx: int, miny: int, maxx: int, maxy: int, *,
         minlon: float, minlat: float, maxlon: float, maxlat: float,
         left: int, right: int, top: int, bottom: int, 
         west: float, south: float, east: float, north: float,  
-        w: float, s: float, e: float, n: float) -> None: ...
+        w: float, s: float, e: float, n: float,
+        x: int, y: int, lon: float, lat: float) -> None: ...
     minlon: float
     minlat: float
     maxlon: float
@@ -34,6 +34,7 @@ class Box:
     def __and__(self, other: 'Box') -> 'Box': ...   
     
 class Coordinate:
+    def __init__(self, /, x: int=None, y: int=None, *, lon: float, lat: float) -> None: ...
     x: int
     y: int
     lon: float
@@ -41,6 +42,7 @@ class Coordinate:
 
 class Feature:
     bounds: 'Box'
+    centroid: 'Coordinate'
     geojson: 'Formatter'
     id: int
     is_area: bool
@@ -102,9 +104,10 @@ class Features:
     def __and__(self, other: "Features") -> "Features": ...
     def __iter__(self) -> Iterator['Feature']: ...
     def __contains__(self, item: 'Feature') -> bool: ...
+    def __call__(self, arg: Union[str ,Box, 'Coordinate', 'Features']) -> Features: ...
     
 class Formatter:
-    id: Union[str, Callable[['Feature'], Union['str',int]]]
+    id: Union[str, Callable[['Feature'], Union[str,int]]]
     limit: int
     linewise: bool
     mercator: bool
@@ -154,7 +157,7 @@ class Map:
     def show(self) -> None: ...
     
 class Tags:
-    ...
+    def __iter__(self) -> Iterator[Tuple[str, Union[str,int,float]]]: ...
     
 class Tile:
     bounds: 'Box'
@@ -164,3 +167,10 @@ class Tile:
     row: int
     size: int
     zoom: int
+
+def to_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry]=None, *,
+    meters: float, m: float, feet: float, ft: float, km: float, miles: float,                
+    lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, int]: ...
+
+def from_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry, int],
+    uinits: str, lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...                  
