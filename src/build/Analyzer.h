@@ -4,7 +4,7 @@
 #pragma once
 #include "osm/OsmPbfReader.h"
 #include "FastTileCalculator.h"
-#include "StringStatistics.h"
+#include "build/util/StringStatistics.h"
 #include "OsmStatistics.h"
 
 class Analyzer;

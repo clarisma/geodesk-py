@@ -102,6 +102,14 @@ struct ProtoStringMapping
 };
 
 
+/**
+ * This class manages four lookup tables:
+ * 
+ * - string to proto-string key/value codes
+ * - proto-string key code to global-string code (or literal)
+ * - proto-string value code to global-string code (or literal)
+ * - global-string code to literal string
+ */
 class ProtoStringManager
 {
 public:
@@ -119,5 +127,49 @@ public:
 		ProtoStringType keyOrValue);
 
 private:
+	struct Entry
+	{
+		uint16_t keyCode;
+		uint16_t valueCode;
+		uint32_t value;
+	};
 
+	std::unique_ptr<uint8_t*> arena_;
+	
+	/**
+	 * Pointer to the hashtable for string lookups.
+	 */
+	uint32_t* table_;
+	
+	/**
+	 * Pointer to a lookup table that turns a proto-string code
+	 * (for key/value) into its equivalent global-string code, 
+	 * number value, or ofset to a literal string
+	 */
+	ProtoStringMapping** protoCodeLookup_;
+
+	/**
+	 * Pointer to the lookup table to turn a global-string code to an 
+	 * offset to its literal string.
+	 */
+	uint32_t* globalCodeToString_;
+
+	/**
+	 * The number of proto-strings.
+	 */
+	uint32_t protoStringCount_;
+
+	/**
+	 * The maximum number of global-string codes (the higher of the
+	 * maxStrings build setting or the number of built-in strings +
+	 * the number of indexed keys).
+	 */
+	uint32_t maxGlobalStringCount_;
+
+	/**
+	 * The number of strings that will be written into the Global
+	 * String table; may be lower than maxGlobalStringCount_ because
+	 * some strings may not meet minStringUsage.
+	 */
+	uint32_t actualGlobalStringCount_;
 };

@@ -27,7 +27,7 @@ public:
 
 	struct Counter : public CounterHeader
 	{
-		uint8_t bytes[1];
+		ShortVarString string;
 
 		Counter(uint32_t next, uint32_t hash, uint32_t stringSize, const uint8_t* b)
 		{
@@ -35,7 +35,7 @@ public:
 			this->hash = hash;
 			this->keys = 0;
 			this->values = 0;
-			memcpy(bytes, b, stringSize);
+			memcpy(&string, b, stringSize);
 		}
 
 		void add(int64_t keys, int64_t values)
@@ -55,7 +55,12 @@ public:
 
 		std::string_view stringView() const
 		{
-			return reinterpret_cast<const ShortVarString*>(&bytes)->toStringView();
+			return string.toStringView();
+		}
+
+		uint32_t stringSize() const
+		{
+			return string.totalSize();
 		}
 	};
 
@@ -73,8 +78,7 @@ public:
 			if (p_ < pEnd_)
 			{
 				const Counter* current = reinterpret_cast<const Counter*>(p_);
-				p_ += current->grossSize(
-					StringStatistics::stringSize(current->bytes));
+				p_ += current->grossSize(current->string.totalSize());
 				return current;
 			}
 			return nullptr;
