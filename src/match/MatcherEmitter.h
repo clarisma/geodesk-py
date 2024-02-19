@@ -21,18 +21,24 @@ struct StringResource
 class MatcherResourceAllocator
 {
 public:
-	MatcherResourceAllocator(uint8_t* pResourcesEnd) :
-		pResourcesEnd_(pResourcesEnd) {}
+	MatcherResourceAllocator(uint8_t* pResources) :
+		pResourcesStart_(pResources),
+		pResourcesEnd_(pResources)
+	{
+	}
 
 	double* allocDouble()
 	{
 		return (double*)alloc(sizeof(double));
 	}
 
-	std::regex* allocRegex()		
+	std::regex* allocRegex(RegexOperand* pRegexOperand)		
 	{
 		// TODO: must use a special area at front of resources!
-		return (std::regex*)alloc(sizeof(std::regex));
+		std::regex* pRegex = reinterpret_cast<std::regex*>(alloc(sizeof(std::regex)));
+		new (pRegex) std::regex(std::move(pRegexOperand->regex()));
+		pRegexOperand->setRegexResource(pRegex);
+		return pRegex;
 	}
 
 	StringResource* allocString(uint16_t len)
@@ -90,14 +96,16 @@ private:
 		assert(_CrtCheckMemory());
 	}
 
-	void putResourceOffset(uint16_t* pOperand, void* pResource)
+	void putResourceOffset(uint16_t* pOperand, const void* pResource)
 	{
 		ptrdiff_t ofs = reinterpret_cast<uint8_t*>(pOperand) -
-			reinterpret_cast<uint8_t*>(pResource);
+			reinterpret_cast<const uint8_t*>(pResource);
 		assert(ofs > 0);
 		assert(ofs < 0xffff);
 		*pOperand = static_cast<uint16_t>(ofs);
 	}
+
+	void createRegexResources();
 
 	static const int STACK_CHUNK_SIZE = 32;
 

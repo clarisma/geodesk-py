@@ -103,6 +103,7 @@ public:
 		return ptr;
 	}
 
+	/*
 	template<typename T, typename A>
 	T* create(A arg)
 	{
@@ -110,6 +111,7 @@ public:
 		new(ptr) T(arg);
 		return ptr;
 	}
+	*/
 
 private:
 	struct Chunk

@@ -119,6 +119,16 @@ void MatcherDecoder::writeBranchingOp(const uint16_t* p)
 		}
 		break;
 
+		case OperandType::REGEX:
+		{
+			uint16_t ofs = *p;
+			const std::regex* pRegex = reinterpret_cast<const std::regex*>(
+				reinterpret_cast<const uint8_t*>(p) - ofs);
+			out_.writeString(" <regex>");
+			p++;
+		}
+		break;
+
 		case OperandType::FEATURE_TYPES:
 		{
 			out_.writeString(" <TODO>");

@@ -91,15 +91,32 @@ class RegexOperand
 {
 public:
 	RegexOperand(const char* s, int len, RegexOperand* next)
-		: next_(next), regex_(std::string(s, len)) {}
+		: next_(next), regexResource_(nullptr), regex_(std::string(s, len)) {}
 		// Must init next_ first to we have a valid chain in case
 		// regex constructor fails
 	
 	std::regex& regex()  { return regex_; }
 	RegexOperand* next() { return next_; }
+	const std::regex* regexResource() const { return regexResource_; }
+	void setRegexResource(const std::regex* pRegex) { regexResource_ = pRegex; }
 
 private:
+	/**
+	 * The next regex operand in the linked list.
+	 */
 	RegexOperand* next_;
+
+	/**
+	 * Pointer to the regex in the MatcherHolder. This is initially null
+	 * and will be assigned an adress by the MatcherEmitter.
+	 */
+	const std::regex* regexResource_;
+
+	/**
+	 * The compiled regex. Once parsing is successful, this regex will be
+	 * transferred to regexResource_ (using move cosntruction) during 
+	 * opcode generation. 
+	 */
 	std::regex regex_;
 };
 
@@ -166,6 +183,7 @@ public:
 	Arena& arena() { return arena_; }
 
 	RegexOperand* addRegex(const char* s, int len);
+	RegexOperand* firstRegex() const { return firstRegex_;  }
 
 	OpNode* createGoto(OpNode* target);
 
