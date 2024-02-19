@@ -16,7 +16,7 @@ OpGraph::~OpGraph()
 	while (p)
 	{
 		RegexOperand* next = p->next();
-		delete p;
+		p->~RegexOperand();
 		p = next;
 	}
 }
@@ -24,7 +24,7 @@ OpGraph::~OpGraph()
 
 RegexOperand* OpGraph::addRegex(const char* s, int len)
 {
-	RegexOperand* p = new RegexOperand(s, len, firstRegex_);
+	RegexOperand* p = arena_.create<RegexOperand>(s, len, firstRegex_);
 	firstRegex_ = p;
 	return p;
 }

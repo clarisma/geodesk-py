@@ -22,6 +22,8 @@ MatcherEmitter::MatcherEmitter(OpGraph& graph, OpNode* root, uint8_t* pResources
 
 void MatcherEmitter::emit()
 {
+	createRegexResources();
+
 	OpNode* node = root_;
 	uint16_t* pOpcode;
 	uint16_t* p = pCode_;
@@ -76,9 +78,9 @@ void MatcherEmitter::emit()
 			// branch based on <regex> operand
 		case Opcode::REGEX:
 		{
-			std::regex* pRegex = resources_.allocRegex();
-			new (pRegex) std::regex(std::move(node->operand.regex->regex()));
-			putResourceOffset(p++, pRegex);
+			RegexOperand* regex = node->operand.regex;
+			assert(regex->regexResource());
+			putResourceOffset(p++, regex->regexResource());
 		}
 		break;
 
@@ -195,5 +197,16 @@ void MatcherEmitter::fixJumps()
 		assert(static_cast<int16_t>(relativeJump) == relativeJump);
 		uint16_t* p = pCode_ + branchArgOffsetInBytes / 2;	// pointer uses words
 		*p = static_cast<uint16_t>(relativeJump);
+	}
+}
+
+
+void MatcherEmitter::createRegexResources()
+{
+	RegexOperand* regex = graph_.firstRegex();
+	while (regex)
+	{
+		resources_.allocRegex(regex);
+		regex = regex->next();
 	}
 }

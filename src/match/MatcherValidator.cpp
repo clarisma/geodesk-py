@@ -18,6 +18,14 @@ MatcherValidator::MatcherValidator(OpGraph& graph) :
 OpNode* MatcherValidator::validate(Selector* firstSel)
 {
 	assert(_CrtCheckMemory());
+	RegexOperand* pRegex = graph_.firstRegex();
+	while (pRegex)
+	{
+		regexCount_++;
+		resourceSize_ += (sizeof(std::regex) + 7) & 0xffff'fff8;
+		pRegex = pRegex->next();
+	}
+
 	OpNode* root = validateAllSelectors(firstSel);
 	validateOp(root);
 	assert(_CrtCheckMemory());
@@ -35,10 +43,6 @@ void MatcherValidator::validateOp(OpNode* node)
 	totalInstructionWords_ += OPCODE_ARGS[op] + 1;
 	switch (OPCODE_OPERAND_TYPES[op])
 	{
-	case OperandType::REGEX:
-		regexCount_++;
-		resourceSize_ += (sizeof(std::regex) + 7) & 0xffff'fff8;
-		break;
 	case OperandType::DOUBLE:
 		static_assert(sizeof(double) == 8, "Expected 8-byte double");
 		resourceSize_ += sizeof(double);

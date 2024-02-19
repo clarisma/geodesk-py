@@ -61,6 +61,14 @@ public:
 		return reinterpret_cast<T*>(alloc(sizeof(T), alignof(T)));
 	}
 
+	template <typename T, typename... Args>
+	T* create(Args&&... args)
+	{
+		T* p = alloc<T>();
+		new(p)T(std::forward<Args>(args)...);
+		return p;
+	}
+
 	template <typename T>
 	T* allocArray(size_t count)
 	{
@@ -95,6 +103,7 @@ public:
 		return ptr;
 	}
 
+	/*
 	template<typename T, typename A>
 	T* create(A arg)
 	{
@@ -102,6 +111,7 @@ public:
 		new(ptr) T(arg);
 		return ptr;
 	}
+	*/
 
 private:
 	struct Chunk
