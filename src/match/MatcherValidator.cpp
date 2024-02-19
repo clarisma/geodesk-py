@@ -123,7 +123,7 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 	}
 	else
 	{
-		// Ceate a path for each type
+		// Create a path for each type
 		if (clauseFlags & TagClause::VALUE_ANY_NUMBER)
 		{
 			OpNode* op = createValueOps(keyOp, TagClause::VALUE_ANY_NUMBER);
@@ -314,7 +314,7 @@ OpNode* MatcherValidator::validateSelector(Selector* sel)
 
 /**
  * Validates each individual selector, then copies the first op of each selector
- * intot he false-op of the preceding selector. If the first op of each selector
+ * into the false-op of the preceding selector. If the first op of each selector
  * is a HAS_LOCAL_KEYS op, and they all are the same (all of them fail if no
  * local keys present, or all of them succeed if no local keys present), we
  * remove the redundant HAS_LOCAL_KEYS ops of the subsequent selectors.
