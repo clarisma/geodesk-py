@@ -81,18 +81,15 @@ PyObject* PyBox::create(PyTypeObject* type, PyObject* args, PyObject* kwargs)
                 PyErr_Format(PyExc_TypeError, "Invalid argument: %s", keyStr);
                 return NULL;
             }
-            double v = PyFloat_AsDouble(value);
-            if (v == -1.0 && PyErr_Occurred()) return NULL;
-            // TODO: throw new exception based on previous
 
             // Bits 8 & 9 contain the coordinate:
-            // 0 = minX/left/west
-            // 1 = minY/bottom/south
-            // 2 = maxX/right/east
-            // 3 = maxY/top/north
-            // Bit 0 indicates whether to return coordinate 
+            //   0 = minX/left/west
+            //   1 = minY/bottom/south
+            //   2 = maxX/right/east
+            //   3 = maxY/top/north
+            // Bit 0 indicates whether to interpret coordinate 
             //   as GeoDesk Mercator (0) or WGS-84 (1)
-            // Bit 1 indicates whther the coordinate value is both min and max
+            // Bit 1 indicates whether the coordinate value is both min and max
 
             int index = attr->index;
             int coordIndex = index >> 8;
@@ -102,30 +99,22 @@ PyObject* PyBox::create(PyTypeObject* type, PyObject* args, PyObject* kwargs)
                 // coordinate value represents lon/lat
                 if (coordIndex & 1)
                 {
-                    if (v < -90 || v > 90)
-                    {
-                        PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
-                        return NULL;
-                    }
-                    coordValue = (int32_t)round(Mercator::yFromLat(v));
+                    PyCoordinate::ConversionResult yRes = PyCoordinate::yFromLat(value);
+                    if (!yRes.success) return NULL;
+                    coordValue =yRes.value;
                 }
                 else
                 {
-                    if (v < -180 || v > 180)
-                    {
-                        PyErr_SetString(PyExc_ValueError, "lon must be in range -180 to 180");
-                        return NULL;
-                    }
-                    coordValue = (int32_t)round(Mercator::xFromLon(v));
+                    PyCoordinate::ConversionResult xRes = PyCoordinate::xFromLon(value);
+                    if (!xRes.success) return NULL;
+                    coordValue = xRes.value;
                 }
             }
             else
             {
                 // coordinate value is already in GeoDesk Mercator projection
-                // coordValue = (int32_t)((coordIndex & 2) ? ceil(v) : floor(v));
-                coordValue = v; 
-                    // coordValue is already int !!!
-                    // (int32_t)round(v);
+                coordValue = PyLong_AsLong(value);
+                if(coordValue == -1 && PyErr_Occurred()) return NULL;
                     // TODO: check if floor/ceil are needed (to make the most
                     // inclusive bbox), or if simple rounding is sufficient
             }
