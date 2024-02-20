@@ -4,6 +4,9 @@
 from geodesk import *
 import pytest
 
+MIN_LAT = -85.0511288
+MAX_LAT = 85.0511287
+
 def test_init():
     c = Coordinate(100, 300)
     assert c.x == 100
@@ -35,6 +38,12 @@ def test_init_with_wrong_args():
         bad = Coordinate(set())
     with pytest.raises(TypeError):            
         bad = Coordinate(x="bad")
+    
+def test_init_clamped_range():
+    c = Coordinate(lon=120, lat=90)
+    assert c.lat == MAX_LAT
+    c = Coordinate(lon=120, lat=-90)
+    assert c.lat == MIN_LAT
     
 def test_as_tuple():
     c = Coordinate(7000, 4000)        
@@ -102,8 +111,6 @@ def test_bad_multi_lonlat():
         bad = latlon(120, -63.5, -166.4)
 
 def test_lonlat_range():
-    MIN_LAT = -85.0511288
-    MAX_LAT = 85.0511287
     c = lonlat(-180, 90)
     assert c == lonlat(-180, MAX_LAT)
     c = lonlat(180, -90)

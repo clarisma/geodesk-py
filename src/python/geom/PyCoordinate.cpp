@@ -100,15 +100,15 @@ int PyCoordinate::init(PyCoordinate* self, PyObject* args, PyObject* kwargs)
             }
             else if (strcmp(name, "lon") == 0)
             {
-                double v = lonValue(value);
-                if (v == -1.0 && PyErr_Occurred()) return -1;
-                self->x = (int32_t)Mercator::xFromLon(v);
+                ConversionResult xRes = xFromLon(value);
+                if (!xRes.success) return -1;
+                self->x = xRes.value;
             }
             else if (strcmp(name, "lat") == 0)
             {
-                double v = latValue(value);
-                if (v == -1.0 && PyErr_Occurred()) return -1;
-                self->y = (int32_t)Mercator::yFromLat(v);
+                ConversionResult yRes = yFromLat(value);
+                if (!yRes.success) return -1;
+                self->y = yRes.value;
             }
             else
             {
