@@ -253,10 +253,10 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
     if (attr)
     {
         // Bits 8 & 9 contain the coordinate:
-        // 0 = minX/left/west
-        // 1 = minY/bottom/south
-        // 2 = maxX/right/east
-        // 3 = maxY/top/north
+        //   0 = minX/left/west
+        //   1 = minY/bottom/south
+        //   2 = maxX/right/east
+        //   3 = maxY/top/north
         // Bit 0 indicates whether to return coordinate 
         //   as GeoDesk Mercator (0) or WGS-84 (1)
         int index = attr->index;
