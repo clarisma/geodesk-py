@@ -23,6 +23,7 @@ PyCoordinate* PyCoordinate::create(int32_t x, int32_t y)
     return self;
 }
 
+/*
 PyObject* PyCoordinate::create(PyObject* args, bool latFirst)
 {
     Py_ssize_t argCount = PySequence_Length(args);
@@ -40,6 +41,7 @@ PyObject* PyCoordinate::create(PyObject* args, bool latFirst)
     
     return create(Mercator::xFromLon(lon), Mercator::yFromLat(lat));
 }
+*/
 
 int PyCoordinate::init(PyCoordinate* self, PyObject* args, PyObject* kwargs)
 {
@@ -267,3 +269,183 @@ PyTypeObject PyCoordinate::TYPE =
 };
 
 
+PyCoordinate::ConversionResult PyCoordinate::xFromLon(PyObject* obj)
+{
+    PyCoordinate::ConversionResult res;
+    double lon;
+    if (PyFloat_Check(obj))
+    {
+        lon = PyFloat_AS_DOUBLE(obj);
+    }
+    else
+    {
+        lon = PyFloat_AsDouble(obj);
+        if (lon == -1.0 && PyErr_Occurred())
+        {
+            res.success = false;
+            return res;
+        }
+    }
+    if(lon < -180 || lon > 180)
+    {
+        PyErr_SetString(PyExc_ValueError, "lon must be in range -180 to 180");
+        res.success = false;
+        return res;
+    }
+    res.success = true;
+    res.value = Mercator::xFromLon(lon);
+    return res;
+}
+
+PyCoordinate::ConversionResult PyCoordinate::yFromLat(PyObject* obj)
+{
+    PyCoordinate::ConversionResult res;
+    double lat;
+    if (PyFloat_Check(obj))
+    {
+        lat = PyFloat_AS_DOUBLE(obj);
+    }
+    else
+    {
+        lat = PyFloat_AsDouble(obj);
+        if (lat == -1.0 && PyErr_Occurred())
+        {
+            res.success = false;
+            return res;
+        }
+    }
+    if (lat < Mercator::MIN_LAT)
+    {
+        if (lat < -90)
+        {
+            PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
+            res.success = false;
+            return res;
+        }
+        lat = Mercator::MIN_LAT;
+    }
+    else if (lat > Mercator::MAX_LAT)
+    {
+        if (lat > 90)
+        {
+            PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
+            res.success = false;
+            return res;
+        }
+        lat = Mercator::MAX_LAT;
+    }
+    res.success = true;
+    res.value = Mercator::yFromLat(lat);
+    return res;
+}
+
+
+PyCoordinate* PyCoordinate::createSingleFromItems(PyObject** items, int n, bool latFirst)
+{
+    PyObject* lon = items[n + (latFirst ? 1 : 0)];
+    PyObject* lat = items[n + (latFirst ? 0 : 1)];
+    ConversionResult xRes = xFromLon(lon);
+    if (!xRes.success) return NULL;
+    ConversionResult yRes = yFromLat(lat);
+    if (!yRes.success) return NULL;
+    return create(xRes.value, yRes.value);
+}
+
+const char* PyCoordinate::ERR_EXPECTED_COORD_LIST =
+    "Expected list of coordinate pairs";
+const char* PyCoordinate::ERR_EXPECTED_COORD_PAIR =
+    "Expected pair of coordinate values";
+
+PyObject* PyCoordinate::createMultiFromTupleItems(PyObject** items, Py_ssize_t count, bool latFirst)
+{
+    PyObject* list = PyList_New(count);
+    for (int i = 0; i < count; i++)
+    {
+        PyObject* item = items[i];
+        PyObject* pair = PySequence_Fast(item, ERR_EXPECTED_COORD_PAIR);
+        if (!pair)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        Py_ssize_t pairSize = PySequence_Fast_GET_SIZE(pair);
+        if (pairSize != 2)
+        {
+            Py_DECREF(pair);
+            Py_DECREF(list);
+            PyErr_SetString(PyExc_TypeError, ERR_EXPECTED_COORD_PAIR);
+            return NULL;
+        }
+        PyObject** pairItems = PySequence_Fast_ITEMS(pair);
+        PyCoordinate* coord = createSingleFromItems(pairItems, 0, latFirst);
+        Py_DECREF(pair);
+        if (!coord)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        PyList_SET_ITEM(list, i, coord);    // steals ref to coord
+    }
+    return list;
+}
+
+PyObject* PyCoordinate::createMultiFromFastSequence(PyObject* seq, bool latFirst)
+{
+    Py_ssize_t count = PySequence_Fast_GET_SIZE(seq);
+    if (count > 0)
+    {
+        PyObject** items = PySequence_Fast_ITEMS(seq);
+        if (PySequence_Check(items[0]))
+        {
+            return createMultiFromTupleItems(items, count, latFirst);
+        }
+        else
+        {
+            // Flat sequence of coordinate values (must appear as pairs,
+            // hence count must be even)
+            if ((count % 2) == 0)
+            {
+                PyObject* list = PyList_New(count / 2);
+                for (int i = 0; i < count; i += 2)
+                {
+                    PyCoordinate* coord = createSingleFromItems(items, i, latFirst);
+                    if (!coord)
+                    {
+                        Py_DECREF(list);
+                        return NULL;
+                    }
+                    PyList_SET_ITEM(list, i / 2, coord);    // steals ref to coord
+                }
+                return list;
+            }
+        }
+    }
+    PyErr_SetString(PyExc_TypeError, ERR_EXPECTED_COORD_LIST);
+    return NULL;
+}
+
+PyObject* PyCoordinate::create(PyObject* args, bool latFirst)
+{
+    Py_ssize_t argCount = PyTuple_GET_SIZE(args);
+    if (argCount == 2)
+    {
+        // This call is safe because args is always a tuple
+        PyObject** items = PySequence_Fast_ITEMS(args);
+        if (PySequence_Check(items[0]))
+        {
+            return createMultiFromTupleItems(items, argCount, latFirst);
+        }
+        return createSingleFromItems(items, 0, latFirst);
+    }
+    if (argCount == 1)
+    {
+        PyObject* arg = PyTuple_GET_ITEM(args, 0);
+        PyObject* seq = PySequence_Fast(arg, ERR_EXPECTED_COORD_LIST);
+        if (!seq) return NULL;
+        PyObject* list = createMultiFromFastSequence(seq, latFirst);
+        Py_DECREF(seq);
+        return list;
+    }
+    // This will check if argument count is 0 and raise exception
+    return createMultiFromFastSequence(args, latFirst);
+}
