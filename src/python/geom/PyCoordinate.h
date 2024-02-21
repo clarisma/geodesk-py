@@ -93,7 +93,7 @@ public:
         return PyFloat_FromDouble(precision7(Mercator::latFromY(y)));
     }
 
-    static struct ConversionResult
+    struct ConversionResult
     {
         int32_t value;
         bool success;
