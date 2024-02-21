@@ -93,7 +93,45 @@ public:
         return PyFloat_FromDouble(precision7(Mercator::latFromY(y)));
     }
 
+    struct ConversionResult
+    {
+        int32_t value;
+        bool success;
+    };
+
+    static ConversionResult xFromLon(PyObject* obj);
+    static ConversionResult yFromLat(PyObject* obj);
+
+    /**
+     * Creates a Coordinate from a sequence of coordinate values.
+     * The following conditions must be met, or this fucntion will result
+     * in undefined behavior:
+     * 1. `seq` must be an object returned from PySequence_Fast
+     * 2. index positions [n] and [n+1] must be valid
+     * 
+     * If the objects at [n] and [n+1] are not numeric (or are outside
+     * the range of valid lon/lat values), this fucntion returns NULL with
+     * an exception set.  
+     */
+    static PyCoordinate* createSingleFromItems(PyObject** items, int n, bool latFirst);
+    
+    /**
+     * Creates a list of coordinates from the given sequence. Raises an 
+     * exception if the sequence is empty.
+     */
+    static PyObject* createMultiFromFastSequence(PyObject* seq, bool latFirst);
+
+    /**
+     * Creates a list of coordinates from the given items. `items` must contain
+     * at least one item. Raises an exception if any item does not represent
+     * a tuple-like coordinate pair (each item can be any sequence, nor just tuple).
+     */
+    static PyObject* createMultiFromTupleItems(PyObject** items, Py_ssize_t, bool latFirst);
+
     Coordinate coordinate() const { return Coordinate(x, y); }
+
+    static const char* ERR_EXPECTED_COORD_PAIR;
+    static const char* ERR_EXPECTED_COORD_LIST;
 };
 
 extern double getCoordValue(PyObject* seq, int index);

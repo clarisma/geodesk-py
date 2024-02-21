@@ -50,10 +50,4 @@ bool LineSegment::linesIntersect(
             orientation(x3, y3, x4, y4, x2, y2) <= 0));
 }
 
-// TODO: need a function that returns exact relationship:
-// -1 = no interaction
-//  0 = line segments are colinear
-//  1 = lines cross
 
-// "Crossing" means both products are < 0
-// "Touching" means either product == 0 ? 

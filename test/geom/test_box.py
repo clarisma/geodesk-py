@@ -7,6 +7,8 @@ import pytest
 
 INT_MIN = -2147483648
 INT_MAX =  2147483647
+MIN_LAT = -85.0511288
+MAX_LAT = 85.0511287
 
 def assert_coord_equal(actual, expected):
     assert actual == expected
@@ -40,6 +42,11 @@ def test_init():
 
     check_box_single_coord(82, 5)
     check_box_single_coord(-111.37245, -82.438192)
+
+def test_init_clamped_range():
+    box = Box(n=90, s=-90)
+    assert box.minlat == MIN_LAT
+    assert box.maxlat == MAX_LAT
 
 def test_init_partial():
     box = Box(north=30)

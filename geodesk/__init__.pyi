@@ -1,5 +1,5 @@
 from shapely import Geometry
-from typing import Callable, Dict, Iterator, List, Sequence, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Sequence, Tuple, Union, overload
 
 class Box:
     def __init__(self, /, minx: int, miny: int, maxx: int, maxy: int, *,
@@ -174,3 +174,15 @@ def to_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry]=None, *,
 
 def from_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry, int],
     uinits: str, lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...                  
+
+@overload
+def lonlat(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
+
+@overload
+def lonlat(*coords: float) -> List['Coordinate']: ...
+
+@overload
+def latlon(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
+
+@overload
+def latlon(*coords: float) -> List['Coordinate']: ...
