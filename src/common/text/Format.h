@@ -28,6 +28,10 @@ namespace Format
         va_end(args);
     }
 
+    #pragma warning(push)  // Save the current warning state
+    #pragma warning(disable : 4996)  // Disable C4996 warning
+        // C4996 concerns potential overflow of a buffer passed to vsprintf
+
     inline void unsafe(char* buf, const char* format, ...)
     {
         va_list args;
@@ -35,6 +39,8 @@ namespace Format
         vsprintf(buf, format, args);
         va_end(args);
     }
+
+    #pragma warning(pop)   // Restore the previous warning state
 
     inline std::string format(const char* format, ...)
     {

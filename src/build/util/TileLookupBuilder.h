@@ -26,5 +26,8 @@ public:
 
 	void omittedTile(uint32_t parentTip, Tile tile)
 	{
+		char buf[80];
+		tile.format(buf);
+		printf("- %s (omitted)\n", buf);
 	}
 };

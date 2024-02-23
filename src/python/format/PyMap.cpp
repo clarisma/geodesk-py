@@ -558,7 +558,7 @@ const char* PyMap::getFileName()
 		// Convert the tm structure to a string without milliseconds
 		char buf[100];
 		strftime(buf, sizeof(buf), "map_%Y-%m-%d_%H-%M-%S", &local_tm);
-		sprintf(&buf[23], "_%03lld.html", ms);
+		Format::unsafe(&buf[23], "_%03lld.html", ms);
 		filename = PyUnicode_FromString((tempDir / buf).string().c_str());
 		if (filename == NULL) return NULL;
 	}

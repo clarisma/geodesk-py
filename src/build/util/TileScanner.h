@@ -69,8 +69,10 @@ private:
 					uint32_t childEntry = index_[childTip];
 					if ((childEntry & 3) == 1)
 					{
-						childTip += static_cast<int32_t>(childEntry) >> 2;
-						scanBranch(tip, childTile, childTip, steps >> 2);
+						printf("Scanning child branch...\n");
+						scanBranch(tip, childTile, 
+							childTip + (static_cast<int32_t>(childEntry) >> 2), 
+							steps >> 2);
 					}
 					else
 					{

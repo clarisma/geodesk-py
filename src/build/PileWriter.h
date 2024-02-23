@@ -44,7 +44,7 @@ public:
 			// x/y deltas, and optional tagsLength
 		uint8_t* p = buf;
 		bool hasTags = !tags.isEmpty();
-		writeVarint(p, ((id - pile->prevId_) << 1) | hasTags);
+		writeVarint(p, ((id - pile->prevId_) << 1) | static_cast<int>(hasTags));
 		writeSignedVarint(p, xy.x - pile->prevCoord_.x);
 		writeSignedVarint(p, xy.y - pile->prevCoord_.y);
 		if (hasTags)
@@ -69,7 +69,7 @@ public:
 			// optional locator, and bodyLength
 		bool isMultiTile = false; // TODO
 		uint8_t* p = buf;
-		writeVarint(p, ((id - pile->prevId_) << 1) | isMultiTile);
+		writeVarint(p, ((id - pile->prevId_) << 1) | static_cast<int>(isMultiTile));
 		write(pile, buf, p - buf);
 		// TODO: locator
 		size_t tagsLen = tags.length();
