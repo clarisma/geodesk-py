@@ -66,14 +66,19 @@ public:
 
     void process(Context* ctx)
     {
-        while (running_)
+        for(;;)
         {
             Task task;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 for (;;)
                 {
-                    if (!running_) return;
+                    if (!running_)
+                    {
+                        LOG("Thread %s: Finished processing queue %p.", 
+                            Threads::currentThreadId().c_str(), this);
+                        return;
+                    }
                     if (count_ > 0) break;
                     LOG("Thread %s: Waiting for tasks in queue %p...", 
                         Threads::currentThreadId().c_str(), this);
@@ -86,7 +91,6 @@ public:
             }
             ctx->processTask(task);
         }
-        LOG("Thread %s: Finished processing queue %p.", Threads::currentThreadId().c_str(), this);
     }
 
 
@@ -105,7 +109,8 @@ public:
     void shutdown()
     {
         LOG("Shutting down queue %p...", this);
-        running_.store(false);
+        std::unique_lock<std::mutex> lock(mutex_);
+        running_ = false;
         notEmpty_.notify_all();
     }
 
@@ -117,5 +122,5 @@ private:
     int rear_;
     int size_;
     int count_;
-    std::atomic<bool> running_;
+    bool running_;
 };
