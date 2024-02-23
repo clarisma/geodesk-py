@@ -3,7 +3,6 @@
 
 #include "Analyzer.h"
 #include <string>
-#include "TileIndexBuilder.h"
 
 // TODO: Need to flush remaining strings at end
 // TODO: race condition
@@ -102,7 +101,8 @@ void AnalyzerContext::countString(uint32_t index, int keys, int values)
 	StringLookupEntry& entry = stringCodeLookup_[index]; // TODO: bounds check!
 	if (entry.counterOfs == 0)
 	{
-		const uint8_t* str = stringTable_ + entry.stringOfs;
+		const ShortVarString* str = reinterpret_cast<const ShortVarString *>(
+			stringTable_ + entry.stringOfs);
 		StringStatistics::CounterOfs ofs = strings_.getCounter(str);
 		if (ofs == 0)
 		{
@@ -177,12 +177,12 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 	{
 		const StringStatistics::Counter* counter =
 			reinterpret_cast<const StringStatistics::Counter*>(p);
-		uint32_t stringSize = StringStatistics::stringSize(counter->bytes);
+		uint32_t stringSize = counter->string.totalSize();
 		for(;;)
 		{
 			if (counter->total() < minStringCount_) break;
 			StringStatistics::CounterOfs ofs;
-			ofs = strings_.getCounter(counter->bytes, stringSize, counter->hash);
+			ofs = strings_.getCounter(&counter->string, counter->hash);
 			if (ofs)
 			{
 				strings_.counterAt(ofs)->add(counter->keys, counter->values);
@@ -253,10 +253,6 @@ void Analyzer::analyze(const char* fileName)
 	printf("  %12llu unique strings in string table\n", totalStringCount);
 	printf("  %12llu unique-string occurrences\n", totalStringUsageCount);
 	printf("  %12llu literal strings\n", literalsCount);
-
-	TileIndexBuilder tib(settings_);
-	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts_.get()));
-	delete totalNodeCounts_.release();
 
 	printf("Analysis complete.\n");
 }

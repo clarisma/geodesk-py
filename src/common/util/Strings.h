@@ -3,6 +3,7 @@
 
 #pragma once
 #include <cstdint>
+#include <string_view>
 
 
 namespace Strings
@@ -71,6 +72,18 @@ private:
 class ShortVarString
 {
 public:
+    void init(const ShortVarString* other)
+    {
+        init(other->data(), other->length());
+    }
+
+    /*
+    static constexpr const ShortVarString& cast(const uint8_t* bytes)
+    {
+        return *reinterpret_cast<const ShortVarString*>(bytes);
+    }
+    */
+
     void init(const char* chars, size_t len)
     {
         int n;
@@ -183,3 +196,18 @@ private:
 };
 
 
+template <std::size_t N>
+class TinyStringConstant
+{
+public:
+    constexpr TinyStringConstant(const char(&str)[N])
+    {
+        init(str, N - 1);
+    }
+
+private:
+    uint8_t chars_[N - 1];
+};
+
+template <std::size_t N> 
+TinyStringConstant(const char(&)[N]) -> TinyStringConstant<N + 1>;

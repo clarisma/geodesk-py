@@ -106,6 +106,11 @@ public:
 	 */
 	void mergeNodeCounts(uint32_t* counts);
 	void mergeStats(const OsmStatistics& stats);
+	const StringStatistics& strings() const { return strings_; }
+	std::unique_ptr<const uint32_t[]> takeTotalNodeCounts()
+	{
+		return std::unique_ptr<const uint32_t[]>(totalNodeCounts_.release());
+	}
 
 private:
 	const BuildSettings& settings_;

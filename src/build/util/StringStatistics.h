@@ -23,19 +23,21 @@ public:
 		StringCount values;
 
 		StringCount total() const { return keys + values; }
+		StringCount keyCount() const { return keys; }
+		StringCount valueCount() const { return values; }
 	};
 
 	struct Counter : public CounterHeader
 	{
 		ShortVarString string;
 
-		Counter(uint32_t next, uint32_t hash, uint32_t stringSize, const uint8_t* b)
+		Counter(uint32_t next, uint32_t hash, const ShortVarString* str)
 		{
 			this->next = next;
 			this->hash = hash;
 			this->keys = 0;
 			this->values = 0;
-			memcpy(&string, b, stringSize);
+			this->string.init(str);
 		}
 
 		void add(int64_t keys, int64_t values)
@@ -102,22 +104,8 @@ public:
 		assert(arena_.get() + ofs < arenaEnd_);
 		return reinterpret_cast<Counter*>(arena_.get() + ofs);
 	}
-	CounterOfs getCounter(const uint8_t* bytes, uint32_t size, uint32_t hash);
-	CounterOfs getCounter(const uint8_t* bytes);
-
-	static uint32_t stringCharCount(const uint8_t* bytes)
-	{
-		uint8_t len = *bytes;
-		return (len & 0x80) ? ((static_cast<uint32_t>(*(bytes + 1)) << 7) | (len & 0x7f)) : len;
-	}
-
-	static uint32_t stringSize(const uint8_t* bytes)
-	{
-		uint8_t len = *bytes;
-		return (len & 0x80) ?
-			(((static_cast<uint32_t>(*(bytes + 1)) << 7) |
-				(len & 0x7f)) + 2) : (len + 1);
-	}
+	CounterOfs getCounter(const ShortVarString* str, uint32_t hash);
+	CounterOfs getCounter(const ShortVarString* str);
 
 private:
 	void clearTable();

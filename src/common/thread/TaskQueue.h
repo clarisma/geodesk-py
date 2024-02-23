@@ -30,8 +30,10 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
         if (count_ == size_)
         {
+            /*
             LOG("Thread %s: Queue %p full, waiting for space...",
                 Threads::currentThreadId().c_str(), this);
+            */
             notFull_.wait(lock, [this] { return count_ < size_; });
         }
         queue_[rear_] = std::move(task);

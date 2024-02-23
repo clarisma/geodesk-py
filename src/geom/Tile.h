@@ -4,6 +4,7 @@
 #pragma once
 
 #include <limits>
+#include <common/text/Format.h>
 #include "Box.h"
 
 typedef int32_t ZoomLevel;
@@ -120,8 +121,13 @@ public:
 	std::string toString() const
 	{
 		char buf[80];
-		sprintf(buf, "%d/%d/%d", zoom(), column(), row());
+		format(buf);
 		return std::string(buf);
+	}
+
+	void format(char* buf) const
+	{
+		Format::unsafe(buf, "%d/%d/%d", zoom(), column(), row());
 	}
 
 	/**

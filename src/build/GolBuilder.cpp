@@ -1,38 +1,59 @@
 #include "GolBuilder.h"
 #include "Analyzer.h"
+#include "TileIndexBuilder.h"
+#include "build/util/TileLookupBuilder.h"
 #ifdef GEODESK_PYTHON
 #include "python/util/util.h"
 #endif
 
-GolBuilder::GolBuilder()
+GolBuilder::GolBuilder() :
+	threadCount_(0)
 {
 
 }
+
+// Resources we need:
+// - A lookup from coordinates to tiles
+
 
 
 void GolBuilder::build(const char* golPath)
 {
 	int cores = std::thread::hardware_concurrency();
-	int threads = settings_.threadCount();
-	if (threads == 0)
+	threadCount_ = settings_.threadCount();
+	if (threadCount_ == 0)
 	{
-		threads = cores;
+		threadCount_ = cores;
 	}
-	else if (threads > 4 * cores)
+	else if (threadCount_ > 4 * cores)
 	{
-		threads = 4 * cores;
+		threadCount_ = 4 * cores;
 	}
 
 	#ifdef _DEBUG
-	threads = 1;
+	threadCount_ = 1;
 	#endif // _DEBUG
 
 	auto startTime = std::chrono::high_resolution_clock::now();
-	Analyzer analyzer(settings_, threads);
-	analyzer.analyze(settings_.sourcePath().c_str());
+	analyze();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 	printf("Built %s in %.3f seconds\n", golPath, duration.count() / 1e6);
+}
+
+void GolBuilder::analyze()
+{
+	Analyzer analyzer(settings_, threadCount_);
+	analyzer.analyze(settings_.sourcePath().c_str());
+	TileIndexBuilder tib(settings_);
+	std::unique_ptr<const uint32_t[]> totalNodeCounts = analyzer.takeTotalNodeCounts();
+	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts.get()));
+	delete totalNodeCounts.release();
+
+	TileLookupBuilder tileLookupBuilder(tileIndex.get(), settings_.zoomLevels());
+	tileLookupBuilder.build();
+
+	stringManager_.build(settings_, analyzer.strings());
 }
 
 #ifdef GEODESK_PYTHON

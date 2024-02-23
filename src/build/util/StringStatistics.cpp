@@ -31,7 +31,7 @@ void StringStatistics::clearTable()
 
 
 StringStatistics::CounterOfs StringStatistics::getCounter(
-	const uint8_t* bytes, uint32_t size, uint32_t hash)
+	const ShortVarString* str, uint32_t hash)
 {
 	uint32_t slot = hash % tableSize_;
 	CounterOfs counterOfs = table_[slot];
@@ -40,6 +40,7 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 		Counter* pCounter = counterAt(counterOfs);
 		if (pCounter->hash == hash)
 		{
+			/*
 			// TODO: check this for possible overrun
 			// but if mismatch of len, should terminate early?
 			// No, memcmp() may read entire words
@@ -47,13 +48,15 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 			{
 				return counterOfs;
 			}
+			*/
+			if (pCounter->string == *str) return counterOfs;
 		}
 		counterOfs = pCounter->next;
 	}
-	uint32_t counterSize = Counter::grossSize(size);
+	uint32_t counterSize = Counter::grossSize(str->totalSize());
 	if (p_ + counterSize > arenaEnd_) return 0;
 	Counter* pCounter = reinterpret_cast<Counter*>(p_);
-	new(pCounter) Counter(table_[slot], hash, size, bytes);
+	new(pCounter) Counter(table_[slot], hash, str);
 	CounterOfs ofs = p_ - arena_.get();
 	table_[slot] = ofs;
 	p_ += counterSize;
@@ -61,21 +64,16 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 	return ofs;
 }
 
-StringStatistics::CounterOfs StringStatistics::getCounter(const uint8_t* bytes)
+StringStatistics::CounterOfs StringStatistics::getCounter(const ShortVarString* str)
 {
-	// TODO: make this more efficient!
-	uint32_t len = stringCharCount(bytes);
-	uint32_t size = stringSize(bytes);
-	uint32_t hash = Strings::hash(
-		reinterpret_cast<const char*>(bytes + size - len), len);
-	return getCounter(bytes, size, hash);
+	uint32_t hash = Strings::hash(str->data(), str->length());
+	return getCounter(str, hash);
 }
 
 
 StringStatistics::CounterOfs StringStatistics::addString(const Counter* pCounter)
 {
-	CounterOfs ofs = getCounter(pCounter->bytes, stringSize(pCounter->bytes), 
-		pCounter->hash);
+	CounterOfs ofs = getCounter(&pCounter->string, pCounter->hash);
 	if (ofs == 0) return 0;
 	counterAt(ofs)->add(pCounter->keys, pCounter->values);
 	return ofs;
@@ -112,7 +110,7 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	while (pSource < p_)
 	{
 		Counter* pCounter = reinterpret_cast<Counter*>(pSource);
-		uint32_t strSize = stringSize(pCounter->bytes);
+		uint32_t strSize = pCounter->string.totalSize();
 		uint32_t counterSize = Counter::grossSize(strSize);
 		if (pCounter->total() >= minCount)
 		{
