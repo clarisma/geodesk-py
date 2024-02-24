@@ -137,7 +137,7 @@ void AnalyzerContext::stringTable(protobuf::Message strings)  // CRTP override
 	while (p < strings.end)
 	{
 		uint32_t marker = readVarint32(p);
-		if (marker != STRINGTABLE_ENTRY)
+		if (marker != OsmPbf::STRINGTABLE_ENTRY)
 		{
 			throw OsmPbfException("Bad string table. Unexpected field: %d", marker);
 		}
@@ -224,6 +224,11 @@ void Analyzer::analyze(const char* fileName)
 {
 	read(fileName, &progress_);
 	// TODO: Only if verbose
+	char buf[100];
+	Format::unsafe(buf, "Analyzed %ld nodes and %ld",
+		totalStats_.nodeCount,
+		totalStats_.tagCount * 2 + totalStats_.memberCount);
+	progress_.end(buf);
 
 	uint64_t totalStringCount = 0;
 	uint64_t totalStringUsageCount = 0;

@@ -31,12 +31,12 @@ public:
 		return tile_ == other.tile_;
 	}
 
-	inline static int columnFromXZ(int32_t x, ZoomLevel zoom) 
+	inline static constexpr int columnFromXZ(int32_t x, ZoomLevel zoom) 
 	{
 		return (int)((static_cast<long long>(x) + (1LL << 31)) >> (32 - zoom));
 	}
 
-	inline static int rowFromYZ(int32_t y, ZoomLevel zoom)
+	inline static constexpr int rowFromYZ(int32_t y, ZoomLevel zoom)
 	{
 		return (int)((0x7fffffffLL - y) >> (32 - zoom));
 	}

@@ -22,11 +22,15 @@ public:
 
 	void build(const char* golPath);
 	const BuildSettings& settings() const { return settings_; }
+	int threadCount() const { return threadCount_; }
 	const StringManager& stringManager() const { return stringManager_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
 
 private:
 	void analyze();
+	void sort();
+	void validate();
+	void compile();
 
 	BuildSettings settings_;
 	StringManager stringManager_;

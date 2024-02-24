@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <stdio.h>
+#include <common/text/Format.h>
 
 class ProgressReporter
 {
@@ -46,6 +47,16 @@ public:
 	void report()
 	{
 		printf("%s... %d%%\r", verb_, percentageCompleted_);
+	}
+
+	void end(const char* what)
+	{
+		std::chrono::time_point<std::chrono::steady_clock> now(
+			std::chrono::steady_clock::now());
+		char buf[32];
+		Format::timespan(buf, std::chrono::duration_cast
+			<std::chrono::milliseconds>(now - startTime_));
+		printf("%s in %s\n", what, buf);
 	}
 
 private:

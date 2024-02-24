@@ -254,8 +254,10 @@ uint32_t TileIndexBuilder::STile::layout(uint32_t pos) noexcept
 
 void TileIndexBuilder::STile::write(uint32_t* pIndex) noexcept
 {
+	/*
 	printf("Writing tile %s (%d children) at tip %d\n", tile_.toString().c_str(), 
 		childCount_, location_ / 4);
+	*/
 	assert(!isLeaf());
 	assert(location_);
 	assert(maxChildren_);

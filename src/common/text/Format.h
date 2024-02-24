@@ -52,35 +52,35 @@ namespace Format
         return std::string(buf);
     }
 
-    inline void timespan(char& buf, std::chrono::milliseconds ms)
+    inline void timespan(char* buf, std::chrono::milliseconds ms)
     {
         if (ms < std::chrono::seconds(1)) 
         {
-            unsafe(&buf, "%lldms", ms.count());
+            unsafe(buf, "%lldms", ms.count());
             return;
         }
         if (ms < std::chrono::minutes(1)) 
         {
             auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ms);
-            unsafe(&buf, "%llds %lldms", seconds.count(), (ms - seconds).count());
+            unsafe(buf, "%llds %lldms", seconds.count(), (ms - seconds).count());
             return;
         }
         if (ms < std::chrono::hours(1)) {
             auto minutes = std::chrono::duration_cast<std::chrono::minutes>(ms);
             auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ms - minutes);
-            unsafe(&buf, "%lldm %llds", minutes.count(), seconds.count());
+            unsafe(buf, "%lldm %llds", minutes.count(), seconds.count());
             return;
         }
         if (ms < std::chrono::hours(24)) 
         {
             auto hours = std::chrono::duration_cast<std::chrono::hours>(ms);
             auto minutes = std::chrono::duration_cast<std::chrono::minutes>(ms - hours);
-            unsafe(&buf, "%lldh %lldm", hours.count(), minutes.count());
+            unsafe(buf, "%lldh %lldm", hours.count(), minutes.count());
             return;
         }
         auto days = std::chrono::duration_cast<std::chrono::hours>(ms) / 24;
         auto hours = std::chrono::duration_cast<std::chrono::hours>(ms) % 24;
-        unsafe(&buf, "%lldd %lldh", days.count(), hours.count());
+        unsafe(buf, "%lldd %lldh", days.count(), hours.count());
     }
 }
 

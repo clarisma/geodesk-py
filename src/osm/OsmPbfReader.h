@@ -525,6 +525,7 @@ public:
 			totalBytesRead += block.blockSize;
 		}
 		LOG("Waiting for threads to complete...");
+
 		this->end();
 		LOG("Done.");
 	}

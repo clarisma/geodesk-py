@@ -9,10 +9,10 @@
 // void omittedTile(uint32_t parentTip, Tile tile);
 
 template <typename Derived>
-class TileScanner
+class TileIndexScanner
 {
 public:
-	TileScanner(const uint32_t* index, ZoomLevels levels) :
+	TileIndexScanner(const uint32_t* index, ZoomLevels levels) :
 		index_(index),
 		levels_(levels)
 	{
@@ -69,7 +69,7 @@ private:
 					uint32_t childEntry = index_[childTip];
 					if ((childEntry & 3) == 1)
 					{
-						printf("Scanning child branch...\n");
+						//printf("Scanning child branch...\n");
 						scanBranch(tip, childTile, 
 							childTip + (static_cast<int32_t>(childEntry) >> 2), 
 							steps >> 2);

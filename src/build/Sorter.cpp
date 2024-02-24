@@ -1,9 +1,15 @@
 #include "Sorter.h"
 #include <cassert>
-
+#include "GolBuilder.h"
+#include "geom/Mercator.h"
 
 SorterContext::SorterContext(Sorter* sorter) :
-    OsmPbfContext<SorterContext, Sorter>(sorter)
+    OsmPbfContext<SorterContext, Sorter>(sorter),
+    builder_(sorter->builder()),
+    nodeCount_(0),
+    wayCount_(0),
+    wayNodeCount_(0),
+    relationCount_(0)
 {
 }
 
@@ -27,12 +33,21 @@ void SorterContext::stringTable(protobuf::Message strings)
     const uint8_t* p = strings.start;
     while(p < strings.end)
     {
+        uint32_t marker = readVarint32(p);
+        if (marker != OsmPbf::STRINGTABLE_ENTRY)
+        {
+            throw OsmPbfException("Bad string table. Unexpected field: %d", marker);
+        }
+        const uint8_t* pString = p;
+        uint32_t len = readVarint32(p);
+        p += len;
+
         // TODO
         // Look up the string
         // If string is in the Proto-String Table, store the encodings
         // for key/value
         // Otherwise, store the offset
-        uint32_t ofs = static_cast<uint32_t>(p + 1 - osmStrings_);
+        uint32_t ofs = static_cast<uint32_t>(pString - osmStrings_);
     }
 }
 
@@ -60,16 +75,27 @@ void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
     // project lon/lat to Mercator
+    Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
+    uint32_t pile = builder_.tileCatalog().pileOfCoordinate(xy);
+
     // look up tile
     // get tile encoder, or create new one (start group for nodes)
     // write x/y deltas to encoder
     // If tagged:
     // - write bodyLen (and tagCount?) to encoder
     // - write pre-encoded keys and values (or literals) to encoder
+    nodeCount_++;
 }
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
+    const uint8_t* p = nodes.start;
+    uint64_t nodeId = 0;
+    while (p < nodes.end)
+    {
+        nodeId += readSignedVarint64(p);
+        wayNodeCount_++;
+    }
     // Need to track
     // - prevNodeTile
     // - northWestWayTile
@@ -106,18 +132,39 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
 
     // write node IDs (can copy directly from .osm.pbf, no re-encoding needed
     // write tags
+    wayCount_++;
 }
 
 void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 	protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes)
 {
+    relationCount_++;
 }
 
 
+void SorterContext::harvestResults()
+{
+    reader()->addCounts(nodeCount_, wayCount_, wayNodeCount_, relationCount_);
+}
 
-Sorter::Sorter(int numberOfThreads) :
-    OsmPbfReader(numberOfThreads),
-    progress_("Sorting")
+
+Sorter::Sorter(const GolBuilder& builder) :
+    OsmPbfReader(builder.threadCount()),
+    builder_(builder),
+    progress_("Sorting"),
+    nodeCount_(0),
+    wayCount_(0),
+    wayNodeCount_(0),
+    relationCount_(0)
 {
 
+}
+
+void Sorter::sort(const char* fileName)
+{
+    read(fileName, &progress_);
+    char buf[200];
+    Format::unsafe(buf, "Sorted %ld nodes / %ld ways (%ld way-nodes) / %ld relations",
+        nodeCount_, wayCount_, wayNodeCount_, relationCount_);
+    progress_.end(buf);
 }

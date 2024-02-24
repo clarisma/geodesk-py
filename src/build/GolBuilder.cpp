@@ -1,7 +1,7 @@
 #include "GolBuilder.h"
 #include "Analyzer.h"
+#include "Sorter.h"
 #include "TileIndexBuilder.h"
-#include "build/util/TileLookupBuilder.h"
 #ifdef GEODESK_PYTHON
 #include "python/util/util.h"
 #endif
@@ -35,7 +35,9 @@ void GolBuilder::build(const char* golPath)
 	#endif // _DEBUG
 
 	auto startTime = std::chrono::high_resolution_clock::now();
+
 	analyze();
+	sort();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 	printf("Built %s in %.3f seconds\n", golPath, duration.count() / 1e6);
@@ -50,11 +52,18 @@ void GolBuilder::analyze()
 	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts.get()));
 	delete totalNodeCounts.release();
 
-	TileLookupBuilder tileLookupBuilder(tileIndex.get(), settings_.zoomLevels());
-	tileLookupBuilder.build();
-
+	printf("Building tile lookup...\n");
+	tileCatalog_.build(tileIndex.get(), settings_.zoomLevels());
+	printf("Tile lookup built.\n");
 	stringManager_.build(settings_, analyzer.strings());
 }
+
+void GolBuilder::sort()
+{
+	Sorter sorter(*this);
+	sorter.sort(settings_.sourcePath().c_str());
+}
+
 
 #ifdef GEODESK_PYTHON
 

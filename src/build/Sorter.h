@@ -8,6 +8,8 @@
 #include "osm/OsmPbfReader.h"
 #include "ProtoStringTable.h"
 
+class GolBuilder;
+
 class GroupEncoder
 {
 public:
@@ -44,12 +46,14 @@ public:
 	void way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes);
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
+	void harvestResults();
 
 private:
 	GroupEncoder* getEncoder(int pile, int startMarker);
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
 	void encodePackedString(uint32_t blockStringCode, ProtoStringType keyOrValue);
 
+	const GolBuilder& builder_;
 	/**
 	 * Pointer to the start of the string table of the current OSM block.
 	 */
@@ -66,6 +70,10 @@ private:
 	BufferWriter tempWriter_;
 	std::vector<uint64_t> memberIds_;
 	std::vector<uint32_t> tagsOrRoles_;
+	uint64_t nodeCount_;
+	uint64_t wayCount_;
+	uint64_t wayNodeCount_;
+	uint64_t relationCount_;
 };
 
 class SorterOutputTask : public OsmPbfOutputTask
@@ -75,8 +83,23 @@ class SorterOutputTask : public OsmPbfOutputTask
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
 {
 public:
-	Sorter(int numberOfThreads);
+	Sorter(const GolBuilder& builder);
+	const GolBuilder& builder() const { return builder_; };
+	void sort(const char* fileName);
+	void addCounts(uint64_t nodeCount, uint64_t wayCount,
+		uint64_t wayNodeCount, uint64_t relationCount)
+	{
+		nodeCount_ += nodeCount;
+		wayCount_ += wayCount;
+		wayNodeCount_ += wayNodeCount;
+		relationCount_ += relationCount;
+	}
 
 private:
 	ProgressReporter progress_;
+	const GolBuilder& builder_;
+	uint64_t nodeCount_;
+	uint64_t wayCount_;
+	uint64_t wayNodeCount_;
+	uint64_t relationCount_;
 };
