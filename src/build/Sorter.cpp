@@ -6,6 +6,7 @@
 SorterContext::SorterContext(Sorter* sorter) :
     OsmPbfContext<SorterContext, Sorter>(sorter),
     builder_(sorter->builder()),
+    osmStrings_(nullptr),
     nodeCount_(0),
     wayCount_(0),
     wayNodeCount_(0),
@@ -75,9 +76,10 @@ void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
     // project lon/lat to Mercator
+    // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
-    uint32_t pile = builder_.tileCatalog().pileOfCoordinate(xy);
-
+    uint32_t pile = builder_->tileCatalog().pileOfCoordinate(xy);
+    builder_->nodeIndex().put(id, pile); // TODO: move to putput thread
     // look up tile
     // get tile encoder, or create new one (start group for nodes)
     // write x/y deltas to encoder
@@ -148,8 +150,8 @@ void SorterContext::harvestResults()
 }
 
 
-Sorter::Sorter(const GolBuilder& builder) :
-    OsmPbfReader(builder.threadCount()),
+Sorter::Sorter(GolBuilder* builder) :
+    OsmPbfReader(builder->threadCount()),
     builder_(builder),
     progress_("Sorting"),
     nodeCount_(0),

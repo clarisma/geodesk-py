@@ -23,7 +23,7 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 		mainMappingSize_ = ((fileSize | 1) + SEGMENT_LENGTH - 1) & ~SEGMENT_LENGTH_MASK;
 		setSize(mainMappingSize_);
 		// TODO: only needed on Linux, Windows expands the file automatically
-		// to match the mapping extent
+		// to match the mapping extent (No! It's in reverse)
 	}
 	else
 	{
@@ -41,7 +41,7 @@ uint8_t* ExpandableMappedFile::translate(uint64_t ofs)
 	uint64_t ofsBits = (ofs >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
 		// we set 0-bit to 1 so we can use the slightly more efficient bit count
 		// (that doesn't work if a value is zero)
-	int slot = Bits::countLeadingZerosInNonZero64(ofsBits) - 1;
+	int slot = 63 - Bits::countLeadingZerosInNonZero64(ofsBits);
 	assert(slot < EXTENDED_MAPPINGS_SLOT_COUNT);
 	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[slot]);
 	if (!mapping) mapping = createExtendedMapping(slot);
@@ -60,6 +60,8 @@ uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 	{
 		uint64_t size = SEGMENT_LENGTH << slot;
 		uint64_t ofs = (size - SEGMENT_LENGTH) + mainMappingSize_;
+		// TODO: may need to extend the file explicitly!
+		setSize(ofs + size);
 		mapping = reinterpret_cast<uint8_t*>(map(ofs, size, MappingMode::READ | MappingMode::WRITE));
 		extendedMappings_[slot] = mapping;
 	}

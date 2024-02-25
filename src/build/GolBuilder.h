@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
+#include <filesystem>
 #include <string_view>
+#include <common/store/IndexFile.h>
 #include "build/util/BuildSettings.h"
 #include "build/util/StringManager.h"
 #include "build/util/TileCatalog.h"
+
 
 class GolBuilder
 {
@@ -25,6 +28,9 @@ public:
 	int threadCount() const { return threadCount_; }
 	const StringManager& stringManager() const { return stringManager_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
+	IndexFile& nodeIndex() { return nodeIndex_; }
+	IndexFile& wayIndex() { return wayIndex_; }
+	IndexFile& relationIndex() { return relationIndex_; }
 
 private:
 	void analyze();
@@ -32,8 +38,16 @@ private:
 	void validate();
 	void compile();
 
+	void openIndexes();
+	void openIndex(IndexFile& index, const char* name, int extraBits);
+
 	BuildSettings settings_;
+	std::filesystem::path golPath_;
+	std::filesystem::path workPath_;
 	StringManager stringManager_;
 	TileCatalog tileCatalog_;
+	IndexFile nodeIndex_;
+	IndexFile wayIndex_;
+	IndexFile relationIndex_;
 	int threadCount_;
 };

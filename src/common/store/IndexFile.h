@@ -36,6 +36,11 @@ public:
 		mask_ = (1 << bits) - 1;
 	}
 
+	void open(const char* filename, int /* OpenMode */ mode)
+	{
+		ExpandableMappedFile::open(filename, mode);
+	}
+
 	uint32_t get(uint64_t key);
 	void put(uint64_t key, uint32_t value);
 

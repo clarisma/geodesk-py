@@ -53,7 +53,7 @@ private:
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
 	void encodePackedString(uint32_t blockStringCode, ProtoStringType keyOrValue);
 
-	const GolBuilder& builder_;
+	GolBuilder* builder_;
 	/**
 	 * Pointer to the start of the string table of the current OSM block.
 	 */
@@ -83,8 +83,8 @@ class SorterOutputTask : public OsmPbfOutputTask
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
 {
 public:
-	Sorter(const GolBuilder& builder);
-	const GolBuilder& builder() const { return builder_; };
+	Sorter(GolBuilder* builder);
+	GolBuilder* builder() { return builder_; };
 	void sort(const char* fileName);
 	void addCounts(uint64_t nodeCount, uint64_t wayCount,
 		uint64_t wayNodeCount, uint64_t relationCount)
@@ -97,7 +97,7 @@ public:
 
 private:
 	ProgressReporter progress_;
-	const GolBuilder& builder_;
+	GolBuilder* builder_;
 	uint64_t nodeCount_;
 	uint64_t wayCount_;
 	uint64_t wayNodeCount_;

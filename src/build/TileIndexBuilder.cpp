@@ -4,7 +4,8 @@
 TileIndexBuilder::TileIndexBuilder(const BuildSettings& settings) :
 	arena_(64 * 1024),
 	settings_(settings),
-	tierCount_(0)
+	tierCount_(0),
+	tileCount_(0)
 {
 	ZoomLevels levels = settings.zoomLevels();
 	ZoomLevels::Iterator iter = levels.iter();
@@ -20,14 +21,14 @@ TileIndexBuilder::TileIndexBuilder(const BuildSettings& settings) :
 	}
 }
 
-uint32_t TileIndexBuilder::sumTileCounts() const noexcept
+uint32_t TileIndexBuilder::sumTileCounts() noexcept
 {
-	uint32_t tileCount = 0;
+	tileCount_ = 0;
 	for (int i = 0; i < tierCount_; i++)
 	{
-		tileCount += tiers_[i].tileCount;
+		tileCount_ += tiers_[i].tileCount;
 	}
-	return tileCount;
+	return tileCount_;
 }
 
 const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
@@ -49,7 +50,7 @@ const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
 	}
 	*/
 
-	printf("- %u tiles\n", sumTileCounts());
+	printf("- %u tiles\n", tileCount_);
 	printf("- %u TIPs\n", pIndex[0]);
 	return pIndex;
 }

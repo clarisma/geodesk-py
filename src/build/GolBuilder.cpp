@@ -36,7 +36,13 @@ void GolBuilder::build(const char* golPath)
 
 	auto startTime = std::chrono::high_resolution_clock::now();
 
+	golPath_ = File::extension(golPath) != 0 ? golPath :
+		std::string(golPath) + ".gol";
+	workPath_ = golPath_.parent_path() / (golPath_.filename().string() + ".work");
+	std::filesystem::create_directories(workPath_);
+
 	analyze();
+	openIndexes();
 	sort();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
@@ -53,17 +59,32 @@ void GolBuilder::analyze()
 	delete totalNodeCounts.release();
 
 	printf("Building tile lookup...\n");
-	tileCatalog_.build(tileIndex.get(), settings_.zoomLevels());
+	tileCatalog_.build(tib.tileCount(), tileIndex.get(), settings_.zoomLevels());
 	printf("Tile lookup built.\n");
 	stringManager_.build(settings_, analyzer.strings());
 }
 
 void GolBuilder::sort()
 {
-	Sorter sorter(*this);
+	Sorter sorter(this);
 	sorter.sort(settings_.sourcePath().c_str());
 }
 
+
+void GolBuilder::openIndex(IndexFile& index, const char* name, int extraBits)
+{
+	int bits = 32 - Bits::countLeadingZerosInNonZero32(tileCatalog_.tileCount());
+	int mode = File::OpenMode::CREATE | File::OpenMode::READ | File::OpenMode::WRITE;
+	index.bits(bits + extraBits);
+	index.open((workPath_ / name).string().c_str(), mode);
+}
+
+void GolBuilder::openIndexes()
+{
+	openIndex(nodeIndex_, "nodes.idx", 0);
+	openIndex(wayIndex_, "ways.idx", 2);
+	openIndex(relationIndex_, "relations.idx", 2);
+}
 
 #ifdef GEODESK_PYTHON
 

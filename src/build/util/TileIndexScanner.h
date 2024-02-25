@@ -33,6 +33,8 @@ public:
 		scanBranch(0, Tile::fromColumnRowZoom(0,0,0), 1, steps);
 	}
 
+	const uint32_t* index() const { return index_; }
+
 private:
 	Derived* self() { return reinterpret_cast<Derived*>(this); }
 

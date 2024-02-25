@@ -13,6 +13,7 @@ class TileIndexBuilder
 public:
 	TileIndexBuilder(const BuildSettings& settings);
 	const uint32_t* build(const uint32_t* nodeCounts);
+	uint32_t tileCount() const { return tileCount_; }
 
 private:
 	class STile
@@ -117,7 +118,7 @@ private:
 	uint32_t layoutIndex();
 	STile* createTile(Tile tile, uint32_t maxChildCount, 
 		uint64_t nodeCount, STile* next);
-	uint32_t sumTileCounts() const noexcept;
+	uint32_t sumTileCounts() noexcept;
 
 	static const int MAX_TIERS = 8;
 
@@ -127,4 +128,5 @@ private:
 		// We need one extra tier in case Zoom 12 is not 
 		// part of the Tile Pyramid
 	uint32_t tierCount_;
+	uint32_t tileCount_;
 };

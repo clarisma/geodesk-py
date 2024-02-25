@@ -24,28 +24,38 @@
  *   synchronous, i.e. it can safely mutate shared state.
  * 
  */
+
+// The constructor of a Context must not access Derived, because
+// Derived won't be fully initialzied at that point!
+// Use a "start" method that inits the contexts and starts the threads
+
 template <typename Derived, typename WorkContext, typename WorkTask, typename OutputTask>
 class TaskEngine
 {
 public:
     TaskEngine(int numberOfThreads, int workQueueSize = 0, int outputQueueSize = 0) :
+        threadCount_(numberOfThreads),
         workQueue_(workQueueSize == 0 ? (numberOfThreads * 2) : workQueueSize),
         outputQueue_(outputQueueSize == 0 ? (numberOfThreads * 2) : outputQueueSize)
     {
         workContexts_.reserve(numberOfThreads);
-        threads_.reserve(numberOfThreads+1);
-        threads_.emplace_back(&TaskEngine::processOutput, this);
-        for (int i = 0; i < numberOfThreads; i++)
-        {
-            workContexts_.emplace_back(reinterpret_cast<Derived*>(this));
-            threads_.emplace_back(&TaskEngine::process, this, &workContexts_[i]);
-        }
+        threads_.reserve(numberOfThreads + 1);
     }
 
     ~TaskEngine()
     {
         // If thread list is empty, this means processing has already ended
         if(!threads_.empty()) end();
+    }
+
+    void start()
+    {
+        threads_.emplace_back(&TaskEngine::processOutput, this);
+        for (int i = 0; i < threadCount_; i++)
+        {
+            workContexts_.emplace_back(reinterpret_cast<Derived*>(this));
+            threads_.emplace_back(&TaskEngine::process, this, &workContexts_[i]);
+        }
     }
 
 
@@ -96,8 +106,16 @@ protected:
 private:
     void process(WorkContext* ctx)
     {
-        workQueue_.process(ctx);
-        ctx->afterTasks();
+        try
+        {
+            workQueue_.process(ctx);
+            ctx->afterTasks();
+        }
+        catch (std::exception& ex)
+        {
+            // TODO
+            printf(ex.what());
+        }
     }
     
     void processOutput()
@@ -110,5 +128,6 @@ private:
 	TaskQueue<WorkContext, WorkTask> workQueue_;
 	TaskQueue<Derived, OutputTask> outputQueue_;
     TaskStatus status_;
+    int threadCount_;
 };
 

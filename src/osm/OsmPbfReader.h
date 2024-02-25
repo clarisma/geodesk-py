@@ -458,6 +458,8 @@ public:
 
 	void read(const char* fileName, ProgressReporter* progress=nullptr)
 	{
+		this->start();
+		
 		File file;
 		file.open(fileName, File::OpenMode::READ);
 		uint64_t fileSize = file.size();
