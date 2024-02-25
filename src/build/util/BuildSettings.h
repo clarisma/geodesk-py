@@ -71,6 +71,10 @@ public:
 	int leafZoomLevel() const { return 12; }
 	int threadCount() const { return threadCount_; }
 	ZoomLevels zoomLevels() const { return zoomLevels_; }
+	const std::vector<std::string_view>& indexedKeyStrings() const
+	{
+		return indexedKeyStrings_;
+	}
 
 	void setSource(const std::string_view path);
 

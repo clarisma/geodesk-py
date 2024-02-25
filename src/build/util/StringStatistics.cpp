@@ -64,6 +64,23 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 	return ofs;
 }
 
+void StringStatistics::addRequiredCounter(std::string_view str)
+{
+	uint32_t hash = Strings::hash(str);
+	uint32_t slot = hash % tableSize_;
+	uint32_t stringSize = ShortVarString::totalSize(str.length());
+	uint32_t counterSize = Counter::grossSize(stringSize);
+	assert (p_ + counterSize < arenaEnd_);	
+		// There must be room for this string
+	Counter* pCounter = reinterpret_cast<Counter*>(p_);
+	new(pCounter) Counter(table_[slot], hash, str);
+	CounterOfs ofs = p_ - arena_.get();
+	table_[slot] = ofs;
+	p_ += counterSize;
+	counterCount_++;
+	// TODO: init count
+}
+
 StringStatistics::CounterOfs StringStatistics::getCounter(const ShortVarString* str)
 {
 	uint32_t hash = Strings::hash(str->data(), str->length());

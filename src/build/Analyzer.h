@@ -113,6 +113,8 @@ public:
 	}
 
 private:
+	void addRequiredStrings();
+
 	const BuildSettings& settings_;
 	StringStatistics strings_;
 	const FastTileCalculator tileCalculator_;

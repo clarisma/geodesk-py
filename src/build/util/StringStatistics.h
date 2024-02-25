@@ -40,6 +40,15 @@ public:
 			this->string.init(str);
 		}
 
+		Counter(uint32_t next, uint32_t hash, std::string_view str)
+		{
+			this->next = next;
+			this->hash = hash;
+			this->keys = 0;
+			this->values = 0;
+			this->string.init(str.data(), str.length());
+		}
+
 		void add(int64_t keys, int64_t values)
 		{
 			this->keys += keys;
@@ -106,6 +115,7 @@ public:
 	}
 	CounterOfs getCounter(const ShortVarString* str, uint32_t hash);
 	CounterOfs getCounter(const ShortVarString* str);
+	void addRequiredCounter(std::string_view str);
 
 private:
 	void clearTable();
