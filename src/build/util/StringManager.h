@@ -16,10 +16,8 @@ public:
 
 	void build(const BuildSettings& setings, const StringStatistics& strings);
 
-	/*
-	static const uint8_t NO_BYTES[];
-	static const ShortVarString& const NO = ShortVarString::cast(NO_BYTES);
-	*/
+	static const char* CORE_STRINGS[];
+	static const int CORE_STRING_COUNT = 5;
 
 private:
 	struct Entry

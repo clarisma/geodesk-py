@@ -148,7 +148,7 @@ public:
 		return fromColumnRowZoom(column() >> delta, row() >> delta, lowerZoom);
 	}
 
-private:
+protected:
 	inline Tile(int col, int row, ZoomLevel zoom)
 		: tile_((zoom << 24) | (row << 12) | col) {}
 	

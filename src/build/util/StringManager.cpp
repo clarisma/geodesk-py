@@ -8,6 +8,15 @@ StringManager::StringManager()
 
 }
 
+const char* StringManager::CORE_STRINGS[] =
+{
+	"",
+	"no",
+	"yes",
+	"outer",
+	"inner"
+};
+
 
 /**
  * - Step 1: Count strings and measure required space

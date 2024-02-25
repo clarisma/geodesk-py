@@ -91,13 +91,24 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
+    IndexFile& nodeIndex = builder_->nodeIndex();
     const uint8_t* p = nodes.start;
     uint64_t nodeId = 0;
+    uint32_t prevNodePile = 0;
+    uint32_t nodeCount = 0;
+    uint32_t wayPile = 0;
     while (p < nodes.end)
     {
         nodeId += readSignedVarint64(p);
-        wayNodeCount_++;
+        uint32_t nodePile = nodeIndex.get(nodeId);
+        wayPile += nodePile;
+        nodeCount++;
     }
+    wayNodeCount_ += nodeCount;
+
+    // TODO: this is a dummy
+    builder_->wayIndex().put(id, wayPile / nodeCount);
+
     // Need to track
     // - prevNodeTile
     // - northWestWayTile

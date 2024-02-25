@@ -8,21 +8,20 @@
 
 void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
 {
-    if (!mappingHandle_)
+    DWORD protect = (mode & MappingMode::WRITE) ?
+        PAGE_READWRITE : PAGE_READONLY;
+    HANDLE mappingHandle = CreateFileMappingA(fileHandle_, NULL, protect, 0, 0, NULL);
+    if (!mappingHandle)
     {
-        DWORD protect = (mode & MappingMode::WRITE) ?
-            PAGE_READWRITE : PAGE_READONLY;
-        mappingHandle_ = CreateFileMappingA(fileHandle_, NULL, protect, 0, 0, NULL);
-        if (!mappingHandle_)
-        {
-            // Error creating file mapping
-            IOException::checkAndThrow();
-        }
+        // Error creating file mapping
+        IOException::checkAndThrow();
     }
 
-    void* mappedAddress = MapViewOfFile(mappingHandle_, 
+    void* mappedAddress = MapViewOfFile(mappingHandle, 
         (mode & MappingMode::WRITE) ? FILE_MAP_ALL_ACCESS : FILE_MAP_READ,
         (DWORD)((offset >> 32) & 0xFFFFFFFF), (DWORD)(offset & 0xFFFFFFFF), length);
+    CloseHandle(mappingHandle);
+
     if (!mappedAddress)
     {
         // Error mapping view of file
@@ -50,13 +49,5 @@ void MappedFile::prefetch(void* address, uint64_t length)
     PrefetchVirtualMemory(GetCurrentProcess(), 1, &entry, 0);
 }
 
-void MappedFile::close()
-{
-    if (mappingHandle_)
-    {
-        CloseHandle(mappingHandle_);
-        mappingHandle_ = NULL;
-    }
-    File::close();
-}
+
 
