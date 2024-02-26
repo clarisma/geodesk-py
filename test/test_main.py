@@ -33,6 +33,6 @@ if __name__ == '__main__':
     # pytest.main(["test_format.py::test_numeric_custom_ids", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_anonymous_nodes.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_issue50.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["test_match.py::test_negated_unary", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["test_match.py::test_negated_unary", "-rA", "-s", "--durations=9999"])
 
     

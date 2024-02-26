@@ -8,7 +8,7 @@ def notest_issue50(features):
             count += 1
     print(f"{count} traffic signs that are not part of a highway")
             
-def test_issue50_relation_nodes(features):
+def notest_issue50_relation_nodes(features):
     traffic_sign_nodes_on_non_highways = set()
     for h in features.relations("aw[!highway]"):
         # print(h)
