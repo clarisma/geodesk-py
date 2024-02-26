@@ -47,6 +47,8 @@ def test_issue_45(features):
     countries('*[name:en=Germany]').one
     
 def test_negative(features):
+    features("w[highway]")         
+    features("w[highway=primary]") 
     features("w[!highway]")                 # ok
     features("w[highway != primary]")       # ok
     features("w[highway][name != 'Main Street']")  # ok
