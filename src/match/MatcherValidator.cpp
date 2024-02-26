@@ -92,7 +92,9 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 
 	OpNode* loadOp = wrongTypeOp;
 	uint32_t clauseFlags = clause->flags;
-	if (clauseFlags == TagClause::VALUE_GLOBAL_STRING)		// only code (== is ok)
+	uint32_t valueFlags = clauseFlags & 
+		(TagClause::VALUE_FLAGS | TagClause::COMPLEX_BOOLEAN_CLAUSE);
+	if (valueFlags == TagClause::VALUE_GLOBAL_STRING)		// only code (== is ok)
 	{
 		// Most common case: all value-ops are EQ_CODE
 
@@ -104,12 +106,12 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 		wrongTypeOp = isUnaryOp ? firstValueOp->next[!negated] : keyOp->next[negated];
 		loadOp = graph_.newOp(Opcode::LOAD_CODE, wrongTypeOp, firstValueOp);
 	}
-	else if (clauseFlags == TagClause::VALUE_LOCAL_STRING)  // only string (== is ok)
+	else if (valueFlags == TagClause::VALUE_LOCAL_STRING)  // only string (== is ok)
 	{
 		// all value-ops are EQ_STR
 		loadOp = graph_.newOp(Opcode::LOAD_STRING, wrongTypeOp, firstValueOp);
 	}
-	else if (clauseFlags == TagClause::VALUE_ANY_NUMBER)	// only numeric (== is ok)
+	else if (valueFlags == TagClause::VALUE_ANY_NUMBER)	// only numeric (== is ok)
 	{
 		// For numeric ops, create a chain that first checks for
 		// number, then wide string (converting string to num),
@@ -124,7 +126,7 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 	else
 	{
 		// Create a path for each type
-		if (clauseFlags & TagClause::VALUE_ANY_NUMBER)
+		if (valueFlags & TagClause::VALUE_ANY_NUMBER)
 		{
 			OpNode* op = createValueOps(keyOp, TagClause::VALUE_ANY_NUMBER);
 			if (op)
@@ -132,14 +134,14 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 				loadOp = graph_.newOp(Opcode::LOAD_NUM, loadOp, op);
 			}
 		}
-		if (clauseFlags & (TagClause::VALUE_LOCAL_STRING |
+		if (valueFlags & (TagClause::VALUE_LOCAL_STRING |
 			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
 		{
 			OpNode* op = createValueOps(keyOp, (TagClause::VALUE_LOCAL_STRING |
 				TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
 			if (op)
 			{
-				if (clauseFlags & TagClause::VALUE_ANY_NUMBER)
+				if (valueFlags & TagClause::VALUE_ANY_NUMBER)
 				{
 					op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
 					// If string is not a number, the double value will be NaN;
@@ -149,21 +151,21 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 				loadOp = graph_.newOp(Opcode::LOAD_STRING, loadOp, op);
 			}
 		}
-		if (clauseFlags & (TagClause::VALUE_GLOBAL_STRING |
+		if (valueFlags & (TagClause::VALUE_GLOBAL_STRING |
 			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
 		{
 			OpNode* op = createValueOps(keyOp, (TagClause::VALUE_GLOBAL_STRING |
 				TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
 			if (op)
 			{
-				if (clauseFlags & TagClause::VALUE_ANY_NUMBER)
+				if (valueFlags & TagClause::VALUE_ANY_NUMBER)
 				{
 					op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
 					// If string is not a number, the double value will be NaN;
 					// for simplicity, we can continue to value checks in both
 					// false and true case
 				}
-				if (clauseFlags & (TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
+				if (valueFlags & (TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
 				{
 					op = graph_.newOp(Opcode::CODE_TO_STR, op, nullptr);
 				}

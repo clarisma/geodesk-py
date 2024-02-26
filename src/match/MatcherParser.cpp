@@ -134,6 +134,7 @@ TagClause* MatcherParser::expectTagClause()
 	skipWhitespace();
 	assert(_CrtCheckMemory());
 
+	clause->flags |= negated ? 0 : TagClause::KEY_REQUIRED;
 	clause->keyOp.setNegated(negated);
 	if (acceptString)
 	{

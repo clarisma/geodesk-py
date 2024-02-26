@@ -32,7 +32,10 @@ void Selector::addClause(TagClause* clause)
 		}
 		break;
 	}
-	indexBits |= IndexBits::fromCategory(clause->category);
+	if (clause->flags & TagClause::KEY_REQUIRED)
+	{
+		indexBits |= IndexBits::fromCategory(clause->category);
+	}
 	clause->next = current;
 	*pNext = clause;
 }
