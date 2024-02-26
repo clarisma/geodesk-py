@@ -14,7 +14,7 @@ if __name__ == '__main__':
             print(f"- {member} as {member.role}")
     """
     
-    pytest.main(["-rA", "-s", "--durations=9999"])
+    # pytest.main(["-rA", "-s", "--durations=9999"])
     # pytest.main(["test_features.py::test_query_parser", "-rA", "--durations=9999"])
     # pytest.main(["test_rtree.py::test_rtree", "-rA", "--durations=9999"])
     # pytest.main(["test_polygonizer.py::test_polygonizer", "-rA", "-s", "--durations=9999"])
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # pytest.main(["test_map.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_fast_within.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_intersects.py", "-rA", "-s", "--durations=9999"])
-    # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["test_performance.py::test_performance_basic", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_coordinate.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_format.py::test_numeric_custom_ids", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_anonymous_nodes.py", "-rA", "-s", "--durations=9999"])
