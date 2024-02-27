@@ -18,3 +18,9 @@ const char* File::extension(const char* filename, size_t len)
 	}
 	return *p == '.' ? p : "";
 }
+
+
+void File::error(const char* what)
+{
+
+}

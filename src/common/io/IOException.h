@@ -13,12 +13,16 @@ public:
     explicit IOException(const std::string& message)
         : std::runtime_error(message) {}
 
+    // static void getError(char* buf);
+
     /**
      * On Linux, this function must only be called if the caller
      * is certain that an error occurred (errno is set) -- typically,
      * because a system call returned -1.
      */
     static void checkAndThrow();
+    static void alwaysThrow();
+    // static void alwaysThrow(const char* msg);
 };
 
 

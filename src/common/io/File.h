@@ -41,6 +41,7 @@ public:
     }
 
     FileHandle handle() const { return fileHandle_; }
+    std::string fileName() const;
 
     void open(const char* filename, int /* OpenMode */ mode);
     void close();
@@ -56,6 +57,8 @@ public:
     size_t write(const void* buf, size_t length);
 
     void force();
+
+    void error(const char* what);
 
     /**
      * Returns the extension of the given filename (as pointer to ".ext"),

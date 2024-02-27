@@ -60,8 +60,15 @@ uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 	{
 		uint64_t size = SEGMENT_LENGTH << slot;
 		uint64_t ofs = (size - SEGMENT_LENGTH) + mainMappingSize_;
-		// TODO: may need to extend the file explicitly!
+		
+		// Windows automatically grows a file to accommodate mappings
+		// On Linux, we need to extend the file explicitly
+		// printf("Slot %d: Need to map %llu at %llu\n", slot, size, ofs);
+		// printf("Trying to resize to %llu\n", ofs + size);
+		#ifndef _WIN32
 		setSize(ofs + size);
+		// printf("  Resized.\n");
+		#endif
 		mapping = reinterpret_cast<uint8_t*>(map(ofs, size, MappingMode::READ | MappingMode::WRITE));
 		extendedMappings_[slot] = mapping;
 	}

@@ -38,7 +38,7 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 	while (counterOfs)
 	{
 		Counter* pCounter = counterAt(counterOfs);
-		if (pCounter->hash == hash)
+		if (pCounter->hash() == hash)
 		{
 			/*
 			// TODO: check this for possible overrun
@@ -49,9 +49,9 @@ StringStatistics::CounterOfs StringStatistics::getCounter(
 				return counterOfs;
 			}
 			*/
-			if (pCounter->string == *str) return counterOfs;
+			if (pCounter->string() == *str) return counterOfs;
 		}
-		counterOfs = pCounter->next;
+		counterOfs = pCounter->next();
 	}
 	uint32_t counterSize = Counter::grossSize(str->totalSize());
 	if (p_ + counterSize > arenaEnd_) return 0;
@@ -74,11 +74,11 @@ void StringStatistics::addRequiredCounter(std::string_view str)
 		// There must be room for this string
 	Counter* pCounter = reinterpret_cast<Counter*>(p_);
 	new(pCounter) Counter(table_[slot], hash, str);
+	pCounter->add(0, Counter::REQUIRED);
 	CounterOfs ofs = p_ - arena_.get();
 	table_[slot] = ofs;
 	p_ += counterSize;
 	counterCount_++;
-	// TODO: init count
 }
 
 StringStatistics::CounterOfs StringStatistics::getCounter(const ShortVarString* str)
@@ -90,9 +90,9 @@ StringStatistics::CounterOfs StringStatistics::getCounter(const ShortVarString* 
 
 StringStatistics::CounterOfs StringStatistics::addString(const Counter* pCounter)
 {
-	CounterOfs ofs = getCounter(&pCounter->string, pCounter->hash);
+	CounterOfs ofs = getCounter(&pCounter->string(), pCounter->hash());
 	if (ofs == 0) return 0;
-	counterAt(ofs)->add(pCounter->keys, pCounter->values);
+	counterAt(ofs)->add(pCounter);
 	return ofs;
 }
 
@@ -127,9 +127,9 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	while (pSource < p_)
 	{
 		Counter* pCounter = reinterpret_cast<Counter*>(pSource);
-		uint32_t strSize = pCounter->string.totalSize();
+		uint32_t strSize = pCounter->string().totalSize();
 		uint32_t counterSize = Counter::grossSize(strSize);
-		if (pCounter->total() >= minCount)
+		if (pCounter->totalCount() >= minCount)
 		{
 			// If the string counter meets the minimum requirement,
 			// we'll keep it and re-index it
@@ -143,8 +143,8 @@ void StringStatistics::removeStrings(uint32_t minCount)
 			}
 			*/
 
-			uint32_t slot = pCounter->hash % tableSize_;
-			pCounter->next = table_[slot];
+			uint32_t slot = pCounter->hash() % tableSize_;
+			pCounter->setNext(table_[slot]);
 			/*
 			if(pDest != pSource) printf("Moving %d bytes from from %p to %p, skipping %d\n", 
 				counterSize, pSource, pDest, (uint32_t)(pSource - pDest));

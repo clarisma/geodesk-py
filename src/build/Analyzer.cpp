@@ -179,15 +179,15 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 	{
 		const StringStatistics::Counter* counter =
 			reinterpret_cast<const StringStatistics::Counter*>(p);
-		uint32_t stringSize = counter->string.totalSize();
+		uint32_t stringSize = counter->string().totalSize();
 		for(;;)
 		{
-			if (counter->total() < minStringCount_) break;
+			if (counter->totalCount() < minStringCount_) break;
 			StringStatistics::CounterOfs ofs;
-			ofs = strings_.getCounter(&counter->string, counter->hash);
+			ofs = strings_.getCounter(&counter->string(), counter->hash());
 			if (ofs)
 			{
-				strings_.counterAt(ofs)->add(counter->keys, counter->values);
+				strings_.counterAt(ofs)->add(counter);
 				break;
 			}
 			LOG("==== Global string arena full, culling strings < %d...", minStringCount_);
@@ -255,7 +255,7 @@ void Analyzer::analyze(const char* fileName)
 	{
 		const StringStatistics::Counter* counter = iter.next();
 		if (!counter) break;
-		uint64_t subTotal = counter->total();
+		uint64_t subTotal = counter->totalCount();
 		if (subTotal >= 100)
 		{
 			std::string_view s = counter->stringView();

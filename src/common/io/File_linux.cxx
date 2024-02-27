@@ -129,3 +129,21 @@ size_t File::write(const void* buf, size_t length)
     }
     return bytesWritten;
 }
+
+
+std::string File::fileName() const
+{
+    char fdPath[1024];
+    char filePath[1024];
+    snprintf(fdPath, sizeof(fdPath), "/proc/self/fd/%d", fileHandle_);
+    ssize_t len = readlink(fdPath, filePath, sizeof(filePath) - 1);
+    if (len != -1) 
+    {
+        filePath[len] = '\0'; // Null-terminate the result
+        return std::string(filePath);
+    }
+    else 
+    {
+        return "<invalid file>";
+    }
+}

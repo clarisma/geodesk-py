@@ -66,15 +66,18 @@ public:
 	#endif
 
 	const std::string& sourcePath() const { return sourcePath_; }
+	const std::vector<std::string_view>& indexedKeyStrings() const 
+	{ 
+		return indexedKeyStrings_; 
+	}
+	uint32_t maxStrings() const { return maxStrings_; }
 	uint32_t maxTiles() const { return maxTiles_; }
+	uint32_t minStringUsage() const { return minStringUsage_; }
 	uint32_t minTileDensity() const { return minTileDensity_; }
 	int leafZoomLevel() const { return 12; }
 	int threadCount() const { return threadCount_; }
 	ZoomLevels zoomLevels() const { return zoomLevels_; }
-	const std::vector<std::string_view>& indexedKeyStrings() const
-	{
-		return indexedKeyStrings_;
-	}
+	
 
 	void setSource(const std::string_view path);
 
@@ -121,7 +124,7 @@ private:
 	std::string sourcePath_;
 	ZoomLevels zoomLevels_;
 	uint32_t maxTiles_ = (1 << 16) - 1;
-	uint32_t maxStrings_ = 300;
+	uint32_t maxStrings_ = 32'000;
 	uint32_t minStringUsage_ = 300;
 	uint32_t minTileDensity_ = 25'000;
 	int threadCount_ = 0;

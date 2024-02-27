@@ -8,9 +8,12 @@
 
 void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
 {
+    // printf("%s: Mapping %llu bytes at %llu...\n", fileName().c_str(), length, offset);
     DWORD protect = (mode & MappingMode::WRITE) ?
         PAGE_READWRITE : PAGE_READONLY;
-    HANDLE mappingHandle = CreateFileMappingA(fileHandle_, NULL, protect, 0, 0, NULL);
+    uint64_t maxSize = offset + length;
+    HANDLE mappingHandle = CreateFileMappingA(fileHandle_, NULL, protect, 
+        static_cast<DWORD>(maxSize >> 32), static_cast<DWORD>(maxSize), NULL);
     if (!mappingHandle)
     {
         // Error creating file mapping

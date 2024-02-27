@@ -3,6 +3,7 @@
 
 #pragma once
 #include <memory>
+#include <vector>
 #include <common/util/Bytes.h>
 #include <common/util/Strings.h>
 
@@ -15,7 +16,7 @@ public:
 	StringCatalog();
 
 	void build(const BuildSettings& setings, const StringStatistics& strings);
-
+	
 	static const char* CORE_STRINGS[];
 	static const int CORE_STRING_COUNT = 5;
 
@@ -42,7 +43,12 @@ private:
 
 	using SortEntry = std::pair<uint64_t, Entry*>;
 
-	void sortDescending(SortEntry* start, SortEntry* end);
+	static void sortDescending(std::vector<SortEntry>& sorted);
+	Entry* lookup(const std::string_view str) const noexcept;
+	static void addGlobalString(std::vector<Entry*>& globalStrings, Entry* p);
+	void addGlobalString(std::vector<Entry*>& globalStrings, std::string_view str);
 
 	std::unique_ptr<uint8_t[]> arena_;
+	const uint32_t* table_;
+	uint32_t tableSlotCount_;
 };

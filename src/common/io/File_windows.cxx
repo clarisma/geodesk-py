@@ -144,3 +144,17 @@ size_t File::write(const void* buf, size_t length)
     }
     return bytesWritten;
 }
+
+
+std::string File::fileName() const
+{
+    TCHAR buf[MAX_PATH];
+    if (GetFinalPathNameByHandle(fileHandle_, buf, MAX_PATH, FILE_NAME_NORMALIZED) > 0) 
+    {
+        return std::string(buf);
+    }
+    else 
+    {
+        return "<invalid file>";
+    }
+}

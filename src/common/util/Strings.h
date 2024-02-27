@@ -133,6 +133,14 @@ public:
         return memcmp(&bytes_[ofs], &other.bytes_[ofs], len) == 0;
     }
 
+    bool operator==(const std::string_view& other) const noexcept
+    {
+        uint32_t len = length();
+        if (len != other.length()) return false;
+        uint32_t ofs = (bytes_[0] >> 7) + 1;
+        return memcmp(&bytes_[ofs], other.data(), len) == 0;
+    }
+
     std::string_view toStringView() const noexcept
     {
         uint32_t ofs = (bytes_[0] >> 7) + 1;
