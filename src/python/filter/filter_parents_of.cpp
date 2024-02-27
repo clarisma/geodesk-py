@@ -23,13 +23,16 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 
 	if (arg->ob_type == &PyFeature::TYPE)
 	{
-		PyFeature* feature = (PyFeature*)arg;
-		FeatureTypes acceptedTypes = feature->feature.isRelationMember() ?
+		PyFeature* featureObj = (PyFeature*)arg;
+		FeatureRef feature = featureObj->feature;
+		FeatureTypes acceptedTypes = feature.isRelationMember() ?
 			FeatureTypes::RELATIONS : 0;
-		acceptedTypes |= feature->feature.isNode() ?
-			(FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED) : 0;
+		acceptedTypes |= 
+			(FeatureTypes(FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED).
+				acceptFlags(feature.flags())) ? 
+				(FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED) : 0;
 		return PyFeatures::createRelated(self, &PyFeatures::Parents::SUBTYPE,
-			feature->feature, acceptedTypes);
+			feature, acceptedTypes);
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{

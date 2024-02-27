@@ -75,3 +75,10 @@ def test_performance_intersects(features):
     benchmark("All post boxes", 
         lambda: features("na[amenity=post_box]").count)
     
+def test_performance_basic(features):
+    benchmark("All post boxes", 
+        lambda: features("na[amenity=post_box]").count)
+    benchmark("All waterways", 
+        lambda: features("w[waterway]").count)
+    benchmark("All sports pitches", 
+        lambda: features("a[leisure=pitch]").count)

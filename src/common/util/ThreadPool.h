@@ -94,8 +94,7 @@ public:
 
     void shutdown()
     {
-        running_.store(false);
-        notEmpty_.notify_all();
+        signalShutdown();
         for (auto& th : threads_)
         {
             if (th.joinable())
@@ -106,9 +105,16 @@ public:
     }
 
 private:
+    void signalShutdown()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        running_ = false;
+        notEmpty_.notify_all();
+    }
+
     void worker()
     {
-        while (running_)
+        for(;;)
         {
             TaskType task;
             {
@@ -136,5 +142,5 @@ private:
     int count_;
     std::mutex mutex_;
     std::condition_variable notEmpty_, notFull_;
-    std::atomic<bool> running_;
+    bool running_;
 };

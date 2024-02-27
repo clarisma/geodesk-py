@@ -128,12 +128,14 @@ TagClause* MatcherParser::expectTagClause()
 		valueOp = graph_.newOp(Opcode::EQ_CODE, codeNo_);
 		valueOp->setNegated(true);
 		clause->insertValueOp(valueOp, false);
+		clause->flags |= TagClause::KEY_REQUIRED;
 		return clause;
 	}
 
 	skipWhitespace();
 	assert(_CrtCheckMemory());
 
+	clause->flags |= negated ? 0 : TagClause::KEY_REQUIRED;
 	clause->keyOp.setNegated(negated);
 	if (acceptString)
 	{

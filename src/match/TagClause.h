@@ -31,11 +31,20 @@ public:
 		VALUE_ANY_STRING = 1 << 6,
 		VALUE_ANY_NUMBER = 1 << 7,
 
+		VALUE_FLAGS = VALUE_GLOBAL_STRING | VALUE_LOCAL_STRING |
+			VALUE_NARROW_NUMBER | VALUE_WIDE_NUMBER |
+			VALUE_TEXT_STRING | VALUE_ANY_STRING | VALUE_ANY_NUMBER,
+
 		/**
 		 * Used on key-ops to indicate that the clause uses nested AND/OR
 		 * expressions (rare)
 		 */
 		COMPLEX_BOOLEAN_CLAUSE = 1 << 8,
+		
+		/**
+		 * Presence of key is required
+		 */
+		KEY_REQUIRED = 1 << 9,
 	};
 
 	bool isOrClause() const;

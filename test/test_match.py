@@ -47,6 +47,8 @@ def test_issue_45(features):
     countries('*[name:en=Germany]').one
     
 def test_negative(features):
+    features("w[highway]")         
+    features("w[highway=primary]") 
     features("w[!highway]")                 # ok
     features("w[highway != primary]")       # ok
     features("w[highway][name != 'Main Street']")  # ok
@@ -92,3 +94,16 @@ def test_negated_unary(features):
     for f in not_tourism:
         assert f not in tourism
     assert nodes.count == tourism.count + not_tourism.count
+
+def test_negated_unary2(features):
+    way_count = features.ways.count
+    highway_count = features.ways("[highway]").count
+    not_highway_count = features.ways("[!highway]").count
+    assert highway_count + not_highway_count == way_count
+
+def test_negated_unary3(features):
+    way_count = features.nodes.count
+    highway_count = features.nodes("[highway]").count
+    not_highway_count = features.nodes("[!highway]").count
+    assert highway_count + not_highway_count == way_count
+    
