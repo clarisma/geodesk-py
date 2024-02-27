@@ -3,7 +3,7 @@
 
 #include "Analyzer.h"
 #include "build/util/BuildSettings.h"
-#include "build/util/StringManager.h"
+#include "build/util/StringCatalog.h"
 #include <string>
 
 // TODO: Need to flush remaining strings at end
@@ -227,9 +227,9 @@ void Analyzer::addRequiredStrings()
 {
 	// TODO: need to init string count, ensure that required strings
 	// cannot be evicted
-	for (int i = 0; i < StringManager::CORE_STRING_COUNT; i++)
+	for (int i = 0; i < StringCatalog::CORE_STRING_COUNT; i++)
 	{
-		strings_.addRequiredCounter(std::string_view(StringManager::CORE_STRINGS[i]));
+		strings_.addRequiredCounter(std::string_view(StringCatalog::CORE_STRINGS[i]));
 	}
 	for (std::string_view str : settings_.indexedKeyStrings())
 	{

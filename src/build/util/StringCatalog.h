@@ -9,10 +9,10 @@
 class BuildSettings;
 class StringStatistics;
 
-class StringManager
+class StringCatalog
 {
 public:
-	StringManager();
+	StringCatalog();
 
 	void build(const BuildSettings& setings, const StringStatistics& strings);
 

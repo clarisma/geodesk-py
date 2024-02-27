@@ -1,14 +1,14 @@
-#include "StringManager.h"
+#include "StringCatalog.h"
 #include <algorithm>
 #include "BuildSettings.h"
 #include "StringStatistics.h"
 
-StringManager::StringManager()
+StringCatalog::StringCatalog()
 {
 
 }
 
-const char* StringManager::CORE_STRINGS[] =
+const char* StringCatalog::CORE_STRINGS[] =
 {
 	"",
 	"no",
@@ -36,7 +36,7 @@ const char* StringManager::CORE_STRINGS[] =
  *     
  */
 
-void StringManager::build(const BuildSettings& setings, const StringStatistics& strings)
+void StringCatalog::build(const BuildSettings& setings, const StringStatistics& strings)
 {
 	uint32_t minProtoStringUsage = 100;
 	uint32_t protoStringCount = 0;
@@ -103,7 +103,7 @@ void StringManager::build(const BuildSettings& setings, const StringStatistics& 
 	printf("Sorted strings in order of occurrence count.\n");
 }
 
-void StringManager::sortDescending(SortEntry* start, SortEntry* end)
+void StringCatalog::sortDescending(SortEntry* start, SortEntry* end)
 {
 	std::sort(start, end, [](const SortEntry& a, const SortEntry& b) 
 		{

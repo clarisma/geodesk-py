@@ -61,7 +61,7 @@ void GolBuilder::analyze()
 	printf("Building tile lookup...\n");
 	tileCatalog_.build(tib.tileCount(), tileIndex.get(), settings_.zoomLevels());
 	printf("Tile lookup built.\n");
-	stringManager_.build(settings_, analyzer.strings());
+	stringCatalog_.build(settings_, analyzer.strings());
 }
 
 void GolBuilder::sort()

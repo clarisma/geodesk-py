@@ -6,7 +6,7 @@
 #include <string_view>
 #include <common/store/IndexFile.h>
 #include "build/util/BuildSettings.h"
-#include "build/util/StringManager.h"
+#include "build/util/StringCatalog.h"
 #include "build/util/TileCatalog.h"
 
 
@@ -26,7 +26,7 @@ public:
 	void build(const char* golPath);
 	const BuildSettings& settings() const { return settings_; }
 	int threadCount() const { return threadCount_; }
-	const StringManager& stringManager() const { return stringManager_; }
+	const StringCatalog& tringCatalog() const { return stringCatalog_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
 	IndexFile& nodeIndex() { return nodeIndex_; }
 	IndexFile& wayIndex() { return wayIndex_; }
@@ -44,7 +44,7 @@ private:
 	BuildSettings settings_;
 	std::filesystem::path golPath_;
 	std::filesystem::path workPath_;
-	StringManager stringManager_;
+	StringCatalog stringCatalog_;
 	TileCatalog tileCatalog_;
 	IndexFile nodeIndex_;
 	IndexFile wayIndex_;
