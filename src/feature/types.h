@@ -58,7 +58,7 @@ public:
     static const uint32_t WAYNODE_FLAGGED = 0b00000000'11110101'00000000'00000000;
     static const uint32_t RELATION_MEMBERS = 0b00001100'11000100'00001100'11000100;
 
-    FeatureTypes(uint32_t types) : types_(types) {}
+    constexpr FeatureTypes(uint32_t types) : types_(types) {}
     FeatureTypes operator|(FeatureTypes other) const 
     { 
         return FeatureTypes(types_ | other.types_);
