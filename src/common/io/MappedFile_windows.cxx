@@ -11,6 +11,10 @@ void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
     // printf("%s: Mapping %llu bytes at %llu...\n", fileName().c_str(), length, offset);
     DWORD protect = (mode & MappingMode::WRITE) ?
         PAGE_READWRITE : PAGE_READONLY;
+
+    // We need to explicitly specify the maximum size to force Windows 
+    // to grow the file to that size in case we're mapping beyond the
+    // current file size
     uint64_t maxSize = offset + length;
     HANDLE mappingHandle = CreateFileMappingA(fileHandle_, NULL, protect, 
         static_cast<DWORD>(maxSize >> 32), static_cast<DWORD>(maxSize), NULL);

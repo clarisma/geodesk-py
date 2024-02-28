@@ -43,15 +43,40 @@ void SorterContext::stringTable(protobuf::Message strings)
         uint32_t len = readVarint32(p);
         p += len;
 
-        // TODO
-        // Look up the string
-        // If string is in the Proto-String Table, store the encodings
-        // for key/value
-        // Otherwise, store the offset
-        uint32_t ofs = static_cast<uint32_t>(pString - osmStrings_);
+        /* TODO
+        stringTranslationTable_.push_back(
+            builder_->stringCatalog().encodedProtoString(
+                reinterpret_cast<const ShortVarString*>(pString),
+                osmStrings_));
+        */
     }
 }
 
+
+void SorterContext::encodeString(uint32_t stringNumber, int type)
+{
+    uint32_t code = stringTranslationTable_[stringNumber].get(type);
+    if (code & ProtoStringCode::SHARED_STRING_FLAG)
+    {
+        // write the varint-encoded proto-string code (including the marker bit)
+        uint32_t byteCount = (code & 3) + 1;
+        code >>= 2;
+        tempWriter_.writeBytes(reinterpret_cast<const uint8_t*>(&code), byteCount);
+    }
+    else
+    {
+        uint32_t ofs = code >> 3;
+        const uint8_t* bytes = osmStrings_ + ofs;
+        // TODO: wrong, must re-encode string length to account for the marker bit
+        // maybe change encoding, use 0-byte as literal string marker
+        // and use untagged varint for codes?
+        // If so, would need to start numbering at 1
+        // But how to diffentiate codes from offsets to literal?
+        // could still use bit 2 as a marker
+        uint32_t stringSize = reinterpret_cast<const ShortVarString*>(bytes)->totalSize();
+        tempWriter_.writeBytes(bytes, stringSize);
+    }
+}
 
 void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
 {
@@ -61,7 +86,7 @@ void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
     {
         uint32_t key = readVarint32(pKey);
         uint32_t value = readVarint32(pValue);
-
+        
         // TODO: Write encoded proto-string codes, or literal strings
         // into tempWriter_
     }

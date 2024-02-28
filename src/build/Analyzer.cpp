@@ -191,7 +191,8 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 				break;
 			}
 			LOG("==== Global string arena full, culling strings < %d...", minStringCount_);
-			strings_.removeStrings(minStringCount_++);
+			strings_.removeStrings(minStringCount_);
+			minStringCount_ <<= 1;
 		}
 		p += StringStatistics::Counter::grossSize(stringSize);
 	}
@@ -255,7 +256,7 @@ void Analyzer::analyze(const char* fileName)
 	{
 		const StringStatistics::Counter* counter = iter.next();
 		if (!counter) break;
-		uint64_t subTotal = counter->totalCount();
+		uint64_t subTotal = counter->trueTotalCount();
 		if (subTotal >= 100)
 		{
 			std::string_view s = counter->stringView();

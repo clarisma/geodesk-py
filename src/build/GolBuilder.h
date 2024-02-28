@@ -26,7 +26,7 @@ public:
 	void build(const char* golPath);
 	const BuildSettings& settings() const { return settings_; }
 	int threadCount() const { return threadCount_; }
-	const StringCatalog& tringCatalog() const { return stringCatalog_; }
+	const StringCatalog& stringCatalog() const { return stringCatalog_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
 	IndexFile& nodeIndex() { return nodeIndex_; }
 	IndexFile& wayIndex() { return wayIndex_; }

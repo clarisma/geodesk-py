@@ -21,9 +21,10 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 	if (mode & OpenMode::WRITE)
 	{
 		mainMappingSize_ = ((fileSize | 1) + SEGMENT_LENGTH - 1) & ~SEGMENT_LENGTH_MASK;
+		#ifndef _WIN32
 		setSize(mainMappingSize_);
-		// TODO: only needed on Linux, Windows expands the file automatically
-		// to match the mapping extent (No! It's in reverse)
+		// Only needed on Linux, Windows expands the file automatically
+		#endif
 	}
 	else
 	{

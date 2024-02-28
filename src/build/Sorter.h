@@ -3,10 +3,11 @@
 
 #pragma once
 #include <vector>
+#include <common/util/BufferWriter.h>
 #include <common/util/ChunkedBuffer.h>
 #include "geom/Coordinate.h"
 #include "osm/OsmPbfReader.h"
-#include "ProtoStringTable.h"
+#include "build/util/StringCatalog.h"
 
 class GolBuilder;
 
@@ -51,7 +52,7 @@ public:
 private:
 	GroupEncoder* getEncoder(int pile, int startMarker);
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
-	void encodePackedString(uint32_t blockStringCode, ProtoStringType keyOrValue);
+	void encodeString(uint32_t stringNumber, int type);
 
 	GolBuilder* builder_;
 	/**
@@ -66,7 +67,7 @@ private:
 	 * the Proto-String Table) or into a literal string (an offset into the
 	 * OSM block's string table)
 	 */
-	std::vector<ProtoStringEncoding> stringTranslationTable_;
+	std::vector<ProtoStringCode> stringTranslationTable_;
 	BufferWriter tempWriter_;
 	std::vector<uint64_t> memberIds_;
 	std::vector<uint32_t> tagsOrRoles_;

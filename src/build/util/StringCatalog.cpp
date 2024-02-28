@@ -139,7 +139,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 		uint32_t slot = hash % tableSlotCount;
 		pEntry->next = table[slot];
 		table[slot] = reinterpret_cast<uint8_t*>(pEntry) - arena_.get();
-		printf("%d: Indexed %s\n", slot, std::string(pEntry->string.toStringView()).c_str());
+		// printf("%d: Indexed %s\n", slot, std::string(pEntry->string.toStringView()).c_str());
 	}
 	table_ = table;
 	tableSlotCount_ = tableSlotCount;
@@ -206,7 +206,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 	printf("Created global string table with %lld strings.\n", globalStrings.size());
 	for (Entry* entry : globalStrings)
 	{
-		printf("- %s\n", std::string(entry->string.toStringView()).c_str());
+		// printf("- %s\n", std::string(entry->string.toStringView()).c_str());
 	}
 
 
