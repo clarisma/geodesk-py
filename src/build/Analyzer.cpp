@@ -13,9 +13,9 @@ Analyzer::Analyzer(const BuildSettings& settings, int numberOfThreads) :
 	OsmPbfReader(numberOfThreads),
 	settings_(settings),
 	strings_(outputTableSize(), outputArenaSize()),
-	minStringCount_(2),
-	progress_("Analyzing")
+	minStringCount_(2)
 {
+	progress_.setTask("Analyzing...");
 }
 
 AnalyzerContext::AnalyzerContext(Analyzer* analyzer) :

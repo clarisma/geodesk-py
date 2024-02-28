@@ -27,6 +27,11 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+if(MSVC)
+  # Add /utf-8 compile option for UTF-8 support globally
+  add_compile_options("/utf-8")
+endif()
+
 project ("geodesk-py")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -116,7 +121,9 @@ if(NOT BUILD_WHEELS)
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
 	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
-
+	if(MSVC)
+		target_compile_options(geodesk-py PRIVATE "/utf-8") # Apply this line for each target
+    endif()
 	set(GOL_SOURCE_FILES ${SOURCE_FILES})
 	list(FILTER GOL_SOURCE_FILES EXCLUDE REGEX "src/python/.*")
 	add_executable (gol "src/gol/main.cxx" ${GOL_SOURCE_FILES} "src/common/data/StringList.h")
@@ -137,7 +144,7 @@ else()
 	endif()
 endif()
 
-# message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
  
 target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON)
 # TODO: Add tests and install targets if needed.

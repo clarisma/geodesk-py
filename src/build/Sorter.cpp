@@ -189,13 +189,12 @@ void SorterContext::harvestResults()
 Sorter::Sorter(GolBuilder* builder) :
     OsmPbfReader(builder->threadCount()),
     builder_(builder),
-    progress_("Sorting"),
     nodeCount_(0),
     wayCount_(0),
     wayNodeCount_(0),
     relationCount_(0)
 {
-
+    progress_.setTask("Sorting...");
 }
 
 void Sorter::sort(const char* fileName)
