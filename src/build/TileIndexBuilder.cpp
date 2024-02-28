@@ -86,6 +86,7 @@ void TileIndexBuilder::trimTiles()
 			(*p++)->clearNodeCount();
 		}
 		while (p < pEnd);
+		tileCount_ = settings_.maxTiles();
 	}
 }
 
