@@ -81,9 +81,9 @@ void GolBuilder::openIndex(IndexFile& index, const char* name, int extraBits)
 
 void GolBuilder::openIndexes()
 {
-	openIndex(nodeIndex_, "nodes.idx", 0);
-	openIndex(wayIndex_, "ways.idx", 2);
-	openIndex(relationIndex_, "relations.idx", 2);
+	openIndex(featureIndexes_[0], "nodes.idx", 0);
+	openIndex(featureIndexes_[1], "ways.idx", 2);
+	openIndex(featureIndexes_[2], "relations.idx", 2);
 }
 
 #ifdef GEODESK_PYTHON

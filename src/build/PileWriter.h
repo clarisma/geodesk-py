@@ -3,28 +3,48 @@
 
 #pragma once
 #include <cstring>
-#include <common/alloc/Arena.h>
-#include <common/util/Buffer.h>
+#include <common/alloc/SimpleArena.h>
+#include <common/util/BufferWriter.h>
 #include <common/util/protobuf.h>
 #include "geom/Coordinate.h"
 
-class PileWriter
+class PileFile;
+
+
+class PileSet
 {
 public:
-	PileWriter();
+	PileSet() :
+		pageSize_(16 * 1024),
+		arena_(16 * 1024 * 1024),	// must be multiple of 
+		// Don't depend on pageSize_ (initialization order is based on 
+		// order of fields, and might change)
+		firstPile_(nullptr)
+	{
+	}
+
+	PileSet(PileSet&& other) :
+		arena_(std::move(other.arena_)),
+		pageSize_(other.pageSize_),
+		firstPile_(other.firstPile_)
+	{
+		other.firstPile_ = nullptr;
+	}
+
+	void writeTo(PileFile& file);
 
 	class Page
 	{
 	protected:
 		Page* next_;
 
-		friend class PileWriter;
+		friend class PileSet;
 	};
 
 	class Pile : public Page
 	{
 	public:
-		
+		Pile* next() const { return nextPile_; }
 
 	private:
 		Pile* nextPile_;
@@ -34,11 +54,66 @@ public:
 		uint64_t prevId_;
 		Coordinate prevCoord_;
 
+		friend class PileSet;
 		friend class PileWriter;
 	};
 
-	void writeNode(Pile* pile, uint64_t id, Coordinate xy, Buffer& tags)
+protected:
+	Pile* createPile(uint32_t number)
 	{
+		uint8_t* p = arena_.alloc(pageSize());
+		Pile* pile = reinterpret_cast<Pile*>(p);
+		pile->nextPile_ = firstPile_;
+		pile->number_ = number;
+		pile->remaining_ = pageSize() - sizeof(Pile);
+		pile->p_ = p + sizeof(Pile);
+		pile->prevId_ = 0;
+		pile->prevCoord_ = Coordinate(0, 0);
+		firstPile_ = pile;
+		return pile;
+	}
+
+	void addPage(Pile* pile)
+	{
+		Page* lastPage = reinterpret_cast<Page*>(pile->p_ - pageSize() + pile->remaining_);
+		uint8_t* p = arena_.alloc(pageSize());
+		Page* nextPage = reinterpret_cast<Page*>(p);
+		nextPage->next_ = nullptr;
+		lastPage->next_ = nextPage;
+		pile->p_ = p + sizeof(Page);
+		pile->remaining_ = pageSize() - sizeof(Page);
+	}
+
+	uint32_t pageSize() const { return pageSize_; }
+
+	SimpleArena arena_;
+	uint32_t pageSize_;
+	Pile* firstPile_;
+};
+
+
+class PileWriter : public PileSet
+{
+public:
+	PileWriter(uint32_t tileCount)
+	{
+		pileIndex_.reset(new Pile*[tileCount + 1]);
+	}
+
+	Pile* get(int pileNumber)
+	{
+		Pile* pile = pileIndex_.get()[pileNumber];
+		if (!pile)
+		{
+			pile = createPile(pileNumber);
+			pileIndex_.get()[pileNumber] = pile;
+		}
+		return pile;
+	}
+		
+	void writeNode(int pileNumber, uint64_t id, Coordinate xy, BufferWriter& tags)
+	{
+		Pile* pile = get(pileNumber);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
 			// x/y deltas, and optional tagsLength
@@ -81,11 +156,23 @@ public:
 		pile->prevId_ = id;
 	}
 
+	void closePiles()
+	{
+		Pile* pile = firstPile_;
+		while (pile)
+		{
+			writeByte(pile, 0);
+			pileIndex_.get()[pile->number_] = nullptr;
+			pile = pile->nextPile_;
+		}
+	}
+
+private:
 	void write(Pile* pile, const uint8_t* bytes, uint32_t len)
 	{
 		for (;;)
 		{
-			if (len < pile->remaining_)
+			if (len <= pile->remaining_)
 			{
 				std::memcpy(pile->p_, bytes, len);
 				pile->p_ += len;
@@ -99,34 +186,13 @@ public:
 		}
 	}
 
-private:
-	Pile* createPile(uint32_t number, Pile* firstPile)
+	void writeByte(Pile* pile, uint8_t v)
 	{
-		uint8_t* p = arena_.alloc(pageSize(), 8);
-		Pile* pile = reinterpret_cast<Pile*>(p);
-		pile->nextPile_ = firstPile;
-		pile->number_ = number;
-		pile->remaining_ = pageSize() - sizeof(Pile);
-		pile->p_ = p + sizeof(Pile);
-		pile->prevId_ = 0;
-		pile->prevCoord_ = Coordinate(0,0);
-		return pile;
+		if (pile->remaining_ == 0) addPage(pile);
+		*pile->p_ = v;
+		pile->p_++;
+		pile->remaining_--;
 	}
 
-	void addPage(Pile* pile)
-	{
-		Page* lastPage = reinterpret_cast<Page*>(
-			pile->p_ - pageSize() + pile->remaining_ - sizeof(Page));
-		uint8_t* p = arena_.alloc(pageSize(), 8);
-		Page* nextPage = reinterpret_cast<Page*>(p);
-		nextPage->next_ = nullptr;
-		lastPage->next_ = nextPage;
-		pile->p_ = p + sizeof(Page);
-		pile->remaining_ = pageSize() - sizeof(Page);
-	}
-
-	uint32_t pageSize() const { return pageSize_; }
-
-	Arena arena_;
-	uint32_t pageSize_;
+	std::unique_ptr<Pile*[]> pileIndex_;
 };

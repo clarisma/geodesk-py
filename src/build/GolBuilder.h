@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string_view>
 #include <common/store/IndexFile.h>
+#include <common/store/PileFile.h>
 #include "build/util/BuildSettings.h"
 #include "build/util/StringCatalog.h"
 #include "build/util/TileCatalog.h"
@@ -28,9 +29,13 @@ public:
 	int threadCount() const { return threadCount_; }
 	const StringCatalog& stringCatalog() const { return stringCatalog_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
-	IndexFile& nodeIndex() { return nodeIndex_; }
-	IndexFile& wayIndex() { return wayIndex_; }
-	IndexFile& relationIndex() { return relationIndex_; }
+	IndexFile& featureIndex(int index) 
+	{ 
+		assert(index >= 0 && index <= 2);
+		return featureIndexes_[index]; 
+	}
+	IndexFile& nodeIndex() { return featureIndex(0); }
+	PileFile& featurePiles() { return featurePiles; }
 
 private:
 	void analyze();
@@ -46,8 +51,7 @@ private:
 	std::filesystem::path workPath_;
 	StringCatalog stringCatalog_;
 	TileCatalog tileCatalog_;
-	IndexFile nodeIndex_;
-	IndexFile wayIndex_;
-	IndexFile relationIndex_;
+	IndexFile featureIndexes_[3];
+	PileFile featurePiles_;
 	int threadCount_;
 };

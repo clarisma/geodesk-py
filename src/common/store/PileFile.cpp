@@ -1,10 +1,25 @@
 #include "PileFile.h"
 
 #include <cassert>
+#include <common/util/Bits.h>
 
 PileFile::PileFile()
 {
 
+}
+
+
+void PileFile::create(const char* filename, uint32_t pileCount, uint32_t pageSize)
+{
+	assert(pileCount > 0 && pileCount < ((1 << 26) - 1));
+	assert(pageSize >= 4096 && pageSize <= SEGMENT_LENGTH && Bits::bitCount(pageSize) == 1);
+	open(filename, OpenMode::READ | OpenMode::WRITE | OpenMode::CREATE);
+	Metadata* meta = metadata();
+	pageSize_ = pageSize;
+	pageS
+	meta->pageSizeShift = Bits::countTrailingZerosInNonZero(pageSize);
+	meta->pileCount = pileCount;
+	
 }
 
 

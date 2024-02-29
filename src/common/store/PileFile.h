@@ -15,6 +15,7 @@ public:
 		uint8_t* end;
 	};
 
+	void create(const char* filename, uint32_t pileCount, uint32_t pageSize);
 	void append(uint32_t pile, const uint8_t* data, size_t len);
 	Data load(uint32_t pile);
 		

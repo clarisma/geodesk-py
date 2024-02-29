@@ -44,6 +44,16 @@ public:
 		// until the arena is actually used
 	}
 
+	SimpleArena(SimpleArena&& other) noexcept :
+		current_(other.current_),
+		p_(other.p_),
+		end_(other.end_)
+	{
+		other.current_ = nullptr;
+		other.end_ = reinterpret_cast<uint8_t*>(grossChunkSize());
+		other.p_ = other.end_;
+	}
+
 	~SimpleArena()
 	{
 		const Chunk* chunk = current_;
@@ -75,9 +85,14 @@ public:
 	}
 
 private:
+	size_t grossChunkSize() const noexcept
+	{
+		return end_ - reinterpret_cast<uint8_t*>(current_);
+	}
+
 	void allocChunk()
 	{
-		size_t grossSize = end_ - reinterpret_cast<uint8_t*>(current_);
+		size_t grossSize = grossChunkSize();
 		uint8_t * newChunkRaw = new uint8_t[grossSize];
 		p_ = newChunkRaw + sizeof(Chunk);
 		end_ = newChunkRaw + grossSize;

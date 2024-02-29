@@ -3,14 +3,20 @@
 #include "GolBuilder.h"
 #include "geom/Mercator.h"
 
+// TODO: Remember to always flush the BufferWriter, and reset buffer
+
 SorterContext::SorterContext(Sorter* sorter) :
     OsmPbfContext<SorterContext, Sorter>(sorter),
     builder_(sorter->builder()),
     osmStrings_(nullptr),
+    tempBuffer_(4096),
+    tempWriter_(&tempBuffer_),
+    currentPhase_(0),
     nodeCount_(0),
     wayCount_(0),
     wayNodeCount_(0),
-    relationCount_(0)
+    relationCount_(0),
+    pileWriter_(sorter->builder()->tileCatalog().tileCount())
 {
 }
 
@@ -39,16 +45,10 @@ void SorterContext::stringTable(protobuf::Message strings)
         {
             throw OsmPbfException("Bad string table. Unexpected field: %d", marker);
         }
-        const uint8_t* pString = p;
-        uint32_t len = readVarint32(p);
-        p += len;
-
-        /* TODO
+        const ShortVarString* str = reinterpret_cast<const ShortVarString*>(p);
         stringTranslationTable_.push_back(
-            builder_->stringCatalog().encodedProtoString(
-                reinterpret_cast<const ShortVarString*>(pString),
-                osmStrings_));
-        */
+            builder_->stringCatalog().encodedProtoString(str, osmStrings_));
+        p += str->totalSize();
     }
 }
 
@@ -67,14 +67,26 @@ void SorterContext::encodeString(uint32_t stringNumber, int type)
     {
         uint32_t ofs = code >> 3;
         const uint8_t* bytes = osmStrings_ + ofs;
-        // TODO: wrong, must re-encode string length to account for the marker bit
-        // maybe change encoding, use 0-byte as literal string marker
-        // and use untagged varint for codes?
-        // If so, would need to start numbering at 1
-        // But how to diffentiate codes from offsets to literal?
-        // could still use bit 2 as a marker
-        uint32_t stringSize = reinterpret_cast<const ShortVarString*>(bytes)->totalSize();
-        tempWriter_.writeBytes(bytes, stringSize);
+        uint32_t len = *bytes;
+        if (len & 0x80)
+        {
+            bytes++;
+            len = (len & 0x7f) | (*bytes << 7);
+        }
+        uint32_t encodedLen = len << 1;
+        if (encodedLen > 0x7f)
+        {
+            tempWriter_.writeByte((encodedLen & 0x7f) | 0x80);
+            tempWriter_.writeByte(encodedLen >> 7);
+            // TODO: We are encoding the string length as a varint13, since
+            // we're using Bit 0 as the shared-vs-literal disciminator 
+            // This limits string length to ~8K instead of ~16K
+        }
+        else
+        {
+            tempWriter_.writeByte(encodedLen);
+        }
+        tempWriter_.writeBytes(bytes+1, len);
     }
 }
 
@@ -86,9 +98,8 @@ void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
     {
         uint32_t key = readVarint32(pKey);
         uint32_t value = readVarint32(pValue);
-        
-        // TODO: Write encoded proto-string codes, or literal strings
-        // into tempWriter_
+        encodeString(key, ProtoStringCode::KEY);
+        encodeString(value, ProtoStringCode::VALUE);
     }
 
     // In new Proto-GOL format, we don't write the tag count
@@ -98,20 +109,64 @@ void SorterContext::encodeTags(protobuf::Message keys, protobuf::Message values)
 }
 
 
+void SorterContext::encodeTags(protobuf::Message tags)
+{
+    const uint8_t* p = tags.start;
+    while (p < tags.end)
+    {
+        uint32_t key = readVarint32(p);
+        if (key == 0) break;
+        uint32_t value = readVarint32(p);
+        encodeString(key, ProtoStringCode::KEY);
+        encodeString(value, ProtoStringCode::VALUE);
+    }
+    tags.start = p;
+        // TODO: This feels hacky; start/end should be immutable, and node()
+        // should not have the responsibility to advance start pointer.
+        // However, this is the fastest approach
+}
+
+
+void SorterContext::addFeature(uint64_t id, uint32_t pile)
+{
+    features_.emplace_back(id, pile);
+    if (features_.size() == features_.capacity()) flush(currentPhase_);
+}
+
+// TODO: Could deadlock if all tasks have been processed, but 
+//  ways are still remaining unflushed while other threads are
+//  attempting to start relations
+//  afterTasks() should solve this
+
+
+void SorterContext::afterTasks()
+{
+    if (blockBytesProcessed())
+    {
+        flush(currentPhase_);
+    }
+}
+
+void SorterContext::flush(int futurePhase)
+{
+    pileWriter_.closePiles();
+    SorterOutputTask task(currentPhase_, futurePhase, blockBytesProcessed(),
+        std::move(features_), std::move(pileWriter_));
+    reader()->postOutput(std::move(task));
+    resetBlockBytesProcessed();
+    features_.reserve(batchSize(futurePhase));
+}
+
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
     // project lon/lat to Mercator
     // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
     uint32_t pile = builder_->tileCatalog().pileOfCoordinate(xy);
-    builder_->nodeIndex().put(id, pile); // TODO: move to putput thread
-    // look up tile
-    // get tile encoder, or create new one (start group for nodes)
-    // write x/y deltas to encoder
-    // If tagged:
-    // - write bodyLen (and tagCount?) to encoder
-    // - write pre-encoded keys and values (or literals) to encoder
-    nodeCount_++;
+    encodeTags(tags);
+    pileWriter_.writeNode(pile, id, xy, tempWriter_);
+    tempWriter_.reset();
+    addFeature(id, pile);
 }
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
@@ -195,7 +250,18 @@ Sorter::Sorter(GolBuilder* builder) :
     wayNodeCount_(0),
     relationCount_(0)
 {
+}
 
+
+void Sorter::processTask(SorterOutputTask& task)
+{
+    task.piles_.writeTo(builder_->featurePiles());
+    IndexFile& index = builder_->featureIndex(task.currentPhase_);
+    for (const FeatureIndexEntry entry : task.features_)
+    {
+        index.put(entry.id(), entry.pile());
+    }
+    progress_.progress(task.bytesProcessed_);
 }
 
 void Sorter::sort(const char* fileName)

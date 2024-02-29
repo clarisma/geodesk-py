@@ -36,6 +36,21 @@ public:
 		end_ = buf->end();
 	}
 
+	const char* data() const
+	{
+		return buf_->data();
+	}
+
+	const size_t length() const
+	{
+		return p_ - buf_->start();
+	}
+
+	void reset()
+	{
+		p_ = buf_->start();
+	}
+
 
 	void flush()
 	{

@@ -8,6 +8,7 @@
 #include "geom/Coordinate.h"
 #include "osm/OsmPbfReader.h"
 #include "build/util/StringCatalog.h"
+#include "PileWriter.h"
 
 class GolBuilder;
 
@@ -35,6 +36,13 @@ private:
 
 class Sorter;
 
+enum SorterPhase
+{
+	NODES,
+	WAYS,
+	RELATIONS
+};
+
 class SorterContext : public OsmPbfContext<SorterContext, Sorter>
 {
 public:
@@ -47,12 +55,16 @@ public:
 	void way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes);
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
+	void afterTasks();
 	void harvestResults();
 
 private:
-	GroupEncoder* getEncoder(int pile, int startMarker);
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
+	void encodeTags(protobuf::Message tags);
 	void encodeString(uint32_t stringNumber, int type);
+	void addFeature(uint64_t id, uint32_t pile);
+	void flush(int futurePhase);
+	size_t batchSize(int phase) { return 8192; }  // TODO
 
 	GolBuilder* builder_;
 	/**
@@ -68,7 +80,12 @@ private:
 	 * OSM block's string table)
 	 */
 	std::vector<ProtoStringCode> stringTranslationTable_;
+	DynamicBuffer tempBuffer_;	// keep this order
 	BufferWriter tempWriter_;
+	PileWriter pileWriter_;
+	std::vector<FeatureIndexEntry> features_;
+	int currentPhase_;
+
 	std::vector<uint64_t> memberIds_;
 	std::vector<uint32_t> tagsOrRoles_;
 	uint64_t nodeCount_;
@@ -77,8 +94,39 @@ private:
 	uint64_t relationCount_;
 };
 
+class FeatureIndexEntry
+{
+public:
+	FeatureIndexEntry(uint64_t id, uint32_t pile) :
+		id_(id), pile_(pile) {}
+
+	uint64_t id() const noexcept { return id_;  }
+	uint64_t pile() const noexcept { return pile_; }
+
+private:
+	uint64_t id_;
+	uint32_t pile_;
+};
+
 class SorterOutputTask : public OsmPbfOutputTask
 {
+public:
+	SorterOutputTask(int currentPhase, int futurePhase,
+		uint64_t bytesProcessed,
+		std::vector<FeatureIndexEntry>&& features, PileSet&& piles) :
+		currentPhase_(currentPhase),
+		futurePhase_(futurePhase),
+		bytesProcessed_(bytesProcessed),
+		features_(std::move(features)),
+		piles_(std::move(piles))
+	{
+	}
+
+	std::vector<FeatureIndexEntry> features_;
+	PileSet piles_;
+	uint64_t bytesProcessed_;
+	int currentPhase_;
+	int futurePhase_;
 };
 
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
@@ -87,6 +135,7 @@ public:
 	Sorter(GolBuilder* builder);
 	GolBuilder* builder() { return builder_; };
 	void sort(const char* fileName);
+	void processTask(SorterOutputTask& task);
 	void addCounts(uint64_t nodeCount, uint64_t wayCount,
 		uint64_t wayNodeCount, uint64_t relationCount)
 	{
