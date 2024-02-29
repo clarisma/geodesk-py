@@ -95,8 +95,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 		if (counter->totalCount() < minProtoStringUsage) continue;
 
 		pEntry->string.init(&counter->string());
-		pEntry->keyCode = 0;
-		pEntry->valueCode = 0;
+		pEntry->code = ProtoStringCode(0,0);
 		sorted.emplace_back(counter->trueTotalCount(), pEntry);
 		uint64_t keyCount = counter->keyCount();
 		if (keyCount >= minKeyValueProtoStringUsage)
@@ -207,10 +206,12 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 	for (Entry* entry : globalStrings)
 	{
 		// printf("- %s\n", std::string(entry->string.toStringView()).c_str());
+		entry->mark(0);
 	}
 
+	createProtoStringCodes(sortedKeys, ProtoStringCode::KEY);
+	createProtoStringCodes(sortedValues, ProtoStringCode::VALUE);
 
-	// TODO: clear the markers??
 }
 
 void StringCatalog::sortDescending(std::vector<SortEntry>& sorted)
@@ -238,11 +239,11 @@ StringCatalog::Entry* StringCatalog::lookup(const std::string_view str) const no
 
 void StringCatalog::addGlobalString(std::vector<Entry*>& globalStrings, Entry* p)
 {
-	if (!p->keyCode)
+	if (!p->isMarked())
 	{
 		// Strign is not already in the GST
 		globalStrings.push_back(p);
-		p->keyCode = globalStrings.size();
+		p->mark(globalStrings.size());
 		// mark the entry with the global-string code + 1
 	}
 }
@@ -252,4 +253,25 @@ void StringCatalog::addGlobalString(std::vector<Entry*>& globalStrings, std::str
 	Entry* p = lookup(str);
 	assert(p); // string must exist
 	addGlobalString(globalStrings, p);
+}
+
+void StringCatalog::createProtoStringCodes(const std::vector<SortEntry>& sorted, int type)
+{
+	uint32_t pos = 0;
+	for (SortEntry entry : sorted)
+	{
+		uint8_t encoded;
+		uint8_t* start = reinterpret_cast<uint8_t*>(encoded);
+		uint8_t* p = start;
+		writeVarint(p, pos);
+		encoded = (encoded << 3) | 4 | ((p - start) - 1);
+		entry.second->code.varints[type] = encoded;
+		pos++;
+	}
+}
+
+ProtoStringCode StringCatalog::encodedProtoString(const ShortVarString* str, const uint8_t* stringBase) const
+{
+	Entry* p = lookup(str->toStringView());
+	return p ? ProtoStringCode(p->keyCode, p->valueCode) : ProtoStringCode(0, 0);
 }

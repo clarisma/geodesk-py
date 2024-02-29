@@ -61,5 +61,4 @@ private:
 	}
 
 	uint32_t pageSize_;
-	uint32_t sizeMask_;
 };

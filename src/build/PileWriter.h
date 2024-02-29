@@ -100,7 +100,7 @@ public:
 		pileIndex_.reset(new Pile*[tileCount + 1]);
 	}
 
-	Pile* get(int pileNumber)
+	Pile* get(uint32_t pileNumber)
 	{
 		Pile* pile = pileIndex_.get()[pileNumber];
 		if (!pile)
@@ -111,7 +111,7 @@ public:
 		return pile;
 	}
 		
-	void writeNode(int pileNumber, uint64_t id, Coordinate xy, BufferWriter& tags)
+	void writeNode(uint32_t pileNumber, uint64_t id, Coordinate xy, BufferWriter& tags)
 	{
 		Pile* pile = get(pileNumber);
 		uint8_t buf[32];
@@ -137,8 +137,9 @@ public:
 		pile->prevCoord_ = xy;
 	}
 
-	void writeWay(Pile* pile, uint64_t id, protobuf::Message nodes, Buffer& tags)
+	void writeWay(uint32_t pileNumber, uint64_t id, protobuf::Message nodes, BufferWriter& tags)
 	{
+		Pile* pile = get(pileNumber);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
 			// optional locator, and bodyLength

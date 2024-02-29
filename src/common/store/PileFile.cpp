@@ -16,10 +16,13 @@ void PileFile::create(const char* filename, uint32_t pileCount, uint32_t pageSiz
 	open(filename, OpenMode::READ | OpenMode::WRITE | OpenMode::CREATE);
 	Metadata* meta = metadata();
 	pageSize_ = pageSize;
-	pageS
 	meta->pageSizeShift = Bits::countTrailingZerosInNonZero(pageSize);
 	meta->pileCount = pileCount;
 	
+	uint32_t entriesPerPage = pageSize / sizeof(IndexEntry);
+	meta->pageCount = (pileCount + entriesPerPage) / entriesPerPage;
+		// No need to use -1, because count includes the metadata (which 
+		// has the same size as an index entry)
 }
 
 
@@ -38,7 +41,7 @@ void PileFile::append(uint32_t pile, const uint8_t* data, size_t len)
 		indexEntry->firstPage = lastPage;
 		indexEntry->lastPage = lastPage;
 	}
-	size_t lastPageUsedBytes = pileSize & sizeMask_;
+	size_t lastPageUsedBytes = pileSize & (pageSize_-1);
 	if (lastPageUsedBytes == 0) lastPageUsedBytes = pageSize_;
 	size_t pageSpaceRemaining = pageSize_ - lastPageUsedBytes;
 	Page* pPage = getPage(lastPage);

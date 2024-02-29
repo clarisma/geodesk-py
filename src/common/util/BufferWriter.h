@@ -46,6 +46,11 @@ public:
 		return p_ - buf_->start();
 	}
 
+	bool isEmpty() const
+	{
+		return p_ == buf_->start();
+	}
+
 	void reset()
 	{
 		p_ = buf_->start();

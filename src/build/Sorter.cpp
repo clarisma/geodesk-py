@@ -169,25 +169,43 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     addFeature(id, pile);
 }
 
+/*
+void SorterContext::writeWay(uint32_t pile, uint64_t id)
+{
+    pileWriter_.writeWay
+}
+*/
+
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
     IndexFile& nodeIndex = builder_->nodeIndex();
-    const uint8_t* p = nodes.start;
     uint64_t nodeId = 0;
     uint32_t prevNodePile = 0;
     uint32_t nodeCount = 0;
     uint32_t wayPile = 0;
+    
+    const uint8_t* p = nodes.start;
     while (p < nodes.end)
     {
         nodeId += readSignedVarint64(p);
         uint32_t nodePile = nodeIndex.get(nodeId);
-        wayPile += nodePile;
+        if (nodePile != prevNodePile && prevNodePile)
+        {
+            // TODO: multi-tile way
+        }
+
+        // TODO: Error if node not in index
+
+        prevNodePile = nodePile;
         nodeCount++;
     }
     wayNodeCount_ += nodeCount;
 
-    // TODO: this is a dummy
-    builder_->wayIndex().put(id, wayPile / nodeCount);
+    // TODO: Reject ways with less than 2 nodes
+
+    wayPile = prevNodePile;
+    pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
+    addFeature(id, wayPile);
 
     // Need to track
     // - prevNodeTile

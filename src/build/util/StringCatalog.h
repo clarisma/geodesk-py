@@ -20,6 +20,12 @@ struct ProtoStringCode
 
 	static const uint32_t SHARED_STRING_FLAG = 4;
 
+	ProtoStringCode(uint32_t keyCode, uint32_t valueCode)
+	{
+		varints[0] = keyCode;
+		varints[1] = valueCode;
+	}
+
 	uint32_t varints[2];
 
 	uint32_t get(int type) const noexcept { return varints[type]; }
@@ -65,9 +71,18 @@ private:
 	struct Entry
 	{
 		uint32_t next;
-		uint32_t keyCode;
-		uint32_t valueCode;
+		ProtoStringCode code;
 		ShortVarString string;
+
+		void mark(uint32_t v)
+		{
+			code.varints[0] = v;
+		}
+
+		bool isMarked() const
+		{
+			return code.varints[0];
+		}
 
 		static uint32_t totalSize(uint32_t stringSize)
 		{
@@ -88,6 +103,7 @@ private:
 	Entry* lookup(const std::string_view str) const noexcept;
 	static void addGlobalString(std::vector<Entry*>& globalStrings, Entry* p);
 	void addGlobalString(std::vector<Entry*>& globalStrings, std::string_view str);
+	void createProtoStringCodes(const std::vector<SortEntry>& sorted, int type);
 
 	std::unique_ptr<uint8_t[]> arena_;
 	const uint32_t* table_;

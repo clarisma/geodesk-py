@@ -62,6 +62,7 @@ private:
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
 	void encodeTags(protobuf::Message tags);
 	void encodeString(uint32_t stringNumber, int type);
+	void writeWay(uint32_t pile, uint64_t id);
 	void addFeature(uint64_t id, uint32_t pile);
 	void flush(int futurePhase);
 	size_t batchSize(int phase) { return 8192; }  // TODO

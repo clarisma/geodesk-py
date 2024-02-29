@@ -39,11 +39,11 @@ public:
 
 private:
 	void analyze();
+	void prepare();
 	void sort();
 	void validate();
 	void compile();
 
-	void openIndexes();
 	void openIndex(IndexFile& index, const char* name, int extraBits);
 
 	BuildSettings settings_;

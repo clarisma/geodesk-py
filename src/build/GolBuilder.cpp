@@ -42,7 +42,7 @@ void GolBuilder::build(const char* golPath)
 	std::filesystem::create_directories(workPath_);
 
 	analyze();
-	openIndexes();
+	prepare();
 	sort();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
@@ -79,11 +79,13 @@ void GolBuilder::openIndex(IndexFile& index, const char* name, int extraBits)
 	index.open((workPath_ / name).string().c_str(), mode);
 }
 
-void GolBuilder::openIndexes()
+void GolBuilder::prepare()
 {
 	openIndex(featureIndexes_[0], "nodes.idx", 0);
 	openIndex(featureIndexes_[1], "ways.idx", 2);
 	openIndex(featureIndexes_[2], "relations.idx", 2);
+	featurePiles_.create((workPath_ / "features.bin").string().c_str(), 
+		tileCatalog_.tileCount(), 64 * 1024);
 }
 
 #ifdef GEODESK_PYTHON
