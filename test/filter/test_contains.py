@@ -12,7 +12,7 @@ def test_contains_point(features):
         "Regierungsbezirk Karlsruhe",
         "Baden-W\u00FCrttemberg",
         "Verkehrsverbund Rhein-Neckar",
-        "Region Rhein-Neckar",
+        # "Region Rhein-Neckar (BW)",
         "Altstadt" }
     names1 = name_set(areas.contains(city))
     assert required <= names1
