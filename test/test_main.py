@@ -34,4 +34,4 @@ if __name__ == '__main__':
     # pytest.main(["test_anonymous_nodes.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_issue50.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_match.py::test_negative", "-rA", "-s", "--durations=9999"])
-    pytest.main(["test_nodes.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["test_match.py::test_multi", "-rA", "-s", "--durations=9999"])
