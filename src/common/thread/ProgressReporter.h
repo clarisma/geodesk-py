@@ -22,7 +22,14 @@ public:
 		unitsCompleted_(0),
 		percentageCompleted_(0)
 	{
-		memset(display_, ' ', 80);
+		memset(display_, ' ', TASK_START + MAX_TASK_WIDTH + PROGRESS_BAR_WIDTH + PERCENTAGE_WIDTH);
+		char* p = &display_[TASK_START + taskWidth_ + 3];
+		char* pEnd = &display_[TASK_START + taskWidth_ + PROGRESS_BAR_WIDTH - 3];
+		while (p < pEnd)
+		{
+			setBlockChar(p, PROGRESS_EMPTY_BLOCK);
+			p += 3;
+		}
 		int crPos = TASK_START + taskWidth_ + PROGRESS_BAR_WIDTH + PERCENTAGE_WIDTH;
 		display_[crPos] = '\r';
 		display_[crPos + 1] = 0;
@@ -79,15 +86,29 @@ public:
 		{
 			setBlockChar(pEnd, PROGRESS_PARTIAL_BLOCKS[quarterBlockCount]);
 		}
-		sprintf(&display_[TASK_START + taskWidth_ + PROGRESS_BAR_WIDTH],
-			"%d%%", percentageCompleted_);
+		char percentage[8];
+		Format::unsafe(percentage, "%3d%%", percentageCompleted_);
+		//memcpy(&display_[TASK_START + taskWidth_ + PROGRESS_BAR_WIDTH],
+		//	percentage, 4);
 		const char* xxx = (const char*)u8"straße 世界▕████████    \n";
 
-		fflush(stdout);
+		// fflush(stdout);
 		SetConsoleOutputCP(CP_UTF8);
-		_setmode(_fileno(stdout), _O_U8TEXT);
-		fflush(stdout);
+		// _setmode(_fileno(stdout), _O_U8TEXT);
+		// fflush(stdout);
 
+		const char* yyy = (const char*)
+			u8"[\033[97m00\033[0m:"
+			"\033[97m01\033[0m:"
+			"\033[97m12\033[0m]  "
+			"\033[97;100m████▎  \033[0m\n";
+
+		DWORD written = 0;
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		WriteConsoleA(hConsole, yyy, strlen(yyy), &written, NULL);
+		WriteConsoleA(hConsole, display_, strlen(display_), &written, NULL);
+		
+		/*
 		printf("monkey\n");
 		printf("straße\n");
 		printf("世界\n");
@@ -95,6 +116,7 @@ public:
 		printf("%s", xxx);
 		printf("%s", display_);
 		fflush(stdout);
+		*/
 		// printf("%s... %d%%\r", verb_, percentageCompleted_);
 	}
 
@@ -123,14 +145,16 @@ private:
 		"\U00002595"	// left delimiter
 		"\U0000258F"	// right delimiter
 		"\U00002588"	// full block
+		"\U0000254C"	// empty
 		"\U0000258E"	// one-quarter block
 		"\U0000258C"	// half block
-		"\U0000258D"	// three-quarter block
+		"\U0000258A"	// three-quarter block
 		;
 	static const int PROGRESS_DELIMITER_LEFT = 0;
 	static const int PROGRESS_DELIMITER_RIGHT = 3;
 	static const int PROGRESS_FULL_BLOCK = 6;
-	static inline const int PROGRESS_PARTIAL_BLOCKS[4] = { 0, 9, 12, 15 };
+	static const int PROGRESS_EMPTY_BLOCK = 9;
+	static inline const int PROGRESS_PARTIAL_BLOCKS[4] = { 9, 12, 15, 18 };
 
 	void setBlockChar(char* p, int code)
 	{
