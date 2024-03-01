@@ -21,6 +21,7 @@ uint32_t IndexFile::get(uint64_t key)
 	uint32_t overrun = std::max(
 		static_cast<int32_t>(byteOffset) - 
 		static_cast<int32_t>(BLOCK_SIZE - 4), 0);
+	assert(overrun <= 3);
 	byteOffset -= overrun;
 	bitShift += overrun * 8;
 	pointer p(translate(block * BLOCK_SIZE + byteOffset));
@@ -46,9 +47,13 @@ void IndexFile::put(uint64_t key, uint32_t value)
 	uint32_t overrun = std::max(
 		static_cast<int32_t>(byteOffset) -
 		static_cast<int32_t>(BLOCK_SIZE - 4), 0);
+	assert(overrun <= 3);
 	byteOffset -= overrun;
 	bitShift += overrun * 8;
 	void* pRaw = translate(block * BLOCK_SIZE + byteOffset);
+
+	// printf("Putting %llu=%d at %p...\n", key, value, pRaw);
+
 	pointer p(pRaw);
 	uint32_t oldValue = p.getUnalignedUnsignedInt();
 	// TOOD: make this safe for architectures that don't allow unaligned writes

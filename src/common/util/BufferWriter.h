@@ -51,7 +51,7 @@ public:
 		return p_ == buf_->start();
 	}
 
-	void reset()
+	void clear()
 	{
 		p_ = buf_->start();
 	}

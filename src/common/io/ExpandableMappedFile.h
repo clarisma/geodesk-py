@@ -11,7 +11,7 @@
  * A MappedFile that grows on demand (if opened in writable mode).
  * The main mapping covers the entire current file (rounded up to nearest 1 GB
  * if opened in writable mode). If regions are accessed that lie beyond the 
- * current size, the underlyong file is grown and additional maps are created. 
+ * current size, the underlyong file is grown and additional mappings are created. 
  * Growth is progressive: First, an additional 1 GB, then 2 GB, then 4 GB, etc.
  * up to a total of 64 TB. 
  * 

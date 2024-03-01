@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 #include <common/alloc/SimpleArena.h>
+#include <common/thread/Threads.h>
 #include <common/util/BufferWriter.h>
 #include <common/util/protobuf.h>
 #include "geom/Coordinate.h"
@@ -192,6 +193,7 @@ public:
 			xxx++;
 		}
 		//printf("Closed %d piles.\n", xxx);
+		printf("Thread %s: Flushing %d piles...\n", Threads::currentThreadId().c_str(), xxx);
 	}
 
 private:

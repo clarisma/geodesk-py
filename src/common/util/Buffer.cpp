@@ -33,6 +33,7 @@ void FileBuffer::flush(char* p)
 	p_ = buf_;
 }
 
+// TODO: Check the way DynamicBuffer grows!
 
 DynamicBuffer::DynamicBuffer(size_t initialCapacity)
 {

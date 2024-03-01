@@ -157,6 +157,12 @@ void SorterContext::flush(int futurePhase)
     resetBlockBytesProcessed();
     features_.reserve(batchSize(futurePhase));
     printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
+    if (futurePhase == 1)
+    {
+        // TODO
+        printf("Started ways...\n");
+        currentPhase_ = futurePhase;
+    }
 }
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
@@ -171,8 +177,9 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     }
     encodeTags(tags);
     pileWriter_.writeNode(pile, id, xy, tempWriter_);
-    tempWriter_.reset();
+    tempWriter_.clear();
     addFeature(id, pile);
+    nodeCount_++;
 }
 
 /*
@@ -184,6 +191,14 @@ void SorterContext::writeWay(uint32_t pile, uint64_t id)
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
+    return;
+
+    if (currentPhase_ != 1)
+    {
+        // TODO: phase shift
+        flush(1);
+    }
+
     IndexFile& nodeIndex = builder_->nodeIndex();
     uint64_t nodeId = 0;
     uint32_t prevNodePile = 0;
@@ -216,7 +231,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     wayPile = prevNodePile;
     if (wayPile)        // TODO
     {
-        pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
+        // pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
         addFeature(id, wayPile);
         //printf("way/%lld sorted into pile #%d\n", id, wayPile);
     }
@@ -224,6 +239,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     {
         //printf("way/%lld: unable to sort\n", id);
     }
+    tempWriter_.clear();
 
     // Need to track
     // - prevNodeTile
