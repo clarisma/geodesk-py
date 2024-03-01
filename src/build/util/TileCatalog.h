@@ -39,13 +39,16 @@ private:
 		}
 
 		void build();
-		void tile(uint32_t parentTip, Tile tile, uint32_t tip);
+		void branchTile(uint32_t parentTip, Tile tile, uint32_t tip);
+		void leafTile(uint32_t parentTip, Tile tile, uint32_t tip);
 		void omittedTile(uint32_t parentTip, Tile tile);
 		const uint32_t* takeGrid() { return grid_.release(); }
 		const uint32_t* takeTipToPile() { return tipToPile_.release(); }
 		uint32_t tileCount() const { return tileCount_; }
 
 	private:
+		void fillGrid(Tile tile, uint32_t pile);
+
 		std::unique_ptr<uint32_t[]> grid_;
 		std::unique_ptr<uint32_t[]> tipToPile_;
 		uint32_t tileCount_;

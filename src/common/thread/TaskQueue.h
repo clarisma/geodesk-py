@@ -31,7 +31,7 @@ public:
         if (count_ == size_)
         {
             /*
-            LOG("Thread %s: Queue %p full, waiting for space...",
+            printf("Thread %s: Queue %p full, waiting for space...\n",
                 Threads::currentThreadId().c_str(), this);
             */
             notFull_.wait(lock, [this] { return count_ < size_; });
@@ -80,8 +80,10 @@ public:
                         return;
                     }
                     if (count_ > 0) break;
-                    LOG("Thread %s: Waiting for tasks in queue %p...", 
+                    /*
+                    printf("Thread %s: Waiting for tasks in queue %p...\n", 
                         Threads::currentThreadId().c_str(), this);
+                    */
                     notEmpty_.wait(lock);
                 }
                 task = std::move(queue_[front_]);

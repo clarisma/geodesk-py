@@ -56,13 +56,22 @@ public:
 
 	~SimpleArena()
 	{
-		const Chunk* chunk = current_;
-		while (chunk)
+		freeChunks();
+	}
+
+	SimpleArena& operator=(SimpleArena&& other) noexcept 
+	{
+		if (this != &other) 
 		{
-			const Chunk* next = chunk->next;
-			delete[] reinterpret_cast<const uint8_t*>(chunk);
-			chunk = next;
+			freeChunks();
+			current_ = other.current_;
+			p_ = other.p_;
+			end_ = other.end_;
+			other.current_ = nullptr;
+			other.p_ = reinterpret_cast<uint8_t*>(grossChunkSize());
+			other.end_ = other.p_;
 		}
+		return *this;
 	}
 
 	uint8_t* alloc(size_t size)
@@ -99,6 +108,17 @@ private:
 		Chunk* newChunk = reinterpret_cast<Chunk*>(newChunkRaw);
 		newChunk->next = current_;
 		current_ = newChunk;
+	}
+
+	void freeChunks()
+	{
+		const Chunk* chunk = current_;
+		while (chunk)
+		{
+			const Chunk* next = chunk->next;
+			delete[] reinterpret_cast<const uint8_t*>(chunk);
+			chunk = next;
+		}
 	}
 
 	Chunk* current_;

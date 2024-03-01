@@ -97,6 +97,11 @@ public:
         outputQueue_.post(std::move(task));
     }
 
+    void reportOutputQueueSpace()
+    {
+        printf("%d slots free in output queue\n", outputQueue_.minimumRemainingCapacity());
+    }
+
 protected:
     void postWork(WorkTask&& task)
     {

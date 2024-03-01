@@ -20,10 +20,24 @@ struct ProtoStringCode
 
 	static const uint32_t SHARED_STRING_FLAG = 4;
 
+	ProtoStringCode()
+	{
+		varints[0] = 0;
+		varints[1] = 0;
+	}
+
 	ProtoStringCode(uint32_t keyCode, uint32_t valueCode)
 	{
 		varints[0] = keyCode;
 		varints[1] = valueCode;
+	}
+
+	void validate(const ShortVarString* str, const uint8_t* stringBase)
+	{
+		const uint8_t* pStr = reinterpret_cast<const uint8_t*>(str);
+		uint32_t encodedLiteral = (pStr - stringBase) << 3;
+		varints[0] = varints[0] ? varints[0] : encodedLiteral;
+		varints[1] = varints[1] ? varints[1] : encodedLiteral;
 	}
 
 	uint32_t varints[2];

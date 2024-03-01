@@ -76,6 +76,8 @@ public:
 	{
 	}
 
+	// TODO: Needs to be move-constructable??
+
 	const uint8_t* strings() const { return strings_.get(); }
 	const uint64_t blockBytesProcessed() const { return blockBytesProcessed_; }
 

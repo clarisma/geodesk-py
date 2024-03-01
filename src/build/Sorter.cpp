@@ -18,6 +18,7 @@ SorterContext::SorterContext(Sorter* sorter) :
     relationCount_(0),
     pileWriter_(sorter->builder()->tileCatalog().tileCount())
 {
+    features_.reserve(batchSize(0));
 }
 
 SorterContext::~SorterContext()
@@ -155,6 +156,7 @@ void SorterContext::flush(int futurePhase)
     reader()->postOutput(std::move(task));
     resetBlockBytesProcessed();
     features_.reserve(batchSize(futurePhase));
+    printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
 }
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
@@ -163,6 +165,10 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
     uint32_t pile = builder_->tileCatalog().pileOfCoordinate(xy);
+    if (!pile)
+    {
+        printf("node/%lld: Unable to assign to tile\n", id);
+    }
     encodeTags(tags);
     pileWriter_.writeNode(pile, id, xy, tempWriter_);
     tempWriter_.reset();
@@ -189,6 +195,10 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     {
         nodeId += readSignedVarint64(p);
         uint32_t nodePile = nodeIndex.get(nodeId);
+        if (!nodePile)
+        {
+            // printf("node/%llu not found in node index\n", nodeId);
+        }
         if (nodePile != prevNodePile && prevNodePile)
         {
             // TODO: multi-tile way
@@ -204,8 +214,16 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     // TODO: Reject ways with less than 2 nodes
 
     wayPile = prevNodePile;
-    pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
-    addFeature(id, wayPile);
+    if (wayPile)        // TODO
+    {
+        pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
+        addFeature(id, wayPile);
+        //printf("way/%lld sorted into pile #%d\n", id, wayPile);
+    }
+    else
+    {
+        //printf("way/%lld: unable to sort\n", id);
+    }
 
     // Need to track
     // - prevNodeTile
@@ -273,13 +291,16 @@ Sorter::Sorter(GolBuilder* builder) :
 
 void Sorter::processTask(SorterOutputTask& task)
 {
-    task.piles_.writeTo(builder_->featurePiles());
+    // task.piles_.writeTo(builder_->featurePiles());
     IndexFile& index = builder_->featureIndex(task.currentPhase_);
+    printf("Writing %llu features into the index...\n", task.features_.size());
     for (const FeatureIndexEntry entry : task.features_)
     {
         index.put(entry.id(), entry.pile());
     }
     progress_.progress(task.bytesProcessed_);
+    reportOutputQueueSpace();
+    // printf("-> Written\n");
 }
 
 void Sorter::sort(const char* fileName)

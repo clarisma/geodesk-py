@@ -3,6 +3,7 @@
 
 #pragma once
 #include <cstring>
+#include <memory>
 #include <common/alloc/SimpleArena.h>
 #include <common/util/BufferWriter.h>
 #include <common/util/protobuf.h>
@@ -30,6 +31,19 @@ public:
 	{
 		other.firstPile_ = nullptr;
 	}
+
+	PileSet& operator=(PileSet&& other) noexcept 
+	{
+		if (this != &other) 
+		{
+			arena_ = std::move(other.arena_);
+			pageSize_ = other.pageSize_;
+			firstPile_ = other.firstPile_;
+			other.firstPile_ = nullptr;
+		}
+		return *this;
+	}
+
 
 	void writeTo(PileFile& file);
 
@@ -97,8 +111,17 @@ class PileWriter : public PileSet
 public:
 	PileWriter(uint32_t tileCount)
 	{
-		pileIndex_.reset(new Pile*[tileCount + 1]);
+		Pile** pileIndex = new Pile*[tileCount + 1];
+		memset(pileIndex, 0, sizeof(Pile*) * (tileCount + 1));
+		pileIndex_.reset(pileIndex);
 	}
+
+	PileWriter(PileWriter&& other) :
+		PileSet(std::move(other)),
+		pileIndex_(std::move(other.pileIndex_))
+	{
+	}
+
 
 	Pile* get(uint32_t pileNumber)
 	{
@@ -159,13 +182,16 @@ public:
 
 	void closePiles()
 	{
+		int xxx = 0;
 		Pile* pile = firstPile_;
 		while (pile)
 		{
 			writeByte(pile, 0);
 			pileIndex_.get()[pile->number_] = nullptr;
 			pile = pile->nextPile_;
+			xxx++;
 		}
+		//printf("Closed %d piles.\n", xxx);
 	}
 
 private:

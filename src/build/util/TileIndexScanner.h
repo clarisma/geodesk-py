@@ -5,7 +5,8 @@
 #include "feature/ZoomLevels.h"
 #include "geom/Tile.h"
 
-// void tile(uint32_t parentTip, Tile tile, uint32_t tip);
+// void branchTile(uint32_t parentTip, Tile tile, uint32_t tip);
+// void leafTile(uint32_t parentTip, Tile tile, uint32_t tip);
 // void omittedTile(uint32_t parentTip, Tile tile);
 
 template <typename Derived>
@@ -40,7 +41,7 @@ private:
 
 	void scanBranch(uint32_t parentTip, Tile tile, uint32_t tip, uint32_t steps)
 	{
-		self()->tile(parentTip, tile, tip);
+		self()->branchTile(parentTip, tile, tip);
 		uint32_t step = steps & 3;
 		int zoom = tile.zoom() + step;
 		int top = tile.row() << step;
@@ -78,7 +79,7 @@ private:
 					}
 					else
 					{
-						self()->tile(tip, childTile, childTip);
+						self()->leafTile(tip, childTile, childTip);
 					}
 					childTip++;
 				}

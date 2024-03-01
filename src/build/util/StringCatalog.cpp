@@ -226,7 +226,7 @@ void StringCatalog::sortDescending(std::vector<SortEntry>& sorted)
 StringCatalog::Entry* StringCatalog::lookup(const std::string_view str) const noexcept
 {
 	uint32_t slot = Strings::hash(str) % tableSlotCount_;
-	printf("Looking up '%s' in slot %d...\n", std::string(str).c_str(), slot);
+	// printf("Looking up '%s' in slot %d...\n", std::string(str).c_str(), slot);
 	uint32_t ofs = table_[slot];
 	while (ofs)
 	{
@@ -260,8 +260,8 @@ void StringCatalog::createProtoStringCodes(const std::vector<SortEntry>& sorted,
 	uint32_t pos = 0;
 	for (SortEntry entry : sorted)
 	{
-		uint8_t encoded;
-		uint8_t* start = reinterpret_cast<uint8_t*>(encoded);
+		uint32_t encoded;
+		uint8_t* start = reinterpret_cast<uint8_t*>(&encoded);
 		uint8_t* p = start;
 		writeVarint(p, pos);
 		encoded = (encoded << 3) | 4 | ((p - start) - 1);
@@ -273,5 +273,7 @@ void StringCatalog::createProtoStringCodes(const std::vector<SortEntry>& sorted,
 ProtoStringCode StringCatalog::encodedProtoString(const ShortVarString* str, const uint8_t* stringBase) const
 {
 	Entry* p = lookup(str->toStringView());
-	return p ? ProtoStringCode(p->keyCode, p->valueCode) : ProtoStringCode(0, 0);
+	ProtoStringCode code = p ? p->code : ProtoStringCode(0, 0);
+	code.validate(str, stringBase);
+	return code;
 }

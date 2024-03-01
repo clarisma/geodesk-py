@@ -43,11 +43,37 @@ enum SorterPhase
 	RELATIONS
 };
 
+class FeatureIndexEntry
+{
+public:
+	FeatureIndexEntry(uint64_t id, uint32_t pile) :
+		id_(id), pile_(pile) {}
+
+	uint64_t id() const noexcept { return id_; }
+	uint64_t pile() const noexcept { return pile_; }
+
+private:
+	uint64_t id_;
+	uint32_t pile_;
+};
+
 class SorterContext : public OsmPbfContext<SorterContext, Sorter>
 {
 public:
 	SorterContext(Sorter* sorter);
 	~SorterContext();
+
+	// TODO: This constructor only exists to satify the requirements
+	// of std:vector (used in TaskEngine)
+	// It must never be called!
+	SorterContext(const SorterContext& other) :
+		OsmPbfContext(nullptr),
+		tempBuffer_(4096),
+		tempWriter_(&tempBuffer_),
+		pileWriter_(0)
+	{
+		assert(false);
+	}
 
 	// CRTP overrides
 	void stringTable(protobuf::Message strings);
@@ -65,7 +91,7 @@ private:
 	void writeWay(uint32_t pile, uint64_t id);
 	void addFeature(uint64_t id, uint32_t pile);
 	void flush(int futurePhase);
-	size_t batchSize(int phase) { return 8192; }  // TODO
+	size_t batchSize(int phase) { return 1024 * 8192; }  // TODO
 
 	GolBuilder* builder_;
 	/**
@@ -95,23 +121,10 @@ private:
 	uint64_t relationCount_;
 };
 
-class FeatureIndexEntry
-{
-public:
-	FeatureIndexEntry(uint64_t id, uint32_t pile) :
-		id_(id), pile_(pile) {}
-
-	uint64_t id() const noexcept { return id_;  }
-	uint64_t pile() const noexcept { return pile_; }
-
-private:
-	uint64_t id_;
-	uint32_t pile_;
-};
-
 class SorterOutputTask : public OsmPbfOutputTask
 {
 public:
+	SorterOutputTask() {} // TODO: not needed, only to satisfy compiler
 	SorterOutputTask(int currentPhase, int futurePhase,
 		uint64_t bytesProcessed,
 		std::vector<FeatureIndexEntry>&& features, PileSet&& piles) :
@@ -122,6 +135,8 @@ public:
 		piles_(std::move(piles))
 	{
 	}
+
+	// SorterOutputTask
 
 	std::vector<FeatureIndexEntry> features_;
 	PileSet piles_;

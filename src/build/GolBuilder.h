@@ -35,7 +35,7 @@ public:
 		return featureIndexes_[index]; 
 	}
 	IndexFile& nodeIndex() { return featureIndex(0); }
-	PileFile& featurePiles() { return featurePiles; }
+	PileFile& featurePiles() { return featurePiles_; }
 
 private:
 	void analyze();

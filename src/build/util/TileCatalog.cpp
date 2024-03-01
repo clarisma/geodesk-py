@@ -14,7 +14,10 @@ void TileCatalog::build(uint32_t tileCount, const uint32_t* index, ZoomLevels le
 void TileCatalog::Builder::build()
 {
 	int extent = 1 << MAX_ZOOM;
-	grid_.reset(new uint32_t[extent * extent]);
+	uint32_t* grid = new uint32_t[extent * extent];
+	memset(grid, 0, sizeof(uint32_t) * extent * extent);
+		// TODO: not needed, every cell should be filled
+	grid_.reset(grid);
 	
 	uint32_t tipCount = index()[0];
 	uint32_t* table = new uint32_t[tipCount + 1];
@@ -22,21 +25,34 @@ void TileCatalog::Builder::build()
 	tipToPile_.reset(table);
 
 	scan();
+
+	for (int i = 0; i < extent * extent; i++)
+	{
+		assert(grid[i]);
+	}
 }
 
-void TileCatalog::Builder::tile(uint32_t parentTip, Tile tile, uint32_t tip)
+void TileCatalog::Builder::branchTile(uint32_t parentTip, Tile tile, uint32_t tip)
 {
 	uint32_t pile = ++tileCount_;
 	tipToPile_.get()[tip] = pile;
-	if (tile.zoom() == MAX_ZOOM)
-	{
-		grid_.get()[cellOf(tile.column(), tile.row())] = pile;
-	}
+}
+
+void TileCatalog::Builder::leafTile(uint32_t parentTip, Tile tile, uint32_t tip)
+{
+	uint32_t pile = ++tileCount_;
+	tipToPile_.get()[tip] = pile;
+	fillGrid(tile, pile);
 }
 
 void TileCatalog::Builder::omittedTile(uint32_t parentTip, Tile tile)
 {
-	uint32_t parentPile = tipToPile_.get()[parentTip];
+	fillGrid(tile, tipToPile_.get()[parentTip]);
+}
+
+void TileCatalog::Builder::fillGrid(Tile tile, uint32_t pile)
+{
+	// printf("Filling %s with %d...\n", tile.toString().c_str(), pile);
 	int step = MAX_ZOOM - tile.zoom();
 	int extent = 1 << step;
 	int left = tile.column() << step;
@@ -47,7 +63,7 @@ void TileCatalog::Builder::omittedTile(uint32_t parentTip, Tile tile)
 	{
 		for (int col = left; col <= right; col++)
 		{
-			grid_.get()[cellOf(col, row)] = parentPile;
+			grid_.get()[cellOf(col, row)] = pile;
 		}
 	}
 }
