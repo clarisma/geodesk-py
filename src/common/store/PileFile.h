@@ -57,7 +57,8 @@ private:
 
 	Page* getPage(uint32_t page) 
 	{
-		return reinterpret_cast<Page*>(translate(page << metadata()->pageSizeShift));
+		return reinterpret_cast<Page*>(translate(
+			static_cast<uint64_t>(page) << metadata()->pageSizeShift));
 	}
 
 	uint32_t pageSize_;

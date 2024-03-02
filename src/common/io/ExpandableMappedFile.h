@@ -53,6 +53,7 @@ protected:
 	static const int SEGMENT_LENGTH_SHIFT = 30;
 	static const uint64_t SEGMENT_LENGTH_MASK = 0x3fff'ffff;
 	static const int EXTENDED_MAPPINGS_SLOT_COUNT = 16;
+	static const uint64_t MAX_FILE_SIZE = 64ULL * 1024 * 1024 * 1024 * 1024;		// 64 TB
 
 	void unmapSegments();
 
@@ -73,7 +74,7 @@ private:
 	 * mainMapping_; this implementation differs com.clarisma.common.store.Store,
 	 * since Java's MappedByteBuffer is limited to an int32_t range).
 	 */
-	volatile uint8_t* extendedMappings_[EXTENDED_MAPPINGS_SLOT_COUNT];
+	std::atomic<uint8_t*> extendedMappings_[EXTENDED_MAPPINGS_SLOT_COUNT];
 
 	/**
 	 * This mutex must be held to modify entries in extendedMappings_

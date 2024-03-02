@@ -16,9 +16,10 @@ SorterContext::SorterContext(Sorter* sorter) :
     wayCount_(0),
     wayNodeCount_(0),
     relationCount_(0),
-    pileWriter_(sorter->builder()->tileCatalog().tileCount())
+    pileWriter_(sorter->builder()->tileCatalog().tileCount()),
+    batchCount_(0)
 {
-    features_.reserve(batchSize(0));
+//    features_.reserve(batchSize(0));
 }
 
 SorterContext::~SorterContext()
@@ -130,8 +131,13 @@ void SorterContext::encodeTags(protobuf::Message tags)
 
 void SorterContext::addFeature(uint64_t id, uint32_t pile)
 {
-    features_.emplace_back(id, pile);
-    if (features_.size() == features_.capacity()) flush(currentPhase_);
+    // features_.emplace_back(id, pile);
+    //if (features_.size() == features_.capacity()) flush(currentPhase_);
+
+    IndexFile& index = builder_->featureIndex(currentPhase_);
+    index.put(id, pile);  // TODO: needs to be synchronized
+    batchCount_++;
+    if (batchCount_ >= batchSize(currentPhase_)) flush(currentPhase_);
 }
 
 // TODO: Could deadlock if all tasks have been processed, but 
@@ -152,10 +158,11 @@ void SorterContext::flush(int futurePhase)
 {
     pileWriter_.closePiles();
     SorterOutputTask task(currentPhase_, futurePhase, blockBytesProcessed(),
-        std::move(features_), std::move(pileWriter_));
+        /* std::move(features_), */ std::move(pileWriter_));
     reader()->postOutput(std::move(task));
     resetBlockBytesProcessed();
-    features_.reserve(batchSize(futurePhase));
+    // features_.reserve(batchSize(futurePhase));
+    batchCount_ = 0;
     printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
     if (futurePhase == 1)
     {
@@ -167,6 +174,7 @@ void SorterContext::flush(int futurePhase)
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
+    assert(id < 1'000'000'000'000ULL);
     // project lon/lat to Mercator
     // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
@@ -191,8 +199,6 @@ void SorterContext::writeWay(uint32_t pile, uint64_t id)
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
-    return;
-
     if (currentPhase_ != 1)
     {
         // TODO: phase shift
@@ -231,7 +237,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     wayPile = prevNodePile;
     if (wayPile)        // TODO
     {
-        // pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
+        pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
         addFeature(id, wayPile);
         //printf("way/%lld sorted into pile #%d\n", id, wayPile);
     }
@@ -307,13 +313,15 @@ Sorter::Sorter(GolBuilder* builder) :
 
 void Sorter::processTask(SorterOutputTask& task)
 {
-    // task.piles_.writeTo(builder_->featurePiles());
+    task.piles_.writeTo(builder_->featurePiles());
+    /*
     IndexFile& index = builder_->featureIndex(task.currentPhase_);
     printf("Writing %llu features into the index...\n", task.features_.size());
     for (const FeatureIndexEntry entry : task.features_)
     {
         index.put(entry.id(), entry.pile());
     }
+    */
     progress_.progress(task.bytesProcessed_);
     reportOutputQueueSpace();
     // printf("-> Written\n");

@@ -9,7 +9,10 @@ ExpandableMappedFile::ExpandableMappedFile() :
 	mainMapping_(nullptr),
 	mainMappingSize_(0)
 {
-	memset(extendedMappings_, 0, sizeof(extendedMappings_));
+	for (int i = 0; i < EXTENDED_MAPPINGS_SLOT_COUNT; i++)
+	{
+		extendedMappings_[i].store(nullptr);
+	}
 }
 
 
@@ -39,42 +42,32 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 
 uint8_t* ExpandableMappedFile::translate(uint64_t ofs)
 {
+	assert(ofs < MAX_FILE_SIZE);
 	if (ofs < mainMappingSize_) return mainMapping_ + ofs;
+	//printf("Getting extended mapping for offset %llu:\n", ofs);
 	ofs -= mainMappingSize_;
-	uint64_t ofsBits = (ofs >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
-		// we set 0-bit to 1 so we can use the slightly more efficient bit count
-		// (that doesn't work if a value is zero)
+	//printf("  Adjusted ofs = %llu\n", ofs);
+	uint64_t ofsBits = (ofs + SEGMENT_LENGTH ) >> SEGMENT_LENGTH_SHIFT;
 	int slot = 63 - Bits::countLeadingZerosInNonZero64(ofsBits);
+	assert(slot >= 0);
 	assert(slot < EXTENDED_MAPPINGS_SLOT_COUNT);
-	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[slot]);
+	//printf("  Slot = %d\n", slot);
+	// Load with acquire ordering to ensure subsequent reads / writes are not reordered before this
+	uint8_t* mapping = extendedMappings_[slot].load(std::memory_order_acquire);
 	if (!mapping) mapping = createExtendedMapping(slot);
-	return mapping + ofs - (SEGMENT_LENGTH << slot) - SEGMENT_LENGTH;
+	assert(ofs >= (SEGMENT_LENGTH << slot) - SEGMENT_LENGTH);
+	uint64_t offsetIntoSegment = ofs - (SEGMENT_LENGTH << slot) + SEGMENT_LENGTH;
+	
+	if (offsetIntoSegment >= mappingSize(slot + 1))
+	{
+		printf("Offset %llu overruns size of slot %d (%llu)\n",
+			offsetIntoSegment, slot, mappingSize(slot + 1));
+	}
+	
+	// assert(offsetIntoSegment < mappingSize(slot + 1));
+	return mapping + ofs - (SEGMENT_LENGTH << slot) + SEGMENT_LENGTH;
 }
 
-// TODO: This may not be safe, may need a memory barrier
-// to ensure that instructions aren't reordered at CPU level
-// shuld use std::atomic<uint8_t*> instead of volatile
-// std::memory_order_acquire
-// use load(std::memory_order_relaxed);
-// and store(mapping, std::memory_order_release)
-
-/*
-	// Load with acquire ordering to ensure subsequent reads/writes are not reordered before this
-	uint8_t* mapping = extendedMappings_[slot].load(std::memory_order_acquire);
-	if (!mapping) 
-	{
-		std::unique_lock<std::mutex> lock(extendedMappingsMutex_);
-		// Re-check with relaxed ordering since we're already protected by the mutex
-		mapping = extendedMappings_[slot].load(std::memory_order_relaxed);
-		if (!mapping) 
-		{
-			// Perform initialization
-			mapping = // initialization logic
-			// Store with release ordering to ensure initialization completes before the pointer is published
-			extendedMappings_[slot].store(mapping, std::memory_order_release);
-		}
-	}
-*/
 
 uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 {
@@ -82,7 +75,8 @@ uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 	// from multiple threads
 
 	std::unique_lock<std::mutex> lock(extendedMappingsMutex_);
-	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[slot]);
+	// Re-check with relaxed ordering since we're already protected by the mutex
+	uint8_t* mapping = extendedMappings_[slot].load(std::memory_order_relaxed);
 	if (!mapping)
 	{
 		uint64_t size = SEGMENT_LENGTH << slot;
@@ -97,7 +91,7 @@ uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 		// printf("  Resized.\n");
 		#endif
 		mapping = reinterpret_cast<uint8_t*>(map(ofs, size, MappingMode::READ | MappingMode::WRITE));
-		extendedMappings_[slot] = mapping;
+		extendedMappings_[slot].store(mapping, std::memory_order_release);
 
 		printf("Created extended mapping #%d at %llu (size %llu) -- p = %p\n", 
 			slot, ofs, size, mapping);
@@ -120,23 +114,21 @@ void ExpandableMappedFile::unmapSegments()
 	{
 		if (extendedMappings_[slot])
 		{
-			uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[slot]);
+			uint8_t* mapping = extendedMappings_[slot].load();
 			unmap(mapping, mappingSize);
-			extendedMappings_[slot] = nullptr;
+			extendedMappings_[slot].store(nullptr);
 		}
 	}
 }
-
 
 uint8_t* ExpandableMappedFile::mapping(int n) 
 {
 	assert(n >= 0 && n <= EXTENDED_MAPPINGS_SLOT_COUNT);
 	if(n == 0) return mainMapping_; 
-	uint8_t* mapping = const_cast<uint8_t*>(extendedMappings_[n-1]);
+	uint8_t* mapping = extendedMappings_[n-1].load(std::memory_order_acquire);
 	if (!mapping) mapping = createExtendedMapping(n-1);
 	return mapping;
 }
-
 
 size_t ExpandableMappedFile::mappingSize(int n) const
 {
@@ -146,10 +138,8 @@ size_t ExpandableMappedFile::mappingSize(int n) const
 int ExpandableMappedFile::mappingNumber(uint64_t ofs) const
 {
 	if (ofs < mainMappingSize_) return 0;
-	uint64_t ofsBits = ((ofs - mainMappingSize_ ) >> (SEGMENT_LENGTH_SHIFT - 1)) | 1;
-	// we set 0-bit to 1 so we can use the slightly more efficient bit count
-	// (that doesn't work if a value is zero)
-	int slot = Bits::countLeadingZerosInNonZero64(ofsBits) - 1;
+	uint64_t ofsBits = (ofs - mainMappingSize_ + SEGMENT_LENGTH) >> SEGMENT_LENGTH_SHIFT;
+	int slot = 63 - Bits::countLeadingZerosInNonZero64(ofsBits);
 	assert(slot < EXTENDED_MAPPINGS_SLOT_COUNT);
 	return slot + 1;
 }

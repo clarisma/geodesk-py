@@ -43,6 +43,7 @@ enum SorterPhase
 	RELATIONS
 };
 
+/*
 class FeatureIndexEntry
 {
 public:
@@ -56,6 +57,7 @@ private:
 	uint64_t id_;
 	uint32_t pile_;
 };
+*/
 
 class SorterContext : public OsmPbfContext<SorterContext, Sorter>
 {
@@ -110,7 +112,7 @@ private:
 	DynamicBuffer tempBuffer_;	// keep this order
 	BufferWriter tempWriter_;
 	PileWriter pileWriter_;
-	std::vector<FeatureIndexEntry> features_;
+	// std::vector<FeatureIndexEntry> features_;
 	int currentPhase_;
 
 	std::vector<uint64_t> memberIds_;
@@ -119,6 +121,7 @@ private:
 	uint64_t wayCount_;
 	uint64_t wayNodeCount_;
 	uint64_t relationCount_;
+	uint64_t batchCount_;
 };
 
 class SorterOutputTask : public OsmPbfOutputTask
@@ -127,18 +130,19 @@ public:
 	SorterOutputTask() {} // TODO: not needed, only to satisfy compiler
 	SorterOutputTask(int currentPhase, int futurePhase,
 		uint64_t bytesProcessed,
-		std::vector<FeatureIndexEntry>&& features, PileSet&& piles) :
+		// std::vector<FeatureIndexEntry>&& features, 
+		PileSet&& piles) :
 		currentPhase_(currentPhase),
 		futurePhase_(futurePhase),
 		bytesProcessed_(bytesProcessed),
-		features_(std::move(features)),
+		// features_(std::move(features)),
 		piles_(std::move(piles))
 	{
 	}
 
 	// SorterOutputTask
 
-	std::vector<FeatureIndexEntry> features_;
+	// std::vector<FeatureIndexEntry> features_;
 	PileSet piles_;
 	uint64_t bytesProcessed_;
 	int currentPhase_;
