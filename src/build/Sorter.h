@@ -4,7 +4,8 @@
 #pragma once
 #include <vector>
 #include <common/util/BufferWriter.h>
-#include <common/util/ChunkedBuffer.h>
+#include <common/util/BufferWriter.h>
+#include <common/thread/Phaser.h>
 #include "geom/Coordinate.h"
 #include "osm/OsmPbfReader.h"
 #include "build/util/StringCatalog.h"
@@ -12,36 +13,8 @@
 
 class GolBuilder;
 
-class GroupEncoder
-{
-public:
-	GroupEncoder(Arena& arena, int pile) :
-		pile_(pile),
-		prevId_(0),
-		prevCoord_(0, 0),
-		nextIndexed_(nullptr),
-		nextSequential_(nullptr),
-		buf_(arena, 16 * 1024)
-	{
-	}
-
-private:
-	GroupEncoder* nextIndexed_;
-	GroupEncoder* nextSequential_;
-	int pile_;
-	int64_t prevId_;
-	Coordinate prevCoord_;
-	ChunkedBuffer buf_;
-};
-
 class Sorter;
 
-enum SorterPhase
-{
-	NODES,
-	WAYS,
-	RELATIONS
-};
 
 /*
 class FeatureIndexEntry
@@ -83,6 +56,7 @@ public:
 	void way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes);
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
+	void endBlock();
 	void afterTasks();
 	void harvestResults();
 
@@ -93,7 +67,7 @@ private:
 	void writeWay(uint32_t pile, uint64_t id);
 	void addFeature(uint64_t id, uint32_t pile);
 	void flush(int futurePhase);
-	size_t batchSize(int phase) { return 1024 * 8192; }  // TODO
+	size_t batchSize(int phase) { return 64 * 1024; }  // TODO
 
 	GolBuilder* builder_;
 	/**
@@ -132,8 +106,8 @@ public:
 		uint64_t bytesProcessed,
 		// std::vector<FeatureIndexEntry>&& features, 
 		PileSet&& piles) :
-		currentPhase_(currentPhase),
-		futurePhase_(futurePhase),
+		// currentPhase_(currentPhase),
+		// futurePhase_(futurePhase),
 		bytesProcessed_(bytesProcessed),
 		// features_(std::move(features)),
 		piles_(std::move(piles))
@@ -145,15 +119,19 @@ public:
 	// std::vector<FeatureIndexEntry> features_;
 	PileSet piles_;
 	uint64_t bytesProcessed_;
-	int currentPhase_;
-	int futurePhase_;
+	// int currentPhase_;
+	// int futurePhase_;
 };
 
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>
 {
 public:
+	enum Phase { NODES, WAYS, RELATIONS, SUPER_RELATIONS };
+	using SorterPhaser = Phaser<3>;
+
 	Sorter(GolBuilder* builder);
 	GolBuilder* builder() { return builder_; };
+	SorterPhaser& phaser() { return phaser_; }
 	void sort(const char* fileName);
 	void processTask(SorterOutputTask& task);
 	void addCounts(uint64_t nodeCount, uint64_t wayCount,
@@ -167,6 +145,7 @@ public:
 
 private:
 	ProgressReporter progress_;
+	SorterPhaser phaser_;
 	GolBuilder* builder_;
 	uint64_t nodeCount_;
 	uint64_t wayCount_;

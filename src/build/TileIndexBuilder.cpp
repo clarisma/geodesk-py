@@ -34,9 +34,12 @@ uint32_t TileIndexBuilder::sumTileCounts() noexcept
 const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
 {
 	createLeafTiles(nodeCounts);
+	//printf("  Created leaf tiles.\n");
 	addParentTiles();
+	//printf("  Added parent tiles.\n");
 	trimTiles();
 	linkChildTiles();
+	//printf("  Linked child tiles.\n");
 	uint32_t indexSize = layoutIndex();
 	uint32_t slotCount = indexSize / 4;
 	uint32_t* pIndex = new uint32_t[slotCount];
@@ -124,6 +127,7 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 		tier->skippedLevels = 0;
 	}
 	tier->firstTile = tile;
+	// printf("firstTile of zoom %d = %p\n", tier->level, tile);
 	tier->tileCount = count;
 }
 	
@@ -142,12 +146,16 @@ void TileIndexBuilder::addParentTiles()
 	std::unordered_map<Tile, STile*> parentTileMap;
 	uint32_t minTileDensity = settings_.minTileDensity();
 	
-	int startTier = tiers_[tierCount_].level < settings_.leafZoomLevel() ?
+	//printf("Adding parent tiles...\n");
+	//printf("tierCount_ = %d\n", tierCount_);
+	int startTier = tiers_[tierCount_-1].level < settings_.leafZoomLevel() ?
 		tierCount_ : (tierCount_ - 1);
 	startTier = std::max(startTier, 1);
+	//printf("startTier = %d\n", startTier);
 
 	for (int i = startTier; i > 0; i--)
 	{
+		//printf("  Tier %d (firstTile = %p)\n", i, tiers_[i].firstTile);
 		Tier& childTier = tiers_[i];
 		Tier& parentTier = tiers_[i-1];
 		int parentZoom = parentTier.level;
@@ -170,7 +178,7 @@ void TileIndexBuilder::addParentTiles()
 				pt = createTile(parentTile, maxChildCount, 0, firstParentTile);
 				parentTileMap[parentTile] = pt;
 				parentTier.addTile(pt);
-				// printf("Created parent tile %s\n", parentTile.toString().c_str());
+				//printf("Created parent tile %s\n", parentTile.toString().c_str());
 			}
 			else
 			{

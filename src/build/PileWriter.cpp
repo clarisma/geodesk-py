@@ -32,5 +32,5 @@ void PileSet::writeTo(PileFile& file)
 		pile = pile->nextPile_;
 		pilesWrittenCount++;
 	}
-	printf("%d piles written (%llu bytes).\n", pilesWrittenCount, bytesWritten);
+	// printf("%d piles written (%llu bytes).\n", pilesWrittenCount, bytesWritten);
 }

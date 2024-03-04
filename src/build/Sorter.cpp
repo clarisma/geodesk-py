@@ -28,6 +28,8 @@ SorterContext::~SorterContext()
 
 void SorterContext::stringTable(protobuf::Message strings)
 {
+    assert(stringTranslationTable_.empty());
+
     // Look up the ProtoStringEncoding for each string in the string table,
     // and store it in the String Translation Table. We have to do this for
     // each OSM block, since the same string (e.g. "highway") may have a
@@ -57,6 +59,7 @@ void SorterContext::stringTable(protobuf::Message strings)
 
 void SorterContext::encodeString(uint32_t stringNumber, int type)
 {
+    assert(stringNumber < stringTranslationTable_.size());  // TODO: exception?
     uint32_t code = stringTranslationTable_[stringNumber].get(type);
     if (code & ProtoStringCode::SHARED_STRING_FLAG)
     {
@@ -163,17 +166,25 @@ void SorterContext::flush(int futurePhase)
     resetBlockBytesProcessed();
     // features_.reserve(batchSize(futurePhase));
     batchCount_ = 0;
-    printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
-    if (futurePhase == 1)
+    // printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
+    if (futurePhase != currentPhase_)
     {
-        // TODO
-        printf("Started ways...\n");
+        reader()->phaser().advancePhase(currentPhase_, futurePhase);
+        if (futurePhase == 1)
+        {
+            printf("Started ways...\n");
+        }
+        if (futurePhase == 2)
+        {
+            printf("Started relations...\n");
+        }
         currentPhase_ = futurePhase;
     }
 }
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
+    assert(tempWriter_.isEmpty());
     assert(id < 1'000'000'000'000ULL);
     // project lon/lat to Mercator
     // TODO: clamp range
@@ -199,11 +210,14 @@ void SorterContext::writeWay(uint32_t pile, uint64_t id)
 
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
-    if (currentPhase_ != 1)
+    assert(tempWriter_.isEmpty());
+    if (currentPhase_ != Sorter::Phase::WAYS)
     {
         // TODO: phase shift
-        flush(1);
+        flush(Sorter::Phase::WAYS);
     }
+
+    encodeTags(keys, values);
 
     IndexFile& nodeIndex = builder_->nodeIndex();
     uint64_t nodeId = 0;
@@ -237,7 +251,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     wayPile = prevNodePile;
     if (wayPile)        // TODO
     {
-        pileWriter_.writeWay(wayPile, id, nodes, tempWriter_);
+        pileWriter_.writeWay(wayPile, id, nodes, nodeCount, tempWriter_);
         addFeature(id, wayPile);
         //printf("way/%lld sorted into pile #%d\n", id, wayPile);
     }
@@ -289,9 +303,68 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
 void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 	protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes)
 {
+    assert(tempWriter_.isEmpty());
+    if (currentPhase_ != Sorter::Phase::RELATIONS)
+    {
+        // TODO: phase shift
+        flush(Sorter::Phase::RELATIONS);
+    }
+
+    uint64_t memberId = 0;
+    uint32_t prevMemberPile = 0;
+    uint32_t memberCount = 0;
+    uint32_t relPile = 0;
+
+    const uint8_t* pMemberId = memberIds.start;
+    const uint8_t* pMemberType = memberTypes.start;
+    const uint8_t* pRole = roles.start;
+    while (pMemberId < memberIds.end)
+    {
+        memberId += readSignedVarint64(pMemberId);
+        int memberType = *pMemberType++;
+        uint32_t role = readVarint32(pRole);
+        uint32_t memberPile = builder_->featureIndex(memberType).get(memberId);
+        if (!memberPile)
+        {
+            // printf("node/%llu not found in node index\n", nodeId);
+        }
+        if (memberPile != prevMemberPile && prevMemberPile != 0)
+        {
+            // TODO: multi-tile relation
+        }
+
+        // TODO: Member not in index
+
+        tempWriter_.writeVarint((memberId << 2) | memberType);
+        encodeString(role, ProtoStringCode::VALUE);
+
+        prevMemberPile = memberPile;
+        memberCount++;
+    }
+    
+    encodeTags(keys, values);
+
+    // TODO: Reject ways with less than 2 nodes
+
+    relPile = prevMemberPile;  // TODO: dummy
+    if (relPile)        // TODO
+    {
+        pileWriter_.writeRelation(relPile, id, memberCount, tempWriter_);
+        addFeature(id, relPile);
+        //printf("way/%lld sorted into pile #%d\n", id, wayPile);
+    }
+    else
+    {
+        //printf("way/%lld: unable to sort\n", id);
+    }
+    tempWriter_.clear();
     relationCount_++;
 }
 
+void SorterContext::endBlock()	// CRTP override
+{
+    stringTranslationTable_.clear();
+}
 
 void SorterContext::harvestResults()
 {
@@ -301,6 +374,7 @@ void SorterContext::harvestResults()
 
 Sorter::Sorter(GolBuilder* builder) :
     OsmPbfReader(builder->threadCount()),
+    phaser_(builder->threadCount()),
     builder_(builder),
     progress_("Sorting"),
     nodeCount_(0),

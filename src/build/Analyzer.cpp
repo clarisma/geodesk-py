@@ -67,6 +67,7 @@ void AnalyzerContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, proto
 		uint32_t key = readVarint32(p);
 		if (key == 0) break;
 		uint32_t value = readVarint32(p);
+		// printf("- Tag: %d = %d\n", key, value);
 		countString(key, 1, 0);
 		countString(value, 0, 1);
 		stats_.tagCount++;
@@ -100,7 +101,8 @@ void AnalyzerContext::relation(int64_t id, protobuf::Message keys, protobuf::Mes
 
 void AnalyzerContext::countString(uint32_t index, int keys, int values)
 {
-	StringLookupEntry& entry = stringCodeLookup_[index]; // TODO: bounds check!
+	assert(index < stringCodeLookup_.size());  // TODO: exception?
+	StringLookupEntry& entry = stringCodeLookup_[index]; 
 	if (entry.counterOfs == 0)
 	{
 		const ShortVarString* str = reinterpret_cast<const ShortVarString *>(

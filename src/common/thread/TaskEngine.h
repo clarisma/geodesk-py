@@ -99,7 +99,7 @@ public:
 
     void reportOutputQueueSpace()
     {
-        printf("%d slots free in output queue\n", outputQueue_.minimumRemainingCapacity());
+        // printf("%d slots free in output queue\n", outputQueue_.minimumRemainingCapacity());
     }
 
 protected:

@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	PileSet(PileSet&& other) :
+	PileSet(PileSet&& other) noexcept :
 		arena_(std::move(other.arena_)),
 		pageSize_(other.pageSize_),
 		firstPile_(other.firstPile_)
@@ -91,6 +91,7 @@ protected:
 	void addPage(Pile* pile)
 	{
 		Page* lastPage = reinterpret_cast<Page*>(pile->p_ - pageSize() + pile->remaining_);
+		assert(pile->next_ != nullptr || lastPage == pile);
 		uint8_t* p = arena_.alloc(pageSize());
 		Page* nextPage = reinterpret_cast<Page*>(p);
 		nextPage->next_ = nullptr;
@@ -117,7 +118,7 @@ public:
 		pileIndex_.reset(pileIndex);
 	}
 
-	PileWriter(PileWriter&& other) :
+	PileWriter(PileWriter&& other) noexcept :
 		PileSet(std::move(other)),
 		pileIndex_(std::move(other.pileIndex_))
 	{
@@ -138,6 +139,7 @@ public:
 	void writeNode(uint32_t pileNumber, uint64_t id, Coordinate xy, BufferWriter& tags)
 	{
 		Pile* pile = get(pileNumber);
+		assert(id > pile->prevId_);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
 			// x/y deltas, and optional tagsLength
@@ -150,34 +152,59 @@ public:
 		{
 			size_t tagsLen = tags.length();
 			writeVarint(p, tagsLen);
+			assert(p - buf <= sizeof(buf));
 			write(pile, buf, p - buf);
 			write(pile, reinterpret_cast<const uint8_t*>(tags.data()), tagsLen);
 		}
 		else
 		{
+			assert(p - buf <= sizeof(buf));
 			write(pile, buf, p - buf);
 		}
 		pile->prevId_ = id;
 		pile->prevCoord_ = xy;
 	}
 
-	void writeWay(uint32_t pileNumber, uint64_t id, protobuf::Message nodes, BufferWriter& tags)
+	void writeWay(uint32_t pileNumber, uint64_t id, protobuf::Message nodes, uint32_t nodeCount, BufferWriter& tags)
 	{
 		Pile* pile = get(pileNumber);
+		assert(id > pile->prevId_);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
-			// optional locator, and bodyLength
+			// optional locator, bodyLength, and nodeCount
 		bool isMultiTile = false; // TODO
 		uint8_t* p = buf;
 		writeVarint(p, ((id - pile->prevId_) << 1) | static_cast<int>(isMultiTile));
-		write(pile, buf, p - buf);
 		// TODO: locator
 		size_t tagsLen = tags.length();
 		size_t nodesLen = nodes.length();
-		writeVarint(p, nodesLen + tagsLen);
+		size_t nodeCountLen = varintSize(nodeCount);
+		writeVarint(p, nodeCountLen + nodesLen + tagsLen);
+		writeVarint(p, nodeCount);
+		assert(p - buf <= sizeof(buf));
 		write(pile, buf, p - buf);
 		write(pile, nodes.start, nodesLen);
 		write(pile, reinterpret_cast<const uint8_t*>(tags.data()), tagsLen);
+		pile->prevId_ = id;
+	}
+
+	void writeRelation(uint32_t pileNumber, uint64_t id, uint32_t memberCount, BufferWriter& body)
+	{
+		Pile* pile = get(pileNumber);
+		assert(id > pile->prevId_);
+		uint8_t buf[32];
+		// enough room for ID delta (with Bit 0 tagged),
+		// locator, and bodyLength
+		uint8_t* p = buf;
+		writeVarint(p, (id - pile->prevId_) << 1);
+		// TODO: locator
+		size_t bodyLen = body.length();
+		size_t memberCountLen = varintSize(memberCount);
+		writeVarint(p, memberCountLen + bodyLen);
+		writeVarint(p, memberCount);
+		assert(p - buf <= sizeof(buf));
+		write(pile, buf, p - buf);
+		write(pile, reinterpret_cast<const uint8_t*>(body.data()), bodyLen);
 		pile->prevId_ = id;
 	}
 
@@ -193,7 +220,7 @@ public:
 			xxx++;
 		}
 		//printf("Closed %d piles.\n", xxx);
-		printf("Thread %s: Flushing %d piles...\n", Threads::currentThreadId().c_str(), xxx);
+		// printf("Thread %s: Flushing %d piles...\n", Threads::currentThreadId().c_str(), xxx);
 	}
 
 private:

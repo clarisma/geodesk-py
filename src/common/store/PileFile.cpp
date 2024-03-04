@@ -46,6 +46,7 @@ void PileFile::append(uint32_t pile, const uint8_t* data, size_t len)
 	size_t pageSpaceRemaining = pageSize_ - lastPageUsedBytes;
 	Page* pPage = getPage(lastPage);
 	uint8_t* pPageData = reinterpret_cast<uint8_t*>(pPage);
+
 	if (pageSpaceRemaining >= len)
 	{
 		memcpy(pPageData + lastPageUsedBytes, data, len);
