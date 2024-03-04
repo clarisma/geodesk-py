@@ -4,6 +4,7 @@
 #pragma once
 #include <filesystem>
 #include <string_view>
+#include <common/cli/Console.h>
 #include <common/store/IndexFile.h>
 #include <common/store/PileFile.h>
 #include "build/util/BuildSettings.h"
@@ -25,6 +26,7 @@ public:
 	#endif
 
 	void build(const char* golPath);
+	Console& console() { return console_; }
 	const BuildSettings& settings() const { return settings_; }
 	int threadCount() const { return threadCount_; }
 	const StringCatalog& stringCatalog() const { return stringCatalog_; }
@@ -46,6 +48,7 @@ private:
 
 	void openIndex(IndexFile& index, const char* name, int extraBits);
 
+	Console console_;
 	BuildSettings settings_;
 	std::filesystem::path golPath_;
 	std::filesystem::path workPath_;

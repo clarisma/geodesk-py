@@ -51,7 +51,7 @@ void GolBuilder::build(const char* golPath)
 
 void GolBuilder::analyze()
 {
-	Analyzer analyzer(settings_, threadCount_);
+	Analyzer analyzer(this);
 	analyzer.analyze(settings_.sourcePath().c_str());
 	TileIndexBuilder tib(settings_);
 	std::unique_ptr<const uint32_t[]> totalNodeCounts = analyzer.takeTotalNodeCounts();

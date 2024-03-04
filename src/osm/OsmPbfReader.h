@@ -447,6 +447,10 @@ class OsmPbfOutputTask
 {
 };
 
+/**
+ * startFile(uint64_t size);
+ */
+
 template <typename Derived, typename WorkContext, typename OutputTask>
 class OsmPbfReader : public TaskEngine<Derived, WorkContext, OsmPbfBlock, OutputTask>
 {
@@ -456,14 +460,18 @@ public:
 	{
 	}
 
-	void read(const char* fileName, ProgressReporter* progress=nullptr)
+	void startFile(uint64_t size)
+	{
+	}
+
+	void read(const char* fileName)
 	{
 		this->start();
 		
 		File file;
 		file.open(fileName, File::OpenMode::READ);
 		uint64_t fileSize = file.size();
-		if (progress) progress->start(fileSize);
+		self()->startFile(fileSize);
 
 		size_t totalBytesRead = 0;
 		while (totalBytesRead < fileSize)
@@ -538,6 +546,8 @@ public:
 	}
 
 private:
+	Derived* self() { return reinterpret_cast<Derived*>(this); }
+
 	static UncompressedBlock uncompressBlock(const OsmPbfBlock& block)
 	{
 		const uint8_t* pRaw = nullptr;

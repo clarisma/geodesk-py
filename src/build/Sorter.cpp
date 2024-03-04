@@ -376,7 +376,6 @@ Sorter::Sorter(GolBuilder* builder) :
     OsmPbfReader(builder->threadCount()),
     phaser_(builder->threadCount()),
     builder_(builder),
-    progress_("Sorting"),
     nodeCount_(0),
     wayCount_(0),
     wayNodeCount_(0),
@@ -396,16 +395,22 @@ void Sorter::processTask(SorterOutputTask& task)
         index.put(entry.id(), entry.pile());
     }
     */
-    progress_.progress(task.bytesProcessed_);
+    builder_->console().progress(task.bytesProcessed_);
     reportOutputQueueSpace();
     // printf("-> Written\n");
 }
 
+void Sorter::startFile(uint64_t size)		// CRTP override
+{
+    builder_->console().start(size, "Sorting nodes...");
+}
+
+
 void Sorter::sort(const char* fileName)
 {
-    read(fileName, &progress_);
+    read(fileName);
     char buf[200];
     Format::unsafe(buf, "Sorted %ld nodes / %ld ways (%ld way-nodes) / %ld relations",
         nodeCount_, wayCount_, wayNodeCount_, relationCount_);
-    progress_.end(buf);
+    // progress_.end(buf);
 }

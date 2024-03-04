@@ -2,19 +2,18 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Analyzer.h"
-#include "build/util/BuildSettings.h"
+#include "GolBuilder.h"
 #include "build/util/StringCatalog.h"
 #include <string>
 
 // TODO: Need to flush remaining strings at end
 // TODO: race condition
 
-Analyzer::Analyzer(const BuildSettings& settings, int numberOfThreads) :
-	OsmPbfReader(numberOfThreads),
-	settings_(settings),
+Analyzer::Analyzer(GolBuilder* builder) :
+	OsmPbfReader(builder->threadCount()),
+	builder_(builder),
 	strings_(outputTableSize(), outputArenaSize()),
-	minStringCount_(2),
-	progress_("Analyzing")
+	minStringCount_(2)
 {
 }
 
@@ -198,7 +197,7 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 		}
 		p += StringStatistics::Counter::grossSize(stringSize);
 	}
-	progress_.progress(task.blockBytesProcessed());
+	builder_->console().progress(task.blockBytesProcessed());
 }
 
 
@@ -234,22 +233,27 @@ void Analyzer::addRequiredStrings()
 	{
 		strings_.addRequiredCounter(std::string_view(StringCatalog::CORE_STRINGS[i]));
 	}
-	for (std::string_view str : settings_.indexedKeyStrings())
+	for (std::string_view str : builder_->settings().indexedKeyStrings())
 	{
 		strings_.addRequiredCounter(str);
 	}
 }
 
+void Analyzer::startFile(uint64_t size)		// CRTP override
+{
+	builder_->console().start(size, "Analyzing...");
+}
+
 void Analyzer::analyze(const char* fileName)
 {
 	addRequiredStrings();
-	read(fileName, &progress_);
+	read(fileName);
 	// TODO: Only if verbose
 	char buf[100];
 	Format::unsafe(buf, "Analyzed %ld nodes and %ld",
 		totalStats_.nodeCount,
 		totalStats_.tagCount * 2 + totalStats_.memberCount);
-	progress_.end(buf);
+	// progress_.end(buf);
 
 	uint64_t totalStringCount = 0;
 	uint64_t totalStringUsageCount = 0;

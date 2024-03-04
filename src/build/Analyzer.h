@@ -8,7 +8,7 @@
 #include "OsmStatistics.h"
 
 class Analyzer;
-class BuildSettings;
+class GolBuilder;
 
 class AnalyzerContext : public OsmPbfContext<AnalyzerContext, Analyzer>
 {
@@ -90,7 +90,7 @@ private:
 class Analyzer : public OsmPbfReader<Analyzer, AnalyzerContext, AnalyzerOutputTask>
 {
 public:
-	Analyzer(const BuildSettings& settings, int numberOfThreads);
+	Analyzer(GolBuilder* builder);
 
 	uint32_t workerTableSize() { return 2 * 1024 * 1024; }
 	uint32_t workerArenaSize() { return 16 * 1024 * 1024; }
@@ -98,8 +98,8 @@ public:
 	uint32_t outputArenaSize() { return 32 * 1024 * 1024; }
 
 	void analyze(const char* fileName);
+	void startFile(uint64_t size);		// CRTP override
 	void processTask(AnalyzerOutputTask& task);
-	ProgressReporter* progress() { return &progress_; }
 	const FastTileCalculator* tileCalculator() const { return &tileCalculator_; }
 	
 	/**
@@ -117,11 +117,10 @@ public:
 private:
 	void addRequiredStrings();
 
-	const BuildSettings& settings_;
+	GolBuilder* builder_;
 	StringStatistics strings_;
 	const FastTileCalculator tileCalculator_;
 	int minStringCount_;
-	ProgressReporter progress_;
 	std::unique_ptr<uint32_t[]> totalNodeCounts_;
 	OsmStatistics totalStats_;
 };

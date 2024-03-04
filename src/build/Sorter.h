@@ -133,6 +133,7 @@ public:
 	GolBuilder* builder() { return builder_; };
 	SorterPhaser& phaser() { return phaser_; }
 	void sort(const char* fileName);
+	void startFile(uint64_t size);		// CRTP override
 	void processTask(SorterOutputTask& task);
 	void addCounts(uint64_t nodeCount, uint64_t wayCount,
 		uint64_t wayNodeCount, uint64_t relationCount)
@@ -144,9 +145,8 @@ public:
 	}
 
 private:
-	ProgressReporter progress_;
-	SorterPhaser phaser_;
 	GolBuilder* builder_;
+	SorterPhaser phaser_;
 	uint64_t nodeCount_;
 	uint64_t wayCount_;
 	uint64_t wayNodeCount_;
