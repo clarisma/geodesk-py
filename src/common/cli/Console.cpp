@@ -39,7 +39,7 @@ void Console::start(int64_t totalWork, std::string_view task)
 	startTime_ = std::chrono::steady_clock::now();
 	nextReportTime_ = std::chrono::steady_clock::time_point::min();
 	status_[8] = ' ';
-	putString(&status_[9], "\x1b[95m");
+	putString(&status_[9], "\x1b[33m");
 	progress(0);
 }
 
@@ -129,7 +129,7 @@ const char* Console::BLOCK_CHARS_UTF8 = (const char*)
 
 char* Console::drawProgressBar(char* p, int percentage)
 {
-	p = putString(p, "\033[35;100m");
+	p = putString(p, "\033[33;100m");
 	int fullBlocks = percentage / 4;
 	char* pEnd = p + fullBlocks * 3;
 	while (p < pEnd)
@@ -138,7 +138,7 @@ char* Console::drawProgressBar(char* p, int percentage)
 		*p++ = BLOCK_CHARS_UTF8[1];
 		*p++ = BLOCK_CHARS_UTF8[2];
 	}
-	int partialBlocks = fullBlocks % 4;
+	int partialBlocks = percentage % 4;
 	int emptyBlocks;
 	if (partialBlocks)
 	{

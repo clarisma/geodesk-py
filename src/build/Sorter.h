@@ -67,7 +67,10 @@ private:
 	void writeWay(uint32_t pile, uint64_t id);
 	void addFeature(uint64_t id, uint32_t pile);
 	void flush(int futurePhase);
-	size_t batchSize(int phase) { return 64 * 1024; }  // TODO
+	size_t batchSize(int phase) 
+	{ 
+		return phase == 0 ? (1024 * 1024) : (32 * 1024); 
+	}  
 
 	GolBuilder* builder_;
 	/**
