@@ -1,14 +1,17 @@
-// Copyright (c) 2024 Clarisma / GeoDesk contributors
+﻿// Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
  
 #include "Console.h"
 #include <cstdlib>
+#ifdef WIN32
+#include <io.h> 
+#endif
 
 template <size_t N>
 static char* putString(char* p, const char(&s)[N])
 {
-	memcpy(p, s, N);
-	return p + N;
+	memcpy(p, s, N-1);	// Subtract 1 to exclude null terminator
+	return p + N-1;
 }
 
 Console::Console()
@@ -18,7 +21,14 @@ Console::Console()
 	GetConsoleMode(hConsole_, &consoleMode);
 	consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	SetConsoleMode(hConsole_, consoleMode);
-	SetConsoleOutputCP(CP_UTF8);
+	if (!SetConsoleOutputCP(CP_UTF8))
+	{
+		printf("Failed to enable UTF-8 support.\n");
+	}
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(hConsole_, &cursorInfo);
+	cursorInfo.bVisible = false; // Set the cursor visibility
+	SetConsoleCursorInfo(hConsole_, &cursorInfo);
 }
 
 void Console::start(int64_t totalWork, std::string_view task)
@@ -29,7 +39,7 @@ void Console::start(int64_t totalWork, std::string_view task)
 	startTime_ = std::chrono::steady_clock::now();
 	nextReportTime_ = std::chrono::steady_clock::time_point::min();
 	status_[8] = ' ';
-	putString(&status_[9], "\x1b[35m");
+	putString(&status_[9], "\x1b[95m");
 	progress(0);
 }
 
@@ -110,11 +120,11 @@ void Console::setTask(std::string_view task)
 	progress(0);
 }
 
-const char* Console::BLOCK_CHARS_UTF8 =
-	"\U00002588"	// full block
-	"\U0000258E"	// one-quarter block
-	"\U0000258C"	// half block
-	"\U0000258A"	// three-quarter block
+const char* Console::BLOCK_CHARS_UTF8 = (const char*)
+	u8"\U00002588"	// full block
+	u8"\U0000258E"	// one-quarter block
+	u8"\U0000258C"	// half block
+	u8"\U0000258A"	// three-quarter block
 	;
 
 char* Console::drawProgressBar(char* p, int percentage)
