@@ -52,12 +52,12 @@ void Console::log(std::string_view msg)
 	formatTimespan(p, std::chrono::duration_cast
 		<std::chrono::milliseconds>(now - startTime_), true);
 	p = putString(p + 12, "\u001b[0m");
-	size_t maxTextLen = MAX_LINE_LENGTH - (p - buf) - 2;
+	size_t maxTextLen = consoleWidth_ - 15;
 	memset(p, ' ', maxTextLen + 2);
 	p += 2;
 	size_t actualTextLen = std::min(msg.length(), maxTextLen);
 	memcpy(p, msg.data(), actualTextLen);
-	p += actualTextLen;
+	p += maxTextLen;
 	*p++ = '\n';
 	print(buf, p - buf);
 	nextReportTime_ = std::chrono::steady_clock::time_point::min();

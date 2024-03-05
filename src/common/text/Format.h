@@ -40,6 +40,11 @@ namespace Format
         va_end(args);
     }
 
+    inline void unsafe(char* buf, const char* format, va_list args)
+    {
+        vsprintf(buf, format, args);
+    }
+
     #pragma warning(pop)   // Restore the previous warning state
 
     inline std::string format(const char* format, ...)

@@ -46,7 +46,7 @@ void GolBuilder::build(const char* golPath)
 	sort();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-	printf("Built %s in %.3f seconds\n", golPath, duration.count() / 1e6);
+	console_.log("Done.");
 }
 
 void GolBuilder::analyze()

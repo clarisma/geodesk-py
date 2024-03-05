@@ -31,11 +31,16 @@ public:
 
 	void log(const char* format, ...)
 	{
-		char buf[1024];
 		va_list args;
 		va_start(args, format);
-		Format::unsafe(buf, format, args);
+		log(format, args);
 		va_end(args);
+	}
+
+	void log(const char* format, va_list args)
+	{
+		char buf[1024];
+		Format::unsafe(buf, format, args);
 		log(std::string_view(buf));
 	}
 
@@ -64,7 +69,7 @@ public:
 
 private:
 	static const char* BLOCK_CHARS_UTF8;
-	static const int MAX_LINE_LENGTH = 78;
+	// static const int MAX_LINE_LENGTH = 78;
 	static const int MAX_TASK_CHARS = 38;
 
 	void init();
@@ -86,5 +91,6 @@ private:
 	std::chrono::time_point<std::chrono::steady_clock> nextReportTime_;
 	int percentageCompleted_ = -1;
 	int statusLen_ = 0;
+	int consoleWidth_ = 80;
 	char status_[256];
 };

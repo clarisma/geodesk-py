@@ -22,6 +22,12 @@ namespace Bytes
             ((value & 0xFF000000) >> 24);
     }
 
+    template<typename T>
+    inline constexpr bool isPowerOf2(T v)
+    {
+        return v && !(v & (v - 1));
+    }
+
     inline uint64_t roundUpToPowerOf2(uint64_t v)
     {
         int leadingZeroes = Bits::countLeadingZerosInNonZero64(v | 1);
