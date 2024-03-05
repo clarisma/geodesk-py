@@ -1,5 +1,6 @@
 #include "StringCatalog.h"
 #include <algorithm>
+#include <common/cli/Console.h>
 #include "BuildSettings.h"
 #include "StringStatistics.h"
 #include "feature/types.h"
@@ -66,7 +67,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 		uint32_t stringSize = counter->stringSize();
 		totalEntrySizeInBytes += Entry::totalSize(stringSize);
 	}
-	printf("Proto-string table has %d strings (%d total bytes)\n",
+	Console::msg("Proto-string table has %d strings (%d total bytes)",
 		protoStringCount, totalEntrySizeInBytes);
 
 	// Allocate space for the proto-string table and copy the strings
@@ -122,7 +123,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 	sortDescending(sortedKeys);
 	sortDescending(sortedValues);
 
-	printf("Sorted strings in order of occurrence count.\n");
+	Console::msg("Sorted strings in order of occurrence count.");
 
 	// Now, create the lookup table
 	// We work backwards so we index the least-used strings first; in the
@@ -202,7 +203,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 		itSorted++;
 	}
 
-	printf("Created global string table with %lld strings.\n", globalStrings.size());
+	Console::msg("Created global string table with %lld strings.", globalStrings.size());
 	for (Entry* entry : globalStrings)
 	{
 		// printf("- %s\n", std::string(entry->string.toStringView()).c_str());

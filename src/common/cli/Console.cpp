@@ -1,11 +1,20 @@
 ﻿// Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
  
-#include "Console.h"
-#include <cstdlib>
-#ifdef WIN32
-#include <io.h> 
+#if defined(_WIN32) 
+#include "Console_windows.cxx"
+#elif defined(__linux__) || defined(__APPLE__) 
+#include "Console_linux.cxx"
+#else
+#error "Platform not supported"
 #endif
+
+// Always print status after logging a line
+// always print if task changed
+// If time is different, update timestamp
+// If % changed, update % and scrollbar
+
+Console* Console::theConsole_ = nullptr;
 
 template <size_t N>
 static char* putString(char* p, const char(&s)[N])
@@ -16,19 +25,8 @@ static char* putString(char* p, const char(&s)[N])
 
 Console::Console()
 {
-	hConsole_ = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD consoleMode;
-	GetConsoleMode(hConsole_, &consoleMode);
-	consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-	SetConsoleMode(hConsole_, consoleMode);
-	if (!SetConsoleOutputCP(CP_UTF8))
-	{
-		printf("Failed to enable UTF-8 support.\n");
-	}
-	CONSOLE_CURSOR_INFO cursorInfo;
-	GetConsoleCursorInfo(hConsole_, &cursorInfo);
-	cursorInfo.bVisible = false; // Set the cursor visibility
-	SetConsoleCursorInfo(hConsole_, &cursorInfo);
+	init();
+	theConsole_ = this;
 }
 
 void Console::start(int64_t totalWork, std::string_view task)
@@ -43,8 +41,35 @@ void Console::start(int64_t totalWork, std::string_view task)
 	progress(0);
 }
 
+// TODO: proper locking
+
+void Console::log(std::string_view msg)
+{
+	char buf[1024];
+	char* p = putString(buf, "\u001b[38;5;242m");
+	std::chrono::time_point<std::chrono::steady_clock> now(
+		std::chrono::steady_clock::now());
+	formatTimespan(p, std::chrono::duration_cast
+		<std::chrono::milliseconds>(now - startTime_), true);
+	p = putString(p + 12, "\u001b[0m");
+	size_t maxTextLen = MAX_LINE_LENGTH - (p - buf) - 2;
+	memset(p, ' ', maxTextLen + 2);
+	p += 2;
+	size_t actualTextLen = std::min(msg.length(), maxTextLen);
+	memcpy(p, msg.data(), actualTextLen);
+	p += actualTextLen;
+	*p++ = '\n';
+	print(buf, p - buf);
+	nextReportTime_ = std::chrono::steady_clock::time_point::min();
+	progress(0);
+}
+
+// TODO: proper locking
+
 void Console::progress(int64_t work)
 {
+	std::unique_lock<std::mutex> lock(mutex_);
+
 	workCompleted_ += work;
 	int percentage = static_cast<int>(workCompleted_ * 100 / totalWork_);
 	if (percentage != percentageCompleted_)
@@ -67,15 +92,15 @@ void Console::progress(int64_t work)
 		formatTimespan(status_, std::chrono::duration_cast
 			<std::chrono::milliseconds>(now - startTime_));
 		nextReportTime_ = std::chrono::ceil<std::chrono::seconds>(now);
-		DWORD written;
-		WriteConsoleA(hConsole_, status_, statusLen_, &written, NULL);
+		print(status_, statusLen_);
 	}
 }
 
-void Console::formatTimespan(char* buf, std::chrono::milliseconds ms)
+void Console::formatTimespan(char* buf, std::chrono::milliseconds timeSpan, bool withMs)
 {
-	div_t d;
-	int s = ms.count() / 1000;
+	div_t d = div(static_cast<int>(timeSpan.count()), 1000);
+	int s = d.quot;
+	int ms = d.rem;
 	d = div(s, 60);
 	int m = d.quot;
 	s = d.rem;
@@ -93,6 +118,15 @@ void Console::formatTimespan(char* buf, std::chrono::milliseconds ms)
 	d = div(s, 10);
 	buf[6] = '0' + d.quot;
 	buf[7] = '0' + d.rem;
+	if (withMs)
+	{
+		buf[8] = '.';
+		d = div(ms, 10);
+		buf[11] = '0' + d.rem;
+		d = div(d.quot, 10);
+		buf[10] = '0' + d.rem;
+		buf[9] = '0' + d.quot;
+	}
 }
 
 

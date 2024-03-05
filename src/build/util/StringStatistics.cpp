@@ -3,6 +3,7 @@
 
 #include "StringStatistics.h"
 #include <cstring>
+#include <common/cli/Console.h>
 #include <common/util/Strings.h>
 
 StringStatistics::StringStatistics(uint32_t tableSize, uint32_t arenaSize) :
@@ -120,7 +121,7 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	// TODO: Stop at a point before arenaEnd_ so recently added strings have a chance
 	// to catch up?
 
-	printf("Evicting strings with usage of less than %d...\n", minCount);
+	Console::msg("Evicting strings with usage of less than %d...", minCount);
 
 	uint64_t totalCount = 0;
 	uint64_t evictionCount = 0;
@@ -171,7 +172,7 @@ void StringStatistics::removeStrings(uint32_t minCount)
 	}
 	p_ = pDest;
 
-	printf("Evicted %llu of %llu strings; minCount is now %d\n", 
+	Console::msg("Evicted %llu of %llu strings; minCount is now %d", 
 		evictionCount, totalCount, minCount);
 	// check();
 }

@@ -134,10 +134,11 @@ public:
 
 	Sorter(GolBuilder* builder);
 	GolBuilder* builder() { return builder_; };
-	SorterPhaser& phaser() { return phaser_; }
+	// SorterPhaser& phaser() { return phaser_; }
 	void sort(const char* fileName);
 	void startFile(uint64_t size);		// CRTP override
 	void processTask(SorterOutputTask& task);
+	void advancePhase(int currentPhase, int newPhase);
 	void addCounts(uint64_t nodeCount, uint64_t wayCount,
 		uint64_t wayNodeCount, uint64_t relationCount)
 	{
@@ -149,9 +150,11 @@ public:
 
 private:
 	GolBuilder* builder_;
-	SorterPhaser phaser_;
+	std::mutex phaseMutex_;
+	std::condition_variable phaseStarted_;
 	uint64_t nodeCount_;
 	uint64_t wayCount_;
 	uint64_t wayNodeCount_;
 	uint64_t relationCount_;
+	int phaseCountdowns_[3];
 };

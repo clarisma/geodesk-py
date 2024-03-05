@@ -3,6 +3,7 @@
 
 #include "ExpandableMappedFile.h"
 #include <cassert>
+#include <common/cli/Console.h>
 #include <common/util/Bits.h>
 
 ExpandableMappedFile::ExpandableMappedFile() :
@@ -36,7 +37,7 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 	}
 	mainMapping_ = reinterpret_cast<uint8_t*>(map(0, mainMappingSize_, 
 		mode & (MappingMode::READ | MappingMode::WRITE)));
-	printf("Created main mapping at %p (size %llu)\n", mainMapping_, mainMappingSize_);
+	Console::msg("Created main mapping at %p (size %llu)", mainMapping_, mainMappingSize_);
 }
 
 
@@ -60,7 +61,7 @@ uint8_t* ExpandableMappedFile::translate(uint64_t ofs)
 	
 	if (offsetIntoSegment >= mappingSize(slot + 1))
 	{
-		printf("Offset %llu overruns size of slot %d (%llu)\n",
+		Console::msg("Offset %llu overruns size of slot %d (%llu)",
 			offsetIntoSegment, slot, mappingSize(slot + 1));
 	}
 	
@@ -93,7 +94,7 @@ uint8_t* ExpandableMappedFile::createExtendedMapping(int slot)
 		mapping = reinterpret_cast<uint8_t*>(map(ofs, size, MappingMode::READ | MappingMode::WRITE));
 		extendedMappings_[slot].store(mapping, std::memory_order_release);
 
-		printf("Created extended mapping #%d at %llu (size %llu) -- p = %p\n", 
+		Console::msg("Created extended mapping #%d at %llu (size %llu) -- p = %p",
 			slot, ofs, size, mapping);
 	}
 	return mapping;

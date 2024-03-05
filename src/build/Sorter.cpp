@@ -169,7 +169,9 @@ void SorterContext::flush(int futurePhase)
     // printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
     if (futurePhase != currentPhase_)
     {
-        reader()->phaser().advancePhase(currentPhase_, futurePhase);
+        reader()->advancePhase(currentPhase_, futurePhase);
+        currentPhase_ = futurePhase;
+        /*
         if (futurePhase == 1)
         {
             printf("Started ways...\n");
@@ -178,7 +180,7 @@ void SorterContext::flush(int futurePhase)
         {
             printf("Started relations...\n");
         }
-        currentPhase_ = futurePhase;
+        */
     }
 }
 
@@ -192,7 +194,7 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     uint32_t pile = builder_->tileCatalog().pileOfCoordinate(xy);
     if (!pile)
     {
-        printf("node/%lld: Unable to assign to tile\n", id);
+        Console::msg("node/%lld: Unable to assign to tile\n", id);
     }
     encodeTags(tags);
     pileWriter_.writeNode(pile, id, xy, tempWriter_);
@@ -374,13 +376,16 @@ void SorterContext::harvestResults()
 
 Sorter::Sorter(GolBuilder* builder) :
     OsmPbfReader(builder->threadCount()),
-    phaser_(builder->threadCount()),
     builder_(builder),
     nodeCount_(0),
     wayCount_(0),
     wayNodeCount_(0),
     relationCount_(0)
 {
+    for (int i = 0; i < 3; i++)
+    {
+        phaseCountdowns_[i] = builder->threadCount();
+    }
 }
 
 
@@ -400,9 +405,38 @@ void Sorter::processTask(SorterOutputTask& task)
     // printf("-> Written\n");
 }
 
+static const char* PHASE_TASK_NAMES[] =
+{
+    "Sorting nodes...",
+    "Sorting ways...",
+    "Sorting relations...",
+    "Sorting relations..."      // Super-relations
+};
+
+void Sorter::advancePhase(int currentPhase, int newPhase)
+{
+    assert(newPhase > currentPhase);
+    assert(newPhase <= 3);
+    std::unique_lock<std::mutex> lock(phaseMutex_);
+    for (int i = currentPhase; i < newPhase; i++)
+    {
+        assert(phaseCountdowns_[i] > 0);
+        phaseCountdowns_[i]--;
+        if (phaseCountdowns_[i] == 0)
+        {
+            builder_->console().setTask(PHASE_TASK_NAMES[newPhase]);
+            phaseStarted_.notify_all();
+        }
+    }
+    while (phaseCountdowns_[newPhase - 1] > 0)
+    {
+        phaseStarted_.wait(lock);
+    }
+}
+
 void Sorter::startFile(uint64_t size)		// CRTP override
 {
-    builder_->console().start(size, "Sorting nodes...");
+    builder_->console().start(size, PHASE_TASK_NAMES[Phase::NODES]);
 }
 
 

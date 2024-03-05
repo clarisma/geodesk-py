@@ -1,5 +1,6 @@
 #include "TileIndexBuilder.h"
 #include <unordered_map>
+#include <common/cli/Console.h>
 
 TileIndexBuilder::TileIndexBuilder(const BuildSettings& settings) :
 	arena_(64 * 1024),
@@ -53,8 +54,8 @@ const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
 	}
 	*/
 
-	printf("- %u tiles\n", tileCount_);
-	printf("- %u TIPs\n", pIndex[0]);
+	Console::msg("- %u tiles", tileCount_);
+	Console::msg("- %u TIPs", pIndex[0]);
 	return pIndex;
 }
 
@@ -224,7 +225,7 @@ void TileIndexBuilder::linkChildTiles()
 uint32_t TileIndexBuilder::layoutIndex()
 {
 	uint32_t size = tiers_[0].firstTile->layout(4);		// First slot of table is unused
-	printf("TileIndex size: %u bytes\n", size);
+	Console::msg("TileIndex size: %u bytes", size);
 	return size;
 }
 

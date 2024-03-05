@@ -58,9 +58,9 @@ void GolBuilder::analyze()
 	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts.get()));
 	delete totalNodeCounts.release();
 
-	printf("Building tile lookup...\n");
+	Console::msg("Building tile lookup...");
 	tileCatalog_.build(tib.tileCount(), tileIndex.get(), settings_.zoomLevels());
-	printf("Tile lookup built.\n");
+	Console::msg("Tile lookup built.");
 	stringCatalog_.build(settings_, analyzer.strings());
 }
 

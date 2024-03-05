@@ -66,7 +66,6 @@ void AnalyzerContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, proto
 		uint32_t key = readVarint32(p);
 		if (key == 0) break;
 		uint32_t value = readVarint32(p);
-		// printf("- Tag: %d = %d\n", key, value);
 		countString(key, 1, 0);
 		countString(value, 0, 1);
 		stats_.tagCount++;
@@ -266,7 +265,6 @@ void Analyzer::analyze(const char* fileName)
 		if (subTotal >= 100)
 		{
 			std::string_view s = counter->stringView();
-			// printf("%12llu %.*s\n", subTotal, static_cast<int>(s.size()), s.data());
 			totalStringCount++;
 			totalStringUsageCount += subTotal;
 		}
@@ -275,16 +273,16 @@ void Analyzer::analyze(const char* fileName)
 	uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
 		- totalStringUsageCount;
 
-	printf("  %12llu nodes\n", totalStats_.nodeCount);
-	printf("  %12llu ways\n", totalStats_.wayCount);
-	printf("  %12llu relations\n", totalStats_.relationCount);
-	printf("  %12llu members\n", totalStats_.memberCount);
-	printf("  %12llu tags\n", totalStats_.tagCount);
-	printf("  %12llu unique strings in string table\n", totalStringCount);
-	printf("  %12llu unique-string occurrences\n", totalStringUsageCount);
-	printf("  %12llu literal strings\n", literalsCount);
+	Console::msg("  %12llu nodes", totalStats_.nodeCount);
+	Console::msg("  %12llu ways", totalStats_.wayCount);
+	Console::msg("  %12llu relations", totalStats_.relationCount);
+	Console::msg("  %12llu members", totalStats_.memberCount);
+	Console::msg("  %12llu tags", totalStats_.tagCount);
+	Console::msg("  %12llu unique strings in string table", totalStringCount);
+	Console::msg("  %12llu unique-string occurrences", totalStringUsageCount);
+	Console::msg("  %12llu literal strings", literalsCount);
 
-	printf("Analysis complete.\n");
+	Console::msg("Analysis complete.");
 }
 
 
