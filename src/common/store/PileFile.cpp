@@ -105,6 +105,7 @@ PileFile::Data PileFile::load(uint32_t pile)
 
 		const Page* pPage = getPage(page);
 		uint64_t dataRead = std::min(dataSize, dataPerPage);
+		page = pPage->nextPage;
 		memcpy(pEnd, &pPage->data, dataRead);
 		pEnd += dataRead;
 		dataSize -= dataPerPage;
