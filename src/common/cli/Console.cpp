@@ -99,38 +99,11 @@ void Console::progress(int64_t work)
 void Console::formatTimespan(char* buf, std::chrono::milliseconds timeSpan, bool withMs)
 {
 	div_t d = div(static_cast<int>(timeSpan.count()), 1000);
-	int s = d.quot;
-	int ms = d.rem;
-	d = div(s, 60);
-	int m = d.quot;
-	s = d.rem;
-	d = div(m, 60);
-	int h = d.quot;
-	m = d.rem;
-	d = div(h, 10);
-	buf[0] = '0' + d.quot;
-	buf[1] = '0' + d.rem;
-	buf[2] = ':';
-	d = div(m, 10);
-	buf[3] = '0' + d.quot;
-	buf[4] = '0' + d.rem;
-	buf[5] = ':';
-	d = div(s, 10);
-	buf[6] = '0' + d.quot;
-	buf[7] = '0' + d.rem;
-	if (withMs)
-	{
-		buf[8] = '.';
-		d = div(ms, 10);
-		buf[11] = '0' + d.rem;
-		d = div(d.quot, 10);
-		buf[10] = '0' + d.rem;
-		buf[9] = '0' + d.quot;
-	}
+	Format::timeFast(buf, d.quot, withMs ? d.rem : -1);
 }
 
 
-void Console::formatPercentage(char* buf, int percentage)
+char* Console::formatPercentage(char* buf, int percentage)
 {
 	div_t d;
 	int v1, v2, v3;
@@ -143,6 +116,7 @@ void Console::formatPercentage(char* buf, int percentage)
 	buf[1] = (v1 | v2) ? ('0' + v2) : ' ';
 	buf[2] = '0' + v3;
 	buf[3] = '%';
+	return &buf[4];
 }
 
 
@@ -195,3 +169,61 @@ char* Console::drawProgressBar(char* p, int percentage)
 	return p;
 }
 
+
+char* Console::formatProgressBar(char* p, int percentage)
+{
+	p = putString(p, " \033[33;100m");
+	int fullBlocks = percentage / 4;
+	char* pEnd = p + fullBlocks * 3;
+	while (p < pEnd)
+	{
+		*p++ = BLOCK_CHARS_UTF8[0];
+		*p++ = BLOCK_CHARS_UTF8[1];
+		*p++ = BLOCK_CHARS_UTF8[2];
+	}
+	int partialBlocks = percentage % 4;
+	int emptyBlocks;
+	if (partialBlocks)
+	{
+		const char* pChar = &BLOCK_CHARS_UTF8[partialBlocks * 3];
+		*pEnd++ = *pChar++;
+		*pEnd++ = *pChar++;
+		*pEnd++ = *pChar;
+		emptyBlocks = 25 - fullBlocks - 1;
+	}
+	else
+	{
+		emptyBlocks = 25 - fullBlocks;
+	}
+	p = pEnd;
+	pEnd = p + emptyBlocks;
+	while (p < pEnd)
+	{
+		*p++ = ' ';
+	}
+	return p;
+}
+
+
+char* Console::formatStatus(char* buf, int secs, int percentage, const char* task)
+{
+	char* p = Format::timeFast(buf, secs, -1);
+	if (percentage >= 0)
+	{
+		*p++ = ' ';
+		p = formatPercentage(p, percentage);
+		p = formatProgressBar(p, percentage);
+		p = putString(p, "\033[0m ");
+		if (task)
+		{
+			char* pEnd = p + MAX_TASK_CHARS;
+			while (*task && p < pEnd)
+			{
+				*p++ = *task++;
+			}
+			while (p < pEnd) *p++ = ' ';
+		}
+	}
+	*p++ = '\r';
+	return p;
+}

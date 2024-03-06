@@ -87,5 +87,46 @@ namespace Format
         auto hours = std::chrono::duration_cast<std::chrono::hours>(ms) % 24;
         unsafe(buf, "%lldd %lldh", days.count(), hours.count());
     }
+
+    /**
+     * Formats time in the form HH:MM:SS or HH:MM:SS.fff, without a
+     * terminating null character.
+     * 
+     * @param   buf  buffer with at least 8 (or 12 for ms) characters
+     * @param   s    seconds since midnight (or a start time)
+     *               Must be less than 24 hours (clock) or 100 hours (timer),
+     *               otherwise the result will be undefined
+     * @param   ms   remainder in milliseconds (0-999) or -1 to omit
+     * @return  pointer to the character immediately after
+     */
+    inline char* timeFast(char* buf, int s, int ms)
+    {
+        div_t d = div(s, 60);
+        int m = d.quot;
+        s = d.rem;
+        d = div(m, 60);
+        int h = d.quot;
+        m = d.rem;
+        d = div(h, 10);
+        buf[0] = '0' + d.quot;
+        buf[1] = '0' + d.rem;
+        buf[2] = ':';
+        d = div(m, 10);
+        buf[3] = '0' + d.quot;
+        buf[4] = '0' + d.rem;
+        buf[5] = ':';
+        d = div(s, 10);
+        buf[6] = '0' + d.quot;
+        buf[7] = '0' + d.rem;
+        if (ms < 0) return &buf[8];
+        buf[8] = '.';
+        d = div(ms, 10);
+        buf[11] = '0' + d.rem;
+        d = div(d.quot, 10);
+        buf[10] = '0' + d.rem;
+        buf[9] = '0' + d.quot;
+        return &buf[12];
+    }
+
 }
 
