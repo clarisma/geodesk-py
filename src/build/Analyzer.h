@@ -123,4 +123,5 @@ private:
 	int minStringCount_;
 	std::unique_ptr<uint32_t[]> totalNodeCounts_;
 	OsmStatistics totalStats_;
+	double workPerByte_;
 };

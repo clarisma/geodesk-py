@@ -400,7 +400,7 @@ void Sorter::processTask(SorterOutputTask& task)
         index.put(entry.id(), entry.pile());
     }
     */
-    builder_->console().progress(task.bytesProcessed_);
+    builder_->progress(task.bytesProcessed_ * workPerByte_);
     reportOutputQueueSpace();
     // printf("-> Written\n");
 }
@@ -436,7 +436,8 @@ void Sorter::advancePhase(int currentPhase, int newPhase)
 
 void Sorter::startFile(uint64_t size)		// CRTP override
 {
-    builder_->console().start(size, PHASE_TASK_NAMES[Phase::NODES]);
+    workPerByte_ = builder_->phaseWork(GolBuilder::Phase::SORT) / size;
+    builder_->console().setTask(PHASE_TASK_NAMES[Phase::NODES]);
 }
 
 

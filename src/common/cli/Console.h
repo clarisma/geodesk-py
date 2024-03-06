@@ -18,9 +18,8 @@ public:
 	Console();
 	~Console() { theConsole_ = nullptr; }
 
-	void start(int64_t totalWork, std::string_view initialTask);
-	void progress(int64_t work);
-	void setTask(std::string_view task);
+	void start(const char* task);
+	void setTask(const char* task);
 	void setProgress(int percentage);
 	void log(std::string_view msg);
 	
@@ -77,23 +76,18 @@ private:
 	void print(const char* s, size_t len);
 
 	static char* formatStatus(char* buf, int secs, int percentage = -1, const char* task = nullptr);
-	static void formatTimespan(char* buf, std::chrono::milliseconds ms, bool withMs = false);
 	static char* formatPercentage(char* buf, int percentage);
-	static char* drawProgressBar(char* p, int percentage);
 	static char* formatProgressBar(char* p, int percentage);
+	size_t printWithStatus(char* buf, char* p, std::chrono::steady_clock::duration elapsed,
+		int percentage = -1, const char* task = nullptr);
 
 	static Console* theConsole_;
 	#ifdef _WIN32
 	HANDLE hConsole_;
 	#endif
-	std::mutex mutex_;
-	std::string_view currentTask_ = "";
-	int64_t totalWork_ = 0;
-	int64_t workCompleted_ = 0;
+	std::atomic<const char*> currentTask_ = "";
 	std::chrono::time_point<std::chrono::steady_clock> startTime_;
-	std::chrono::time_point<std::chrono::steady_clock> nextReportTime_;
-	int percentageCompleted_ = -1;
-	int statusLen_ = 0;
+	std::atomic<std::chrono::steady_clock::duration> reportNext_;
+	std::atomic<int> currentPercentage_ = -1;
 	int consoleWidth_ = 80;
-	char status_[256];
 };

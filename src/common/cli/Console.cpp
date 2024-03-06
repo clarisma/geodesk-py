@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
- 
+
+#include <cassert>
 #if defined(_WIN32) 
 #include "Console_windows.cxx"
 #elif defined(__linux__) || defined(__APPLE__) 
@@ -29,29 +30,26 @@ Console::Console()
 	theConsole_ = this;
 }
 
-void Console::start(int64_t totalWork, std::string_view task)
+void Console::start(const char* task)
 {
-	totalWork_ = totalWork;
-	workCompleted_ = 0;
-	currentTask_ = task;
 	startTime_ = std::chrono::steady_clock::now();
-	nextReportTime_ = std::chrono::steady_clock::time_point::min();
-	status_[8] = ' ';
-	putString(&status_[9], "\x1b[33m");
-	progress(0);
+	currentPercentage_.store(0, std::memory_order_release);
+	setTask(task);
 }
-
-// TODO: proper locking
 
 void Console::log(std::string_view msg)
 {
+	auto elapsed = std::chrono::steady_clock::now() - startTime_;
 	char buf[1024];
+	int ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+	div_t d;
+	d = div(ms, 1000);
+	int s = d.quot;
+	ms = d.rem;
+
 	char* p = putString(buf, "\u001b[38;5;242m");
-	std::chrono::time_point<std::chrono::steady_clock> now(
-		std::chrono::steady_clock::now());
-	formatTimespan(p, std::chrono::duration_cast
-		<std::chrono::milliseconds>(now - startTime_), true);
-	p = putString(p + 12, "\u001b[0m");
+	p = Format::timeFast(p, s, ms);
+	p = putString(p, "\u001b[0m");
 	size_t maxTextLen = consoleWidth_ - 15;
 	memset(p, ' ', maxTextLen + 2);
 	p += 2;
@@ -59,52 +57,16 @@ void Console::log(std::string_view msg)
 	memcpy(p, msg.data(), actualTextLen);
 	p += maxTextLen;
 	*p++ = '\n';
-	print(buf, p - buf);
-	nextReportTime_ = std::chrono::steady_clock::time_point::min();
-	progress(0);
-}
-
-// TODO: proper locking
-
-void Console::progress(int64_t work)
-{
-	std::unique_lock<std::mutex> lock(mutex_);
-
-	workCompleted_ += work;
-	int percentage = static_cast<int>(workCompleted_ * 100 / totalWork_);
-	if (percentage != percentageCompleted_)
-	{
-		percentageCompleted_ = percentage;
-		formatPercentage(&status_[14], percentage);
-		status_[18] = ' ';
-		char* p = drawProgressBar(&status_[19], percentage);
-		p = putString(p, "\033[0m ");
-		memset(p, ' ', MAX_TASK_CHARS);
-		memcpy(p, currentTask_.data(), std::min(currentTask_.size(), 38ULL));
-		p += MAX_TASK_CHARS;
-		*p++ = '\r';
-		statusLen_ = p - status_;
-	}
-	std::chrono::time_point<std::chrono::steady_clock> now(
-		std::chrono::steady_clock::now());
-	if (now >= nextReportTime_)
-	{
-		formatTimespan(status_, std::chrono::duration_cast
-			<std::chrono::milliseconds>(now - startTime_));
-		nextReportTime_ = std::chrono::ceil<std::chrono::seconds>(now);
-		print(status_, statusLen_);
-	}
-}
-
-void Console::formatTimespan(char* buf, std::chrono::milliseconds timeSpan, bool withMs)
-{
-	div_t d = div(static_cast<int>(timeSpan.count()), 1000);
-	Format::timeFast(buf, d.quot, withMs ? d.rem : -1);
+	int percentage = currentPercentage_.load(std::memory_order_acquire);
+	const char* task = currentTask_.load(std::memory_order_acquire);
+	size_t bytesPrinted = printWithStatus(buf, p, elapsed, percentage, task);
+	assert(bytesPrinted < sizeof(buf));
 }
 
 
 char* Console::formatPercentage(char* buf, int percentage)
 {
+	buf = putString(buf, "\x1b[33m");
 	div_t d;
 	int v1, v2, v3;
 	d = div(percentage, 10);
@@ -120,13 +82,6 @@ char* Console::formatPercentage(char* buf, int percentage)
 }
 
 
-void Console::setTask(std::string_view task)
-{
-	currentTask_ = task;
-	nextReportTime_ = std::chrono::steady_clock::time_point::min();
-	percentageCompleted_ = -1;
-	progress(0);
-}
 
 const char* Console::BLOCK_CHARS_UTF8 = (const char*)
 	u8"\U00002588"	// full block
@@ -134,40 +89,6 @@ const char* Console::BLOCK_CHARS_UTF8 = (const char*)
 	u8"\U0000258C"	// half block
 	u8"\U0000258A"	// three-quarter block
 	;
-
-char* Console::drawProgressBar(char* p, int percentage)
-{
-	p = putString(p, "\033[33;100m");
-	int fullBlocks = percentage / 4;
-	char* pEnd = p + fullBlocks * 3;
-	while (p < pEnd)
-	{
-		*p++ = BLOCK_CHARS_UTF8[0];
-		*p++ = BLOCK_CHARS_UTF8[1];
-		*p++ = BLOCK_CHARS_UTF8[2];
-	}
-	int partialBlocks = percentage % 4;
-	int emptyBlocks;
-	if (partialBlocks)
-	{
-		const char* pChar = &BLOCK_CHARS_UTF8[partialBlocks * 3];
-		*pEnd++ = *pChar++;
-		*pEnd++ = *pChar++;
-		*pEnd++ = *pChar;
-		emptyBlocks = 25 - fullBlocks - 1;
-	}
-	else
-	{
-		emptyBlocks = 25 - fullBlocks;
-	}
-	p = pEnd;
-	pEnd = p + emptyBlocks;
-	while (p < pEnd)
-	{
-		*p++ = ' ';
-	}
-	return p;
-}
 
 
 char* Console::formatProgressBar(char* p, int percentage)
@@ -226,4 +147,49 @@ char* Console::formatStatus(char* buf, int secs, int percentage, const char* tas
 	}
 	*p++ = '\r';
 	return p;
+}
+
+
+void Console::setProgress(int percentage)
+{
+	auto elapsed = std::chrono::steady_clock::now() - startTime_;
+	// std::chrono::steady_clock::duration reportNext;
+	int oldPercentage = currentPercentage_.load(std::memory_order_relaxed);
+	if (percentage != oldPercentage)
+	{
+		currentPercentage_.store(percentage, std::memory_order_release);
+	}
+	else
+	{
+		auto reportNext = reportNext_.load(std::memory_order_relaxed);
+		if (elapsed < reportNext) return;
+		percentage = -1;
+	}
+	char buf[256];
+	size_t bytesPrinted = printWithStatus(buf, buf, elapsed, percentage);
+	assert(bytesPrinted < sizeof(buf));
+}
+
+
+size_t Console::printWithStatus(char* buf, char* p,
+	std::chrono::steady_clock::duration elapsed,
+	int percentage, const char* task)
+{
+	reportNext_.store(std::chrono::ceil<std::chrono::seconds>(elapsed),
+		std::memory_order_relaxed);
+	int secs = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+	const char* end = formatStatus(p, secs, percentage, task);
+	size_t size = end - buf;
+	print(buf, size);
+	return size;
+}
+
+
+void Console::setTask(const char* task)
+{
+	currentTask_.store(task, std::memory_order_release);
+	char buf[256];
+	int percentage = currentPercentage_.load(std::memory_order_acquire);
+	printWithStatus(buf, buf, std::chrono::steady_clock::now() - startTime_,
+		currentPercentage_, task);
 }

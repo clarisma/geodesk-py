@@ -17,6 +17,8 @@ class GolBuilder
 public:
 	GolBuilder();
 
+	enum Phase { ANALYZE, SORT, VALIDATE, COMPILE };
+
 	#ifdef GEODESK_PYTHON
 	static PyObject* build(PyObject* args, PyObject* kwds);
 	int setOptions(PyObject* dict)
@@ -38,6 +40,12 @@ public:
 	}
 	IndexFile& nodeIndex() { return featureIndex(0); }
 	PileFile& featurePiles() { return featurePiles_; }
+	double phaseWork(int phase) const { return workPerPhase_[phase]; }
+	void progress(double work)
+	{
+		workCompleted_ += work;
+		console_.setProgress(static_cast<int>(workCompleted_));
+	}
 
 private:
 	void analyze();
@@ -46,6 +54,7 @@ private:
 	void validate();
 	void compile();
 
+	void calculateWork();
 	void openIndex(IndexFile& index, const char* name, int extraBits);
 
 	Console console_;
@@ -57,4 +66,6 @@ private:
 	IndexFile featureIndexes_[3];
 	PileFile featurePiles_;
 	int threadCount_;
+	double workPerPhase_[4];
+	double workCompleted_;
 };

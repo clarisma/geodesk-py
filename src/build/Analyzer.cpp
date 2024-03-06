@@ -196,7 +196,7 @@ void Analyzer::processTask(AnalyzerOutputTask& task)
 		}
 		p += StringStatistics::Counter::grossSize(stringSize);
 	}
-	builder_->console().progress(task.blockBytesProcessed());
+	builder_->progress(task.blockBytesProcessed() * workPerByte_);
 }
 
 
@@ -240,7 +240,8 @@ void Analyzer::addRequiredStrings()
 
 void Analyzer::startFile(uint64_t size)		// CRTP override
 {
-	builder_->console().start(size, "Analyzing...");
+	workPerByte_ = builder_->phaseWork(GolBuilder::Phase::ANALYZE) / size;
+	builder_->console().setTask("Analyzing...");
 }
 
 void Analyzer::analyze(const char* fileName)

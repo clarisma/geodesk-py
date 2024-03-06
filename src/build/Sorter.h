@@ -156,5 +156,6 @@ private:
 	uint64_t wayCount_;
 	uint64_t wayNodeCount_;
 	uint64_t relationCount_;
+	double workPerByte_;
 	int phaseCountdowns_[3];
 };

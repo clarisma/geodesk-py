@@ -36,6 +36,9 @@ void GolBuilder::build(const char* golPath)
 
 	auto startTime = std::chrono::high_resolution_clock::now();
 
+	console_.start("Analyzing...");
+	calculateWork();
+
 	golPath_ = File::extension(golPath) != 0 ? golPath :
 		std::string(golPath) + ".gol";
 	workPath_ = golPath_.parent_path() / (golPath_.filename().string() + ".work");
@@ -102,4 +105,12 @@ PyObject* GolBuilder::build(PyObject* args, PyObject* kwds)
 }
 
 #endif
+
+void GolBuilder::calculateWork()
+{
+	workPerPhase_[ANALYZE]  = 10.0;
+	workPerPhase_[SORT]     = 40.0;
+	workPerPhase_[VALIDATE] = 20.0;
+	workPerPhase_[COMPILE]  = 30.0;
+}
 
