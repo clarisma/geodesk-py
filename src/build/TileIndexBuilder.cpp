@@ -269,7 +269,7 @@ void TileIndexBuilder::STile::write(uint32_t* pIndex) noexcept
 	printf("Writing tile %s (%d children) at tip %d\n", tile_.toString().c_str(), 
 		childCount_, location_ / 4);
 	*/
-	assert(!isLeaf());
+	assert(!isLeaf() || tile_ == Tile::fromColumnRowZoom(0,0,0));
 	assert(location_);
 	assert(maxChildren_);
 	int step = Bits::countTrailingZerosInNonZero(maxChildren_) / 2;

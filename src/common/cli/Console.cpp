@@ -9,6 +9,7 @@
 #else
 #error "Platform not supported"
 #endif
+#include <common/thread/Threads.h>
 
 // Always print status after logging a line
 // always print if task changed
@@ -192,4 +193,25 @@ void Console::setTask(const char* task)
 	int percentage = currentPercentage_.load(std::memory_order_acquire);
 	printWithStatus(buf, buf, std::chrono::steady_clock::now() - startTime_,
 		currentPercentage_, task);
+}
+
+
+void Console::debug(const char* format, ...)
+{
+	if (theConsole_)
+	{
+		char buf[1024];
+		char* p = buf;
+		*p++ = '[';
+		std::string threadId = Threads::currentThreadId();
+		memcpy(p, threadId.data(), threadId.length());
+		p += threadId.length();
+		*p++ = ']';
+		*p++ = ' ';
+		va_list args;
+		va_start(args, format);
+		Format::unsafe(p, format, args);
+		va_end(args);
+		theConsole_->log(std::string_view(buf));
+	}
 }

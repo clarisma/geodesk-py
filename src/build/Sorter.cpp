@@ -153,7 +153,11 @@ void SorterContext::afterTasks()
 {
     if (blockBytesProcessed())
     {
-        flush(currentPhase_);
+        flush(Sorter::Phase::SUPER_RELATIONS);
+    }
+    else
+    {
+        reader()->advancePhase(currentPhase_, Sorter::Phase::SUPER_RELATIONS);
     }
 }
 
@@ -325,7 +329,10 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
         memberId += readSignedVarint64(pMemberId);
         int memberType = *pMemberType++;
         uint32_t role = readVarint32(pRole);
+
+        // TODO: remmeber the multi-tile bits in way/relation!!!
         uint32_t memberPile = builder_->featureIndex(memberType).get(memberId);
+
         if (!memberPile)
         {
             // printf("node/%llu not found in node index\n", nodeId);
@@ -351,6 +358,9 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
     relPile = prevMemberPile;  // TODO: dummy
     if (relPile)        // TODO
     {
+        // TODO
+        relPile = std::min(relPile, builder_->tileCatalog().tileCount() - 1);
+        // assert(relPile < builder_->tileCatalog().tileCount());
         pileWriter_.writeRelation(relPile, id, memberCount, tempWriter_);
         addFeature(id, relPile);
         //printf("way/%lld sorted into pile #%d\n", id, wayPile);
@@ -415,6 +425,7 @@ static const char* PHASE_TASK_NAMES[] =
 
 void Sorter::advancePhase(int currentPhase, int newPhase)
 {
+    //Console::debug("Advancing phase from %d to %d...", currentPhase, newPhase);
     assert(newPhase > currentPhase);
     assert(newPhase <= 3);
     std::unique_lock<std::mutex> lock(phaseMutex_);
@@ -422,6 +433,7 @@ void Sorter::advancePhase(int currentPhase, int newPhase)
     {
         assert(phaseCountdowns_[i] > 0);
         phaseCountdowns_[i]--;
+        //Console::debug("Completed phase %d, countdown is now %d", i, phaseCountdowns_[i]);
         if (phaseCountdowns_[i] == 0)
         {
             builder_->console().setTask(PHASE_TASK_NAMES[newPhase]);
@@ -430,6 +442,7 @@ void Sorter::advancePhase(int currentPhase, int newPhase)
     }
     while (phaseCountdowns_[newPhase - 1] > 0)
     {
+        //Console::debug("Waiting to proceed to phase %d...", newPhase);
         phaseStarted_.wait(lock);
     }
 }

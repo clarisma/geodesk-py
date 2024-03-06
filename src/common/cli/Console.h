@@ -52,7 +52,7 @@ public:
 	template <size_t N>
 	static void msg(const char(&msg)[N])
 	{
-		LOG(std::string_view(msg, N - 1));  // Subtract 1 to exclude null terminator
+		log(std::string_view(msg, N - 1));  // Subtract 1 to exclude null terminator
 	}
 
 
@@ -66,6 +66,8 @@ public:
 			va_end(args);
 		}
 	}
+
+	static void debug(const char* format, ...);
 
 private:
 	static const char* BLOCK_CHARS_UTF8;

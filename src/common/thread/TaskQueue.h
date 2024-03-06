@@ -3,10 +3,13 @@
 
 #pragma once
 
+#include <cassert>
 #include <vector>
 #include <thread>
 #include <condition_variable>
 #include <atomic>
+#include <functional>
+#include <common/cli/Console.h>
 #include <common/thread/Threads.h>
 #include <common/util/log.h>
 
@@ -21,6 +24,7 @@ public:
         rear_(0),
         running_(true)
     {
+        assert(size > 0);
         queue_.resize(size);
     }
 
@@ -54,6 +58,25 @@ public:
         return true;
     }
 
+    // TODO: Needs test
+    bool fill(std::function<bool(Task*)> supplier) 
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+
+        int tasksAdded = 0;
+        while (count_ < size_) 
+        {
+            if (!supplier(&queue_[rear_])) break;
+            // Successfully got a new task directly into the queue
+            rear_ = (rear_ + 1) % size_;
+            count_++;
+            tasksAdded++;
+        }
+
+        if (tasksAdded) notEmpty_.notify_all();
+        return count_ == size_; // Return true if the queue is full, indicating there might be more tasks to add
+    }
+
     
     int minimumRemainingCapacity()
     {
@@ -75,8 +98,7 @@ public:
                 {
                     if (!running_)
                     {
-                        LOG("Thread %s: Finished processing queue %p.", 
-                            Threads::currentThreadId().c_str(), this);
+                        Console::debug("Finished processing queue %p.", this);
                         return;
                     }
                     if (count_ > 0) break;

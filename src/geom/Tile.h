@@ -13,6 +13,7 @@ class Tile
 {
 public:
 	Tile() : tile_(-1) {}
+	Tile(uint32_t v) : tile_(v) {}
 	Tile(const Tile& other) : tile_(other.tile_) {}
 
 	Tile& operator=(const Tile& other) 
@@ -56,7 +57,7 @@ public:
 		return (tile_ >> 24) & 0xf;
 	}
 
-	static inline Tile fromColumnRowZoom(int col, int row, ZoomLevel zoom)
+	static inline constexpr Tile fromColumnRowZoom(int col, int row, ZoomLevel zoom)
 	{
 		return Tile(col, row, zoom);
 	}
@@ -149,7 +150,7 @@ public:
 	}
 
 protected:
-	inline Tile(int col, int row, ZoomLevel zoom)
+	inline constexpr Tile(int col, int row, ZoomLevel zoom)
 		: tile_((zoom << 24) | (row << 12) | col) {}
 	
 	inline Tile(int t) : tile_(t) {}

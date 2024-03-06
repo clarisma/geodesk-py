@@ -1,6 +1,8 @@
 #include "GolBuilder.h"
 #include "Analyzer.h"
 #include "Sorter.h"
+#include "Validator.h"
+#include "Compiler.h"
 #include "TileIndexBuilder.h"
 #ifdef GEODESK_PYTHON
 #include "python/util/util.h"
@@ -47,6 +49,8 @@ void GolBuilder::build(const char* golPath)
 	analyze();
 	prepare();
 	sort();
+	validate();
+	compile();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 	console_.log("Done.");
@@ -67,12 +71,6 @@ void GolBuilder::analyze()
 	stringCatalog_.build(settings_, analyzer.strings());
 }
 
-void GolBuilder::sort()
-{
-	Sorter sorter(this);
-	sorter.sort(settings_.sourcePath().c_str());
-}
-
 
 void GolBuilder::openIndex(IndexFile& index, const char* name, int extraBits)
 {
@@ -90,6 +88,26 @@ void GolBuilder::prepare()
 	featurePiles_.create((workPath_ / "features.bin").string().c_str(), 
 		tileCatalog_.tileCount(), 64 * 1024);
 }
+
+
+void GolBuilder::sort()
+{
+	Sorter sorter(this);
+	sorter.sort(settings_.sourcePath().c_str());
+}
+
+void GolBuilder::validate()
+{
+	Validator validator(this);
+	validator.validate();
+}
+
+void GolBuilder::compile()
+{
+
+}
+
+
 
 #ifdef GEODESK_PYTHON
 
