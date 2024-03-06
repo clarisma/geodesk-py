@@ -273,7 +273,7 @@ void TileIndexBuilder::STile::write(uint32_t* pIndex) noexcept
 	assert(location_);
 	assert(maxChildren_);
 	int step = Bits::countTrailingZerosInNonZero(maxChildren_) / 2;
-	assert((maxChildren_ == 4 && step == 1) || (maxChildren_ == 16 && step == 2) || (maxChildren_ == 64 && step == 2));
+	assert((maxChildren_ == 4 && step == 1) || (maxChildren_ == 16 && step == 2) || (maxChildren_ == 64 && step == 3));
 	uint64_t childTileMask = 0;
 	int left = tile_.column() << step;
 	int top = tile_.row() << step;
