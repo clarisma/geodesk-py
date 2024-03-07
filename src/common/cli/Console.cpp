@@ -38,6 +38,17 @@ void Console::start(const char* task)
 	setTask(task);
 }
 
+// TODO: This suffers from a (benign) race condition where the output
+// of different threads could appear out of order (log output with an
+// earlier timestamp follows output with a later timestamp).
+// We could obtain and format the current time *last* to mitigate 
+// its impact (especially if the time to format text varies greatly)
+// However, we then would no longer have the true timestamp of when the 
+// logged event occurred
+// Full synchronization via a mutex would fix this, but the performance
+// impact may be unacceptable (we would also have to sync the updates
+// of the progress bar)
+
 void Console::log(std::string_view msg)
 {
 	auto elapsed = std::chrono::steady_clock::now() - startTime_;

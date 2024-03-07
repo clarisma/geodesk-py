@@ -60,6 +60,7 @@ void Validator::Worker::processTask(TaskKey task)
 	// TODO
 	validator_->builder_->featurePiles().load(task.pile());
 	validator_->markCompleted(task);
+	Console::debug("  Validated %s", task.tile().toString().c_str());
 }
 
 void Validator::markCompleted(TaskKey task)

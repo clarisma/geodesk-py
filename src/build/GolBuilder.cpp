@@ -85,8 +85,7 @@ void GolBuilder::prepare()
 	openIndex(featureIndexes_[0], "nodes.idx", 0);
 	openIndex(featureIndexes_[1], "ways.idx", 2);
 	openIndex(featureIndexes_[2], "relations.idx", 2);
-	featurePiles_.create((workPath_ / "features.bin").string().c_str(), 
-		tileCatalog_.tileCount(), 64 * 1024);
+	featurePiles_.create(workPath_ / "features.bin", tileCatalog_.tileCount(), 64 * 1024);
 }
 
 

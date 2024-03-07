@@ -236,6 +236,8 @@ private:
 				return;
 			}
 			std::memcpy(pile->p_, bytes, pile->remaining_);
+				// TODO: possible undefined behavior if pile is full
+				// (Invalid pointer, but size = 0)
 			bytes += pile->remaining_;
 			len -= pile->remaining_;
 			addPage(pile);

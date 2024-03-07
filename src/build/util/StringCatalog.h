@@ -82,10 +82,14 @@ public:
 	static const int CORE_STRING_COUNT = 5;
 
 private:
-	struct Entry
+	struct EntryHeader
 	{
 		uint32_t next;
 		ProtoStringCode code;
+	};
+
+	struct Entry : public EntryHeader
+	{
 		ShortVarString string;
 
 		void mark(uint32_t v)
@@ -100,8 +104,7 @@ private:
 
 		static uint32_t totalSize(uint32_t stringSize)
 		{
-			return static_cast<uint32_t>(
-				sizeof(Entry) - sizeof(ShortVarString) +
+			return static_cast<uint32_t>(sizeof(EntryHeader) +
 				Bytes::aligned(stringSize, alignof(Entry)));
 		}
 

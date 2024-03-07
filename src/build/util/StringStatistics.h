@@ -60,7 +60,8 @@ public:
 
 		static uint32_t grossSize(uint32_t stringSize)
 		{
-			uint32_t counterSize = sizeof(Counter) - sizeof(string_) + stringSize;
+			static_assert(offsetof(Counter, string_) == 24, "Compiler added padding!");
+			uint32_t counterSize = offsetof(Counter, string_) + stringSize;
 			return (counterSize + 3) & ~3;
 			// TODO: Decide on alignment 4 vs. 8
 			// TODO: 4 not portable since we are using 64-bit StringCount

@@ -2,6 +2,9 @@
 
 #include <cassert>
 #include <common/util/Bits.h>
+#include <common/util/Bytes.h>
+
+// TODO: Implement open()!
 
 PileFile::PileFile()
 {
@@ -9,11 +12,17 @@ PileFile::PileFile()
 }
 
 
-void PileFile::create(const char* filename, uint32_t pileCount, uint32_t pageSize)
+void PileFile::create(std::filesystem::path filePath, uint32_t pileCount, uint32_t pageSize)
 {
-	assert(pileCount > 0 && pileCount < ((1 << 26) - 1));
-	assert(pageSize >= 4096 && pageSize <= SEGMENT_LENGTH && Bits::bitCount(pageSize) == 1);
-	open(filename, OpenMode::READ | OpenMode::WRITE | OpenMode::CREATE);
+	assert(pileCount > 0 && pileCount < MAX_PILE_COUNT);
+	assert(pageSize >= 4096 && pageSize <= SEGMENT_LENGTH && Bytes::isPowerOf2(pageSize));
+	if (std::filesystem::exists(filePath))
+	{
+		// Delete exisitng file so we start with a blank slate
+		std::filesystem::remove(filePath);
+	}
+
+	open(filePath.string().c_str(), OpenMode::READ | OpenMode::WRITE | OpenMode::CREATE);
 	Metadata* meta = metadata();
 	pageSize_ = pageSize;
 	meta->pageSizeShift = Bits::countTrailingZerosInNonZero(pageSize);
@@ -26,10 +35,9 @@ void PileFile::create(const char* filename, uint32_t pileCount, uint32_t pageSiz
 }
 
 
-void PileFile::append(uint32_t pile, const uint8_t* data, size_t len)
+void PileFile::append(int pile, const uint8_t* data, size_t len)
 {
 	assert (pile > 0 && pile <= metadata()->pileCount);
-	// assert baseMapping.limit() == (1 << 30) : String.format("Wrong buffer limit = %d", baseMapping.limit());
 	IndexEntry* indexEntry = &metadata()->index[pile - 1];
 	uint32_t lastPage = indexEntry->lastPage;
 	uint64_t pileSize = indexEntry->grossSize;
@@ -37,44 +45,37 @@ void PileFile::append(uint32_t pile, const uint8_t* data, size_t len)
 	{
 		// Pile does not yet exist
 		lastPage = allocPage();
-		pileSize = sizeof(PageHeader);
+		pileSize = PAGE_HEADER_SIZE;
 		indexEntry->firstPage = lastPage;
 		indexEntry->lastPage = lastPage;
 	}
-	size_t lastPageUsedBytes = pileSize & (pageSize_-1);
+	uint32_t lastPageUsedBytes = pileSize & (pageSize_-1);
 	if (lastPageUsedBytes == 0) lastPageUsedBytes = pageSize_;
-	size_t pageSpaceRemaining = pageSize_ - lastPageUsedBytes;
-	Page* pPage = getPage(lastPage);
-	uint8_t* pPageData = reinterpret_cast<uint8_t*>(pPage);
-
-	if (pageSpaceRemaining >= len)
+	
+	uint64_t remainingLen = len;
+	for(;;)
 	{
-		memcpy(pPageData + lastPageUsedBytes, data, len);
-	}
-	else
-	{
-		size_t remainingLen = len;
-		for (;;)
+		Page* pPage = getPage(lastPage);
+		uint64_t pageSpaceRemaining = pageSize_ - lastPageUsedBytes;
+		if(pageSpaceRemaining > 0)
 		{
-			memcpy(pPageData + lastPageUsedBytes, data, std::min(pageSpaceRemaining, remainingLen));
-			data += pageSpaceRemaining;
-			remainingLen -= pageSpaceRemaining;
-			if (static_cast<int64_t>(remainingLen) <= 0) break;
-			lastPage = allocPage();
-			pPage->nextPage = lastPage;
-			pageSpaceRemaining = pageSize_ - sizeof(PageHeader);
-			lastPageUsedBytes = sizeof(PageHeader);
-			pileSize += sizeof(PageHeader);
-			pPage = getPage(lastPage);
-			uint8_t* pPageData = reinterpret_cast<uint8_t*>(pPage);
+			uint8_t* p = reinterpret_cast<uint8_t*>(pPage) + lastPageUsedBytes;
+			uint64_t n = std::min(remainingLen, pageSpaceRemaining);
+			memcpy(p, data, n);
+			remainingLen -= n;
 		}
-		indexEntry->lastPage = lastPage;
+		if (remainingLen == 0) break;
+		lastPage = allocPage();
+		pPage->nextPage = lastPage;
+		pileSize += PAGE_HEADER_SIZE;
+		lastPageUsedBytes = PAGE_HEADER_SIZE;
 	}
+	indexEntry->lastPage = lastPage;
 	indexEntry->grossSize = pileSize + len;
 }
 
 
-PileFile::Data PileFile::load(uint32_t pile)
+PileFile::Data PileFile::load(int pile)
 {
 	assert (pile > 0 && pile <= metadata()->pileCount);
 	IndexEntry* indexEntry = &metadata()->index[pile - 1];
@@ -86,10 +87,11 @@ PileFile::Data PileFile::load(uint32_t pile)
 	}
 	uint64_t pileSize = indexEntry->grossSize;
 	uint64_t numberOfPages = (pileSize + pageSize_ - 1) >> metadata()->pageSizeShift;
-	uint64_t dataSize = pileSize - numberOfPages * sizeof(PageHeader);
+	uint64_t dataSize = pileSize - numberOfPages * PAGE_HEADER_SIZE;
 	uint8_t* pStart = new uint8_t[dataSize];
 	uint8_t* pEnd = pStart;
-	uint64_t dataPerPage = pageSize_ - sizeof(PageHeader);
+	uint64_t dataPerPage = pageSize_ - PAGE_HEADER_SIZE;
+	uint64_t remainingLen = dataSize;
 	while (page != 0)
 	{
 		/*
@@ -104,12 +106,13 @@ PileFile::Data PileFile::load(uint32_t pile)
 		*/
 
 		const Page* pPage = getPage(page);
-		uint64_t dataRead = std::min(dataSize, dataPerPage);
+		uint64_t n = std::min(remainingLen, dataPerPage);
 		page = pPage->nextPage;
-		memcpy(pEnd, &pPage->data, dataRead);
-		pEnd += dataRead;
-		dataSize -= dataPerPage;
-		// TODO: detect underflow = corrupt pile file
+		memcpy(pEnd, &pPage->data, n);
+		pEnd += n;
+		remainingLen -= n;
+		assert(remainingLen < dataSize);		// check for wraparound
 	}
+	assert(remainingLen == 0);
 	return Data{ pStart, pEnd };
 }

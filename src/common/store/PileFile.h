@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
  
 #pragma once
+#include <filesystem>
 #include <common/io/ExpandableMappedFile.h>
 
 class PileFile : protected ExpandableMappedFile
@@ -15,9 +16,11 @@ public:
 		uint8_t* end;
 	};
 
-	void create(const char* filename, uint32_t pileCount, uint32_t pageSize);
-	void append(uint32_t pile, const uint8_t* data, size_t len);
-	Data load(uint32_t pile);
+	void create(std::filesystem::path filePath, uint32_t pileCount, uint32_t pageSize);
+	void append(int pile, const uint8_t* data, size_t len);
+	Data load(int pile);
+
+	static const int MAX_PILE_COUNT = (1 << 26) - 1;
 		
 
 private:
@@ -37,15 +40,14 @@ private:
 		IndexEntry index[1];		// variable size
 	};
 
-	struct PageHeader
+	struct Page
 	{
 		uint32_t nextPage;
-	};
-
-	struct Page : public PageHeader
-	{
 		uint8_t data[1];			// variable size
 	};
+
+	static const size_t PAGE_HEADER_SIZE = 4;
+		// Don't use sizeof() because it will include alignments
 
 	Metadata* metadata() const { return reinterpret_cast<Metadata*>(mainMapping()); }
 	uint32_t allocPage() const
