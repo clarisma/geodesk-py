@@ -32,35 +32,40 @@
  *    can be written normally without risking a conflict, resulting in a 
  *    significant increase in throughput.
  */
-class FastFeatureIndexer
+class FastFeatureIndex
 {
 public:
-	FastFeatureIndexer();
+	FastFeatureIndex(uint64_t* index, int valueWidth, int64_t maxId);
 
-	void startIndex(IndexFile* index)
+	enum WriteState
 	{
-		endBlock();
-		index_ = index;
-		// currentSegment_ = index->
-	}
-	void startBlock();
-	void append(uint64_t id, uint32_t pile);
-	void endBlock();
+		NOT_STARTED = -1,
+		AT_START = 0,
+		BEYOND_START = 1
+	};
 
+	int get(int64_t id);
+	void put(int64_t id, int pile);
+	void endBatch();
+	
 private:
-	IndexFile* index_;
-	uint8_t* currentSegment_;
-	uint64_t data_;
+	static const int64_t SEGMENT_LENGTH_BYTES = 1024 * 1024 * 1024;		// 1 GB
 
-	/**
-	 * The position of the first bit in data_ in which any index data
-	 * is stored by the present thread.
-	 */
-	int startBit_;
+	struct CellRef
+	{
+		uint64_t* p;
+		int bitOffset;
+	};
 
-	/**
-	 * The position right after the last bit in data_ in which any 
-	 * index data is stored by the present thread.
-	 */
-	int endBit_;
+	CellRef access(int64_t id);
+	void flush();
+	void flushAtomic();
+
+	uint64_t* index_;
+	int64_t maxId_;
+	uint64_t* currentCell_;
+	uint64_t cellData_;
+	int writeState_;
+	int valueWidth_;
+	int slotsPerSegment_;
 };

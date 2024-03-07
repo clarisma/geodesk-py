@@ -108,6 +108,7 @@ public:
 	 */
 	void mergeNodeCounts(uint32_t* counts);
 	void mergeStats(const OsmStatistics& stats);
+	const OsmStatistics& osmStats() const { return totalStats_; }
 	const StringStatistics& strings() const { return strings_; }
 	std::unique_ptr<const uint32_t[]> takeTotalNodeCounts()
 	{
