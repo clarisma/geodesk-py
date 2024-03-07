@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
+#include <common/alloc/ReusableBlock.h>
 #include <common/thread/TaskEngine.h>
 
 class Compiler;
@@ -17,6 +18,7 @@ public:
 
 private:
 	Compiler* compiler_;
+	ReusableBlock data_;
 };
 
 class CompilerOutputTask

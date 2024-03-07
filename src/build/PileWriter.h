@@ -9,6 +9,7 @@
 #include <common/util/BufferWriter.h>
 #include <common/util/protobuf.h>
 #include "geom/Coordinate.h"
+#include "ProtoGol.h"
 
 class PileFile;
 
@@ -16,6 +17,12 @@ class PileFile;
 class PileSet
 {
 public:
+	enum GroupType
+	{
+		LOCAL_NODES = 0,
+		LOCAL_WAYS =  8,
+	};
+
 	PileSet() :
 		pageSize_(16 * 1024),
 		arena_(16 * 1024 * 1024),	// must be multiple of 
@@ -74,14 +81,16 @@ public:
 	};
 
 protected:
-	Pile* createPile(uint32_t number)
+	Pile* createPile(uint32_t number, int groupType)
 	{
 		uint8_t* p = arena_.alloc(pageSize());
 		Pile* pile = reinterpret_cast<Pile*>(p);
 		pile->nextPile_ = firstPile_;
 		pile->number_ = number;
-		pile->remaining_ = pageSize() - sizeof(Pile);
-		pile->p_ = p + sizeof(Pile);
+		pile->remaining_ = pageSize() - sizeof(Pile) - 1;
+		p += sizeof(Pile);
+		*p++ = static_cast<uint8_t>(groupType);
+		pile->p_ = p;
 		pile->prevId_ = 0;
 		pile->prevCoord_ = Coordinate(0, 0);
 		firstPile_ = pile;
@@ -125,20 +134,20 @@ public:
 	}
 
 
-	Pile* get(uint32_t pileNumber)
+	Pile* get(uint32_t pileNumber, int groupType)
 	{
-		Pile* pile = pileIndex_.get()[pileNumber];
+		Pile* pile = pileIndex_[pileNumber];
 		if (!pile)
 		{
-			pile = createPile(pileNumber);
-			pileIndex_.get()[pileNumber] = pile;
+			pile = createPile(pileNumber, groupType);
+			pileIndex_[pileNumber] = pile;
 		}
 		return pile;
 	}
 		
 	void writeNode(uint32_t pileNumber, uint64_t id, Coordinate xy, BufferWriter& tags)
 	{
-		Pile* pile = get(pileNumber);
+		Pile* pile = get(pileNumber, ProtoGol::LOCAL_NODES);
 		assert(id > pile->prevId_);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
@@ -167,7 +176,7 @@ public:
 
 	void writeWay(uint32_t pileNumber, uint64_t id, protobuf::Message nodes, uint32_t nodeCount, BufferWriter& tags)
 	{
-		Pile* pile = get(pileNumber);
+		Pile* pile = get(pileNumber, ProtoGol::LOCAL_WAYS);
 		assert(id > pile->prevId_);
 		uint8_t buf[32];
 			// enough room for ID delta (with Bit 0 tagged),
@@ -190,7 +199,7 @@ public:
 
 	void writeRelation(uint32_t pileNumber, uint64_t id, uint32_t memberCount, BufferWriter& body)
 	{
-		Pile* pile = get(pileNumber);
+		Pile* pile = get(pileNumber, ProtoGol::LOCAL_RELATIONS);
 		assert(id > pile->prevId_);
 		uint8_t buf[32];
 		// enough room for ID delta (with Bit 0 tagged),

@@ -195,7 +195,7 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     // project lon/lat to Mercator
     // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
-    uint32_t pile = builder_->tileCatalog().pileOfCoordinate(xy);
+    int pile = builder_->tileCatalog().pileOfCoordinate(xy);
     if (!pile)
     {
         Console::msg("node/%lld: Unable to assign to tile\n", id);
@@ -227,9 +227,9 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
 
     IndexFile& nodeIndex = builder_->nodeIndex();
     uint64_t nodeId = 0;
-    uint32_t prevNodePile = 0;
-    uint32_t nodeCount = 0;
-    uint32_t wayPile = 0;
+    int prevNodePile = 0;
+    int nodeCount = 0;
+    int wayPile = 0;
     
     const uint8_t* p = nodes.start;
     while (p < nodes.end)
@@ -317,9 +317,9 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
     }
 
     uint64_t memberId = 0;
-    uint32_t prevMemberPile = 0;
-    uint32_t memberCount = 0;
-    uint32_t relPile = 0;
+    int prevMemberPile = 0;
+    int memberCount = 0;
+    int relPile = 0;
 
     const uint8_t* pMemberId = memberIds.start;
     const uint8_t* pMemberType = memberTypes.start;
@@ -461,4 +461,5 @@ void Sorter::sort(const char* fileName)
     Format::unsafe(buf, "Sorted %ld nodes / %ld ways (%ld way-nodes) / %ld relations",
         nodeCount_, wayCount_, wayNodeCount_, relationCount_);
     // progress_.end(buf);
+    assert(_CrtCheckMemory());
 }

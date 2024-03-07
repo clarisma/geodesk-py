@@ -98,7 +98,7 @@ public:
                 {
                     if (!running_)
                     {
-                        Console::debug("Finished processing queue %p.", this);
+                        // Console::debug("Finished processing queue %p.", this);
                         return;
                     }
                     if (count_ > 0) break;

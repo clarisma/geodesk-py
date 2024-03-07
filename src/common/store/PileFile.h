@@ -3,6 +3,7 @@
  
 #pragma once
 #include <filesystem>
+#include <common/alloc/ReusableBlock.h>
 #include <common/io/ExpandableMappedFile.h>
 
 class PileFile : protected ExpandableMappedFile
@@ -18,7 +19,7 @@ public:
 
 	void create(std::filesystem::path filePath, uint32_t pileCount, uint32_t pageSize);
 	void append(int pile, const uint8_t* data, size_t len);
-	Data load(int pile);
+	void load(int pile, ReusableBlock& block);
 
 	static const int MAX_PILE_COUNT = (1 << 26) - 1;
 		

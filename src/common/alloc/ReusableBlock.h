@@ -6,31 +6,58 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <common/cli/Console.h>
 #include <common/util/Bytes.h>
 
-template <uint32_t Increments, int MaxCycles>
-class ReusableBlock<Increments, MaxCycles>
+class ReusableBlock
 {
 public:
-	static_assert(Bytes::isPowerOf2(Increments), "Increments must be a power of 2");
+	ReusableBlock(uint32_t increments = 1024 * 1024, int maxWastefulCycles = 3) :
+		capacity_(0),
+		size_(0),
+		increments_(increments),
+		maxWastefulCycles_(static_cast<int16_t>(maxWastefulCycles))
+	{
+		assert(Bytes::isPowerOf2(increments));
+		assert(maxWastefulCycles >= 0 && maxWastefulCycles < (1 << 16) - 1);
+		wastefulCyclesRemaining_ = maxWastefulCycles_;
+	}
 
-	uint8_t* get(uint32_t requiredCapacity) 
+	uint8_t* data() const noexcept { return data_.get(); };
+	size_t size() const noexcept { return size_; }
+	size_t capacity() const noexcept { return capacity_; }
+
+	void resize(size_t newSize) 
 	{ 
-		assert(requiredCapacity != 0);
-		if (requiredCapacity > capacity_ || !allowOverage_)
+		size_ = newSize;
+		wastefulCyclesRemaining_ -= (capacity_ - newSize >= increments_) ? 1 : 0;
+		// Console::debug("Resizing buffer to %llu (%d wasteful cycles remaining)", 
+		//	newSize, wastefulCyclesRemaining_);
+
+		if (newSize > capacity_ || wastefulCyclesRemaining_ == 0)
 		{
-			uint8_t* d = new uint_8[(requiredCapacity + Increments - 1) & ~Increments];
+			size_t newCapacity = (newSize + increments_ - 1) & ~(increments_ - 1);
+			assert(newCapacity >= newSize);
+			// assert(_CrtCheckMemory());
+			// Console::debug("  Allocating %llu", newCapacity);
+			uint8_t* d = new uint8_t[newCapacity];
 			data_.reset(d);
-			allowOverage_ = MaxCycles;
-			return d;
+			capacity_ = newCapacity;
+			wastefulCyclesRemaining_ = maxWastefulCycles_;
+			//Console::debug("Resized buffer to %llu, REALLOCATED %lld (%d retries)",
+			//	newSize, capacity_, wastefulCyclesRemaining_);
+			return;
 		}
-		allowOverage_ -= (capacity_ - requiredCapacity >= Increments) ? 1 : 0;
-		return data_.get();
+		//Console::debug("Resized buffer to %llu, keeping %lld (%d retries)",
+		//	newSize, capacity_, wastefulCyclesRemaining_);
 	}
 
 private:
-	std::unique_ptr<uint8_t> data_;
-	uint32_t capacity_ = 0;
-	int allowOverage_ = MaxCycles;
+	std::unique_ptr<uint8_t[]> data_;
+	size_t capacity_ = 0;
+	size_t size_ = 0;
+	uint32_t increments_;
+	int16_t maxWastefulCycles_;
+	int16_t wastefulCyclesRemaining_;
 };
 

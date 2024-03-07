@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <common/alloc/ReusableBlock.h>
 #include <common/thread/TaskQueue.h>
 #include "geom/Tile.h"
 
@@ -71,6 +72,7 @@ private:
 	private:
 		Validator* validator_;		// keep this order
 		std::thread thread_;
+		ReusableBlock data_;
 	};
 
 	void process(Worker* worker);

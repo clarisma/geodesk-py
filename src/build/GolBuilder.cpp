@@ -103,10 +103,9 @@ void GolBuilder::validate()
 
 void GolBuilder::compile()
 {
-
+	Compiler compiler(this);
+	compiler.compile();
 }
-
-
 
 #ifdef GEODESK_PYTHON
 

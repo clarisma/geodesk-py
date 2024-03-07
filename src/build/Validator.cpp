@@ -7,11 +7,9 @@
 #include "GolBuilder.h"
 
 
-static class ValidatorContext
-{
-private:
+// struct Feature
 
-};
+
 
 int Validator::quadrant(int col, int row)
 {
@@ -25,9 +23,10 @@ int Validator::quadrant(Tile tile)
 
 Validator::Worker::Worker(Validator* validator) :
 	validator_(validator),
-	thread_(&Validator::process, validator, this)
+	thread_(&Validator::process, validator, this),
+	data_(256 * 1024, 8)
 {
-	Console::debug("Created worker");
+	// Console::debug("Created worker");
 }
 
 
@@ -44,7 +43,7 @@ void Validator::process(Worker* worker)
 {
 	try
 	{
-		Console::debug("Validator: Processing queue...");
+		// Console::debug("Validator: Processing queue...");
 		queue_.process(worker);
 	}
 	catch (std::exception& ex)
@@ -56,11 +55,11 @@ void Validator::process(Worker* worker)
 
 void Validator::Worker::processTask(TaskKey task)
 {
-	Console::debug("Validating %s...", task.tile().toString().c_str());
+	// Console::debug("Validating %s...", task.tile().toString().c_str());
 	// TODO
-	validator_->builder_->featurePiles().load(task.pile());
+	validator_->builder_->featurePiles().load(task.pile(), data_);
 	validator_->markCompleted(task);
-	Console::debug("  Validated %s", task.tile().toString().c_str());
+	// Console::debug("  Validated %s", task.tile().toString().c_str());
 }
 
 void Validator::markCompleted(TaskKey task)
@@ -88,7 +87,7 @@ void Validator::validate()
 	workers_.reserve(threadCount);
 	for (int i = 0; i < threadCount; i++)
 	{
-		Console::debug("Creating worker #%d...", i);
+		// Console::debug("Creating worker #%d...", i);
 		workers_.emplace_back(this);
 	}
 
@@ -102,8 +101,9 @@ void Validator::validate()
 	}
 	queue_.awaitCompletion();
 	queue_.shutdown();
-	for (auto it = workers_.begin() + 1; it != workers_.end(); ++it)
+	for (auto it = workers_.begin(); it != workers_.end(); ++it)
 	{
 		it->join();
 	}
+	assert(_CrtCheckMemory());
 }

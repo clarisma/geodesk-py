@@ -11,29 +11,30 @@ class TileCatalog
 public:
 	static const int MAX_ZOOM = 12;
 
-	void build(uint32_t tileCount, const uint32_t* index, ZoomLevels levels);
+	void build(int tileCount, const uint32_t* index, ZoomLevels levels);
 
-	uint32_t tileCount() const { return tileCount_; }
+	int tileCount() const { return tileCount_; }
 
-	Tile tileOfPile(uint32_t pile) const
+	Tile tileOfPile(int pile) const
 	{
-		return piles_[pile].tile;
+		return pileToTile_[pile];
 	}
 
-	uint32_t pileOfCoordinate(Coordinate c) const
+	int pileOfCoordinate(Coordinate c) const
 	{
 		int col = Tile::columnFromXZ(c.x, MAX_ZOOM);
 		int row = Tile::rowFromYZ(c.y, MAX_ZOOM);
 		// printf("12/%d/%d\n", col, row);
-		return grid_.get()[cellOf(col, row)];
+		return grid_[cellOf(col, row)];
 	}
 
 private:
 	class Builder : TileIndexScanner<Builder>
 	{
 	public:
-		Builder(const uint32_t* index, ZoomLevels levels) :
+		Builder(const uint32_t* index, ZoomLevels levels, int officialTileCount) :
 			TileIndexScanner(index, levels),
+			officialTileCount_(officialTileCount),
 			tileCount_(0)
 		{
 		}
@@ -42,23 +43,28 @@ private:
 		void branchTile(uint32_t parentTip, Tile tile, uint32_t tip);
 		void leafTile(uint32_t parentTip, Tile tile, uint32_t tip);
 		void omittedTile(uint32_t parentTip, Tile tile);
-		const uint32_t* takeGrid() { return grid_.release(); }
-		const uint32_t* takeTipToPile() { return tipToPile_.release(); }
-		uint32_t tileCount() const { return tileCount_; }
+		std::unique_ptr<const int[]> takeGrid() { return std::move(grid_); }
+		std::unique_ptr<const int[]> takeTipToPile() { return std::move(tipToPile_); }
+		std::unique_ptr<const Tile[]> takePileToTile() { return std::move(pileToTile_); }
+		int tileCount() const { return tileCount_; }
 
 	private:
-		void fillGrid(Tile tile, uint32_t pile);
+		void fillGrid(Tile tile, int pile);
 
-		std::unique_ptr<uint32_t[]> grid_;
-		std::unique_ptr<uint32_t[]> tipToPile_;
-		uint32_t tileCount_;
+		std::unique_ptr<int[]> grid_;
+		std::unique_ptr<int[]> tipToPile_;
+		std::unique_ptr<Tile[]> pileToTile_;
+		int officialTileCount_;
+		int tileCount_;
 	};
 
+	/*
 	struct PileEntry
 	{
 		Tile tile;
 		uint32_t parentPile;
 	};
+	*/
 
 	static constexpr int cellOf(int col, int row)
 	{
@@ -67,20 +73,8 @@ private:
 		return row * (1 << MAX_ZOOM) + col;
 	}
 
-	std::unique_ptr<const uint32_t[]> grid_;
-	std::unique_ptr<const uint32_t[]> tipToPile_;
-
-	const PileEntry* piles_;
-	/**
-	 * A table used to look up the pile number of the tile 
-	 * to the east of a given tile
-	 */
-	const uint32_t* eastPiles_;
-	
-	/**
-	 * A table used to look up the pile number of the tile
-	 * to the south of a given tile
-	 */
-	const uint32_t* southPiles_;
-	uint32_t tileCount_;
+	std::unique_ptr<const int[]> grid_;
+	std::unique_ptr<const int[]> tipToPile_;
+	std::unique_ptr<const Tile[]> pileToTile_;
+	int tileCount_;
 };

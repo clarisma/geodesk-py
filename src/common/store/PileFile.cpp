@@ -75,20 +75,21 @@ void PileFile::append(int pile, const uint8_t* data, size_t len)
 }
 
 
-PileFile::Data PileFile::load(int pile)
+void PileFile::load(int pile, ReusableBlock& block)
 {
 	assert (pile > 0 && pile <= metadata()->pileCount);
 	IndexEntry* indexEntry = &metadata()->index[pile - 1];
 	uint32_t page = indexEntry->firstPage;
 	if (page == 0)
 	{
-		uint8_t* p = new uint8_t[1];
-		return Data{p, p};
+		block.resize(0);
+		return;
 	}
 	uint64_t pileSize = indexEntry->grossSize;
 	uint64_t numberOfPages = (pileSize + pageSize_ - 1) >> metadata()->pageSizeShift;
 	uint64_t dataSize = pileSize - numberOfPages * PAGE_HEADER_SIZE;
-	uint8_t* pStart = new uint8_t[dataSize];
+	block.resize(dataSize);
+	uint8_t* pStart = block.data();
 	uint8_t* pEnd = pStart;
 	uint64_t dataPerPage = pageSize_ - PAGE_HEADER_SIZE;
 	uint64_t remainingLen = dataSize;
@@ -114,5 +115,4 @@ PileFile::Data PileFile::load(int pile)
 		assert(remainingLen < dataSize);		// check for wraparound
 	}
 	assert(remainingLen == 0);
-	return Data{ pStart, pEnd };
 }

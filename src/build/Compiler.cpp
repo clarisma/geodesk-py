@@ -5,14 +5,15 @@
 #include "GolBuilder.h"
 
 CompilerContext::CompilerContext(Compiler* compiler) :
-	compiler_(compiler)
+	compiler_(compiler),
+	data_(256 * 1024, 8)
 {
 }
 
 void CompilerContext::processTask(int pile)
 {
 	// TODO
-	compiler_->builder_->featurePiles().load(pile);
+	compiler_->builder_->featurePiles().load(pile, data_);
 	CompilerOutputTask output;
 	compiler_->postOutput(std::move(output));
 }
@@ -29,6 +30,8 @@ Compiler::Compiler(GolBuilder* builder) :
 
 void Compiler::compile()
 {
+	builder_->console().setTask("Compiling...");
+	start();
 	for (int i = 0; i < builder_->tileCatalog().tileCount(); i++)
 	{
 		postWork(std::move(i+1));

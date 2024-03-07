@@ -114,7 +114,7 @@ private:
         try
         {
             workQueue_.process(ctx);
-            Console::debug("Calling afterTasks()...");
+            // Console::debug("Calling afterTasks()...");
             ctx->afterTasks();
         }
         catch (std::exception& ex)
