@@ -203,14 +203,9 @@ public:
 		self()->endBlock();
 	}
 
-	void afterTasks()	// CRTP override
-	{
-	}
-
-	void harvestResults()	// CRTP override
-	{
-	}
-
+	void afterTasks() {}	// CRTP override
+	void harvestResults() {}	// CRTP override
+	
 protected:
 	uint64_t blockBytesProcessed() const { return blockBytesProcessed_; }
 	void resetBlockBytesProcessed() { blockBytesProcessed_ = 0; }
@@ -242,13 +237,16 @@ protected:
 		*/
 	}
 
-	void startBlock()	// CRTP override
-	{
-	}
+	// CRTP Overrides
 
-	void endBlock()		// CRTP override
-	{
-	}
+	void startBlock() {}		
+	void beginNodeGroup() {}	
+	void endNodeGroup() {}		
+	void beginWayGroup() {}		
+	void endWayGroup() {}		
+	void beginRelationGroup() {}
+	void endRelationGroup() {}	
+	void endBlock() {}		
 
 private:
 	Derived* self() { return reinterpret_cast<Derived*>(this); }
@@ -265,16 +263,19 @@ private:
 				throw OsmPbfException("Only dense nodes are supported");
 				break;
 			case GROUP_DENSENODES:
-				// TODO: if (currentPhase != PHASE_NODES) switchPhase(PHASE_NODES);
+				self()->beginNodeGroup();
 				decodeDenseNodes(protobuf::readMessage(p));
+				self()->endNodeGroup();
 				break;
 			case GROUP_WAY:
-				// TODO: if (currentPhase != PHASE_WAYS) switchPhase(PHASE_WAYS);
+				self()->beginWayGroup();
 				decodeWay(protobuf::readMessage(p));
+				self()->endWayGroup();
 				break;
 			case GROUP_RELATION:
-				// TODO: if (currentPhase != PHASE_RELATIONS) switchPhase(PHASE_RELATIONS);
+				self()->beginRelationGroup();
 				decodeRelation(protobuf::readMessage(p));
+				self()->endRelationGroup();
 				break;
 			case GROUP_CHANGESET:
 				protobuf::readMessage(p);

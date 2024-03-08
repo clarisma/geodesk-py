@@ -53,7 +53,9 @@ public:
 	// CRTP overrides
 	void stringTable(protobuf::Message strings);
 	void node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags);
+	void beginWayGroup();
 	void way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes);
+	void beginRelationGroup();
 	void relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 		protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes);
 	void endBlock();

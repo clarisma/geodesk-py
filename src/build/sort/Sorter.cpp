@@ -214,15 +214,17 @@ void SorterContext::writeWay(uint32_t pile, uint64_t id)
 }
 */
 
+void SorterContext::beginWayGroup()
+{
+    if (currentPhase_ != Sorter::Phase::WAYS)
+    {
+        flush(Sorter::Phase::WAYS);
+    }
+}
+
 void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message values, protobuf::Message nodes)
 {
     assert(tempWriter_.isEmpty());
-    if (currentPhase_ != Sorter::Phase::WAYS)
-    {
-        // TODO: phase shift
-        flush(Sorter::Phase::WAYS);
-    }
-
     encodeTags(keys, values);
 
     IndexFile& nodeIndex = builder_->nodeIndex();
@@ -306,15 +308,18 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     wayCount_++;
 }
 
+void SorterContext::beginRelationGroup()
+{
+    if (currentPhase_ != Sorter::Phase::RELATIONS)
+    {
+        flush(Sorter::Phase::WAYS);
+    }
+}
+
 void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Message values,
 	protobuf::Message roles, protobuf::Message memberIds, protobuf::Message memberTypes)
 {
     assert(tempWriter_.isEmpty());
-    if (currentPhase_ != Sorter::Phase::RELATIONS)
-    {
-        // TODO: phase shift
-        flush(Sorter::Phase::RELATIONS);
-    }
 
     uint64_t memberId = 0;
     int prevMemberPile = 0;
