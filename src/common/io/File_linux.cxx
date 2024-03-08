@@ -119,6 +119,16 @@ size_t File::read(void* buf, size_t length)
     return bytesRead;
 }
 
+size_t File::read(uint64_t ofs, void* buf, size_t length)
+{
+    ssize_t bytesRead = pread(fileHandle_, buf, length, ofs);
+    if (bytesRead < 0)
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesRead;
+}
+
 
 size_t File::write(const void* buf, size_t length)
 {

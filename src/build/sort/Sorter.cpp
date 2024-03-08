@@ -12,10 +12,6 @@ SorterContext::SorterContext(Sorter* sorter) :
     tempBuffer_(4096),
     tempWriter_(&tempBuffer_),
     currentPhase_(0),
-    nodeCount_(0),
-    wayCount_(0),
-    wayNodeCount_(0),
-    relationCount_(0),
     pileWriter_(sorter->builder()->tileCatalog().tileCount()),
     pileCount_(sorter->builder()->tileCatalog().tileCount()),
     batchCount_(0)
@@ -210,7 +206,7 @@ void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobu
     pileWriter_.writeNode(pile, id, xy, tempWriter_);
     tempWriter_.clear();
     addFeature(id, pile);
-    nodeCount_++;
+    stats_.nodeCount++;
 }
 
 /*
@@ -237,24 +233,30 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     int prevNodePile = 0;
     int nodeCount = 0;
     int wayPile = 0;
+    int pileDiversity = 0;
+    int highestNodeZoom = 0;
+    bool requiresGhosts = false;
     
     const uint8_t* p = nodes.start;
     while (p < nodes.end)
     {
         nodeId += readSignedVarint64(p);
-        if (nodeId == 58802209LL)
-        {
-            // printf("WayNode: node/%lld\n", nodeId);
-        }
         int nodePile = indexes_[0].get(nodeId);
         assert(nodePile >= 0 && nodePile <= pileCount_);  // pile numbers are 1-based
         if (nodePile == 0)
         {
-            // printf("node/%llu not found in node index\n", nodeId);
+            Console::msg("node/%lld not found in node index", nodeId);
         }
-        if (nodePile != prevNodePile && prevNodePile)
+        pileDiversity += (nodePile != prevNodePile) ? 1 : 0;
+        if (pileDiversity > 1)
         {
             // TODO: multi-tile way
+            const TileCatalog& tc = builder_->tileCatalog();
+            if (tc.tileOfPile(nodePile).zoom() !=
+                tc.tileOfPile(prevNodePile).zoom())
+            {
+                requiresGhosts = true;
+            }
         }
 
         // TODO: Error if node not in index
@@ -262,8 +264,10 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
         prevNodePile = nodePile;
         nodeCount++;
     }
-    wayNodeCount_ += nodeCount;
+    stats_.wayNodeCount += nodeCount;
 
+    if (pileDiversity > 1) stats_.multitileWayCount++;
+    if (requiresGhosts) stats_.ghostWayCount++;
     // TODO: Reject ways with less than 2 nodes
 
     wayPile = prevNodePile;
@@ -315,7 +319,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
 
     // write node IDs (can copy directly from .osm.pbf, no re-encoding needed
     // write tags
-    wayCount_++;
+    stats_.wayCount++;
 }
 
 void SorterContext::beginRelationGroup()
@@ -385,7 +389,7 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
         //printf("way/%lld: unable to sort\n", id);
     }
     tempWriter_.clear();
-    relationCount_++;
+    stats_.relationCount++;
 }
 
 void SorterContext::endBlock()	// CRTP override
@@ -400,17 +404,14 @@ void SorterContext::endBlock()	// CRTP override
 
 void SorterContext::harvestResults()
 {
-    reader()->addCounts(nodeCount_, wayCount_, wayNodeCount_, relationCount_);
+    reader()->addCounts(stats_);
 }
 
 
 Sorter::Sorter(GolBuilder* builder) :
     OsmPbfReader(builder->threadCount()),
     builder_(builder),
-    nodeCount_(0),
-    wayCount_(0),
-    wayNodeCount_(0),
-    relationCount_(0)
+    workPerByte_(0)
 {
     for (int i = 0; i < 3; i++)
     {
@@ -478,8 +479,9 @@ void Sorter::sort(const char* fileName)
 {
     read(fileName);
     char buf[200];
-    Format::unsafe(buf, "Sorted %ld nodes / %ld ways (%ld way-nodes) / %ld relations",
-        nodeCount_, wayCount_, wayNodeCount_, relationCount_);
+    Console::msg("%lld of %lld ways are multi-tile",
+        stats_.multitileWayCount, stats_.wayCount);
+    Console::msg("  Of these, %lld require ghosts", stats_.ghostWayCount);
     // progress_.end(buf);
-    assert(_CrtCheckMemory());
+    // assert(_CrtCheckMemory());
 }

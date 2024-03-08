@@ -135,6 +135,22 @@ size_t File::read(void* buf, size_t length)
 }
 
 
+size_t File::read(uint64_t ofs, void* buf, size_t length)
+{
+    // BOOL ReadFromFile(HANDLE hFile, LPVOID buf, DWORD length, DWORD64 ofs)
+    
+    OVERLAPPED overlapped = { 0 };
+    overlapped.Offset = (DWORD)(ofs & 0xFFFFFFFF);
+    overlapped.OffsetHigh = (DWORD)(ofs >> 32);
+    DWORD bytesRead;
+    if (!ReadFile(fileHandle_, buf, length, &bytesRead, &overlapped))
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesRead;
+}
+
+
 size_t File::write(const void* buf, size_t length)
 {
     DWORD bytesWritten;

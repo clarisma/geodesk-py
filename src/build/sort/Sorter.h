@@ -17,6 +17,32 @@ class GolBuilder;
 class Sorter;
 
 
+struct SorterStatistics
+{
+	SorterStatistics()
+	{
+		memset(this, 0, sizeof(SorterStatistics));
+	}
+
+	SorterStatistics& operator+=(const SorterStatistics& other)
+	{
+		nodeCount += other.nodeCount;
+		wayCount += other.wayCount;
+		relationCount += other.relationCount;
+		multitileWayCount += other.multitileWayCount;
+		ghostWayCount += other.ghostWayCount;
+		wayNodeCount += other.wayNodeCount;
+		return *this;
+	}
+
+	int64_t nodeCount;
+	int64_t wayCount;
+	int64_t multitileWayCount;
+	int64_t ghostWayCount;
+	int64_t wayNodeCount;
+	int64_t relationCount;
+};
+
 /*
 class FeatureIndexEntry
 {
@@ -100,10 +126,7 @@ private:
 
 	std::vector<uint64_t> memberIds_;
 	std::vector<uint32_t> tagsOrRoles_;
-	uint64_t nodeCount_;
-	uint64_t wayCount_;
-	uint64_t wayNodeCount_;
-	uint64_t relationCount_;
+	SorterStatistics stats_;
 	uint64_t batchCount_;
 };
 
@@ -134,23 +157,16 @@ public:
 	void startFile(uint64_t size);		// CRTP override
 	void processTask(SorterOutputTask& task);
 	void advancePhase(int currentPhase, int newPhase);
-	void addCounts(uint64_t nodeCount, uint64_t wayCount,
-		uint64_t wayNodeCount, uint64_t relationCount)
+	void addCounts(const SorterStatistics& stats)
 	{
-		nodeCount_ += nodeCount;
-		wayCount_ += wayCount;
-		wayNodeCount_ += wayNodeCount;
-		relationCount_ += relationCount;
+		stats_ += stats;
 	}
 
 private:
 	GolBuilder* builder_;
 	std::mutex phaseMutex_;
 	std::condition_variable phaseStarted_;
-	uint64_t nodeCount_;
-	uint64_t wayCount_;
-	uint64_t wayNodeCount_;
-	uint64_t relationCount_;
+	SorterStatistics stats_; 
 	double workPerByte_;
 	int phaseCountdowns_[3];
 };

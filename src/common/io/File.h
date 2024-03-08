@@ -23,6 +23,11 @@ typedef int FileHandle;
 static FileHandle INVALID_FILE_HANDLE = -1;
 #endif
 
+// TODO: Decide if a File object can be copied
+// If so, don't close it in the destructor
+
+// TODO: Should methods be const?
+
 class File 
 {
 public:
@@ -54,6 +59,7 @@ public:
 
     void seek(uint64_t posAbsolute);
     size_t read(void* buf, size_t length);
+    size_t read(uint64_t ofs, void* buf, size_t length);
     size_t write(const void* buf, size_t length);
 
     void force();

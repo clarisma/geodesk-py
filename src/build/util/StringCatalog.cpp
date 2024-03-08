@@ -5,6 +5,8 @@
 #include "StringStatistics.h"
 #include "feature/types.h"
 
+// TODO: Don't place numbers into the GST (at least not narrow numbers)
+
 StringCatalog::StringCatalog() :
 	table_(nullptr),
 	tableSlotCount_(0)
