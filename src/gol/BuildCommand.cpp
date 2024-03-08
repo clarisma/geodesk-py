@@ -1,6 +1,5 @@
 #include "BuildCommand.h"
 #include <chrono>
-#include "build/Analyzer.h"
 
 BuildCommand::BuildCommand()
 {

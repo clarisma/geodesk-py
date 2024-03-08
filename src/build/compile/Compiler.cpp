@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Compiler.h"
-#include "GolBuilder.h"
+#include "build/GolBuilder.h"
 
 CompilerContext::CompilerContext(Compiler* compiler) :
 	compiler_(compiler),

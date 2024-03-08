@@ -4,7 +4,7 @@
 #include "Validator.h"
 #include <algorithm> 
 #include <memory>
-#include "GolBuilder.h"
+#include "build/GolBuilder.h"
 
 
 // struct Feature

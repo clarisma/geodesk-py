@@ -9,7 +9,7 @@
 #include "geom/Coordinate.h"
 #include "osm/OsmPbfReader.h"
 #include "build/util/StringCatalog.h"
-#include "PileWriter.h"
+#include "build/util/PileWriter.h"
 
 class GolBuilder;
 

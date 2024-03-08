@@ -1,9 +1,9 @@
 #include "GolBuilder.h"
-#include "Analyzer.h"
-#include "Sorter.h"
-#include "Validator.h"
-#include "Compiler.h"
-#include "TileIndexBuilder.h"
+#include "build/analyze/Analyzer.h"
+#include "build/analyze/TileIndexBuilder.h"
+#include "build/sort/Sorter.h"
+#include "build/sort/Validator.h"
+#include "build/compile/Compiler.h"
 #ifdef GEODESK_PYTHON
 #include "python/util/util.h"
 #endif

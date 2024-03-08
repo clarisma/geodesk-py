@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Analyzer.h"
-#include "GolBuilder.h"
+#include "build/GolBuilder.h"
 #include "build/util/StringCatalog.h"
 #include <string>
 

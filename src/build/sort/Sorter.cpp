@@ -1,6 +1,6 @@
 #include "Sorter.h"
 #include <cassert>
-#include "GolBuilder.h"
+#include "build/GolBuilder.h"
 #include "geom/Mercator.h"
 
 // TODO: Remember to always flush the BufferWriter, and reset buffer
