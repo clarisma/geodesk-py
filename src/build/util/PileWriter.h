@@ -85,6 +85,7 @@ protected:
 	{
 		uint8_t* p = arena_.alloc(pageSize());
 		Pile* pile = reinterpret_cast<Pile*>(p);
+		pile->next_ = nullptr;
 		pile->nextPile_ = firstPile_;
 		pile->number_ = number;
 		pile->remaining_ = pageSize() - sizeof(Pile) - 1;

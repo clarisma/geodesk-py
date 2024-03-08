@@ -17,9 +17,12 @@ SorterContext::SorterContext(Sorter* sorter) :
     wayNodeCount_(0),
     relationCount_(0),
     pileWriter_(sorter->builder()->tileCatalog().tileCount()),
+    pileCount_(sorter->builder()->tileCatalog().tileCount()),
     batchCount_(0)
 {
-//    features_.reserve(batchSize(0));
+    indexes_[0] = FastFeatureIndex(builder_->featureIndex(0));
+    indexes_[1] = FastFeatureIndex(builder_->featureIndex(1));
+    indexes_[2] = FastFeatureIndex(builder_->featureIndex(2));
 }
 
 SorterContext::~SorterContext()
@@ -132,15 +135,13 @@ void SorterContext::encodeTags(protobuf::Message tags)
 }
 
 
-void SorterContext::addFeature(uint64_t id, uint32_t pile)
+void SorterContext::addFeature(int64_t id, int pile)
 {
-    // features_.emplace_back(id, pile);
-    //if (features_.size() == features_.capacity()) flush(currentPhase_);
-
-    IndexFile& index = builder_->featureIndex(currentPhase_);
-    index.put(id, pile);  // TODO: needs to be synchronized
+    FastFeatureIndex& index = indexes_[currentPhase_];
+    assert(pile >= 0 && pile <= pileCount_);
+    index.put(id, pile);  
     batchCount_++;
-    if (batchCount_ >= batchSize(currentPhase_)) flush(currentPhase_);
+    if (batchCount_ >= batchSize(currentPhase_)) flushPiles();
 }
 
 // TODO: Could deadlock if all tasks have been processed, but 
@@ -153,49 +154,54 @@ void SorterContext::afterTasks()
 {
     if (blockBytesProcessed())
     {
-        flush(Sorter::Phase::SUPER_RELATIONS);
+        flushPiles();
     }
-    else
+    flushIndex();
+    reader()->advancePhase(currentPhase_, Sorter::Phase::SUPER_RELATIONS);
+    for (int i = 0; i < 2; i++)
     {
-        reader()->advancePhase(currentPhase_, Sorter::Phase::SUPER_RELATIONS);
+        assert(!indexes_[i].hasPendingWrites());
     }
 }
 
-void SorterContext::flush(int futurePhase)
+void SorterContext::advancePhase(int futurePhase)
+{
+    flushPiles();
+    flushIndex();
+    reader()->advancePhase(currentPhase_, futurePhase);
+    // This will block until all worker threads have switched to futurePhase
+    currentPhase_ = futurePhase;
+}
+
+
+void SorterContext::flushIndex()
+{
+    indexes_[currentPhase_].endBatch();
+}
+
+void SorterContext::flushPiles()
 {
     pileWriter_.closePiles();
-    SorterOutputTask task(currentPhase_, futurePhase, blockBytesProcessed(),
-        /* std::move(features_), */ std::move(pileWriter_));
+    SorterOutputTask task(blockBytesProcessed(), std::move(pileWriter_));
     reader()->postOutput(std::move(task));
     resetBlockBytesProcessed();
-    // features_.reserve(batchSize(futurePhase));
     batchCount_ = 0;
     // printf("Thread %s: Flushed.\n", Threads::currentThreadId().c_str());
-    if (futurePhase != currentPhase_)
-    {
-        reader()->advancePhase(currentPhase_, futurePhase);
-        currentPhase_ = futurePhase;
-        /*
-        if (futurePhase == 1)
-        {
-            printf("Started ways...\n");
-        }
-        if (futurePhase == 2)
-        {
-            printf("Started relations...\n");
-        }
-        */
-    }
 }
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
+    if (id == 58802209LL)
+    {
+        // printf("node/%lld\n", id);
+    }
     assert(tempWriter_.isEmpty());
     assert(id < 1'000'000'000'000ULL);
     // project lon/lat to Mercator
     // TODO: clamp range
     Coordinate xy(Mercator::xFromLon100nd(lon100nd), Mercator::yFromLat100nd(lat100nd));
     int pile = builder_->tileCatalog().pileOfCoordinate(xy);
+    assert(pile > 0 && pile <= pileCount_);  // pile numbers are 1-based
     if (!pile)
     {
         Console::msg("node/%lld: Unable to assign to tile\n", id);
@@ -218,7 +224,7 @@ void SorterContext::beginWayGroup()
 {
     if (currentPhase_ != Sorter::Phase::WAYS)
     {
-        flush(Sorter::Phase::WAYS);
+        advancePhase(Sorter::Phase::WAYS);
     }
 }
 
@@ -227,8 +233,7 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     assert(tempWriter_.isEmpty());
     encodeTags(keys, values);
 
-    IndexFile& nodeIndex = builder_->nodeIndex();
-    uint64_t nodeId = 0;
+    int64_t nodeId = 0;
     int prevNodePile = 0;
     int nodeCount = 0;
     int wayPile = 0;
@@ -237,8 +242,13 @@ void SorterContext::way(int64_t id, protobuf::Message keys, protobuf::Message va
     while (p < nodes.end)
     {
         nodeId += readSignedVarint64(p);
-        uint32_t nodePile = nodeIndex.get(nodeId);
-        if (!nodePile)
+        if (nodeId == 58802209LL)
+        {
+            // printf("WayNode: node/%lld\n", nodeId);
+        }
+        int nodePile = indexes_[0].get(nodeId);
+        assert(nodePile >= 0 && nodePile <= pileCount_);  // pile numbers are 1-based
+        if (nodePile == 0)
         {
             // printf("node/%llu not found in node index\n", nodeId);
         }
@@ -312,7 +322,7 @@ void SorterContext::beginRelationGroup()
 {
     if (currentPhase_ != Sorter::Phase::RELATIONS)
     {
-        flush(Sorter::Phase::WAYS);
+        advancePhase(Sorter::Phase::RELATIONS);
     }
 }
 
@@ -336,7 +346,7 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
         uint32_t role = readVarint32(pRole);
 
         // TODO: remmeber the multi-tile bits in way/relation!!!
-        uint32_t memberPile = builder_->featureIndex(memberType).get(memberId);
+        int memberPile = indexes_[memberType].get(memberId);
 
         if (!memberPile)
         {
@@ -364,7 +374,7 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
     if (relPile)        // TODO
     {
         // TODO
-        relPile = std::min(relPile, builder_->tileCatalog().tileCount() - 1);
+        relPile = std::min(relPile, pileCount_ - 1);
         // assert(relPile < builder_->tileCatalog().tileCount());
         pileWriter_.writeRelation(relPile, id, memberCount, tempWriter_);
         addFeature(id, relPile);
@@ -380,6 +390,11 @@ void SorterContext::relation(int64_t id, protobuf::Message keys, protobuf::Messa
 
 void SorterContext::endBlock()	// CRTP override
 {
+    // At the end of each OSM block, we flush the index to ensure that
+    // index writes does not overlap in a non-atomic way
+    // However, we don't need to flush the piles, we can allow them to
+    // accumulate
+    flushIndex();
     stringTranslationTable_.clear();
 }
 

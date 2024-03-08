@@ -70,10 +70,10 @@ public:
 	{ 
 		return indexedKeyStrings_; 
 	}
-	uint32_t maxStrings() const { return maxStrings_; }
-	uint32_t maxTiles() const { return maxTiles_; }
-	uint32_t minStringUsage() const { return minStringUsage_; }
-	uint32_t minTileDensity() const { return minTileDensity_; }
+	int maxStrings() const { return maxStrings_; }
+	int maxTiles() const { return maxTiles_; }
+	int minStringUsage() const { return minStringUsage_; }
+	int minTileDensity() const { return minTileDensity_; }
 	int leafZoomLevel() const { return 12; }
 	int threadCount() const { return threadCount_; }
 	ZoomLevels zoomLevels() const { return zoomLevels_; }
@@ -84,35 +84,31 @@ public:
 	void setMaxStrings(int64_t v)
 	{
 		if (v < 256) v = 256;
-		Validate::max(v, MAX_GLOBAL_STRING_CODE + 1);
-		maxStrings_ = v;
+		maxStrings_ = Validate::maxInt(v, MAX_GLOBAL_STRING_CODE + 1);
 	}
 
 	void setMaxTiles(int64_t v)
 	{
 		if (v < 1) v = 1;
-		Validate::max(v, 8'000'000);
-		maxTiles_ = v;
+		maxTiles_ = Validate::maxInt(v, 8'000'000);
 	}
 
 	void setMinTileDensity(int64_t v)
 	{
 		if (v < 1) v = 1;
-		Validate::max(v, 10'000'000);
-		minTileDensity_ = v;
+		minTileDensity_ = Validate::maxInt(v, 10'000'000);
 	}
 
 	void setMinStringUsage(int64_t v)
 	{
 		if (v < 1) v = 1;
-		Validate::max(v, 100'000'000);
-		minStringUsage_ = v;
+		minStringUsage_ = Validate::maxInt(v, 100'000'000);
 	}
 
 	void setThreadCount(int64_t v)
 	{
 		if (v < 0) v = 0;
-		threadCount_ = v;
+		threadCount_ = static_cast<int>(v);
 	}
 
 private:
@@ -123,10 +119,10 @@ private:
 	
 	std::string sourcePath_;
 	ZoomLevels zoomLevels_;
-	uint32_t maxTiles_ = (1 << 16) - 1;
-	uint32_t maxStrings_ = 32'000;
-	uint32_t minStringUsage_ = 300;
-	uint32_t minTileDensity_ = 25'000;
+	int maxTiles_ = (1 << 16) - 1;
+	int maxStrings_ = 32'000;
+	int minStringUsage_ = 300;
+	int minTileDensity_ = 25'000;
 	int threadCount_ = 0;
 	std::vector<std::string_view> indexedKeyStrings_;
 	std::vector<uint8_t> indexedKeyCategories_;

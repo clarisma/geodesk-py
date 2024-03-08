@@ -8,6 +8,10 @@
 #include <common/text/Format.h>
 #include <common/util/log.h>
 
+// TODO: Get rid of the vectors, just use simple arrays?
+// --> No, leaves memory uninitialized in the event of an exception
+//     --> destructors will fail
+
 // TODO: It would be better to defer initialization of the per-thread 
 // WorkContext object; this way, memory used by the main class is
 // allocated first. By allocating per-thread memory afterwards, we

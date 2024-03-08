@@ -35,7 +35,9 @@ struct ProtoStringCode
 	void validate(const ShortVarString* str, const uint8_t* stringBase)
 	{
 		const uint8_t* pStr = reinterpret_cast<const uint8_t*>(str);
-		uint32_t encodedLiteral = (pStr - stringBase) << 3;
+		assert(pStr >= stringBase);
+		assert(pStr - stringBase < (1 << 29));
+		uint32_t encodedLiteral = static_cast<uint32_t>(pStr - stringBase) << 3;
 		varints[0] = varints[0] ? varints[0] : encodedLiteral;
 		varints[1] = varints[1] ? varints[1] : encodedLiteral;
 	}

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "FastFeatureIndex.h"
+#include <cassert>
 #include <atomic>
 
 
@@ -11,15 +12,15 @@ static_assert(sizeof(uint64_t) == sizeof(std::atomic<uint64_t>),
 	"Extra state is maintained for std::atomic, the types are definitely "
 	"not compatible on this platform.");
 
-FastFeatureIndex::FastFeatureIndex(uint64_t* index, int valueWidth, int64_t maxId) :
-	index_(index),
-	valueWidth_(valueWidth),
-	maxId_(maxId),
+FastFeatureIndex::FastFeatureIndex(const MappedIndex& index) :
+	index_(index.data()),
+	valueWidth_(index.valueWidth()),
+	maxId_(index.maxId()),
 	currentCell_(nullptr),
 	cellData_(0),
 	writeState_(NOT_STARTED)
 {
-	slotsPerSegment_ = SEGMENT_LENGTH_BYTES * 8 / valueWidth;
+	slotsPerSegment_ = SEGMENT_LENGTH_BYTES * 8 / valueWidth_;
 }
 
 
@@ -93,6 +94,7 @@ void FastFeatureIndex::put(int64_t id, int pile)
 		// we should be reading the same data as the Analyzer
 		// TODO: What about negative IDs?
 		// --> should check in Sorter and reject the file
+	assert((pile & ((1 << valueWidth_) - 1)) == pile);
 
 	CellRef ref = access(id);
 	assert(ref.p >= currentCell_);

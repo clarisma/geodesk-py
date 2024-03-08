@@ -5,9 +5,10 @@
 #include <filesystem>
 #include <string_view>
 #include <common/cli/Console.h>
-#include <common/store/IndexFile.h>
 #include <common/store/PileFile.h>
+#include "build/analyze/OsmStatistics.h"
 #include "build/util/BuildSettings.h"
+#include "build/util/MappedIndex.h"
 #include "build/util/StringCatalog.h"
 #include "build/util/TileCatalog.h"
 
@@ -33,12 +34,11 @@ public:
 	int threadCount() const { return threadCount_; }
 	const StringCatalog& stringCatalog() const { return stringCatalog_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
-	IndexFile& featureIndex(int index) 
+	MappedIndex& featureIndex(int index) 
 	{ 
 		assert(index >= 0 && index <= 2);
 		return featureIndexes_[index]; 
 	}
-	IndexFile& nodeIndex() { return featureIndex(0); }
 	PileFile& featurePiles() { return featurePiles_; }
 	double phaseWork(int phase) const { return workPerPhase_[phase]; }
 	void progress(double work)
@@ -55,7 +55,7 @@ private:
 	void compile();
 
 	void calculateWork();
-	void openIndex(IndexFile& index, const char* name, int extraBits);
+	void createIndex(MappedIndex& index, const char* name, int64_t maxId, int extraBits);
 
 	Console console_;
 	BuildSettings settings_;
@@ -63,8 +63,9 @@ private:
 	std::filesystem::path workPath_;
 	StringCatalog stringCatalog_;
 	TileCatalog tileCatalog_;
-	IndexFile featureIndexes_[3];
+	MappedIndex featureIndexes_[3];
 	PileFile featurePiles_;
+	OsmStatistics stats_;
 	int threadCount_;
 	double workPerPhase_[4];
 	double workCompleted_;

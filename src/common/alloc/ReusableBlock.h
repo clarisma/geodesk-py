@@ -36,7 +36,8 @@ public:
 
 		if (newSize > capacity_ || wastefulCyclesRemaining_ == 0)
 		{
-			size_t newCapacity = (newSize + increments_ - 1) & ~(increments_ - 1);
+			size_t newCapacity = (newSize + increments_ - 1) & 
+				~(static_cast<size_t>(increments_) - 1);
 			assert(newCapacity >= newSize);
 			// assert(_CrtCheckMemory());
 			// Console::debug("  Allocating %llu", newCapacity);

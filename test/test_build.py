@@ -5,6 +5,7 @@ def test_build():
     test_path = "c:\\geodesk\\tests\\"
     source_path = "e:\\geodesk\\mapdata\\"
     world = Features(test_path + "de3", 
+        # threads = 1,
         source = source_path + "de-2024-01-31.osm.pbf",
         # source=source_path + "de-2021-01-29.osm.pbf",
         # source=source_path + "monaco-2023-10-02.osm.pbf",

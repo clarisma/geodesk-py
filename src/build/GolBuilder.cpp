@@ -9,9 +9,9 @@
 #endif
 
 GolBuilder::GolBuilder() :
-	threadCount_(0)
+	threadCount_(0),
+	workCompleted_(0)
 {
-
 }
 
 // Resources we need:
@@ -32,9 +32,11 @@ void GolBuilder::build(const char* golPath)
 		threadCount_ = 4 * cores;
 	}
 
+	/*
 	#ifdef _DEBUG
 	threadCount_ = 1;
 	#endif // _DEBUG
+	*/
 
 	auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -60,6 +62,8 @@ void GolBuilder::analyze()
 {
 	Analyzer analyzer(this);
 	analyzer.analyze(settings_.sourcePath().c_str());
+	stats_ = analyzer.osmStats();
+
 	TileIndexBuilder tib(settings_);
 	std::unique_ptr<const uint32_t[]> totalNodeCounts = analyzer.takeTotalNodeCounts();
 	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts.get()));
@@ -72,19 +76,19 @@ void GolBuilder::analyze()
 }
 
 
-void GolBuilder::openIndex(IndexFile& index, const char* name, int extraBits)
+void GolBuilder::createIndex(MappedIndex& index, const char* name, int64_t maxId, int extraBits)
 {
 	int bits = 32 - Bits::countLeadingZerosInNonZero32(tileCatalog_.tileCount());
-	int mode = File::OpenMode::CREATE | File::OpenMode::READ | File::OpenMode::WRITE;
-	index.bits(bits + extraBits);
-	index.open((workPath_ / name).string().c_str(), mode);
+		// The above is correct; if we have 512 tiles, we need to store 513
+		// distinct values (pile number starts at 1, 0 = "missing")
+	index.create((workPath_ / name).string().c_str(), maxId, bits + extraBits);
 }
 
 void GolBuilder::prepare()
 {
-	openIndex(featureIndexes_[0], "nodes.idx", 0);
-	openIndex(featureIndexes_[1], "ways.idx", 2);
-	openIndex(featureIndexes_[2], "relations.idx", 2);
+	createIndex(featureIndexes_[0], "nodes.idx", stats_.maxNodeId, 0);
+	createIndex(featureIndexes_[1], "ways.idx", stats_.maxWayId, 2);
+	createIndex(featureIndexes_[2], "relations.idx", stats_.maxRelationId, 2);
 	featurePiles_.create(workPath_ / "features.bin", tileCatalog_.tileCount(), 64 * 1024);
 }
 

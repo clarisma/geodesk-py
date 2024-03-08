@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include <common/store/IndexFile.h>
+#include "build/util/MappedIndex.h"
 
 /**
  * A utility class that allows multiple threads to efficiently write 
@@ -35,7 +35,8 @@
 class FastFeatureIndex
 {
 public:
-	FastFeatureIndex(uint64_t* index, int valueWidth, int64_t maxId);
+	FastFeatureIndex() : index_(nullptr) {}		// TODO: dummy
+	FastFeatureIndex(const MappedIndex& index);
 
 	enum WriteState
 	{
@@ -47,6 +48,7 @@ public:
 	int get(int64_t id);
 	void put(int64_t id, int pile);
 	void endBatch();
+	bool hasPendingWrites() const {	return writeState_ >= AT_START; }
 	
 private:
 	static const int64_t SEGMENT_LENGTH_BYTES = 1024 * 1024 * 1024;		// 1 GB
@@ -65,7 +67,7 @@ private:
 	int64_t maxId_;
 	uint64_t* currentCell_;
 	uint64_t cellData_;
-	int writeState_;
-	int valueWidth_;
 	int slotsPerSegment_;
+	int16_t writeState_;
+	int16_t valueWidth_;
 };

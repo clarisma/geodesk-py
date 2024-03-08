@@ -19,11 +19,17 @@ public:
 
 namespace Validate
 {
-    inline void max(int64_t value, int64_t max)
+    inline int64_t max(int64_t value, int64_t maxValue)
     {
-        if (value > max)
+        if (value > maxValue)
         {
-            throw ValueException(Format::format("Exceeds maximum value (%d)", max));
+            throw ValueException(Format::format("Exceeds maximum value (%d)", maxValue));
         }
+        return value;
+    }
+
+    inline int maxInt(int64_t value, int maxValue)
+    {
+        return static_cast<int>(max(value, maxValue));
     }
 }

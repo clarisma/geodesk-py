@@ -10,6 +10,7 @@
 #include "osm/OsmPbfReader.h"
 #include "build/util/StringCatalog.h"
 #include "build/util/PileWriter.h"
+#include "FastFeatureIndex.h"
 
 class GolBuilder;
 
@@ -66,9 +67,11 @@ private:
 	void encodeTags(protobuf::Message keys, protobuf::Message values);
 	void encodeTags(protobuf::Message tags);
 	void encodeString(uint32_t stringNumber, int type);
-	void writeWay(uint32_t pile, uint64_t id);
-	void addFeature(uint64_t id, uint32_t pile);
-	void flush(int futurePhase);
+	// void writeWay(uint32_t pile, uint64_t id);
+	void addFeature(int64_t id, int pile);
+	void advancePhase(int futurePhase);
+	void flushPiles();
+	void flushIndex();
 	size_t batchSize(int phase) 
 	{ 
 		return phase == 0 ? (1024 * 1024) : (32 * 1024); 
@@ -91,8 +94,9 @@ private:
 	DynamicBuffer tempBuffer_;	// keep this order
 	BufferWriter tempWriter_;
 	PileWriter pileWriter_;
-	// std::vector<FeatureIndexEntry> features_;
+	FastFeatureIndex indexes_[3];
 	int currentPhase_;
+	int pileCount_;
 
 	std::vector<uint64_t> memberIds_;
 	std::vector<uint32_t> tagsOrRoles_;
@@ -107,25 +111,14 @@ class SorterOutputTask : public OsmPbfOutputTask
 {
 public:
 	SorterOutputTask() {} // TODO: not needed, only to satisfy compiler
-	SorterOutputTask(int currentPhase, int futurePhase,
-		uint64_t bytesProcessed,
-		// std::vector<FeatureIndexEntry>&& features, 
-		PileSet&& piles) :
-		// currentPhase_(currentPhase),
-		// futurePhase_(futurePhase),
+	SorterOutputTask(uint64_t bytesProcessed, PileSet&& piles) :
 		bytesProcessed_(bytesProcessed),
-		// features_(std::move(features)),
 		piles_(std::move(piles))
 	{
 	}
 
-	// SorterOutputTask
-
-	// std::vector<FeatureIndexEntry> features_;
 	PileSet piles_;
 	uint64_t bytesProcessed_;
-	// int currentPhase_;
-	// int futurePhase_;
 };
 
 class Sorter : public OsmPbfReader<Sorter, SorterContext, SorterOutputTask>

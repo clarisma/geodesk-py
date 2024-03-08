@@ -146,8 +146,8 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 
 	// Now we can build the global string table
 	const std::vector<std::string_view>& indexedKeyStrings = settings.indexedKeyStrings();
-	uint32_t minGlobalStringCount = CORE_STRING_COUNT + indexedKeyStrings.size();
-	uint32_t maxGlobalStringCount = std::max(settings.maxStrings(), minGlobalStringCount);
+	int minGlobalStringCount = CORE_STRING_COUNT + indexedKeyStrings.size();
+	int maxGlobalStringCount = std::max(settings.maxStrings(), minGlobalStringCount);
 
 	std::vector<Entry*> globalStrings;
 	globalStrings.reserve(maxGlobalStringCount);
@@ -162,8 +162,8 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 	assert(globalStrings.size() <= maxGlobalStringCount);
 
 	uint32_t minGlobalStringUsage = settings.minStringUsage();
-	const static uint32_t MAX_MIXED_STRINGS = 512;
-	uint32_t maxMixedStringCount = std::min(MAX_MIXED_STRINGS, maxGlobalStringCount);
+	const static int MAX_MIXED_STRINGS = 512;
+	int maxMixedStringCount = std::min(MAX_MIXED_STRINGS, maxGlobalStringCount);
 
 	// Add the most common keys and values
 
@@ -180,7 +180,7 @@ void StringCatalog::build(const BuildSettings& settings, const StringStatistics&
 	
 	// Fill the table space up to 8K only with keys
 
-	uint32_t maxKeyCount = std::min(1U << 13, maxGlobalStringCount);
+	int maxKeyCount = std::min(1 << 13, maxGlobalStringCount);
 		// TODO: use constant (max 8K keys);
 	for (SortEntry entry : sortedKeys)
 	{
