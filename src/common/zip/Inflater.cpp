@@ -4,6 +4,7 @@
 #include "Inflater.h"
 #include <cassert>
 #include <zlib.h>
+#include "ZipException.h"
 
 Inflater::Inflater()
 {
@@ -38,7 +39,7 @@ size_t Inflater::inflate(File& file, uint64_t ofs, size_t compressedSize,
         catch (IOException& ex)
         {
             inflateEnd(&stream);
-            throw ex;
+            throw;
         }
         inputRemaining -= stream.avail_in;
         stream.next_in = buffer_.get();
@@ -46,7 +47,7 @@ size_t Inflater::inflate(File& file, uint64_t ofs, size_t compressedSize,
         ret = ::inflate(&stream, Z_NO_FLUSH);
         if (ret != Z_OK) break;
     }
-    assert (ret == Z_STREAM_END);   // TODO: throw exception
+    if (ret != Z_STREAM_END) throw ZipException(ret);
     inflateEnd(&stream);
     return stream.total_out;
 }

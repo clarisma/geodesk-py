@@ -5,10 +5,50 @@
 #include <algorithm> 
 #include <memory>
 #include "build/GolBuilder.h"
+#include "geom/Box.h"
 
 
-// struct Feature
+class Feature
+{
+public:
 
+private:
+	uint64_t idAndFlags_;
+	union
+	{
+		// Slot of next feature whose ID has the same hash
+		// - Invalid once TEX has been assigned
+		uint32_t next_;
+		// TEX (for an exported feature)
+		int tex_;
+	};
+	union
+	{
+		// Offset in the proto-tile data where the nodeIds (for way) or
+		// members (for relation) are stored; not used by node (which 
+		// uses nextAtLocation_ instead)
+		// - Only used by local features
+		// - Invalid once the feature's bounds have been calculated
+		uint32_t bodyOfs_;
+		// Slot in nodes where the next node is stored whose coordinates
+		// have the same hash
+		uint32_t nextAtLocation_;
+		// Slot in bounds where the feature's bounding box is stored
+		uint32_t bounds_;
+	};
+};
+
+class Node : public Feature
+{
+private:
+	Coordinate xy_;
+};
+
+struct Bounds
+{
+	Box box;
+	uint64_t exportTiles;
+};
 
 
 int Validator::quadrant(int col, int row)

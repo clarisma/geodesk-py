@@ -23,9 +23,6 @@ typedef int FileHandle;
 static FileHandle INVALID_FILE_HANDLE = -1;
 #endif
 
-// TODO: Decide if a File object can be copied
-// If so, don't close it in the destructor
-
 // TODO: Should methods be const?
 
 class File 
@@ -40,11 +37,31 @@ public:
     };
 
     File() = default;
+    File(FileHandle handle) : fileHandle_(handle) {};
+    File(const File& other) = delete;
+    File(File&& other)
+    {
+        fileHandle_ = other.fileHandle_;
+        other.fileHandle_ = INVALID_FILE_HANDLE;
+    }
+
     ~File() 
     {
         close();
     }
 
+    File& operator=(const File& other) = delete;
+    File& operator=(File&& other) noexcept
+    {
+        if (this != &other)
+        {
+            fileHandle_ = other.fileHandle_;
+            other.fileHandle_ = INVALID_FILE_HANDLE;
+        }
+        return *this;
+    }
+
+    
     FileHandle handle() const { return fileHandle_; }
     std::string fileName() const;
 
