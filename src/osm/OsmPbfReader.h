@@ -4,7 +4,7 @@
 #pragma once
 #include <string_view>
 #include <common/io/File.h>
-#include <common/thread/ProgressReporter.h>
+#include <common/alloc/ReusableBlock.h>
 #include <common/thread/TaskEngine.h>
 #include <common/util/Bytes.h>
 #include <common/util/log.h>
@@ -99,33 +99,6 @@ public:
 	uint32_t blockSize;
 };
 
-class UncompressedBlock
-{
-public:
-	UncompressedBlock() :
-		data(nullptr),
-		dataSize(0),
-		toDelete(nullptr)
-	{
-	}
-
-	UncompressedBlock(UncompressedBlock&& other)
-	{
-		data = other.data;
-		dataSize = other.dataSize;
-		toDelete = other.toDelete;
-		other.toDelete = nullptr;
-	}
-
-	~UncompressedBlock() 
-	{ 
-		if(toDelete) delete[] toDelete; 
-	}
-
-	const uint8_t* data;
-	uint32_t dataSize;
-	const uint8_t* toDelete;
-};
 
 /**
  * stringTable()
@@ -150,9 +123,9 @@ public:
 
 	void processTask(OsmPbfBlock& block)
 	{
-		UncompressedBlock uncompressed = Reader::uncompressBlock(block);
-		const uint8_t* p = uncompressed.data;
-		const uint8_t* pEnd = p + uncompressed.dataSize;
+		Reader::uncompressBlock(block, block_);
+		const uint8_t* p = block_.data();
+		const uint8_t* pEnd = p + block_.size();
 
 		blockBytesProcessed_ += block.blockSize;
 		self()->startBlock();
@@ -434,6 +407,7 @@ private:
 	}
 
 	Reader* reader_;
+	ReusableBlock block_;
 	// std::vector<const uint8_t*> strings_;
 	std::vector<protobuf::Message> groups_;
 	int64_t latOffset_;
@@ -549,11 +523,10 @@ public:
 private:
 	Derived* self() { return reinterpret_cast<Derived*>(this); }
 
-	static UncompressedBlock uncompressBlock(const OsmPbfBlock& block)
+	static void uncompressBlock(const OsmPbfBlock& block, ReusableBlock& data)
 	{
 		const uint8_t* pRaw = nullptr;
 		const uint8_t* pZipped = nullptr;
-		uint32_t rawSize;
 		uint32_t zippedSize;
 		uint32_t uncompressedSize = 0;
 
@@ -565,9 +538,9 @@ private:
 			switch (field)
 			{
 			case BLOB_RAW_DATA:
-				rawSize = readVarint32(p);
+				uncompressedSize = readVarint32(p);
 				pRaw = p;
-				p += rawSize;
+				p += uncompressedSize;
 				break;
 			case BLOB_RAW_SIZE:
 				uncompressedSize = readVarint32(p);
@@ -583,12 +556,10 @@ private:
 			}
 		}
 
-		UncompressedBlock uncompressed;
+		data.resize(uncompressedSize);
 		if (pRaw)
 		{
-			uncompressed.data = pRaw;
-			uncompressed.dataSize = rawSize;
-			uncompressed.toDelete = block.data;
+			memcpy(data.data(), pRaw, uncompressedSize);
 		}
 		else if (pZipped)
 		{
@@ -596,29 +567,23 @@ private:
 			{
 				throw OsmPbfException("Invalid uncompressed size: %d", uncompressedSize);
 			}
-			uint8_t* pUnzipped = new uint8_t[uncompressedSize];
 			uLongf uncompressedSizeZlib = uncompressedSize;
-			int result = uncompress(pUnzipped, &uncompressedSizeZlib, pZipped, zippedSize);
-			delete block.data;
+			int result = uncompress(data.data(), &uncompressedSizeZlib, pZipped, zippedSize);
 			if (result != Z_OK)
 			{
 				throw OsmPbfException("Inflating failed with error code %d", result);
 			}
-
-			uncompressed.data = pUnzipped;
-			uncompressed.dataSize = uncompressedSize;
-			uncompressed.toDelete = pUnzipped;
 		}
 		else
 		{
 			throw OsmPbfException("Block has no content");
 		}
-		return std::move(uncompressed);
+		delete block.data;
 	}
 
 	void decodeHeaderBlock(const OsmPbfBlock& block)
 	{
-		UncompressedBlock uncompressed = uncompressBlock(block);
+		// UncompressedBlock uncompressed = uncompressBlock(block);
 		// TODO
 	}
 
