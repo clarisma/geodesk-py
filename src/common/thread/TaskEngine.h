@@ -30,7 +30,7 @@
  */
 
 // The constructor of a Context must not access Derived, because
-// Derived won't be fully initialzied at that point!
+// Derived won't be fully initialzied at that point
 // Use a "start" method that inits the contexts and starts the threads
 
 template <typename Derived, typename WorkContext, typename WorkTask, typename OutputTask>

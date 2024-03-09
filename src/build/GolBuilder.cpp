@@ -101,7 +101,7 @@ void GolBuilder::sort()
 
 void GolBuilder::validate()
 {
-	Validator validator(this);
+	Validator::Validator validator(this);
 	validator.validate();
 }
 
