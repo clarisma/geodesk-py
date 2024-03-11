@@ -12,8 +12,13 @@ class TileIndexBuilder
 {
 public:
 	TileIndexBuilder(const BuildSettings& settings);
-	const uint32_t* build(const uint32_t* nodeCounts);
-	uint32_t tileCount() const { return tileCount_; }
+	void build(std::unique_ptr<const uint32_t[]> nodeCounts);
+	int tileCount() const { return tileCount_; }
+	std::unique_ptr<const uint32_t[]> takeTileIndex() { return std::move(tileIndex_); }
+	std::unique_ptr<const uint32_t[]> takeTileSizeEstimates()
+	{ 
+		return std::move(tileSizeEstimates_); 
+	}
 
 private:
 	class STile
@@ -25,12 +30,18 @@ private:
 		uint32_t tip() const { return location_ / 4; }
 		void setParent(STile* pt) { parent_ = pt; }
 		uint64_t nodeCount() const { return totalNodeCount_; }
+		uint64_t estimatedTileSize() const { return estimatedTileSize_; }
 		STile* next() const { return next_; }
 		void setNext(STile* next) { next_ = next; }
-		void clearNodeCount() { totalNodeCount_ = 0; }
+		void clearNodeCount() {	totalNodeCount_ = 0; }
 		void addNodeCount(const STile* ct) 
 		{ 
 			totalNodeCount_ += ct->totalNodeCount_;
+		}
+
+		void addEstimatedSize(int64_t estimatedSize)
+		{
+			estimatedTileSize_ += estimatedSize;
 		}
 
 		void addChild(STile* t)
@@ -63,6 +74,7 @@ private:
 		uint32_t maxChildren_;
 		uint32_t childCount_;
 		uint64_t totalNodeCount_;
+		uint64_t estimatedTileSize_;
 		// uint64_t ownNodeCount_;
 		STile* parent_;
 		STile* children_[1];
@@ -121,12 +133,16 @@ private:
 	uint32_t sumTileCounts() noexcept;
 
 	static const int MAX_TIERS = 8;
+	static const int ESTIMATED_BYTES_PER_NODE = 8;
+	static const int ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE = (1 << 14);
 
 	Arena arena_;
 	const BuildSettings& settings_;
 	Tier tiers_[MAX_TIERS + 1];
 		// We need one extra tier in case Zoom 12 is not 
 		// part of the Tile Pyramid
-	uint32_t tierCount_;
-	uint32_t tileCount_;
+	int tierCount_;
+	int tileCount_;
+	std::unique_ptr<uint32_t[]> tileIndex_;
+	std::unique_ptr<uint32_t[]> tileSizeEstimates_;
 };

@@ -89,7 +89,7 @@ public:
         int n;
         if (len < 128)
         {
-            bytes_[0] = len;
+            bytes_[0] = static_cast<uint8_t>(len);
             n = 1;
         }
         else

@@ -15,3 +15,15 @@ size_t FileSystem::getBlockSize(const char* path)
     }
     return buf.f_bsize;
 }
+
+
+size_t FileSystem::getAvailableDiskSpace(const char* path)
+{
+    struct statvfs buf;
+    if (statvfs(path.c_str(), &buf) != 0) 
+    {
+        IOException::checkAndThrow();
+    }
+    return static_cast<size_t>(buf.f_bsize) * buf.f_bavail;
+}
+

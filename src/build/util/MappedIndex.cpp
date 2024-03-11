@@ -15,20 +15,15 @@ uint64_t MappedIndex::calculateMappingSize()
 	// TODO: Ensure SEGMENT_LENGTH_BYTES is a 64-bit type
 }
 
-void MappedIndex::create(std::filesystem::path filePath, int64_t maxId, int valueWidth)
+void MappedIndex::create(const char* fileName, int64_t maxId, int valueWidth)
 {
 	maxId_ = maxId;
 	valueWidth_ = valueWidth;
 
-	if (std::filesystem::exists(filePath))
-	{
-		// Delete exisitng file so we start with a blank slate
-		std::filesystem::remove(filePath);
-	}
 	MappedFile file;
-	file.open(filePath.string().c_str(),
+	file.open(fileName,
 		File::OpenMode::READ | File::OpenMode::WRITE |
-		File::OpenMode::CREATE | File::OpenMode::SPARSE);
+		File::OpenMode::REPLACE_EXISTING | File::OpenMode::SPARSE);
 	uint64_t totalBytes = calculateMappingSize();
 	file.setSize(totalBytes);
 	index_ = reinterpret_cast<uint64_t*>(file.map(0, totalBytes,

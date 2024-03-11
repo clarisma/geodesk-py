@@ -74,6 +74,7 @@ enum OsmPbf
 class OsmPbfException : public std::runtime_error
 {
 public:
+	// TODO: This is broken!
 	explicit OsmPbfException(const char* format, ...)
 		: std::runtime_error(formatMessage(format))
 	{
@@ -557,11 +558,7 @@ private:
 		}
 
 		data.resize(uncompressedSize);
-		if (pRaw)
-		{
-			memcpy(data.data(), pRaw, uncompressedSize);
-		}
-		else if (pZipped)
+		if (pZipped)
 		{
 			if (uncompressedSize == 0)
 			{
@@ -573,6 +570,10 @@ private:
 			{
 				throw OsmPbfException("Inflating failed with error code %d", result);
 			}
+		}
+		else if (pRaw)
+		{
+			memcpy(data.data(), pRaw, uncompressedSize);
 		}
 		else
 		{

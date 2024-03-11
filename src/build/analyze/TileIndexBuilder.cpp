@@ -32,9 +32,9 @@ uint32_t TileIndexBuilder::sumTileCounts() noexcept
 	return tileCount_;
 }
 
-const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
+void TileIndexBuilder::build(std::unique_ptr<const uint32_t[]> nodeCounts)
 {
-	createLeafTiles(nodeCounts);
+	createLeafTiles(nodeCounts.get());
 	//printf("  Created leaf tiles.\n");
 	addParentTiles();
 	//printf("  Added parent tiles.\n");
@@ -43,9 +43,9 @@ const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
 	//printf("  Linked child tiles.\n");
 	uint32_t indexSize = layoutIndex();
 	uint32_t slotCount = indexSize / 4;
-	uint32_t* pIndex = new uint32_t[slotCount];
-	pIndex[0] = slotCount-1;
-	tiers_[0].firstTile->write(pIndex);
+	tileIndex_.reset(new uint32_t[slotCount]);
+	tileIndex_[0] = slotCount-1;
+	tiers_[0].firstTile->write(tileIndex_.get());
 
 	/*
 	for (STile* t : tiles_)
@@ -55,8 +55,7 @@ const uint32_t* TileIndexBuilder::build(const uint32_t* nodeCounts)
 	*/
 
 	Console::msg("- %u tiles", tileCount_);
-	Console::msg("- %u TIPs", pIndex[0]);
-	return pIndex;
+	Console::msg("- %u TIPs", tileIndex_[0]);
 }
 
 void TileIndexBuilder::trimTiles()
@@ -122,6 +121,8 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 	{
 		// If the tile pyramid does not include zoom level 12,
 		// we create a fake tier to store the level-12 tiles
+
+		// TODO: In that case, the Analyzer should create a coarser grid instead
 
 		tier = &tiers_[tierCount_];
 		tier->level = leafLevel;
@@ -189,6 +190,8 @@ void TileIndexBuilder::addParentTiles()
 			// we just mark the parent
 			ct->setParent(pt);
 			pt->addNodeCount(ct);
+			pt->addEstimatedSize(ct->estimatedTileSize() /
+				ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE);
 			if (ct->nodeCount() >= minTileDensity) childTier.addTile(ct);
 		}
 		parentTileMap.clear();
@@ -217,6 +220,12 @@ void TileIndexBuilder::linkChildTiles()
 				parent->addChild(tile);
 				tier.addTile(tile);
 			}
+			else
+			{
+				uint64_t estimatedChildSize = tile->estimatedTileSize();
+				parent->addEstimatedSize(estimatedChildSize +
+					estimatedChildSize / ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE);
+			}
 		}
 	}
 }
@@ -236,6 +245,7 @@ TileIndexBuilder::STile::STile(Tile tile, uint32_t maxChildren, uint64_t nodeCou
 	tile_(tile),
 	maxChildren_(maxChildren),
 	childCount_(0),
+	estimatedTileSize_(nodeCount * ESTIMATED_BYTES_PER_NODE),
 	totalNodeCount_(nodeCount),
 	// ownNodeCount_(0),
 	parent_(nullptr)

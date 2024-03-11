@@ -48,8 +48,10 @@ public:
 	size_t mappingSize(int n) const;
 	int mappingNumber(uint64_t ofs) const;
 
-protected:
+public:
 	static const uint64_t SEGMENT_LENGTH = 1024 * 1024 * 1024;		// 1 GB
+
+protected:
 	static const int SEGMENT_LENGTH_SHIFT = 30;
 	static const uint64_t SEGMENT_LENGTH_MASK = 0x3fff'ffff;
 	static const int EXTENDED_MAPPINGS_SLOT_COUNT = 16;

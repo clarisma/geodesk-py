@@ -11,67 +11,129 @@ PileFile::PileFile()
 
 }
 
-
-void PileFile::create(std::filesystem::path filePath, uint32_t pileCount, uint32_t pageSize)
+void PileFile::openExisting(const char* fileName)
 {
-	assert(pileCount > 0 && pileCount < MAX_PILE_COUNT);
-	assert(pageSize >= 4096 && pageSize <= SEGMENT_LENGTH && Bytes::isPowerOf2(pageSize));
-	if (std::filesystem::exists(filePath))
-	{
-		// Delete exisitng file so we start with a blank slate
-		std::filesystem::remove(filePath);
-	}
-
-	open(filePath.string().c_str(), OpenMode::READ | OpenMode::WRITE | OpenMode::CREATE);
+	file_.open(fileName, File::OpenMode::READ | File::OpenMode::WRITE);
+	// Open mode is implicitly sparse
 	Metadata* meta = metadata();
-	pageSize_ = pageSize;
-	meta->pageSizeShift = Bits::countTrailingZerosInNonZero(pageSize);
-	meta->pileCount = pileCount;
-	
-	uint32_t entriesPerPage = pageSize / sizeof(IndexEntry);
-	meta->pageCount = (pileCount + entriesPerPage) / entriesPerPage;
-		// No need to use -1, because count includes the metadata (which 
-		// has the same size as an index entry)
+	pageSizeShift_ = meta->pageSizeShift;
+	pageSize_ = pageSizeShift_;
 }
 
 
-void PileFile::append(int pile, const uint8_t* data, size_t len)
+void PileFile::create(const char* fileName, uint32_t pileCount, 
+	uint32_t pageSize, uint32_t preallocatePages)
+{
+	assert(pileCount > 0 && pileCount < MAX_PILE_COUNT);
+	assert(pageSize >= 4096 && pageSize <= ExpandableMappedFile::SEGMENT_LENGTH 
+		&& Bytes::isPowerOf2(pageSize));
+
+
+	uint32_t entriesPerPage = pageSize / sizeof(IndexEntry);
+	uint32_t pageCount = (pileCount + entriesPerPage) / entriesPerPage;
+	// No need to use -1, because count includes the metadata (which 
+	// has the same size as an index entry)
+
+	if (preallocatePages)
+	{
+		File file;
+		file.open(fileName, File::OpenMode::READ | File::OpenMode::WRITE | File::OpenMode::REPLACE_EXISTING);
+		
+		size_t size = static_cast<size_t>(pageSize) * (pageCount + preallocatePages);
+		file.setSize(size);
+		file.zeroFill(0, size);
+		file.makeSparse();
+		file.close();
+	}
+
+	file_.open(fileName, File::OpenMode::READ | File::OpenMode::WRITE);
+		// Open mode is implicitly sparse
+	Metadata* meta = metadata();
+	pageSize_ = pageSize;
+	pageSizeShift_ = Bits::countTrailingZerosInNonZero(pageSize);
+	meta->magic = MAGIC;
+	meta->pageCount = pageCount;
+	meta->pileCount = pileCount;
+	meta->pageSizeShift = pageSizeShift_;
+}
+
+
+void PileFile::preallocate(int pile, int pages)
+{
+	Metadata* meta = metadata();
+	IndexEntry* indexEntry = &(meta->index[pile - 1]);
+	assert(indexEntry->firstPage == 0);
+	assert(indexEntry->lastPage == 0);
+	assert(indexEntry->totalPayloadSize == 0);
+	assert(static_cast<uint64_t>(pages) << pageSizeShift_ < (1ULL << 32));
+	// Don't go through regular allocation, since that would cause a write
+	// in the middle of the file; more efficient to defer it and let append()
+	// handle the first-chunk initialization
+	indexEntry->firstPage = meta->pageCount;
+	// We leave indexEntry->lastPage = 0 to indicate that the first chunk is 
+	// allocated, but uninitialized; instead, we set the totalPayloadSize
+	// to the allocated payload size -- append() will then reset this to 0
+	indexEntry->totalPayloadSize = static_cast<uint32_t>(pages << pageSizeShift_) -
+		CHUNK_HEADER_SIZE;
+	meta->pageCount += pages;
+}
+
+
+void PileFile::append(int pile, const uint8_t* data, uint32_t len)
 {
 	assert (pile > 0 && pile <= metadata()->pileCount);
 	IndexEntry* indexEntry = &metadata()->index[pile - 1];
 	uint32_t lastPage = indexEntry->lastPage;
-	uint64_t pileSize = indexEntry->grossSize;
+	size_t pileSize;
+	Chunk* chunk;
+	uint32_t chunkSize;
+
 	if (lastPage == 0)
 	{
-		// Pile does not yet exist
-		lastPage = allocPage();
-		pileSize = PAGE_HEADER_SIZE;
-		indexEntry->firstPage = lastPage;
-		indexEntry->lastPage = lastPage;
-	}
-	uint32_t lastPageUsedBytes = pileSize & (pageSize_-1);
-	if (lastPageUsedBytes == 0) lastPageUsedBytes = pageSize_;
-	
-	uint64_t remainingLen = len;
-	for(;;)
-	{
-		Page* pPage = getPage(lastPage);
-		uint64_t pageSpaceRemaining = pageSize_ - lastPageUsedBytes;
-		if(pageSpaceRemaining > 0)
+		// First write to a chunk
+		if (indexEntry->firstPage == 0)
 		{
-			uint8_t* p = reinterpret_cast<uint8_t*>(pPage) + lastPageUsedBytes;
-			uint64_t n = std::min(remainingLen, pageSpaceRemaining);
-			memcpy(p, data, n);
-			remainingLen -= n;
+			// Pile does not yet exist
+			assert(indexEntry->totalPayloadSize == 0);
+			ChunkAllocation alloc = allocChunk(len);
+			lastPage = alloc.firstPage;
+			indexEntry->firstPage = lastPage;
+			indexEntry->lastPage = lastPage;
+			chunk = alloc.chunk;
 		}
-		if (remainingLen == 0) break;
-		lastPage = allocPage();
-		pPage->nextPage = lastPage;
-		pileSize += PAGE_HEADER_SIZE;
-		lastPageUsedBytes = PAGE_HEADER_SIZE;
+		else
+		{
+			// Pre-allocated chunk
+			chunk = getChunk(lastPage);
+			assert(chunk->payloadSize == 0 && chunk->remainingSize == 0);
+			chunkSize = static_cast<uint32_t>(indexEntry->totalPayloadSize);
+			chunk->payloadSize = chunkSize;
+			chunk->remainingSize = chunkSize;
+			indexEntry->totalPayloadSize = 0;
+			indexEntry->lastPage = indexEntry->firstPage;
+		}
 	}
-	indexEntry->lastPage = lastPage;
-	indexEntry->grossSize = pileSize + len;
+	else
+	{
+		chunk = getChunk(lastPage);
+	}
+
+	chunkSize = chunk->payloadSize;
+	uint32_t remainingSize = chunk->remainingSize;
+
+	uint32_t n = std::min(len, remainingSize);
+	memcpy(&chunk->data[chunkSize - remainingSize], data, n);
+	uint32_t leftToWrite = len - n;
+	if (leftToWrite > 0)
+	{
+		ChunkAllocation alloc = allocChunk(leftToWrite);
+		chunk->nextPage = alloc.firstPage;
+		indexEntry->lastPage = alloc.firstPage;
+		chunk = alloc.chunk;
+		memcpy(&chunk->data, data, leftToWrite);
+		chunk->remainingSize -= leftToWrite;
+	}
+	indexEntry->totalPayloadSize += len;
 }
 
 
@@ -80,39 +142,51 @@ void PileFile::load(int pile, ReusableBlock& block)
 	assert (pile > 0 && pile <= metadata()->pileCount);
 	IndexEntry* indexEntry = &metadata()->index[pile - 1];
 	uint32_t page = indexEntry->firstPage;
+	uint32_t lastPage = indexEntry->lastPage;
 	if (page == 0)
 	{
 		block.resize(0);
 		return;
 	}
-	uint64_t pileSize = indexEntry->grossSize;
-	uint64_t numberOfPages = (pileSize + pageSize_ - 1) >> metadata()->pageSizeShift;
-	uint64_t dataSize = pileSize - numberOfPages * PAGE_HEADER_SIZE;
+	size_t dataSize = indexEntry->totalPayloadSize;
 	block.resize(dataSize);
 	uint8_t* pStart = block.data();
-	uint8_t* pEnd = pStart;
-	uint64_t dataPerPage = pageSize_ - PAGE_HEADER_SIZE;
-	uint64_t remainingLen = dataSize;
-	while (page != 0)
+	uint8_t* p = pStart;
+	size_t leftToRead = dataSize;
+	for(;;)
 	{
-		/*
-		if (dataSize <= 0)
+		const Chunk* chunk = getChunk(page);
+		if (page == lastPage)
 		{
-			throw new IOException(
-				String.format(
-					"Corrupt PileFile, Pile %d has more pages than " +
-					"actual data (Pile size = %d, next page = %d)",
-					pile, pileSize, page));
+			size_t finalChunkSize = chunk->payloadSize - chunk->remainingSize;
+			assert(leftToRead == finalChunkSize);
+			memcpy(p, &chunk->data, finalChunkSize);
+			break;
 		}
-		*/
-
-		const Page* pPage = getPage(page);
-		uint64_t n = std::min(remainingLen, dataPerPage);
-		page = pPage->nextPage;
-		memcpy(pEnd, &pPage->data, n);
-		pEnd += n;
-		remainingLen -= n;
-		assert(remainingLen < dataSize);		// check for wraparound
+		assert(leftToRead >= chunk->payloadSize);
+		memcpy(p, chunk->data, chunk->payloadSize);
+		leftToRead -= chunk->payloadSize;
+		page = chunk->nextPage;
 	}
-	assert(remainingLen == 0);
+}
+
+
+PileFile::ChunkAllocation PileFile::allocChunk(uint32_t minPayload)
+{
+	uint32_t firstPage = metadata()->pageCount;
+	uint32_t pages =
+		static_cast<uint32_t>(
+			(minPayload + pageSize_ - CHUNK_HEADER_SIZE - 1)
+			/ (pageSize_ - CHUNK_HEADER_SIZE));
+	metadata()->pageCount = firstPage + pages;
+	Chunk* chunk = getChunk(firstPage);
+	chunk->payloadSize = static_cast<uint32_t>(pages << pageSizeShift_) - CHUNK_HEADER_SIZE;
+	chunk->remainingSize = chunk->payloadSize;
+	return ChunkAllocation{ chunk, firstPage };
+}
+
+PileFile::Chunk* PileFile::getChunk(uint32_t page)
+{
+	return reinterpret_cast<Chunk*>(file_.translate(
+		static_cast<uint64_t>(page) << pageSizeShift_));
 }

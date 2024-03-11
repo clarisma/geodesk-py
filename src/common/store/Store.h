@@ -54,7 +54,7 @@ protected:
 
 	inline uint8_t* data(uint64_t ofs) 
 	{
-		return translate(ofs);;
+		return translate(ofs);
 	}
 
 	void error(const char* msg) const;

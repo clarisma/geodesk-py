@@ -6,10 +6,25 @@
 #include "query/Query.h"
 #include "BuildCommand.h"
 
+void testPileFile()
+{
+	File file;
+	file.open("c:\\geodesk\\tests\\trash.bin",
+		File::OpenMode::READ | File::OpenMode::WRITE | File::OpenMode::CREATE);
+	size_t size = 5ULL * 1024 * 1024 * 1024;
+	file.setSize(size);
+	file.zeroFill(0, size);
+	file.makeSparse();
+	file.setSize(size * 2);
+	file.close();
+}
+
 int main(int argc, char* argv[])
 {
-	BuildCommand cmd;
-	cmd.run(argv);
+	testPileFile();
+
+	//BuildCommand cmd;
+	//cmd.run(argv);
 
 	/*
 	FeatureStore store;

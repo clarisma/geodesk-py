@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include <filesystem>
 #include <common/io/Mappedfile.h>
 
 class MappedIndex
@@ -10,7 +9,7 @@ class MappedIndex
 public:
 	~MappedIndex() { release(); }
 
-	void create(std::filesystem::path filePath, int64_t maxId, int valueWidth);
+	void create(const char* fileName, int64_t maxId, int valueWidth);
 	void release();
 	uint64_t* data() const { return index_; }
 	int64_t maxId() const { return maxId_; }

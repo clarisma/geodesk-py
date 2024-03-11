@@ -63,6 +63,7 @@ private:
 	std::filesystem::path workPath_;
 	StringCatalog stringCatalog_;
 	TileCatalog tileCatalog_;
+	std::unique_ptr<const uint32_t[]> tileSizeEstimates_;
 	MappedIndex featureIndexes_[3];
 	PileFile featurePiles_;
 	OsmStatistics stats_;

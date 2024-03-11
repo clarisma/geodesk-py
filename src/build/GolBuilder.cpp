@@ -1,4 +1,5 @@
 #include "GolBuilder.h"
+#include <common/sys/SystemInfo.h>
 #include "build/analyze/Analyzer.h"
 #include "build/analyze/TileIndexBuilder.h"
 #include "build/sort/Sorter.h"
@@ -41,6 +42,7 @@ void GolBuilder::build(const char* golPath)
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	console_.start("Analyzing...");
+	SystemInfo sysinfo;
 	calculateWork();
 
 	golPath_ = File::extension(golPath) != 0 ? golPath :
@@ -66,9 +68,10 @@ void GolBuilder::analyze()
 
 	TileIndexBuilder tib(settings_);
 	std::unique_ptr<const uint32_t[]> totalNodeCounts = analyzer.takeTotalNodeCounts();
-	std::unique_ptr<const uint32_t[]> tileIndex(tib.build(totalNodeCounts.get()));
-	delete totalNodeCounts.release();
-
+	tib.build(std::move(totalNodeCounts));
+	std::unique_ptr<const uint32_t[]> tileIndex = tib.takeTileIndex();
+	tileSizeEstimates_ = tib.takeTileSizeEstimates();
+	
 	Console::msg("Building tile lookup...");
 	tileCatalog_.build(tib.tileCount(), tileIndex.get(), settings_.zoomLevels());
 	Console::msg("Tile lookup built.");
@@ -89,7 +92,22 @@ void GolBuilder::prepare()
 	createIndex(featureIndexes_[0], "nodes.idx", stats_.maxNodeId, 0);
 	createIndex(featureIndexes_[1], "ways.idx", stats_.maxWayId, 2);
 	createIndex(featureIndexes_[2], "relations.idx", stats_.maxRelationId, 2);
-	featurePiles_.create(workPath_ / "features.bin", tileCatalog_.tileCount(), 64 * 1024);
+
+	// TODO: Decide whether tileSizeEstimates_ is 0-based or 1-based
+
+	uint32_t featurePilesPageSize = settings_.featurePilesPageSize();
+	int tileCount = tileCatalog_.tileCount();
+	uint32_t nPreallocatePages = 0;
+	for (int i = 0; i < tileCount; i++)
+	{
+		nPreallocatePages += (tileSizeEstimates_[i] + featurePilesPageSize - 1) / featurePilesPageSize;
+	}
+	featurePiles_.create((workPath_ / "features.bin").string().c_str(), 
+		tileCount, 64 * 1024, nPreallocatePages);
+	for (int i = 0; i < tileCount; i++)
+	{
+		featurePiles_.preallocate(i+1, (tileSizeEstimates_[i] + featurePilesPageSize - 1) / featurePilesPageSize);
+	}
 }
 
 

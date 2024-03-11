@@ -66,6 +66,7 @@ public:
 	#endif
 
 	const std::string& sourcePath() const { return sourcePath_; }
+	uint32_t featurePilesPageSize() const { return featurePilesPageSize_; }
 	const std::vector<std::string_view>& indexedKeyStrings() const 
 	{ 
 		return indexedKeyStrings_; 
@@ -124,6 +125,7 @@ private:
 	int minStringUsage_ = 300;
 	int minTileDensity_ = 25'000;
 	int threadCount_ = 0;
+	uint32_t featurePilesPageSize_ = 64 * 1024;
 	std::vector<std::string_view> indexedKeyStrings_;
 	std::vector<uint8_t> indexedKeyCategories_;
 };

@@ -19,7 +19,11 @@ void File::open(const char* filename, int mode)
         access |= GENERIC_WRITE;
     }
 
-    if (mode & OpenMode::CREATE)
+    if (mode & REPLACE_EXISTING)
+    {
+        creationDisposition = CREATE_ALWAYS;
+    }
+    else if (mode & OpenMode::CREATE)
     {
         creationDisposition = OPEN_ALWAYS;
     }
@@ -172,5 +176,55 @@ std::string File::fileName() const
     else 
     {
         return "<invalid file>";
+    }
+}
+
+
+void File::makeSparse()
+{
+    DWORD bytesReturned = 0;
+    if(!DeviceIoControl(
+        fileHandle_,          // Handle to the file obtained with CreateFile
+        FSCTL_SET_SPARSE,     // Control code for setting the file as sparse
+        NULL,                 // No input buffer required
+        0,                    // Input buffer size is zero since no input buffer
+        NULL,                 // No output buffer required
+        0,                    // Output buffer size is zero since no output buffer
+        &bytesReturned,       // Bytes returned
+        NULL))                // Not using overlapped I/O
+    {
+        IOException::checkAndThrow();
+    }
+}
+
+void File::allocate(uint64_t ofs, size_t length)
+{
+    // TODO: does not really exist on Windows
+}
+
+void File::deallocate(uint64_t ofs, size_t length)
+{
+    zeroFill(ofs, length);
+}
+
+
+void File::zeroFill(uint64_t ofs, size_t length)
+{
+    FILE_ZERO_DATA_INFORMATION zeroDataInfo;
+    zeroDataInfo.FileOffset.QuadPart = ofs;
+    zeroDataInfo.BeyondFinalZero.QuadPart = ofs + length;
+
+    DWORD bytesReturned = 0;
+    if (!DeviceIoControl(
+        fileHandle_,                 // handle to file
+        FSCTL_SET_ZERO_DATA,         // dwIoControlCode
+        &zeroDataInfo,               // input buffer
+        sizeof(zeroDataInfo),        // size of input buffer
+        NULL,                        // lpOutBuffer
+        0,                           // nOutBufferSize
+        &bytesReturned,              // lpBytesReturned
+        NULL))                       // lpOverlapped
+    {
+        IOException::checkAndThrow();
     }
 }

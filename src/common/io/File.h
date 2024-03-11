@@ -33,7 +33,8 @@ public:
         READ = 1 << 0,      // TODO: expected to stay stable
         WRITE = 1 << 1,     // TODO: expected to stay stable
         CREATE = 1 << 2,    // TODO: expected to stay stable    
-        SPARSE = 1 << 3
+        SPARSE = 1 << 3,
+        REPLACE_EXISTING = 1 << 4
     };
 
     File() = default;
@@ -78,6 +79,12 @@ public:
     size_t read(void* buf, size_t length);
     size_t read(uint64_t ofs, void* buf, size_t length);
     size_t write(const void* buf, size_t length);
+
+    void makeSparse();
+    void allocate(uint64_t ofs, size_t length);
+    void deallocate(uint64_t ofs, size_t length);
+    void zeroFill(uint64_t ofs, size_t length);
+
 
     void force();
 

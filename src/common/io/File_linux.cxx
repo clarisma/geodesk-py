@@ -26,8 +26,15 @@ void File::open(const char* filename, int mode)
     {
         flags |= O_WRONLY;
     }
-
-    if (mode & OpenMode::CREATE) flags |= O_CREAT;
+    
+    if (mode & REPLACE_EXISTING)
+    {
+        flags |= O_TRUNC;
+    }
+    else if (mode & OpenMode::CREATE)
+    {
+        flags |= O_CREAT;
+    }
 
     fileHandle_ = ::open(filename, flags, 0666);
 

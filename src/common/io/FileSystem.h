@@ -10,4 +10,5 @@ class FileSystem
 {
 public:
 	static size_t getBlockSize(const char* path);
+	static size_t getAvailableDiskSpace(const char* path);
 };
