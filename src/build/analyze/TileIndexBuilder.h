@@ -78,6 +78,8 @@ private:
 		// uint64_t ownNodeCount_;
 		STile* parent_;
 		STile* children_[1];
+
+		friend class TileIndexBuilder;
 	};
 
 	struct Tier
@@ -131,6 +133,8 @@ private:
 	STile* createTile(Tile tile, uint32_t maxChildCount, 
 		uint64_t nodeCount, STile* next);
 	uint32_t sumTileCounts() noexcept;
+	void calculateTileSizeEstimates();
+	int tileSizeEstimate(int pile, STile* tile);
 
 	static const int MAX_TIERS = 8;
 	static const int ESTIMATED_BYTES_PER_NODE = 8;

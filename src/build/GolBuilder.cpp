@@ -42,7 +42,7 @@ void GolBuilder::build(const char* golPath)
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	console_.start("Analyzing...");
-	SystemInfo sysinfo;
+	// SystemInfo sysinfo;
 	calculateWork();
 
 	golPath_ = File::extension(golPath) != 0 ? golPath :
@@ -65,6 +65,8 @@ void GolBuilder::analyze()
 	Analyzer analyzer(this);
 	analyzer.analyze(settings_.sourcePath().c_str());
 	stats_ = analyzer.osmStats();
+
+	console_.setTask("Preparing indexes...");
 
 	TileIndexBuilder tib(settings_);
 	std::unique_ptr<const uint32_t[]> totalNodeCounts = analyzer.takeTotalNodeCounts();
@@ -95,18 +97,13 @@ void GolBuilder::prepare()
 
 	// TODO: Decide whether tileSizeEstimates_ is 0-based or 1-based
 
-	uint32_t featurePilesPageSize = settings_.featurePilesPageSize();
 	int tileCount = tileCatalog_.tileCount();
-	uint32_t nPreallocatePages = 0;
-	for (int i = 0; i < tileCount; i++)
-	{
-		nPreallocatePages += (tileSizeEstimates_[i] + featurePilesPageSize - 1) / featurePilesPageSize;
-	}
 	featurePiles_.create((workPath_ / "features.bin").string().c_str(), 
-		tileCount, 64 * 1024, nPreallocatePages);
-	for (int i = 0; i < tileCount; i++)
+		tileCount, 64 * 1024, tileSizeEstimates_[0]);
+
+	for (int i = 1; i <= tileCount; i++)
 	{
-		featurePiles_.preallocate(i+1, (tileSizeEstimates_[i] + featurePilesPageSize - 1) / featurePilesPageSize);
+		featurePiles_.preallocate(i, tileSizeEstimates_[i]);
 	}
 }
 

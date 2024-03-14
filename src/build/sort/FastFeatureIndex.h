@@ -67,7 +67,10 @@ private:
 	int64_t maxId_;
 	uint64_t* currentCell_;
 	uint64_t cellData_;
-	int slotsPerSegment_;
+	int64_t slotsPerSegment_;	
+		// has to be 64 bit to support 1-bit indexes
+		// could avoid by limiting to 4B slots per segment, for 1-bit indexes
+		// each segment will only be half-filled, but that's ok since index files are sparse
 	int16_t writeState_;
 	int16_t valueWidth_;
 };

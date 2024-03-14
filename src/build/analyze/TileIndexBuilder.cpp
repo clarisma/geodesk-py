@@ -47,6 +47,7 @@ void TileIndexBuilder::build(std::unique_ptr<const uint32_t[]> nodeCounts)
 	tileIndex_[0] = slotCount-1;
 	tiers_[0].firstTile->write(tileIndex_.get());
 
+	calculateTileSizeEstimates();
 	/*
 	for (STile* t : tiles_)
 	{
@@ -192,7 +193,14 @@ void TileIndexBuilder::addParentTiles()
 			pt->addNodeCount(ct);
 			pt->addEstimatedSize(ct->estimatedTileSize() /
 				ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE);
-			if (ct->nodeCount() >= minTileDensity) childTier.addTile(ct);
+			if (ct->nodeCount() >= minTileDensity)
+			{
+				childTier.addTile(ct);
+			}
+			else
+			{
+				pt->addEstimatedSize(ct->estimatedTileSize());
+			}
 		}
 		parentTileMap.clear();
 	}
@@ -318,3 +326,28 @@ void TileIndexBuilder::STile::write(uint32_t* pIndex) noexcept
 		}
 	}
 }
+
+
+void TileIndexBuilder::calculateTileSizeEstimates()
+{
+	tileSizeEstimates_.reset(new uint32_t[tileCount_ + 1]);
+	tileSizeEstimates_[0] = 0;
+	int nextPile = tileSizeEstimate(1, tiers_[0].firstTile);
+	assert(nextPile - 1 == tileCount_);
+}
+
+int TileIndexBuilder::tileSizeEstimate(int pile, STile* tile)
+{
+	uint32_t pageSize = settings_.featurePilesPageSize();
+	uint32_t pages = (tile->estimatedTileSize() + pageSize - 1) / pageSize;
+	tileSizeEstimates_[pile] = pages;
+	tileSizeEstimates_[0] += pages;
+	pile++;
+	for (int i = 0; i < tile->childCount_; i++)
+	{
+		pile = tileSizeEstimate(pile, tile->children_[i]);
+	}
+	return pile;
+}
+
+
