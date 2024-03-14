@@ -14,7 +14,6 @@ MatcherParser::MatcherParser(FeatureStore* store, const char* pInput) :
 
 Selector* MatcherParser::parse()
 {
-	// assert(_CrtCheckMemory());
 	Selector* firstSel = nullptr;
 	Selector** pNextSel = &firstSel;
 	for (;;)
@@ -133,7 +132,6 @@ TagClause* MatcherParser::expectTagClause()
 	}
 
 	skipWhitespace();
-	assert(_CrtCheckMemory());
 
 	clause->flags |= negated ? 0 : TagClause::KEY_REQUIRED;
 	clause->keyOp.setNegated(negated);

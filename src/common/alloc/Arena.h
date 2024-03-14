@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <utility>
 #include <new>
 
 // TODO: make it part of Arena contract NOT to alloc memory in constructor
