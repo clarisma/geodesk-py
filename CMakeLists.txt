@@ -13,7 +13,9 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment ve
 
 # Define _WIN32_WINNT to be at least Windows 8.1
 # (Needed for virtual memory management)
-add_definitions(-D_WIN32_WINNT=0x0603)
+# add_definitions(-D_WIN32_WINNT=0x0603)
+add_compile_definitions(_WIN32_WINNT=0x0603)
+
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -25,6 +27,12 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
+endif()
+
+# Unbloat executable via section garbage collection
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
+	# target_link_options(geodesk-py PRIVATE -Wl,--gc-sections)
 endif()
 
 project ("geodesk-py")

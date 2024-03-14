@@ -204,7 +204,7 @@ int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
                 break;
 
             case FIRST_LOCAL_KEY:
-                assert(((int)ctx.pTagTable_) & 1); // must have local-keys flag  
+                assert(reinterpret_cast<uintptr_t>(ctx.pTagTable_) & 1); // must have local-keys flag
                 ctx.pTag_ = ctx.pTagTable_ - 5;    // position pTag_ to first key (at -4, but
                                                    // the local_keys flag is set (1), so -5  
                 ctx.valueOfs_ = -4;                // remains constant for all local-key tags  
