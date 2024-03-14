@@ -75,9 +75,7 @@ private:
 	{
 		if (node->flags & OpFlags::DEFERRED) return;
 		node->flags |= OpFlags::DEFERRED;
-		assert(_CrtCheckMemory());
 		deferred_.push(node);
-		assert(_CrtCheckMemory());
 	}
 
 	inline OpNode* takeDeferred()
@@ -93,7 +91,6 @@ private:
 	inline void addJump(OpNode* node)
 	{
 		jumps_.push(node);
-		assert(_CrtCheckMemory());
 	}
 
 	void putResourceOffset(uint16_t* pOperand, const void* pResource)
