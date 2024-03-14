@@ -1,3 +1,6 @@
 [submodule "third_party/geos"]
 	path = third_party/geos
 	url = https://github.com/libgeos/geos.git
+[submodule "third_party/zlib"]
+	path = third_party/zlib
+	url = https://github.com/madler/zlib.git
