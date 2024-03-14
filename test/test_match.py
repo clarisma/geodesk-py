@@ -107,3 +107,14 @@ def test_negated_unary3(features):
     not_highway_count = features.nodes("[!highway]").count
     assert highway_count + not_highway_count == way_count
     
+def test_multi(features):
+    non_canal_count = 0
+    waterways = features("w[waterway][waterway!=canal],w[waterway=canal][lock]")
+    for ww in waterways:
+        if ww.waterway == 'canal':
+            lock = ww.lock
+            assert lock and lock != 'no'
+        else:
+            non_canal_count += 1
+    assert non_canal_count        
+    

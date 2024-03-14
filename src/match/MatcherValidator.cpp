@@ -17,7 +17,6 @@ MatcherValidator::MatcherValidator(OpGraph& graph) :
 
 OpNode* MatcherValidator::validate(Selector* firstSel)
 {
-	assert(_CrtCheckMemory());
 	RegexOperand* pRegex = graph_.firstRegex();
 	while (pRegex)
 	{
@@ -28,7 +27,6 @@ OpNode* MatcherValidator::validate(Selector* firstSel)
 
 	OpNode* root = validateAllSelectors(firstSel);
 	validateOp(root);
-	assert(_CrtCheckMemory());
 	return root;
 }
 
