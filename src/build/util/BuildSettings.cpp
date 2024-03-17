@@ -141,23 +141,10 @@ int BuildSettings::setIndexedKeys(PyObject* list)
         return -1;
     }
     Py_ssize_t len = PyList_GET_SIZE(list);
-    //Console::msg("There are %d indexed key entries", len);
-    printf("There are %zd indexed key entries\n", len);
     for (Py_ssize_t i = 0; i < len; i++)
     {
-        //Console::msg("Indexed key entry %d", i);
-        printf("Indexed key entry %zd\n", i);
-        // int category = i + 1;
-        /*
+        int category = i + 1;
         PyObject* item = PyList_GET_ITEM(list, i);
-        if(item == NULL)
-        {
-            printf("NULL!!!!");
-            //Console::msg("NULL item at index %d!", i);
-            continue;
-        }
-         */
-        /*
         PyTypeObject* type = Py_TYPE(item);
         if (type == &PyUnicode_Type)
         {
@@ -177,8 +164,8 @@ int BuildSettings::setIndexedKeys(PyObject* list)
                 }
             }
         }
-         */
     }
+    return 0;
 }
 
 
@@ -191,7 +178,7 @@ int BuildSettings::setExcludedKeys(PyObject* arg)
 int BuildSettings::addIndexedKey(PyObject* obj, int category)
 {
     std::string_view key = Python::getStringView(obj);
-    if (!key.data()) return -1;
+    if (key.data() == nullptr) return -1;
     addIndexedKey(key, category);
     return 0;
 }
