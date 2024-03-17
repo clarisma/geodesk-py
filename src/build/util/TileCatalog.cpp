@@ -5,7 +5,6 @@ void TileCatalog::build(int tileCount, const uint32_t* index, ZoomLevels levels)
 	tileCount_ = tileCount;
 	Builder builder(index, levels, tileCount);
 	builder.build();
-	assert(_CrtCheckMemory());
 	grid_ = builder.takeGrid();
 	tipToPile_ = builder.takeTipToPile();
 	pileToTile_ = builder.takePileToTile();

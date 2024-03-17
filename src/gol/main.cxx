@@ -6,6 +6,7 @@
 #include "query/Query.h"
 #include "BuildCommand.h"
 
+/*
 void testPileFile()
 {
 	File file;
@@ -18,10 +19,11 @@ void testPileFile()
 	file.setSize(size * 2);
 	file.close();
 }
+*/
 
 int main(int argc, char* argv[])
 {
-	testPileFile();
+	// testPileFile();
 
 	//BuildCommand cmd;
 	//cmd.run(argv);

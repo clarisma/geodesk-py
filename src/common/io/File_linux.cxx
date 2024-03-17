@@ -164,3 +164,12 @@ std::string File::fileName() const
         return "<invalid file>";
     }
 }
+
+
+void File::allocate(uint64_t ofs, size_t length)
+{
+    if (fallocate(fileHandle_, 0, ofs, length) != 0)
+    {
+        IOException::checkAndThrow();
+    }
+}

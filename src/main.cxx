@@ -128,13 +128,14 @@ int main(int argc, char* argv[])
 	return 0;
 	*/
 
-	std::filesystem::current_path("c:\\dev\\geodesk-py\\test");
+	// std::filesystem::current_path("c:\\dev\\geodesk-py\\test");
+    std::filesystem::current_path("/home/md/dev/geodesk-py/test");
 
 	// char* script = readFile(argc > 1 ? argv[1] : "script.py");
 
 	// std::cout << "Test!\n";
     // Py_SetPath(L"C:\\python\\Lib;C:\\python\\Lib\\site-packages");
-	Py_SetPath(L"C:\\Python\\python311.zip;C:\\Python\\DLLs;C:\\Python\\Lib;C:\\Python;C:\\Python\\Lib\\site-packages");
+	// Py_SetPath(L"C:\\Python\\python311.zip;C:\\Python\\DLLs;C:\\Python\\Lib;C:\\Python;C:\\Python\\Lib\\site-packages");
     if(PyImport_AppendInittab("geodesk", &PyInit_geodesk) < 0)
     {
         std::cout << "PyImport_AppendInittab failed.\n";
@@ -143,41 +144,12 @@ int main(int argc, char* argv[])
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\query.py";
-	const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\test\\test_main.py";
+	// const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\test\\test_main.py";
+    const char* script = argc > 1 ? argv[1] : "/home/md/dev/geodesk-py/test/test_main.py";
 	FILE* file = fopen(script, "r");
 	PyRun_SimpleFile(file, "query.py");
 	fclose(file);
 
-	/*
-    PyRun_SimpleString(
-        "from geodesk import *\n"
-        "\n"
-        "box = Box(100,200,300,400)\n"
-        "print(box)\n"
-		// "world = Features('c:\\\\geodesk\\\\tests\\\\monaco.gol')\n"
-		"world = Features('c:\\\\geodesk\\\\tests\\\\de.gol')\n"
-		// "print(world.count)\n"
-		"streets = world('w[highway=residential]')\n"
-		// "for s in streets:\n"
-		// "    print (s.highway)\n"
-		"print(streets.count)\n"
-		"for s in streets:\n"
-		"    for k,v in s.tags:\n"
-		"        print (f\"{k} = {v}\")\n"
-		
-		"count = 0\n"
-		"for f in world:\n"
-		"    v = f['name']\n"
-		"    if v is not None:\n"
-		"        print(v)\n"
-		"    count += 1\n"
-		"print(count)\n"
-		
-		"part = world(box)\n"
-		// "bad = world(2)\n"
-		// "bad = Features('c:\\\\notfound.bad')\n"
-    );
-	*/
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 

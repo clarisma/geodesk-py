@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "BuildSettings.h"
+#include <cstring>
+#include <common/cli/Console.h>
 #include "feature/ZoomLevels.h"
 #include "BuildSettings_lookup.cxx"
 
@@ -10,22 +12,22 @@
 
 const BuildSettings::SetterMethod BuildSettings::SETTER_METHODS[] =
 {
-    &setAreaTags,
-    &setExcludedKeys,
-    &setIdIndexing,
-    &setIndexedKeys,
-    &setKeyIndexMinFeatures,
-    &setMaxKeyIndexes,
-    &setMaxStrings,
-    &setMaxTiles,
-    &setMinStringUsage,
-    &setMinTileDensity,
-    &setProperties,
-    &setRTreeBranchSize,
-    &setSource,
-    &setThreads,
-    &setUpdatable,
-    &setZoomLevels,
+    &BuildSettings::setAreaTags,
+    &BuildSettings::setExcludedKeys,
+    &BuildSettings::setIdIndexing,
+    &BuildSettings::setIndexedKeys,
+    &BuildSettings::setKeyIndexMinFeatures,
+    &BuildSettings::setMaxKeyIndexes,
+    &BuildSettings::setMaxStrings,
+    &BuildSettings::setMaxTiles,
+    &BuildSettings::setMinStringUsage,
+    &BuildSettings::setMinTileDensity,
+    &BuildSettings::setProperties,
+    &BuildSettings::setRTreeBranchSize,
+    &BuildSettings::setSource,
+    &BuildSettings::setThreads,
+    &BuildSettings::setUpdatable,
+    &BuildSettings::setZoomLevels,
 };
 
 int BuildSettings::setAreaTags(PyObject* arg)
@@ -139,10 +141,23 @@ int BuildSettings::setIndexedKeys(PyObject* list)
         return -1;
     }
     Py_ssize_t len = PyList_GET_SIZE(list);
+    //Console::msg("There are %d indexed key entries", len);
+    printf("There are %zd indexed key entries\n", len);
     for (Py_ssize_t i = 0; i < len; i++)
     {
-        int category = i + 1;
+        //Console::msg("Indexed key entry %d", i);
+        printf("Indexed key entry %zd\n", i);
+        // int category = i + 1;
+        /*
         PyObject* item = PyList_GET_ITEM(list, i);
+        if(item == NULL)
+        {
+            printf("NULL!!!!");
+            //Console::msg("NULL item at index %d!", i);
+            continue;
+        }
+         */
+        /*
         PyTypeObject* type = Py_TYPE(item);
         if (type == &PyUnicode_Type)
         {
@@ -162,6 +177,7 @@ int BuildSettings::setIndexedKeys(PyObject* list)
                 }
             }
         }
+         */
     }
 }
 

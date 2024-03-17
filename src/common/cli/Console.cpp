@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include <cassert>
+#include <cstring>
+#include <common/thread/Threads.h>
+
 #if defined(_WIN32) 
 #include "Console_windows.cxx"
 #elif defined(__linux__) || defined(__APPLE__) 
@@ -9,7 +12,7 @@
 #else
 #error "Platform not supported"
 #endif
-#include <common/thread/Threads.h>
+
 
 // Always print status after logging a line
 // always print if task changed

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include <common/io/Mappedfile.h>
+#include <common/io/MappedFile.h>
 
 class MappedIndex
 {

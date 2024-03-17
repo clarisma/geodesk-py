@@ -3,6 +3,7 @@
 
 #pragma once
 #include "MappedFile.h"
+#include <atomic>
 #include <mutex>
 
 // TODO: Allow setting initial size, may be more efficient to access?
