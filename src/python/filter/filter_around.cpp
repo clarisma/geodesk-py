@@ -9,8 +9,8 @@
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/util/util.h"
-#include <geos_c.h>
-#include <geos.h>
+#include <geos/geom/Coordinate.h>
+#include <geos/geom/Geometry.h>
 #include <geos/algorithm/Centroid.h>
 
 
