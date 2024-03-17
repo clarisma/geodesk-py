@@ -104,12 +104,9 @@ const MatcherHolder* MatcherCompiler::compileMatcher(OpGraph& graph, Selector* f
 	matcherHolder->resourcesLength_ = resourceSize;
 	matcherHolder->regexCount_ = validator.regexCount();
 
-	assert(_CrtCheckMemory());
 	MatcherEmitter emitter(graph, root, matcherData, pCode);
 	emitter.emit();
-	assert(_CrtCheckMemory());
 	emitter.fixJumps();
-	assert(_CrtCheckMemory());
 
 	new (&matcherHolder->mainMatcher_)Matcher((MatcherMethod)MatcherEngine::accept, store_);
 
