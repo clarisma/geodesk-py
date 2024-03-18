@@ -34,7 +34,6 @@ void PileFile::create(const char* fileName, uint32_t pileCount,
 	// No need to use -1, because count includes the metadata (which 
 	// has the same size as an index entry)
 
-#ifdef _WIN32
 	int openMode = File::OpenMode::READ | File::OpenMode::WRITE;
 	if (preallocatePages)
 	{
@@ -44,8 +43,12 @@ void PileFile::create(const char* fileName, uint32_t pileCount,
 		
 		size_t size = static_cast<size_t>(pageSize) * (pageCount + preallocatePages);
 		file.setSize(size);
+        #ifdef _WIN32
 		file.zeroFill(0, size);
 		file.makeSparse();
+        #else
+        file.allocate(0, size);
+        #endif
 		file.close();
 	}
 	else
@@ -54,17 +57,6 @@ void PileFile::create(const char* fileName, uint32_t pileCount,
 	}
 	file_.open(fileName, openMode);
 		// Open mode is implicitly sparse
-#else
-    file_.open(fileName, File::OpenMode::READ | File::OpenMode::WRITE |
-        File::OpenMode::CREATE | File::OpenMode::REPLACE_EXISTING);
-    if (preallocatePages)
-    {
-        size_t size = static_cast<size_t>(pageSize) * (pageCount + preallocatePages);
-        file_.setSize(size);
-        file_.allocate(0, size);
-    }
-
-#endif
 
 	Metadata* meta = metadata();
 	pageSize_ = pageSize;
