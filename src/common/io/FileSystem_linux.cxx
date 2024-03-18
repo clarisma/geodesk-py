@@ -3,6 +3,7 @@
 
 #include "FileSystem.h"
 #include <iostream>
+#include <sys/statvfs.h>
 #include "IOException.h"
 
 size_t FileSystem::getBlockSize(const char* path)
@@ -20,7 +21,7 @@ size_t FileSystem::getBlockSize(const char* path)
 size_t FileSystem::getAvailableDiskSpace(const char* path)
 {
     struct statvfs buf;
-    if (statvfs(path.c_str(), &buf) != 0) 
+    if (statvfs(path, &buf) != 0)
     {
         IOException::checkAndThrow();
     }

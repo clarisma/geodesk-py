@@ -1,6 +1,7 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#ifdef _WIN32
 #include "SystemInfo.h"
 #include <windows.h>
 #include <iostream>
@@ -24,3 +25,5 @@ SystemInfo::SystemInfo()
     Console::msg("Min working set: %llu", minWorkingSet);
     Console::msg("Max working set: %llu", maxWorkingSet);
 }
+
+#endif

@@ -52,7 +52,7 @@ public:
 	template <size_t N>
 	static void msg(const char(&msg)[N])
 	{
-		log(std::string_view(msg, N - 1));  // Subtract 1 to exclude null terminator
+		msg(std::string_view(msg, N - 1));  // Subtract 1 to exclude null terminator
 	}
 
 

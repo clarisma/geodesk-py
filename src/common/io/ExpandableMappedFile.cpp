@@ -24,7 +24,10 @@ void ExpandableMappedFile::open(const char* filename, int /* OpenMode */ mode)
 	uint64_t fileSize = size();
 	if (mode & OpenMode::WRITE)
 	{
-		mainMappingSize_ = (std::max(fileSize, SEGMENT_LENGTH) + SEGMENT_LENGTH - 1) & ~SEGMENT_LENGTH_MASK;
+        uint64_t segmentLen = SEGMENT_LENGTH;
+            // This gets around the odr issue of using SEGMENT_LENGTH in call
+            // to std::max (which expects a reference)
+		mainMappingSize_ = (std::max(fileSize, segmentLen) + SEGMENT_LENGTH - 1) & ~SEGMENT_LENGTH_MASK;
 		// round up to closest multiple of 1 GB (SEGMENT_LENGTH), with a 1 GB minimum
 		#ifndef _WIN32
 		setSize(mainMappingSize_);

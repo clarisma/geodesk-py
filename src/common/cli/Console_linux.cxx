@@ -12,7 +12,7 @@ void Console::init()
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) 
     {
-        consoleWidth_ = w.ws_col;
+        if(w.ws_col != 0) consoleWidth_ = w.ws_col;
     }
         
     // Setting the terminal to UTF-8 and cursor visibility can be done via
@@ -23,7 +23,7 @@ void Console::init()
     printf("\e[?25l");
 }
 
-void print(const char* s, size_t len) 
+void Console::print(const char* s, size_t len)
 {
     // Directly write to STDOUT_FILENO
     write(STDOUT_FILENO, s, len);

@@ -165,7 +165,7 @@ void Validator::validate()
 	{
 		it->join();
 	}
-	assert(_CrtCheckMemory());
+	// assert(_CrtCheckMemory());
 }
 
 

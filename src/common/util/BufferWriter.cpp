@@ -4,6 +4,7 @@
 #include "BufferWriter.h"
 #include <cassert>
 #include <cstdio>
+#include <math.h>
 #include <common/util/log.h>
 #include <common/util/math.h>
 

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "BuildSettings.h"
+#include <cstring>
+#include <common/cli/Console.h>
 #include "feature/ZoomLevels.h"
 #include "BuildSettings_lookup.cxx"
 
@@ -10,22 +12,22 @@
 
 const BuildSettings::SetterMethod BuildSettings::SETTER_METHODS[] =
 {
-    &setAreaTags,
-    &setExcludedKeys,
-    &setIdIndexing,
-    &setIndexedKeys,
-    &setKeyIndexMinFeatures,
-    &setMaxKeyIndexes,
-    &setMaxStrings,
-    &setMaxTiles,
-    &setMinStringUsage,
-    &setMinTileDensity,
-    &setProperties,
-    &setRTreeBranchSize,
-    &setSource,
-    &setThreads,
-    &setUpdatable,
-    &setZoomLevels,
+    &BuildSettings::setAreaTags,
+    &BuildSettings::setExcludedKeys,
+    &BuildSettings::setIdIndexing,
+    &BuildSettings::setIndexedKeys,
+    &BuildSettings::setKeyIndexMinFeatures,
+    &BuildSettings::setMaxKeyIndexes,
+    &BuildSettings::setMaxStrings,
+    &BuildSettings::setMaxTiles,
+    &BuildSettings::setMinStringUsage,
+    &BuildSettings::setMinTileDensity,
+    &BuildSettings::setProperties,
+    &BuildSettings::setRTreeBranchSize,
+    &BuildSettings::setSource,
+    &BuildSettings::setThreads,
+    &BuildSettings::setUpdatable,
+    &BuildSettings::setZoomLevels,
 };
 
 int BuildSettings::setAreaTags(PyObject* arg)
@@ -163,6 +165,7 @@ int BuildSettings::setIndexedKeys(PyObject* list)
             }
         }
     }
+    return 0;
 }
 
 
@@ -175,7 +178,7 @@ int BuildSettings::setExcludedKeys(PyObject* arg)
 int BuildSettings::addIndexedKey(PyObject* obj, int category)
 {
     std::string_view key = Python::getStringView(obj);
-    if (!key.data()) return -1;
+    if (key.data() == nullptr) return -1;
     addIndexedKey(key, category);
     return 0;
 }

@@ -44,7 +44,7 @@ namespace Python
 			const char* s = PyUnicode_AsUTF8AndSize(arg, &len);
 			if (s) return std::string_view(s, len);
 		}
-		return std::string_view();
+		return std::string_view(nullptr, 0);
 	}
 
 	inline PyObject* badKeyword(const char* str)

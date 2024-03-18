@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <unordered_map>
+#include <vector>
 #include <common/io/FileLock.h>
 #include <common/io/ExpandableMappedFile.h>
 #include <common/util/enum_flags.h>
