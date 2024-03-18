@@ -53,7 +53,7 @@ int FastFeatureIndex::get(int64_t id)
 	{
 		v |= *(ref.p + 1) << (valueWidth_ - overflow);
 	}
-	return v & mask;
+	return static_cast<int>(v & mask);
 }
 
 

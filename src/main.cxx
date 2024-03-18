@@ -1,6 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+static_assert(sizeof(void*) == 8, "Only 64-bit architectures are supported");
+
 #ifndef GEODESK_PYTHON
 #error "Relies on Python; enable GEODESK_PYTHON"
 #endif
@@ -128,14 +130,19 @@ int main(int argc, char* argv[])
 	return 0;
 	*/
 
-	// std::filesystem::current_path("c:\\dev\\geodesk-py\\test");
+#ifdef _WIN32
+	std::filesystem::current_path("c:\\dev\\geodesk-py\\test");
+#else
     std::filesystem::current_path("/home/md/dev/geodesk-py/test");
+#endif
 
 	// char* script = readFile(argc > 1 ? argv[1] : "script.py");
 
 	// std::cout << "Test!\n";
     // Py_SetPath(L"C:\\python\\Lib;C:\\python\\Lib\\site-packages");
-	// Py_SetPath(L"C:\\Python\\python311.zip;C:\\Python\\DLLs;C:\\Python\\Lib;C:\\Python;C:\\Python\\Lib\\site-packages");
+#ifdef _WIN32
+    Py_SetPath(L"C:\\Python\\python311.zip;C:\\Python\\DLLs;C:\\Python\\Lib;C:\\Python;C:\\Python\\Lib\\site-packages");
+#endif
     if(PyImport_AppendInittab("geodesk", &PyInit_geodesk) < 0)
     {
         std::cout << "PyImport_AppendInittab failed.\n";
@@ -143,9 +150,12 @@ int main(int argc, char* argv[])
     Py_Initialize();
 	auto start = std::chrono::high_resolution_clock::now();
 
-	// const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\query.py";
-	// const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\test\\test_main.py";
+#ifdef _WIN32
+	const char* script = argc > 1 ? argv[1] : "c:\\dev\\geodesk-py\\test\\test_main.py";
+#else
     const char* script = argc > 1 ? argv[1] : "/home/md/dev/geodesk-py/test/test_main.py";
+#endif
+
 	FILE* file = fopen(script, "r");
 	PyRun_SimpleFile(file, "query.py");
 	fclose(file);

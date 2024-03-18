@@ -80,7 +80,7 @@ public:
 	{
 		if (minX() > maxX())
 		{
-			// empty or Animeridian-crossing
+			// empty or Antimeridian-crossing
 			if (minY() > maxY()) return false;  // empty box cannot contain anything
 			// If 180 longitude crossed, minX and maxY are swapped
 			return (x >= maxX() && x <= minX() &&

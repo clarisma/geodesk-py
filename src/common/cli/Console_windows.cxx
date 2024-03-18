@@ -12,8 +12,7 @@ void Console::init()
 	hConsole_ = GetStdHandle(STD_OUTPUT_HANDLE);
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	int columns;
-
+	
 	if (GetConsoleScreenBufferInfo(hConsole_, &csbi))
 	{
 		consoleWidth_ = csbi.srWindow.Right - csbi.srWindow.Left + 1;

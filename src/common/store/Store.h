@@ -67,8 +67,6 @@ protected:
 		LOCK_APPEND = 2,
 		LOCK_EXCLUSIVE = 3
 	};
-	static const uint64_t SEGMENT_LENGTH = 1024 * 1024 * 1024;		// 1 GB
-	static const int EXTENDED_MAPPINGS_SLOT_COUNT = 16;
 
 	class TransactionBlock
 	{
