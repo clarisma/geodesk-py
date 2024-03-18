@@ -31,7 +31,7 @@ void File::open(const char* filename, int mode)
     {
         flags |= O_TRUNC;
     }
-    else if (mode & OpenMode::CREATE)
+    if (mode & OpenMode::CREATE)
     {
         flags |= O_CREAT;
     }

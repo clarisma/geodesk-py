@@ -23,7 +23,8 @@ void MappedIndex::create(const char* fileName, int64_t maxId, int valueWidth)
 	MappedFile file;
 	file.open(fileName,
 		File::OpenMode::READ | File::OpenMode::WRITE |
-		File::OpenMode::REPLACE_EXISTING | File::OpenMode::SPARSE);
+                File::OpenMode::CREATE |
+                File::OpenMode::REPLACE_EXISTING | File::OpenMode::SPARSE);
 	uint64_t totalBytes = calculateMappingSize();
 	file.setSize(totalBytes);
 	index_ = reinterpret_cast<uint64_t*>(file.map(0, totalBytes,
