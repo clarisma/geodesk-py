@@ -23,6 +23,41 @@ public:
 		wastefulCyclesRemaining_ = maxWastefulCycles_;
 	}
 
+	ReusableBlock(const ReusableBlock& other) = delete;
+
+	ReusableBlock(ReusableBlock&& other) noexcept :
+		data_(std::move(other.data_)),
+		capacity_(other.capacity_),
+		size_(other.size_),
+		increments_(other.increments_),
+		maxWastefulCycles_(other.maxWastefulCycles_),
+		wastefulCyclesRemaining_(other.wastefulCyclesRemaining_)
+	{
+		other.size_ = 0;
+		other.capacity_ = 0;
+		other.wastefulCyclesRemaining_ = other.maxWastefulCycles_;
+	}
+
+	ReusableBlock& operator=(const ReusableBlock& other) = delete;
+
+	ReusableBlock& operator=(ReusableBlock&& other) noexcept
+	{
+		if (this != &other)
+		{
+			data_ = std::move(other.data_);
+			capacity_ = other.capacity_;
+			size_ = other.size_;
+			increments_ = other.increments_;
+			maxWastefulCycles_ = other.maxWastefulCycles_;
+			wastefulCyclesRemaining_ = other.wastefulCyclesRemaining_;
+
+			other.size_ = 0;
+			other.capacity_ = 0;
+			other.wastefulCyclesRemaining_ = other.maxWastefulCycles_;
+		}
+		return *this;
+	}
+
 	uint8_t* data() const noexcept { return data_.get(); };
 	size_t size() const noexcept { return size_; }
 	size_t capacity() const noexcept { return capacity_; }
