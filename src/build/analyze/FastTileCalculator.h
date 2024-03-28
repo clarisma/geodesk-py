@@ -45,6 +45,7 @@ public:
 		assert(row < GRID_EXTENT);
 		uint32_t col = Tile::columnFromXZ(Mercator::xFromLon100nd(lon100nd), ZOOM_LEVEL);
 		assert(col < GRID_EXTENT);
+
 		return row * GRID_EXTENT + col;
 	}
 

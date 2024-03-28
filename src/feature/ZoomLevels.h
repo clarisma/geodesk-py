@@ -10,6 +10,7 @@
 class ZoomLevels
 {
 public:
+    ZoomLevels() : levels_(0) {}
     ZoomLevels(uint32_t levels) : levels_(levels) {}
 
     static const uint32_t DEFAULT = 0b1010101010101;
@@ -63,6 +64,16 @@ public:
     {
         uint32_t childLevels = levels_ >> (zoom + 1);
         return childLevels ? Bits::countTrailingZerosInNonZero(childLevels) : -1;
+    }
+
+    /**
+     * Returns the highest zoom level below the given zoom level.
+     * If zoom is 0, returns 0.
+     */
+    int parentZoom(int zoom) const noexcept
+    {
+        uint32_t mask = (1 << zoom) - 1;
+        return 31 - Bits::countLeadingZerosInNonZero32((levels_ & mask) | 1);
     }
 
 private:

@@ -4,6 +4,7 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
+#include <unordered_map>
 #include "TileIndexScanner.h"
 
 class TileCatalog
@@ -25,8 +26,18 @@ public:
 		int col = Tile::columnFromXZ(c.x, MAX_ZOOM);
 		int row = Tile::rowFromYZ(c.y, MAX_ZOOM);
 		// printf("12/%d/%d\n", col, row);
+		assert(grid_[cellOf(col, row)] == pileOfTileOrParent(
+			Tile::fromColumnRowZoom(col, row, MAX_ZOOM)));
 		return grid_[cellOf(col, row)];
 	}
+
+	int pileOfTile(Tile tile) const noexcept
+	{
+		auto it = tileToPile_.find(tile);
+		return (it != tileToPile_.end()) ? it->second : 0;
+	}
+
+	int pileOfTileOrParent(Tile tile) const noexcept;
 
 private:
 	class Builder : TileIndexScanner<Builder>
@@ -76,5 +87,7 @@ private:
 	std::unique_ptr<const int[]> grid_;
 	std::unique_ptr<const int[]> tipToPile_;
 	std::unique_ptr<const Tile[]> pileToTile_;
+	std::unordered_map<Tile, int> tileToPile_;
+	ZoomLevels levels_;
 	int tileCount_;
 };

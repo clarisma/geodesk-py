@@ -1,7 +1,9 @@
 #include "TileCatalog.h"
+#include <common/cli/Console.h>
 
 void TileCatalog::build(int tileCount, const uint32_t* index, ZoomLevels levels)
 {
+	levels_ = levels;
 	tileCount_ = tileCount;
 	Builder builder(index, levels, tileCount);
 	builder.build();
@@ -9,6 +11,13 @@ void TileCatalog::build(int tileCount, const uint32_t* index, ZoomLevels levels)
 	tipToPile_ = builder.takeTipToPile();
 	pileToTile_ = builder.takePileToTile();
 	assert(builder.tileCount() == tileCount);
+
+	tileToPile_.reserve(tileCount);
+	for (int i = 1; i <= tileCount; i++)
+	{
+		Console::msg("%d: %s", i, pileToTile_[i].toString().c_str());
+		tileToPile_[pileToTile_[i]] = i;
+	}
 }
 
 
@@ -68,5 +77,18 @@ void TileCatalog::Builder::fillGrid(Tile tile, int pile)
 		{
 			grid_[cellOf(col, row)] = pile;
 		}
+	}
+}
+
+
+int TileCatalog::pileOfTileOrParent(Tile tile) const noexcept
+{
+	for (;;)
+	{
+		auto it = tileToPile_.find(tile);
+		if (it != tileToPile_.end()) return it->second;
+		int zoom = tile.zoom();
+		assert(zoom > 0); // root tile must be in tileToPile_
+		tile = tile.zoomedOut(levels_.parentZoom(zoom));
 	}
 }

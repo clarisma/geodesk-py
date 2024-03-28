@@ -187,10 +187,6 @@ void SorterContext::flushPiles()
 
 void SorterContext::node(int64_t id, int32_t lon100nd, int32_t lat100nd, protobuf::Message& tags)
 {
-    if (id == 58802209LL)
-    {
-        // printf("node/%lld\n", id);
-    }
     assert(tempWriter_.isEmpty());
     assert(id < 1'000'000'000'000ULL);
     // project lon/lat to Mercator

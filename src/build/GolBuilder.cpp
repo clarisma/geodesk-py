@@ -52,8 +52,8 @@ void GolBuilder::build(const char* golPath)
 
 	analyze();
 	prepare();
-	//sort();
-	//validate();
+	sort();
+	validate();
 	compile();
 	auto endTime = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

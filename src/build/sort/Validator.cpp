@@ -115,7 +115,8 @@ void Validator::process(Worker* worker)
 
 void Worker::processTask(TaskKey task)
 {
-	// Console::debug("Validating %s...", task.tile().toString().c_str());
+	Console::debug("Validating %s (Pile %d)...", task.tile().toString().c_str(),
+		task.pile());
 	// TODO
 	validator_->builder_->featurePiles().load(task.pile(), data_);
 	validator_->markCompleted(task);
