@@ -128,5 +128,42 @@ namespace Format
         return &buf[12];
     }
 
+    /**
+     * Formats an unsigned integr value, placing digits from end to start.
+     * 
+     * @param d    unsigned integer value
+     * @param end  pointer to the character that follows the last digit 
+     * @return     pointer to the first digit
+     */
+    inline char* unsignedIntegerReverse(unsigned long long d, char* end)
+    {
+        do
+        {
+            lldiv_t result = lldiv(d, 10);
+            *(--end) = static_cast<char>('0' + result.rem);
+            d = result.quot;
+        }
+        while (d != 0);
+        return end;
+    }
+
+    inline char* integerReverse(long long d, char* end)
+    {
+        bool negative = d < 0;
+        d = negative ? -d : d;
+        end = unsignedIntegerReverse(d, end);
+        *(end - 1) = '-';
+        return end - negative;
+    }
+
+    inline char* integer(char* p, int64_t d)
+    {
+        char buf[32];
+        char* end = buf + sizeof(buf);
+        char* start = integerReverse(d, end);
+        size_t len = end - start;
+        memcpy(p, start, len);
+        return p + len;
+    }
 }
 

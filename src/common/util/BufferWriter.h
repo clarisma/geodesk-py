@@ -241,7 +241,7 @@ protected:
 		*(end - 1) = '-';
 		return end - negative;
 	}
-	
+
 private:
 	void filled()
 	{

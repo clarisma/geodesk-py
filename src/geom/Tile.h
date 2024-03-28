@@ -126,6 +126,16 @@ public:
 		return std::string(buf);
 	}
 
+	char* formatReverse(char* end) const
+	{
+		end = Format::unsignedIntegerReverse(static_cast<unsigned int>(row()), end) - 1;
+		*end = '/';
+		end = Format::unsignedIntegerReverse(static_cast<unsigned int>(column()), end) - 1;
+		*end = '/';
+		return Format::unsignedIntegerReverse(static_cast<unsigned int>(zoom()), end);
+	}
+
+
 	void format(char* buf) const
 	{
 		Format::unsafe(buf, "%d/%d/%d", zoom(), column(), row());
