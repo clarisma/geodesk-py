@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Analyzer.h"
+#include <common/util/FileWriter.h>
 #include "build/GolBuilder.h"
 #include "build/util/StringCatalog.h"
 #include <string>
@@ -244,6 +245,24 @@ void Analyzer::startFile(uint64_t size)		// CRTP override
 	builder_->console().setTask("Analyzing...");
 }
 
+
+void Analyzer::writeNodeCounts()
+{
+	FileWriter out(builder_->workPath() / "node-counts.txt");
+	for (int row = 0; row < FastTileCalculator::GRID_EXTENT; row++)
+	{
+		for (int col = 0; col < FastTileCalculator::GRID_EXTENT; col++)
+		{
+			uint32_t count = totalNodeCounts_[row * FastTileCalculator::GRID_EXTENT + col];
+			if (count > 0)
+			{
+				out << Tile::fromColumnRowZoom(col, row, FastTileCalculator::ZOOM_LEVEL);
+				out << '\t' << count << '\n';
+			}
+		}
+	}
+}
+
 void Analyzer::analyze(const char* fileName)
 {
 	addRequiredStrings();
@@ -270,6 +289,8 @@ void Analyzer::analyze(const char* fileName)
 			totalStringUsageCount += subTotal;
 		}
 	}
+
+	writeNodeCounts();
 
 	uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
 		- totalStringUsageCount;

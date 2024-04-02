@@ -117,6 +117,7 @@ public:
 
 private:
 	void addRequiredStrings();
+	void writeNodeCounts();
 
 	GolBuilder* builder_;
 	StringStatistics strings_;

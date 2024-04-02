@@ -7,6 +7,7 @@
 #include <common/text/Format.h>
 #include "Box.h"
 
+class BufferWriter;
 typedef int32_t ZoomLevel;
 
 class Tile
@@ -126,15 +127,8 @@ public:
 		return std::string(buf);
 	}
 
-	char* formatReverse(char* end) const
-	{
-		end = Format::unsignedIntegerReverse(static_cast<unsigned int>(row()), end) - 1;
-		*end = '/';
-		end = Format::unsignedIntegerReverse(static_cast<unsigned int>(column()), end) - 1;
-		*end = '/';
-		return Format::unsignedIntegerReverse(static_cast<unsigned int>(zoom()), end);
-	}
-
+	char* formatReverse(char* end) const;
+	void write(BufferWriter& out) const;
 
 	void format(char* buf) const
 	{

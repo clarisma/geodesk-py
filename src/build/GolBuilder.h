@@ -47,6 +47,8 @@ public:
 		console_.setProgress(static_cast<int>(workCompleted_));
 	}
 
+	std::filesystem::path workPath() const noexcept { return workPath_; }
+
 private:
 	void analyze();
 	void prepare();

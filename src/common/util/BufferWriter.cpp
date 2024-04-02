@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <math.h>
+#include <common/text/Format.h>
 #include <common/util/log.h>
 #include <common/util/math.h>
 
@@ -33,6 +34,14 @@ void BufferWriter::formatInt(int64_t d)
 	char buf[32];
 	char* end = buf + sizeof(buf);
 	char* start = formatLongReverse(d, end, d<0);
+	writeBytes(start, end - start);
+}
+
+void BufferWriter::formatUnsignedInt(uint64_t v)
+{
+	char buf[32];
+	char* end = buf + sizeof(buf);
+	char* start = Format::unsignedIntegerReverse(v, end);
 	writeBytes(start, end - start);
 }
 

@@ -3,25 +3,45 @@
 
 #pragma once
 #include "BufferWriter.h"
+#include <filesystem>
 #include "FileBuffer2.h"
 
 class FileWriter : public BufferWriter
 {
 public:
-	FileWriter() : BufferWriter(&buf_)
+	FileWriter()
 	{
+		setBuffer(&buf_);
 	}
 
 	FileWriter(const char* filename, size_t capacity = 64 * 1024) : 
-		BufferWriter(&buf_),
 		buf_(capacity)
 	{
+		setBuffer(&buf_);
 		open(filename);
+	}
+
+	FileWriter(std::filesystem::path path, size_t capacity = 64 * 1024) :
+		buf_(capacity)
+	{
+		setBuffer(&buf_);
+		open(path);
+	}
+
+	~FileWriter()
+	{
+		flush();		// TODO: should base class always flush?
 	}
 
 	void open(const char* filename)
 	{
+		setBuffer(&buf_);
 		buf_.open(filename);
+	}
+
+	void open(std::filesystem::path path)
+	{
+		buf_.open(path.string().c_str());
 	}
 
 private:

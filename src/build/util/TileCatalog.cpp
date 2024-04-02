@@ -1,5 +1,6 @@
 #include "TileCatalog.h"
 #include <common/cli/Console.h>
+#include <common/util/FileWriter.h>
 
 void TileCatalog::build(int tileCount, const uint32_t* index, ZoomLevels levels)
 {
@@ -90,5 +91,15 @@ int TileCatalog::pileOfTileOrParent(Tile tile) const noexcept
 		int zoom = tile.zoom();
 		assert(zoom > 0); // root tile must be in tileToPile_
 		tile = tile.zoomedOut(levels_.parentZoom(zoom));
+	}
+}
+
+
+void TileCatalog::write(std::filesystem::path path) const
+{
+	FileWriter out(path);
+	for (int i = 1; i <= tileCount_; i++)
+	{
+		out << pileToTile_[i] << '\n';
 	}
 }

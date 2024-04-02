@@ -16,6 +16,8 @@
 // TODO: use p_ and end_ of buffer, enable buffer to be safely used by multiple
 // writers, and avoid need to flush for memory-based buffers
 
+// TODO: should destructor auto-flush?
+
 class BufferWriter
 {
 public:
@@ -184,6 +186,7 @@ public:
 	}
 
 	void formatInt(int64_t d);	// TODO: rename
+	void formatUnsignedInt(uint64_t v);
 	void formatDouble(double d, int precision = 15, bool zeroFill = false);
 
 	void writeJsonEscapedString(const char* s, size_t len);
@@ -196,6 +199,31 @@ public:
 	{
 		// TODO: use smarter approach?
 		for (int i = 0; i < times; i++) writeByte(ch);
+	}
+
+	BufferWriter& operator<<(char ch)
+	{
+		writeByte(ch);
+		return *this;
+	}
+
+	BufferWriter& operator<<(uint32_t value)
+	{
+		formatUnsignedInt(value);
+		return *this;
+	}
+
+	BufferWriter& operator<<(uint64_t value)
+	{
+		formatUnsignedInt(value);
+		return *this;
+	}
+
+	template<typename T>
+	BufferWriter& operator<<(const T& value) 
+	{
+		value.write(*this);
+		return *this;
 	}
 
 protected:

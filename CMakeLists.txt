@@ -146,7 +146,7 @@ else()
 endif()
 
 # message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
- 
+  
 target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON)
 # TODO: Add tests and install targets if needed.
 

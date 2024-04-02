@@ -76,6 +76,7 @@ void GolBuilder::analyze()
 	
 	Console::msg("Building tile lookup...");
 	tileCatalog_.build(tib.tileCount(), tileIndex.get(), settings_.zoomLevels());
+	tileCatalog_.write(workPath_ / "tile-catalog.txt");
 	Console::msg("Tile lookup built.");
 	stringCatalog_.build(settings_, analyzer.strings());
 }

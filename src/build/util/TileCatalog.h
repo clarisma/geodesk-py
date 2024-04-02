@@ -4,6 +4,7 @@
 #pragma once
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
 #include <unordered_map>
 #include "TileIndexScanner.h"
 
@@ -38,6 +39,8 @@ public:
 	}
 
 	int pileOfTileOrParent(Tile tile) const noexcept;
+
+	void write(std::filesystem::path path) const;
 
 private:
 	class Builder : TileIndexScanner<Builder>

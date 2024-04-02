@@ -24,6 +24,8 @@ static FileHandle INVALID_FILE_HANDLE = -1;
 #endif
 
 // TODO: Should methods be const?
+//  Consider logical state, write(0 should not be const even thugh it does
+//  not change the binary representation of the object
 
 class File 
 {
