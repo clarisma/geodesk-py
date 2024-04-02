@@ -290,21 +290,24 @@ void Analyzer::analyze(const char* fileName)
 		}
 	}
 
-	writeNodeCounts();
+	if (builder_->isDebug())
+	{
+		writeNodeCounts();
 
-	uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
-		- totalStringUsageCount;
+		uint64_t literalsCount = totalStats_.tagCount * 2 + totalStats_.memberCount
+			- totalStringUsageCount;
 
-	Console::msg("  %12llu nodes", totalStats_.nodeCount);
-	Console::msg("  %12llu ways", totalStats_.wayCount);
-	Console::msg("  %12llu relations", totalStats_.relationCount);
-	Console::msg("  %12llu members", totalStats_.memberCount);
-	Console::msg("  %12llu tags", totalStats_.tagCount);
-	Console::msg("  %12llu unique strings in string table", totalStringCount);
-	Console::msg("  %12llu unique-string occurrences", totalStringUsageCount);
-	Console::msg("  %12llu literal strings", literalsCount);
+		Console::msg("  %12llu nodes", totalStats_.nodeCount);
+		Console::msg("  %12llu ways", totalStats_.wayCount);
+		Console::msg("  %12llu relations", totalStats_.relationCount);
+		Console::msg("  %12llu members", totalStats_.memberCount);
+		Console::msg("  %12llu tags", totalStats_.tagCount);
+		Console::msg("  %12llu unique strings in string table", totalStringCount);
+		Console::msg("  %12llu unique-string occurrences", totalStringUsageCount);
+		Console::msg("  %12llu literal strings", literalsCount);
 
-	Console::msg("Analysis complete.");
+		Console::msg("Analysis complete.");
+	}
 }
 
 

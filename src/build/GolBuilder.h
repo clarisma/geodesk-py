@@ -34,6 +34,7 @@ public:
 	int threadCount() const { return threadCount_; }
 	const StringCatalog& stringCatalog() const { return stringCatalog_; }
 	const TileCatalog& tileCatalog() const { return tileCatalog_; }
+	bool isDebug() const noexcept { return debug_; }
 	MappedIndex& featureIndex(int index) 
 	{ 
 		assert(index >= 0 && index <= 2);
@@ -72,4 +73,5 @@ private:
 	int threadCount_;
 	double workPerPhase_[4];
 	double workCompleted_;
+	bool debug_ = true;
 };

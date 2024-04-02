@@ -2,11 +2,28 @@
 #include <unordered_map>
 #include <common/cli/Console.h>
 
+
+struct STile
+{
+	STile* next;
+	Tile tile;
+	int tip;
+	int maxChildCount;
+	int childCount;
+	uint64_t totalNodeCount;
+	uint64_t estimatedTileSize;
+	STile* parent;
+	STile* children[1];
+};
+
+
 TileIndexBuilder::TileIndexBuilder(const BuildSettings& settings) :
 	arena_(64 * 1024),
 	settings_(settings),
 	tierCount_(0),
-	tileCount_(0)
+	tileCount_(0),
+	pileCount_(0),
+	maxZoom_(settings.leafZoomLevel())
 {
 	ZoomLevels levels = settings.zoomLevels();
 	ZoomLevels::Iterator iter = levels.iter();
@@ -35,25 +52,19 @@ uint32_t TileIndexBuilder::sumTileCounts() noexcept
 void TileIndexBuilder::build(std::unique_ptr<const uint32_t[]> nodeCounts)
 {
 	createLeafTiles(nodeCounts.get());
-	//printf("  Created leaf tiles.\n");
 	addParentTiles();
-	//printf("  Added parent tiles.\n");
 	trimTiles();
 	linkChildTiles();
-	//printf("  Linked child tiles.\n");
-	uint32_t indexSize = layoutIndex();
-	uint32_t slotCount = indexSize / 4;
-	tileIndex_.reset(new uint32_t[slotCount]);
-	tileIndex_[0] = slotCount-1;
-	tiers_[0].firstTile->write(tileIndex_.get());
+	int tipCount = assignTip(tiers_[0].firstTile, 1);
+	tileIndex_.reset(new uint32_t[tipCount]);
+	tileIndex_[0] = tipCount-1;
+	tipToPile_ = std::make_unique<int[]>(tipCount);
+	pileToTile_.reset(new Tile[tileCount_ + 1]);
+	tileSizeEstimates_.reset(new uint32_t[tileCount_ + 1]);
+	tileSizeEstimates_[0] = 0;
+	cellToPile_.reset(new int[1 << (maxZoom_ * 2)]);
 
-	calculateTileSizeEstimates();
-	/*
-	for (STile* t : tiles_)
-	{
-		printf("%s at TIP %u\n", t->tile().toString().c_str(), t->tip());
-	}
-	*/
+	buildTile(tiers_[0].firstTile);
 
 	Console::msg("- %u tiles", tileCount_);
 	Console::msg("- %u TIPs", tileIndex_[0]);
@@ -82,12 +93,12 @@ void TileIndexBuilder::trimTiles()
 		STile** pEnd = pTiles + tileCount;
 		std::sort(pTiles, pEnd, [](const STile* a, const STile* b)
 			{
-				return a->nodeCount() > b->nodeCount();  // Use > for descending order
+				return a->totalNodeCount > b->totalNodeCount;  // Use > for descending order
 			});
 		p = pTiles + settings_.maxTiles();
 		do
 		{
-			(*p++)->clearNodeCount();
+			(*p++)->totalNodeCount = 0;
 		}
 		while (p < pEnd);
 		tileCount_ = settings_.maxTiles();
@@ -96,8 +107,7 @@ void TileIndexBuilder::trimTiles()
 
 void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 {
-	int leafLevel = settings_.leafZoomLevel();
-	int extent = 1 << leafLevel;
+	int extent = 1 << maxZoom_;
 	const uint32_t* p = nodeCounts;
 	STile* tile = nullptr;
 	uint32_t count = 0;
@@ -111,14 +121,14 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 			// a node count below the minimum, so we can add that count
 			// to the next-lower tile in the pyramid
 			tile = createTile(
-				Tile::fromColumnRowZoom(col, row, settings_.leafZoomLevel()),
+				Tile::fromColumnRowZoom(col, row, maxZoom_),
 				0, nodeCount, tile);
 			count++;
 		}
 	}
 
 	Tier* tier = &tiers_[tierCount_ - 1];
-	if (tier->level < leafLevel)
+	if (tier->level < maxZoom_)
 	{
 		// If the tile pyramid does not include zoom level 12,
 		// we create a fake tier to store the level-12 tiles
@@ -126,7 +136,7 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 		// TODO: In that case, the Analyzer should create a coarser grid instead
 
 		tier = &tiers_[tierCount_];
-		tier->level = leafLevel;
+		tier->level = maxZoom_;
 		tier->skippedLevels = 0;
 	}
 	tier->firstTile = tile;
@@ -134,12 +144,17 @@ void TileIndexBuilder::createLeafTiles(const uint32_t* nodeCounts)
 	tier->tileCount = count;
 }
 	
-TileIndexBuilder::STile* TileIndexBuilder::createTile(
-	Tile tile, uint32_t maxChildCount, uint64_t nodeCount, STile* next)
+STile* TileIndexBuilder::createTile(
+	Tile tile, int maxChildCount, uint64_t nodeCount, STile* next)
 {
-	STile* pt = arena_.allocWithExplicitSize<STile>(sizeof(STile) +
-		(static_cast<int32_t>(maxChildCount)-1) * sizeof(STile*));
-	new(pt) STile(tile, maxChildCount, nodeCount, next);
+	size_t size = sizeof(STile) + (maxChildCount - 1) * sizeof(STile*);
+	STile* pt = arena_.allocWithExplicitSize<STile>(size);
+	memset(pt, 0, size);
+	pt->next = next;
+	pt->tile = tile;
+	pt->maxChildCount = maxChildCount;
+	pt->totalNodeCount = nodeCount;
+	pt->estimatedTileSize = nodeCount * ESTIMATED_BYTES_PER_NODE;
 	return pt;
 }
 
@@ -149,22 +164,17 @@ void TileIndexBuilder::addParentTiles()
 	std::unordered_map<Tile, STile*> parentTileMap;
 	uint32_t minTileDensity = settings_.minTileDensity();
 	
-	//printf("Adding parent tiles...\n");
-	//printf("tierCount_ = %d\n", tierCount_);
-	int startTier = tiers_[tierCount_-1].level < settings_.leafZoomLevel() ?
+	int startTier = tiers_[tierCount_-1].level < maxZoom_ ?
 		tierCount_ : (tierCount_ - 1);
 	startTier = std::max(startTier, 1);
-	//printf("startTier = %d\n", startTier);
-
+	
 	for (int i = startTier; i > 0; i--)
 	{
-		//printf("  Tier %d (firstTile = %p)\n", i, tiers_[i].firstTile);
 		Tier& childTier = tiers_[i];
 		Tier& parentTier = tiers_[i-1];
 		int parentZoom = parentTier.level;
 		uint32_t maxChildCount = parentTier.maxChildCount();
-		// printf("Tier %d = zoom %d, %d max children\n", i, parentZoom, maxChildCount);
-
+	
 		Tier::Iterator iter = childTier.iter();
 		childTier.clearTiles();
 		STile* firstParentTile = nullptr;
@@ -172,8 +182,7 @@ void TileIndexBuilder::addParentTiles()
 		{
 			STile* ct = iter.next();
 			if (!ct) break;
-
-			Tile parentTile = ct->tile().zoomedOut(parentZoom);
+			Tile parentTile = ct->tile.zoomedOut(parentZoom);
 			STile* pt;
 			auto it = parentTileMap.find(parentTile);
 			if (it == parentTileMap.end())
@@ -189,18 +198,19 @@ void TileIndexBuilder::addParentTiles()
 			}
 			// We don't actually add the child to the parent yet,
 			// we just mark the parent
-			ct->setParent(pt);
-			pt->addNodeCount(ct);
-			pt->addEstimatedSize(ct->estimatedTileSize() /
-				ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE);
-			if (ct->nodeCount() >= minTileDensity)
+			ct->parent = pt;
+			pt->totalNodeCount += ct->totalNodeCount;
+			pt->estimatedTileSize += ct->estimatedTileSize /
+				ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE;
+			if (ct->totalNodeCount >= minTileDensity)
 			{
 				childTier.addTile(ct);
 			}
 			else
 			{
-				pt->addEstimatedSize(ct->estimatedTileSize());
+				pt->estimatedTileSize += ct->estimatedTileSize;
 			}
+			ct = ct->next;
 		}
 		parentTileMap.clear();
 	}
@@ -219,135 +229,156 @@ void TileIndexBuilder::linkChildTiles()
 		{
 			STile* tile = iter.next();
 			if (!tile) break;
-			STile* parent = tile->parent();
+			STile* parent = tile->parent;
 			assert(parent);
-			// printf("Adding %s to %s...\n", tile->tile().toString().c_str(),
-			//	parent->tile().toString().c_str());
-			if (tile->nodeCount())
+			if (tile->totalNodeCount)
 			{
-				parent->addChild(tile);
+				addChildTile(parent, tile);
 				tier.addTile(tile);
 			}
 			else
 			{
-				uint64_t estimatedChildSize = tile->estimatedTileSize();
-				parent->addEstimatedSize(estimatedChildSize +
-					estimatedChildSize / ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE);
+				uint64_t estimatedChildSize = tile->estimatedTileSize;
+				parent->estimatedTileSize += estimatedChildSize +
+					estimatedChildSize / ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE;
 			}
+			tile = tile->next;
 		}
 	}
 }
 
 
-uint32_t TileIndexBuilder::layoutIndex()
+void TileIndexBuilder::Tier::addTile(STile* tile)
 {
-	uint32_t size = tiers_[0].firstTile->layout(4);		// First slot of table is unused
-	Console::msg("TileIndex size: %u bytes", size);
-	return size;
+	tile->next = firstTile;
+	firstTile = tile;
+	tileCount++;
 }
 
 
-TileIndexBuilder::STile::STile(Tile tile, uint32_t maxChildren, uint64_t nodeCount, STile* next) :
-	next_(next),
-	location_(0),
-	tile_(tile),
-	maxChildren_(maxChildren),
-	childCount_(0),
-	estimatedTileSize_(nodeCount * ESTIMATED_BYTES_PER_NODE),
-	totalNodeCount_(nodeCount),
-	// ownNodeCount_(0),
-	parent_(nullptr)
+int TileIndexBuilder::assignTip(STile* tile, int tip) noexcept
 {
-}
-
-uint32_t TileIndexBuilder::STile::layout(uint32_t pos) noexcept
-{
-	// printf("Placing %s at %u...\n", tile_.toString().c_str(), pos);
-	location_ = pos;
-	pos += size();
-	uint32_t childPos = pos - childCount_ * 4;
-	for (int i = 0; i < childCount_; i++)
+	tile->tip = tip;
+	int childTip = tip + ((tile->maxChildCount == 64) ? 3 : 2);
+	int nextTip = childTip + tile->childCount;
+	for (int i = 0; i < tile->maxChildCount; i++)
 	{
-		if (!children_[i]->isLeaf())
+		STile* childTile = tile->children[i];
+		if (childTile)
 		{
-			pos = children_[i]->layout(pos);
+			if (childTile->childCount)
+			{
+				nextTip = assignTip(childTile, nextTip);
+			}
+			else
+			{
+				childTile->tip = childTip;
+			}
+			childTip++;
 		}
-		else
-		{
-			children_[i]->location_ = childPos;
-		}
-		childPos += 4;
 	}
-	return pos;
+	return nextTip;
 }
 
-void TileIndexBuilder::STile::write(uint32_t* pIndex) noexcept
+
+void TileIndexBuilder::addChildTile(STile* parent, STile* child)
 {
-	/*
-	printf("Writing tile %s (%d children) at tip %d\n", tile_.toString().c_str(), 
-		childCount_, location_ / 4);
-	*/
-	assert(!isLeaf() || tile_ == Tile::fromColumnRowZoom(0,0,0));
-	assert(location_);
-	assert(maxChildren_);
-	int step = Bits::countTrailingZerosInNonZero(maxChildren_) / 2;
-	assert((maxChildren_ == 4 && step == 1) || (maxChildren_ == 16 && step == 2) || (maxChildren_ == 64 && step == 3));
-	uint64_t childTileMask = 0;
-	int left = tile_.column() << step;
-	int top = tile_.row() << step;
+	assert(parent->childCount < parent->maxChildCount);
+
+	int childZoom = child->tile.zoom();
+	int step = childZoom - parent->tile.zoom();
+	assert(step > 0 && step <= 3);
+	int left = parent->tile.column() << step;
+	int top = parent->tile.row() << step;
 	int width = 1 << step;
-	for (int i = 0; i < childCount_; i++)
-	{
-		Tile childTile = children_[i]->tile();
-		int num = (childTile.row() - top) * width + (childTile.column() - left);
-		assert(num >= 0 && num < maxChildren_);
-		childTileMask |= 1ULL << num;
-	}
-	uint32_t* p = &pIndex[location_ / 4];
-	uint32_t* pStart = p;
-	*p++ = 0;
-	*p++ = static_cast<uint32_t>(childTileMask);
-	if (step == 3)
-	{
-		assert(maxChildren_ == 64);
-		*p++ = static_cast<uint32_t>(childTileMask >> 32);
-	}
-	for (int i = 0; i < childCount_; i++)
-	{
-		if (children_[i]->isLeaf())
-		{
-			*p++ = 0;
-		}
-		else
-		{
-			*p++ = (children_[i]->location_ - (location_ +
-				(p - pStart) * sizeof(uint32_t))) | 1;
-			children_[i]->write(pIndex);
-		}
-	}
+	int pos = (child->tile.row() - top) * width + (child->tile.column() - left);
+	assert(pos >= 0 && pos < parent->maxChildCount);
+	assert(parent->children[pos] == nullptr);
+	parent->children[pos] = child;
+	parent->childCount++;
 }
 
 
-void TileIndexBuilder::calculateTileSizeEstimates()
+void TileIndexBuilder::buildTile(STile* tile) noexcept
 {
-	tileSizeEstimates_.reset(new uint32_t[tileCount_ + 1]);
-	tileSizeEstimates_[0] = 0;
-	int nextPile = tileSizeEstimate(1, tiers_[0].firstTile);
-	assert(nextPile - 1 == tileCount_);
-}
+	assert(tile->tip);
+	pileCount_++;
+	int pile = pileCount_;
+	tipToPile_[tile->tip] = pile;
+	pileToTile_[pile] = tile->tile;
 
-int TileIndexBuilder::tileSizeEstimate(int pile, STile* tile)
-{
 	uint32_t pageSize = settings_.featurePilesPageSize();
-	uint32_t pages = (tile->estimatedTileSize() + pageSize - 1) / pageSize;
+	uint32_t pages = (tile->estimatedTileSize + pageSize - 1) / pageSize;
 	tileSizeEstimates_[pile] = pages;
 	tileSizeEstimates_[0] += pages;
-	pile++;
-	for (int i = 0; i < tile->childCount_; i++)
+
+	if (tile->childCount == 0)
 	{
-		pile = tileSizeEstimate(pile, tile->children_[i]);
+		tileIndex_[tile->tip] = 0;
+		fillGrid(tile->tile, pile);
 	}
-	return pile;
+	else
+	{
+		assert(tile->maxChildCount);
+		int step = Bits::countTrailingZerosInNonZero(tile->maxChildCount) / 2;
+		assert((tile->maxChildCount == 4 && step == 1) ||
+			(tile->maxChildCount == 16 && step == 2) ||
+			(tile->maxChildCount == 64 && step == 3));
+
+		tileIndex_[tile->tip] = 0;
+		int childTip = tile->tip + ((step == 3) ? 3 : 2);
+		uint64_t childTileMask = 0;
+		for (int i = 0; i < tile->maxChildCount; i++)
+		{
+			STile* childTile = tile->children[i];
+			if (childTile)
+			{
+				childTileMask |= (1ULL << i);
+				tileIndex_[childTip] = ((childTile->tip - childTip) << 2) | 1;
+					// For simplicity, we always write a branch tile pointer; 
+					// if the child tile is a leaf tile, buildTile overwrites
+					// this entry with 0
+				buildTile(childTile);
+				childTip++;
+			}
+			else
+			{
+				Tile childTile = Tile::fromColumnRowZoom(
+					(tile->tile.column() << step) & ((1 << step) - 1),
+					(tile->tile.row() << step) + (i >> step),
+					tile->tile.zoom() + step);
+				fillGrid(childTile, pile);
+			}
+		}
+		tileIndex_[tile->tip + 1] = static_cast<uint32_t>(childTileMask);
+		if (step == 3)
+		{
+			tileIndex_[tile->tip + 2] = static_cast<uint32_t>(childTileMask >> 32);
+		}
+	}
 }
 
 
+void TileIndexBuilder::fillGrid(Tile tile, int pile)
+{
+	int step = maxZoom_ - tile.zoom();
+	int extent = 1 << step;
+	int left = tile.column() << step;
+	int right = left + extent - 1;
+	int top = tile.row() << step;
+	int bottom = top + extent - 1;
+	for (int row = top; row <= bottom; row++)
+	{
+		for (int col = left; col <= right; col++)
+		{
+			cellToPile_[cellOf(col, row)] = pile;
+		}
+	}
+}
+
+STile* TileIndexBuilder::Tier::Iterator::next() noexcept
+{
+	STile* tile = next_;
+	if (tile) next_ = tile->next;
+	return tile;
+}
