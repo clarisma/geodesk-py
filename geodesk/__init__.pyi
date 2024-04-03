@@ -41,6 +41,7 @@ class Coordinate:
     lat: float
 
 class Feature:
+    area: float
     bounds: 'Box'
     centroid: 'Coordinate'
     geojson: 'Formatter'

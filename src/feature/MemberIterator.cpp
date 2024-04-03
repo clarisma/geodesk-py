@@ -26,12 +26,13 @@ MemberIterator::MemberIterator(FeatureStore* store, pointer pMembers,
     currentMember_ = p_.getUnalignedInt() == 0 ? MemberFlags::LAST : 0;
     currentMatcher_ = &matcher->mainMatcher(); // TODO: select based on role
     #ifdef GEODESK_PYTHON
-    currentRoleObject_ = store->strings().getStringObject(0);
+    // currentRoleObject_ = store->strings().getStringObject(0);
         // TODO: this bumps the refcount; let's use a "borrow" function instead!
         // TODO: check for refcount handling in code below
         // No, see comments below -- must refcount because local strings are 
         // treated as owned
-    assert(currentRoleObject_);
+    // assert(currentRoleObject_);
+    currentRoleObject_ = nullptr;
     #endif
 }
 
@@ -71,13 +72,18 @@ FeatureRef MemberIterator::next()
                 // TODO: ensure this will be unsigned
                 currentRoleStr_ = nullptr;
                 #ifdef GEODESK_PYTHON
-                Py_DECREF(currentRoleObject_);  // move out of if
+                if (currentRoleObject_)
+                {
+                    Py_DECREF(currentRoleObject_);
+                    currentRoleObject_ = nullptr;
+                }
+                    // move out of if?
                 // TODO: This is wrong, needs to borrow!
                 //  No, it has to addref, because refs to local strings are owned
                 //  and we have no way to distinguish between them that is cheaper
                 //  than refcounting
-                currentRoleObject_ = store_->strings().getStringObject(currentRoleCode_);
-                assert(currentRoleObject_);
+                // currentRoleObject_ = store_->strings().getStringObject(currentRoleCode_);
+                // assert(currentRoleObject_);
                 #endif
             }
             else
@@ -86,9 +92,13 @@ FeatureRef MemberIterator::next()
                 currentRoleCode_ = -1;
                 currentRoleStr_ = p_ + ((rawRole >> 1) - 2); // signed
                 #ifdef GEODESK_PYTHON
-                Py_DECREF(currentRoleObject_);      // move out of if
-                currentRoleObject_ = currentRoleStr_.toStringObject();
-                assert(currentRoleObject_);
+                if (currentRoleObject_)
+                {
+                    Py_DECREF(currentRoleObject_);
+                    currentRoleObject_ = nullptr;
+                }
+                // currentRoleObject_ = currentRoleStr_.toStringObject();
+                // assert(currentRoleObject_);
                 #endif
                 p_ += 2;
             }

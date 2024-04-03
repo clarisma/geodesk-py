@@ -18,6 +18,9 @@ def test_min_area(features):
     print("\nVery large houses:")
     show(features("a[building=house]").min_area(2000))
     
+    print("\nVery large parks:")
+    show(features("a[leisure=park]").min_area(km=10))
+    
     # 0 or negative must return all features
     assert features.count == features.min_area(0).count
     assert features.count == features.min_area(-10).count
@@ -51,5 +54,14 @@ def test_adjacent(features):
             if neighbor != w and dict(w.tags) == dict(neighbor.tags):
                 print(f"{w} could be merged into {neighbor}")
                 # TODO: Should also check relations
-                
-     
+        
+"""                
+def test_relations(features):
+    roles = set()
+    for r in features.relations:
+        for m in r:
+            if(" " in m.role):
+                print(f"{r}: {m} as {m.role}")
+            roles.add(m.role)
+    print(roles)
+"""    
