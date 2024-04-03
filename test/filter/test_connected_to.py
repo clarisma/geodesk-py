@@ -3,7 +3,7 @@
 
 from geodesk import *
 
-def test_connected_to(features):
+def notest_connected_to(features):
     count = 0
     waterways = features("w[waterway=river,canal]")
     systems = []

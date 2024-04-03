@@ -37,39 +37,10 @@ PyFeatures* filters::disjoint(PyFeatures* self, PyObject* args, PyObject* kwargs
 	return NULL;
 }
 
-PyFeatures* filters::max_area(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"max_area will be available in Version 0.2.0");
-	return NULL;
-}
-
-PyFeatures* filters::max_length(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"max_length will be available in Version 0.2.0");
-	return NULL;
-}
-
 PyFeatures* filters::max_meters_from(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
 		"max_meters_from will be available in Version 0.2.0");
-	return NULL;
-}
-
-PyFeatures* filters::min_area(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"min_area will be available in Version 0.2.0");
-	return NULL;
-}
-
-
-PyFeatures* filters::min_length(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"min_length will be available in Version 0.2.0");
 	return NULL;
 }
 
@@ -80,14 +51,12 @@ PyFeatures* filters::nearest_to(PyFeatures* self, PyObject* args, PyObject* kwar
 	return NULL;
 }
 
-
 PyFeatures* filters::overlaps(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
 		"overlaps will be available in Version 0.2.0");
 	return NULL;
 }
-
 
 PyFeatures* filters::pythonFilter(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
