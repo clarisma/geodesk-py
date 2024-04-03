@@ -54,8 +54,11 @@ def test_nearby_hotels(features):
     hotels = features("na[tourism=hotel,guest_house,hostel]")
     m = Map()
     s = bike_routes.shape
+    print("A")
     s.simplify(50000)
+    print("B")
     s = s.buffer(100000)
+    print("C")
     m.add(s)    
     m.add(bike_routes, color="red")
     m.add(hotels.within(s), color="orange")
