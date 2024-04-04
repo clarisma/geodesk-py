@@ -13,6 +13,12 @@
 
 // TODO: For the sake of the API, we should treat local and global strings the same
 
+// TODO: Warning, MemberIterator is not threadsafe because it uses a Python string
+// to track the role
+// 4/3/24: The Python role string object is now created lazily, which means that
+//  MemberIterator is now threadsafe as long as the Python role string is not 
+//  accessed (via borrowCurrentRole())
+
 class MemberIterator
 {
 public:
@@ -22,7 +28,7 @@ public:
 	~MemberIterator()
 	{
 		#ifdef GEODESK_PYTHON
-		Py_DECREF(currentRoleObject_);
+		Py_XDECREF(currentRoleObject_);
 		#endif
 	}
 
@@ -52,7 +58,22 @@ public:
 	 * Obtains a borrowed reference to the Python string object that
 	 * represents the role of the current member.
 	 */
-	PyObject* borrowCurrentRole() const { return currentRoleObject_; }
+	PyObject* borrowCurrentRole() // const 
+	{ 
+		if (!currentRoleObject_)
+		{
+			if (currentRoleCode_ >= 0)
+			{
+				currentRoleObject_ = store_->strings().getStringObject(currentRoleCode_);
+			}
+			else
+			{
+				currentRoleObject_ = currentRoleStr_.toStringObject();
+			}
+			assert(currentRoleObject_);
+		}
+		return currentRoleObject_; 
+	}
 	#endif
 
 private:

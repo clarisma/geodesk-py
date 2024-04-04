@@ -52,6 +52,8 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
     // TODO: deal with missing tiles
     // TODO: use FastMemberIterator -- no, need role
     //  But careful, MemberIterator is not threadsafe!
+    //  (4/3/24: made it threadsafe by only creating the Pyhon role string object
+    //  on demand; since we no longer use the Python object, MI is safe)
     MemberIterator iter(store, pMembers, FeatureTypes::WAYS, store->borrowAllMatcher(), nullptr);
     for (;;)
     {
@@ -73,24 +75,6 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
         // are always global strings (may not be the case for very small
         // datasets where their string count falls below the minimum)
 
-        // TODO: just drop Python code altogether
-        #ifdef GEODESK_PYTHON
-        PyObject* roleString = iter.borrowCurrentRole();
-        const char* strRole = PyUnicode_AsUTF8(roleString);
-        if(strRole)
-        {
-            if (strcmp(strRole, "outer") == 0)
-            {
-                outerSegments = createSegment(way, outerSegments);
-                outerSegmentCount++;
-            }
-            else if (strcmp(strRole, "inner") == 0)
-            {
-                innerSegments = createSegment(way, innerSegments);
-                innerSegmentCount++;
-            }
-        }
-        #else   
         std::string_view role = iter.currentRole();
         if (role == "outer")
         {
@@ -102,7 +86,6 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
             innerSegments = createSegment(way, innerSegments);
             innerSegmentCount++;
         }
-        #endif
     }
     if (outerSegmentCount > 0)
     {
