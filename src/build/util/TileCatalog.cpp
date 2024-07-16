@@ -14,7 +14,7 @@ void TileCatalog::build(TileIndexBuilder& builder)
 	tileToPile_.reserve(tileCount_);
 	for (int i = 1; i <= tileCount_; i++)
 	{
-		Console::msg("%d: %s", i, pileToTile_[i].toString().c_str());
+		// Console::msg("%d: %s", i, pileToTile_[i].toString().c_str());
 		tileToPile_[pileToTile_[i]] = i;
 	}
 }

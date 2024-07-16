@@ -344,7 +344,7 @@ void TileIndexBuilder::buildTile(STile* tile) noexcept
 			else
 			{
 				Tile childTile = Tile::fromColumnRowZoom(
-					(tile->tile.column() << step) & ((1 << step) - 1),
+					(tile->tile.column() << step) + (i & ((1 << step) - 1)),
 					(tile->tile.row() << step) + (i >> step),
 					tile->tile.zoom() + step);
 				fillGrid(childTile, pile);
@@ -361,6 +361,7 @@ void TileIndexBuilder::buildTile(STile* tile) noexcept
 
 void TileIndexBuilder::fillGrid(Tile tile, int pile)
 {
+	//Console::msg("Filling grid for %s with %d", tile.toString().c_str(), pile);
 	int step = maxZoom_ - tile.zoom();
 	int extent = 1 << step;
 	int left = tile.column() << step;

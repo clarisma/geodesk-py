@@ -5,6 +5,7 @@
 #include "feature/FeatureStore.h"
 #include "query/Query.h"
 #include "BuildCommand.h"
+#include "GolTool.h"
 
 /*
 void testPileFile()
@@ -23,6 +24,9 @@ void testPileFile()
 
 int main(int argc, char* argv[])
 {
+	GolTool app;
+	return app.run(argv);
+}
 	// testPileFile();
 
 	//BuildCommand cmd;
@@ -54,5 +58,5 @@ int main(int argc, char* argv[])
 		printf("%lld features found in %.3f seconds\n", count, duration.count() / 1e6);
 	}
 	*/
-}
+// }
 

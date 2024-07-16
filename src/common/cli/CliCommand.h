@@ -7,7 +7,8 @@
 class CliCommand
 {
 public:
-	void run(char* argv[]);
+	static const char* getCommand(char* argv[]);
+	int run(char* argv[]);
 	virtual void setParam(int number, std::string_view value) {};
 	virtual void setOption(std::string_view name, std::string_view value) {};
 };

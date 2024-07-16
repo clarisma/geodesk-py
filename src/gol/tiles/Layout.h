@@ -48,7 +48,7 @@ private:
 	void put(TElement* elem, int pos)
 	{
 		elem->setLocation(pos);
-		pos_ += elem->size();
+		pos_ = pos + elem->size();
 		placed_.addTail(elem);
 	}
 

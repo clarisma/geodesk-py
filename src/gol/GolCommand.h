@@ -10,7 +10,7 @@ class GolCommand : CliCommand
 public:
 	GolCommand();
 
-	void run(char* argv[]) { CliCommand::run(argv); }
+	int run(char* argv[]) { return CliCommand::run(argv); }
 
 	static std::string pathWithExtension(std::string_view path, const char* ext)
 	{

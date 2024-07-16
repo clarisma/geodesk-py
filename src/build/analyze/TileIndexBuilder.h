@@ -23,7 +23,7 @@ public:
 	std::unique_ptr<const Tile[]> takePileToTile() { return std::move(pileToTile_); }
 	std::unique_ptr<const uint32_t[]> takeTileSizeEstimates() { return std::move(tileSizeEstimates_); }
 
-	static const int ESTIMATED_BYTES_PER_NODE = 8;
+	static const int ESTIMATED_BYTES_PER_NODE = 10;
 	static const int ESTIMATED_CHILD_BYTES_PER_PARENT_BYTE = (1 << 14);
 
 private:

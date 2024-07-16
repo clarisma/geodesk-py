@@ -3,7 +3,7 @@
 
 #include "CliCommand.h"
 
-void CliCommand::run(char* argv[])
+int CliCommand::run(char* argv[])
 {
 	const char* arg;
 	int paramCount = 0;
@@ -23,4 +23,17 @@ void CliCommand::run(char* argv[])
 			setParam(paramCount++, std::string_view(arg));
 		}
 	}
+	return 0;
+}
+
+
+const char* CliCommand::getCommand(char* argv[])
+{
+	char** pArg = &argv[1];
+	while (*pArg)
+	{
+		if (**pArg != '-') return *pArg;
+		pArg++;
+	}
+	return NULL;
 }

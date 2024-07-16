@@ -12,6 +12,19 @@
 #endif 
 #include <common/text/Format.h>
 
+/*
+ * Console colors:
+ * highlight
+ * highlight2
+ * progress bar
+ * progress bar bground
+ * progress percent
+ * timestamp
+ * success
+ * error
+ * warning
+ * orange
+ */
 class Console
 {
 public:
@@ -68,6 +81,8 @@ public:
 	}
 
 	static void debug(const char* format, ...);
+
+	static Console* get() { return theConsole_; }
 
 private:
 	static const char* BLOCK_CHARS_UTF8;

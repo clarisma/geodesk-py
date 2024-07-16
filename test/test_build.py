@@ -20,8 +20,8 @@ def test_build():
         # source=source_path + "monaco-2023-10-02.osm.pbf",
         # source = "c:\\geodesk\\mapdata\\planet-2023-02-19.osm.pbf",
         # source = source_path +  "planet-2023-10-07.osm.pbf",
-        zoom_levels = [2,4,6,8,10,12],
-        # zoom_levels = [3,6,9,12],
+        # zoom_levels = [2,4,6,8,10,12],
+        zoom_levels = [3,6,9,12],
         max_tiles = 64000,
         min_tile_density=75000,
         indexed_keys= [

@@ -87,7 +87,7 @@ void PileFile::preallocate(int pile, int pages)
 		CHUNK_HEADER_SIZE;
 	meta->pageCount += pages;
 
-	Console::msg("Preallocated pile %d: %llu bytes", pile, indexEntry->totalPayloadSize);
+	// Console::msg("Preallocated pile %d: %llu bytes", pile, indexEntry->totalPayloadSize);
 }
 
 
@@ -166,12 +166,12 @@ void PileFile::load(int pile, ReusableBlock& block)
 	uint32_t lastPage = indexEntry->lastPage;
 	if (lastPage == 0)
 	{
-		Console::msg("Reading pile %d (empty)...", pile);
+		// Console::msg("Reading pile %d (empty)...", pile);
 		block.resize(0);
 		return;
 	}
 	size_t dataSize = indexEntry->totalPayloadSize;
-	Console::msg("Reading pile %d (%llu bytes)...", pile, dataSize);
+	// Console::msg("Reading pile %d (%llu bytes)...", pile, dataSize);
 	block.resize(dataSize);
 	uint8_t* pStart = block.data();
 	uint8_t* p = pStart;
