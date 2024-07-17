@@ -2,24 +2,79 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TesWriter.h"
+#include "TesFlags.h"
 #include "TFeature.h"
 
 TesWriter::TesWriter(TTile& tile, Buffer* out) :
 	tile_(tile),
 	out_(out),
-	prevXY_(0,0),
-	prevId_(0)
+	prevXY_(0,0)
 {
 }
 
 
 void TesWriter::write()
 {
+	writeFeatureIndex();
 	writeStrings();
 	writeTagTables();
 	writeRelationTables();
 	writeFeatures();
 	out_.flush();
+}
+
+
+void TesWriter::writeFeatureIndex()
+{
+	class SortableFeature
+	{
+	public:
+		SortableFeature(TFeature* feature) :
+			typeAndId_(feature->id() | 
+				(static_cast<uint64_t>(feature->typeCode()) << 60)),
+			feature_(feature)
+		{
+		}
+
+		uint64_t id() const { return typeAndId_ & 0xff'ffff'ffff'ffffULL; }
+		int typeCode() const { return static_cast<int>(typeAndId_ >> 60); }
+		TFeature* feature() const { return feature_; }
+
+		bool operator<(const SortableFeature& other) const
+		{
+			return typeAndId_ < other.typeAndId_;
+		}
+
+	private:
+		uint64_t typeAndId_;
+		TFeature* feature_;
+	};
+
+	std::vector<SortableFeature> features;
+	FeatureTable::Iterator iter = tile_.iterFeatures();
+	while (iter.hasNext())
+	{
+		features.push_back(SortableFeature(iter.next()));
+	}
+	std::sort(features.begin(), features.end());
+
+	out_.writeVarint(features.size());
+	int prevType = 0;
+	uint64_t prevId = 0;
+	for (int i=0; i<features.size(); i++)
+	{
+		int type = features[i].typeCode();
+		if (type != prevType)
+		{
+			out_.writeByte(0);
+			prevType = type;
+		}
+		uint64_t id = features[i].id();
+		out_.writeVarint(((id - prevId) << 1) | 1);
+			// Bit 0: changed_flag
+		prevId = id;
+		features[i].feature()->setLocation(i + 1);
+	}
 }
 
 
@@ -171,12 +226,36 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 }
 
 
-void TesWriter::writeStub(const TFeature* feature, int flagBitCount, int flags)
+void TesWriter::writeStub(const TFeature* feature, int flags)
 {
-	int64_t id = feature->id();
-	out_.writeVarint(((id - prevId_) << flagBitCount) | flags);
-	prevId_ = id;
-	out_.writeVarint(feature->tags(tile_)->location());
+	TTagTable* tags = feature->tags(tile_);
+	flags |= TesFlags::TAGS_CHANGED | TesFlags::GEOMETRY_CHANGED;
+	flags |= tags->location() ? TesFlags::SHARED_TAGS : 0;
+	flags |= feature->isRelationMember() ? TesFlags::RELATIONS_CHANGED : 0;
+	out_.writeByte(flags);
+
+	if (flags & TesFlags::SHARED_TAGS)
+	{
+		out_.writeVarint(tags->location());
+	}
+	else
+	{
+		writeTagTable(tags);
+	}
+
+	if (flags & TesFlags::RELATIONS_CHANGED)
+	{
+		TRelationTable* rels = tile_.getRelationTable(
+			feature->feature().relationTableFast());
+		if (rels->location())
+		{
+			out_.writeVarint(rels->location());
+		}
+		else
+		{
+			writeRelationTable(rels);
+		}
+	}
 }
 
 
@@ -184,13 +263,10 @@ void TesWriter::writeNode(const TNode* node)
 {
 	NodeRef nodeRef(node->feature());
 	bool isRelationMember = nodeRef.isRelationMember();
-	writeStub(node, 3, TAGS_CHANGED | GEOMETRY_CHANGED | (isRelationMember ? RELATIONS_CHANGED : 0));
+	int flags = (node->feature().flags() & FeatureFlags::WAYNODE) ?
+		TesFlags::NODE_BELONGS_TO_WAY : 0;
+	writeStub(node, flags);  // TODO: has_shared_location / is_exception_node  
 
-	if (isRelationMember)
-	{
-		TRelationTable* relTable = tile_.getRelationTable(nodeRef.bodyptr());
-		out_.writeVarint(relTable->location());
-	}
 	Coordinate xy = nodeRef.xy();
 	out_.writeSignedVarint(static_cast<int64_t>(xy.x) - prevXY_.x);
 	out_.writeSignedVarint(static_cast<int64_t>(xy.y) - prevXY_.y);
@@ -201,27 +277,26 @@ void TesWriter::writeNode(const TNode* node)
 void TesWriter::writeWay(const TWay* way)
 {
 	WayRef wayRef(way->feature());
-	bool isRelationMember = wayRef.isRelationMember();
 	bool hasFeatureNodes = (wayRef.flags() & FeatureFlags::WAYNODE);
-	writeStub(way, 5, TAGS_CHANGED | GEOMETRY_CHANGED | 
-		(isRelationMember ? RELATIONS_CHANGED : 0) |
-		(wayRef.isArea() ? AREA_FEATURE : 0) |
-		(hasFeatureNodes ? WAY_HAS_FEATURE_NODES : 0));
+	int flags = 
+		(hasFeatureNodes ? TesFlags::MEMBERS_CHANGED : 0) |
+		(wayRef.isArea() ? TesFlags::IS_AREA : 0) |
+		TesFlags::NODE_IDS_CHANGED;
+	writeStub(way, flags);
 	
 	pointer pBody = way->body().data();
 	int anchor = way->body().anchor();
-	if (isRelationMember)
-	{
-		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned(anchor-4));
-		out_.writeVarint(relTable->location());
-	}
 
-	writeBounds(wayRef);
+	Coordinate xy = wayRef.bounds().bottomLeft();
+	out_.writeSignedVarint(static_cast<int64_t>(xy.x) - prevXY_.x);
+	out_.writeSignedVarint(static_cast<int64_t>(xy.y) - prevXY_.y);
+	prevXY_ = xy;
+
 	out_.writeBytes(pBody.asBytePointer() + anchor, way->body().size() - anchor);
 
 	if (hasFeatureNodes)
 	{
-		int skipReltablePointer = isRelationMember ? 4 : 0;
+		int skipReltablePointer = (wayRef.flags() & FeatureFlags::RELATION_MEMBER) ? 4 : 0;
 		out_.writeVarint(anchor - skipReltablePointer);
 		pointer p = pBody + anchor - skipReltablePointer;
 		for (;;)
@@ -266,27 +341,18 @@ void TesWriter::writeWay(const TWay* way)
 void TesWriter::writeRelation(const TRelation* relation)
 {
 	RelationRef relationRef(relation->feature());
-	bool isRelationMember = relationRef.isRelationMember();
-	writeStub(relation, 4, TAGS_CHANGED | GEOMETRY_CHANGED |
-		(isRelationMember ? RELATIONS_CHANGED : 0) |
-		(relationRef.isArea() ? AREA_FEATURE : 0));
+	int flags =
+		(relationRef.isArea() ? TesFlags::IS_AREA : 0) |
+		TesFlags::MEMBERS_CHANGED | TesFlags::BBOX_CHANGED;
+	writeStub(relation, flags);
 
+	bool isRelationMember = relationRef.isRelationMember();
 	return;  // TODO
 
 	LOG("Writing relation/%lld", relationRef.id());
-	if (relationRef.id() == 181912)
-	{
-		LOG("debug");
-	}
-
 
 	const TRelationBody& body = relation->body();
 	pointer pBody = body.data();
-	if (isRelationMember)
-	{
-		TRelationTable* relTable = tile_.getRelationTable(pBody.followUnaligned());
-		out_.writeVarint(relTable->location());
-	}
 
 	writeBounds(relationRef);
 
@@ -357,8 +423,6 @@ void TesWriter::writeRelation(const TRelation* relation)
 		if (member & MemberFlags::LAST) break;
 	}
 }
-
-
 
 
 void TesWriter::writeBounds(FeatureRef feature)

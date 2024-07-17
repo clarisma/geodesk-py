@@ -24,6 +24,7 @@ public:
 
 	FeatureRef feature() const { return feature_; }
 	uint64_t id() const { return feature_.id(); }
+	uint64_t typeCode() const { return feature_.typeCode(); }
 	uint64_t idBits() const { return feature_.idBits(); }
 	int flags() const {	return feature_.flags(); }
 	bool isRelationMember() const { return feature_.flags() & FeatureFlags::RELATION_MEMBER; }
@@ -35,6 +36,11 @@ public:
 	}
 	static void addRelationTable(Layout& layout, pointer ppRelTable);
 	void write(const TTile& tile) const;
+
+	static bool compareById(const TFeature* a, const TFeature* b)
+	{
+		return a->id() < b->id();
+	}
 
 protected:
 	union

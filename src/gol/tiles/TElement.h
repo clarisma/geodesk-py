@@ -76,6 +76,7 @@ private:
 	unsigned int alignment_ :  2;
 	unsigned int size_      : 30;
 	int32_t oldLocation_;
+		// TODO: move oldLocation to TReferencedElement?
 	Type type_              :  6;
 	bool isLast_            :  1;
 	bool isDeleted_         :  1;

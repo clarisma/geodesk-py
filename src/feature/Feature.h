@@ -37,6 +37,11 @@ public:
 		return (static_cast<uint64_t>(hi) << 32) | lo;
 	}
 
+	uint64_t typedId() const
+	{
+		return (id() << 2) | typeCode();
+	}
+
 	// TODO: should just get pointer
 	Box bounds() const
 	{

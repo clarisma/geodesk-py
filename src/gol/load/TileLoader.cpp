@@ -40,7 +40,7 @@ void TileLoader::load()
 		postWork(TileLoaderTask(tiw2.currentTile(), tiw2.currentTip()));
 	}
 	end();
-	printf("Total bytes written: %ld\n", totalBytesWritten_);
+	printf("Total bytes written: %lld\n", totalBytesWritten_);
 }
 
 void TileLoaderContext::processTask(TileLoaderTask& task)

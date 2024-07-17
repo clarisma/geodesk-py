@@ -79,6 +79,7 @@ private:
 	{
 		return static_cast<int32_t>(pCurrentTile_ - p.asBytePointer());
 		// We use negative values to indicate old location
+		// TODO: Change this approach
 	}
 
 	/**
