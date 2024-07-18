@@ -450,27 +450,38 @@ void TesWriter::writeBounds(FeatureRef feature)
 void TesWriter::writeRelationTable(const TRelationTable* relTable)
 {
 	out_.writeVarint(relTable->size());
-
-	int localRelCount = 0;
-	pointer pRelTable = relTable->data();
-	pointer p = pRelTable;
-	for(;;)
+	pointer p = relTable->data();
+	for (;;)
 	{
-		int32_t rel = p.getUnalignedInt();
-		if (rel & 2) break; // foreign
-		localRelCount++;
-		p += 4;
-		if (rel & 1) break; // last item
-	}
-	
-	out_.writeVarint(relTable->size());
-	out_.writeVarint(localRelCount);
-	p = pRelTable;
-	for (int i = 0; i < localRelCount; i++)
-	{
-		int32_t rel = p.getUnalignedInt() & 0xffff'fffc;
-		TReferencedElement* relation = tile_.getElement(p + rel);
-		assert(relation->location());
-		out_.writeVarint(relation->location());
+		uint32_t rel = p.getUnalignedInt();
+		p += 4;		
+			// TODO: When we switch to TEX, <rel> could be 2 or 4 bytes
+		if (rel & MemberFlags::FOREIGN)
+		{
+			out_.writeVarint((rel >> 3) |  // TODO: changes to TEX_DELTA in future, >> 4
+				(rel & MemberFlags::DIFFERENT_TILE) ? 1 : 0);
+			if (rel & MemberFlags::DIFFERENT_TILE)
+			{
+				int32_t tipDelta = p.getShort();
+				p += 2;
+				if (tipDelta & 1)
+				{
+					// wide TIP delta
+					tipDelta = (tipDelta & 0xffff) |
+						(static_cast<int32_t>(p_.getShort()) << 16);
+					p += 2;
+				}
+				out_.writeSignedVarint(tipDelta >> 1);     // signed
+			}
+		}
+		else
+		{
+			TReferencedElement* relation = tile_.getElement(p + (rel & 0xffff'fffc));
+			assert(relation->location());
+			out_.writeVarint((relation->location() - nodeCount_ - wayCount_) << 1);
+			// *Relation* number, not feature number
+			// Bit 0 is always clear
+		}
+		if (rel & MemberFlags::LAST) break;
 	}
 }
