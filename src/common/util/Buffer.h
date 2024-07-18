@@ -39,7 +39,7 @@ public:
 	virtual void filled(char* p);		// TODO: why does this take a pointer??
 	virtual void flush(char* p);
 	char* take();
-	ByteBlock takeBytes()
+	ByteBlock takeBytes();
 
 protected:
 	void grow();

@@ -13,6 +13,6 @@ public:
 	int run(char* argv[]);
 
 private:
-	void setParam(int number, std::string_view value) override;
-	void setOption(std::string_view name, std::string_view value) override;
+	//void setParam(int number, std::string_view value) override;
+	//void setOption(std::string_view name, std::string_view value) override;
 };
