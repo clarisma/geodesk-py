@@ -84,6 +84,14 @@ char* DynamicBuffer::take()
     return buf;
 }
 
+ByteBlock DynamicBuffer::takeBytes()
+{
+    ByteBlock block(reinterpret_cast<uint8_t*>(buf_), length());
+    p_ = buf_ = end_ = nullptr;
+    return block;
+}
+
+
 
 /*
 

@@ -4,6 +4,7 @@
 #pragma once
 #include <cassert>
 #include <cstdio>
+#include <common/alloc/Block.h>
 
 class Buffer
 {
@@ -38,6 +39,7 @@ public:
 	virtual void filled(char* p);		// TODO: why does this take a pointer??
 	virtual void flush(char* p);
 	char* take();
+	ByteBlock takeBytes()
 
 protected:
 	void grow();
