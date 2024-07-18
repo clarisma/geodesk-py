@@ -17,11 +17,13 @@ TesWriter::TesWriter(TTile& tile, Buffer* out) :
 
 void TesWriter::write()
 {
+	// TODO: Header
 	writeFeatureIndex();
 	writeStrings();
 	writeTagTables();
 	writeRelationTables();
 	writeFeatures();
+	out_.writeByte(0); // no removed features
 	// TODO: ExportTable
 	out_.flush();
 }
@@ -355,10 +357,7 @@ void TesWriter::writeRelation(const TRelation* relation)
 		TesFlags::MEMBERS_CHANGED | TesFlags::BBOX_CHANGED;
 	writeStub(relation, flags);
 
-	bool isRelationMember = relationRef.isRelationMember();
-	return;  // TODO
-
-	LOG("Writing relation/%lld", relationRef.id());
+	// LOG("Writing relation/%lld", relationRef.id());
 
 	const TRelationBody& body = relation->body();
 	pointer pBody = body.data();
@@ -468,7 +467,7 @@ void TesWriter::writeRelationTable(const TRelationTable* relTable)
 				{
 					// wide TIP delta
 					tipDelta = (tipDelta & 0xffff) |
-						(static_cast<int32_t>(p_.getShort()) << 16);
+						(static_cast<int32_t>(p.getShort()) << 16);
 					p += 2;
 				}
 				out_.writeSignedVarint(tipDelta >> 1);     // signed
