@@ -20,8 +20,40 @@ public:
 	void write();
 
 private:
+	class SortedFeature
+	{
+	public:
+		SortedFeature(TFeature* feature) :
+			typeAndId_(feature->id() |
+				(static_cast<uint64_t>(feature->typeCode()) << 60)),
+			feature_(feature)
+		{
+		}
+
+		uint64_t id() const { return typeAndId_ & 0xff'ffff'ffff'ffffULL; }
+		int typeCode() const { return static_cast<int>(typeAndId_ >> 60); }
+		TFeature* feature() const { return feature_; }
+
+		bool operator<(const SortedFeature& other) const
+		{
+			return typeAndId_ < other.typeAndId_;
+		}
+
+	private:
+		uint64_t typeAndId_;
+		TFeature* feature_;
+	};
+
+	struct Tag
+	{
+		uint32_t key;
+		uint32_t value;
+
+		Tag(uint32_t k, uint32_t v) : key(k), value(v) {}
+	};
+
 	template <typename T>
-	T** sortedItems(const ElementDeduplicator<T>& items);
+	void gatherSharedItems(const ElementDeduplicator<T>& items, int minUsers, size_t firstGroupSize);
 
 	void writeFeatureIndex();
 
@@ -29,16 +61,21 @@ private:
 	void writeTagTables();
 	void writeRelationTables();
 	void writeTagTable(const TTagTable* tags);
-	void writeTagValue(pointer p, int valueFlags);
+	uint32_t getTagValue(pointer p, int valueFlags);
 	void writeRelationTable(const TRelationTable* relTable);
+	void writeFeatures();
 	void writeNode(const TNode* node);
 	void writeWay(const TWay* way);
 	void writeRelation(const TRelation* relation);
 	void writeStub(const TFeature* feature, int flags);
 	void writeBounds(FeatureRef feature);
-	void writeFeatures();
 
 	BufferWriter out_;
 	TTile& tile_;
 	Coordinate prevXY_;
+	std::vector<const SortedFeature> features_;
+	int nodeCount_;
+	int wayCount_;
+	std::vector<TSharedElement*> sharedElements_;
+	std::vector<const Tag> localKeyTags_;
 };

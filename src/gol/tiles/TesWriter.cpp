@@ -8,7 +8,9 @@
 TesWriter::TesWriter(TTile& tile, Buffer* out) :
 	tile_(tile),
 	out_(out),
-	prevXY_(0,0)
+	prevXY_(0,0),
+	nodeCount_(0),
+	wayCount_(0)
 {
 }
 
@@ -20,130 +22,122 @@ void TesWriter::write()
 	writeTagTables();
 	writeRelationTables();
 	writeFeatures();
+	// TODO: ExportTable
 	out_.flush();
 }
 
 
 void TesWriter::writeFeatureIndex()
 {
-	class SortableFeature
-	{
-	public:
-		SortableFeature(TFeature* feature) :
-			typeAndId_(feature->id() | 
-				(static_cast<uint64_t>(feature->typeCode()) << 60)),
-			feature_(feature)
-		{
-		}
-
-		uint64_t id() const { return typeAndId_ & 0xff'ffff'ffff'ffffULL; }
-		int typeCode() const { return static_cast<int>(typeAndId_ >> 60); }
-		TFeature* feature() const { return feature_; }
-
-		bool operator<(const SortableFeature& other) const
-		{
-			return typeAndId_ < other.typeAndId_;
-		}
-
-	private:
-		uint64_t typeAndId_;
-		TFeature* feature_;
-	};
-
-	std::vector<SortableFeature> features;
 	FeatureTable::Iterator iter = tile_.iterFeatures();
 	while (iter.hasNext())
 	{
-		features.push_back(SortableFeature(iter.next()));
+		features_.push_back(SortedFeature(iter.next()));
 	}
-	std::sort(features.begin(), features.end());
+	std::sort(features_.begin(), features_.end());
 
-	out_.writeVarint(features.size());
+	out_.writeVarint(features_.size());
 	int prevType = 0;
 	uint64_t prevId = 0;
-	for (int i=0; i<features.size(); i++)
+	for (int i=0; i<features_.size(); i++)
 	{
-		int type = features[i].typeCode();
+		const SortedFeature& feature = features_[i];
+		int type = feature.typeCode();
 		if (type != prevType)
 		{
+			if (type == 1)
+			{
+				nodeCount_ = i;
+			}
+			else
+			{
+				assert(type == 2);
+				wayCount_ = i - nodeCount_;
+			}
 			out_.writeByte(0);
 			prevType = type;
 		}
-		uint64_t id = features[i].id();
+		uint64_t id = feature.id();
 		out_.writeVarint(((id - prevId) << 1) | 1);
 			// Bit 0: changed_flag
 		prevId = id;
-		features[i].feature()->setLocation(i + 1);
+		feature.feature()->setLocation(i + 1);
 	}
 }
 
 
 void TesWriter::writeStrings()
 {
-	TString** strings = sortedItems<TString>(tile_.strings());
-	size_t count = tile_.strings().count();
-	out_.writeVarint(count);
-	TString** pEnd = strings + count;
-	TString** p = strings;
-	while (p < pEnd)
+	gatherSharedItems(tile_.strings(), 0, 127);
+	out_.writeVarint(sharedElements_.size());
+	for (const auto& e : sharedElements_)
 	{
-		out_.writeBytes((*p)->data(), (*p)->size());
-		p++;
+		TString* s = static_cast<TString*>(e);
+		out_.writeBytes(s->data(), s->size());
 	}
 }
 
 
 void TesWriter::writeTagTables()
 {
-	TTagTable** tagTables = sortedItems<TTagTable>(tile_.tagTables());
-	size_t count = tile_.tagTables().count();
-	out_.writeVarint(count);
-	TTagTable** pEnd = tagTables + count;
-	TTagTable** p = tagTables;
-	while (p < pEnd)
+	gatherSharedItems(tile_.tagTables(), 1, 127);
+	out_.writeVarint(sharedElements_.size());
+	for (const auto& e : sharedElements_)
 	{
-		writeTagTable(*p++);
+		writeTagTable(static_cast<TTagTable*>(e));
 	}
 }
 
 
 void TesWriter::writeRelationTables()
 {
-	TRelationTable** relationTables = sortedItems<TRelationTable>(tile_.relationTables());
-	size_t count = tile_.relationTables().count();
-	out_.writeVarint(count);
-	TRelationTable** pEnd = relationTables + count;
-	TRelationTable** p = relationTables;
-	while (p < pEnd)
+	gatherSharedItems(tile_.relationTables(), 1, 63);
+	out_.writeVarint(sharedElements_.size());
+	for (const auto& e : sharedElements_)
 	{
-		writeRelationTable(*p++);
+		writeRelationTable(static_cast<TRelationTable*>(e));
 	}
 }
 
-
+// TODO: let caller clear sharedElements_?
 template <typename T>
-T** TesWriter::sortedItems(const ElementDeduplicator<T>& items)
+void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUsers, size_t firstGroupSize)
 {
-	size_t count = items.count();
-	T** sorted = items.toArray(tile_.arena());
+	assert (firstGroupSize == 127 || firstGroupSize == 63);
+	sharedElements_.clear();
+	ElementDeduplicator<TSharedElement>::Iterator iter = items.iter();
+	while (iter.hasNext())
+	{
+		TSharedElement* item = iter.next();
+		if (item->users() > minUsers) sharedElements_.push_back(item);
+	}
 
-	std::sort(sorted, sorted+count, [](const T* a, const T* b) 
+	std::sort(sharedElements_.begin(), sharedElements_.end(),
+		[](const TSharedElement* a, const TSharedElement* b)
 		{
-			// Sort in descending order based on the result of users()
+			// Sort in descending order based on number of users
 			return a->users() > b->users();
 		});
 
-	// TODO: group and sort by contents
-
-	for (int i = 0; i < count; i++)
+	size_t start = 0;
+	size_t end = std::min(firstGroupSize + 1, shared.size());
+	for (;;)
 	{
-		sorted[i]->setLocation(i + 1);
+		// Within each group, sort elements in their natural order
+		std::sort(sharedElements_.begin() + start, sharedElements_.begin() + end);
+		start = end;
+		end = std::min(end * 128, shared.size());
 	}
-	return sorted;
+
+	for (int i = 0; i < sharedElements_.size(); i++)
+	{
+		sharedElements_[i]->setLocation(i + 1);
+	}
 }
 
 
-void TesWriter::writeTagValue(pointer p, int valueFlags)
+
+uint32_t TesWriter::getTagValue(pointer p, int valueFlags)
 {
 	assert(valueFlags >= 0 && valueFlags <= 3);
 	uint32_t value;
@@ -161,39 +155,16 @@ void TesWriter::writeTagValue(pointer p, int valueFlags)
 			value = valueStr->location();
 		}
 	}
-	out_.writeVarint(value);
+	return value;
 }
 
 void TesWriter::writeTagTable(const TTagTable* tags)
 {
 	pointer pTable = tags->data() + tags->anchor();
-	int globalTagCount = 0;
-	int localTagCount = 0;
-	pointer p = pTable;
-	if (p.getUnalignedUnsignedInt() != TagsRef::EMPTY_TABLE_MARKER)
-	{
-		for(;;)
-		{
-			globalTagCount++;
-			int key = p.getUnsignedShort();
-			p += 2 + (key & 2);
-			if (key & 0x8000) break;
-		}
-	}
+	pointer p;
 	if (tags->hasLocalTags())
 	{
 		pointer origin = pointer::ofTagged(pTable, 0xffff'ffff'ffff'fffcULL);
-		p = pTable;
-		for (;;)
-		{
-			localTagCount++;
-			p -= 4;
-			int key = p.getUnsignedShort();
-			p -= 2 + (key & 2);
-			if (key & 4) break;
-		}
-		out_.writeVarint((globalTagCount << 1) | 1);
-		out_.writeVarint(localTagCount);
 		p = pTable;
 		for (;;)
 		{
@@ -203,28 +174,66 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 			pointer pKeyString = origin + ((key ^ flags) >> 1);
 			TString* keyStr = tile_.getString(pKeyString);
 			int valueType = flags & 3;
-			out_.writeVarint((keyStr->location() << 2) | valueType);
 			p -= 2 + (valueType & 2);
-			writeTagValue(p, valueType);
+			localKeyTags_.push_back(Tag(
+				(keyStr->location() << 2) | valueType,
+				getTagValue(p, valueType)));
 			if (flags & 4) break;  // last-tag?
 		}
+
+		out_.writeVarint(localKeyTags_.size());
+		for (Tag tag : localKeyTags_)
+		{
+			out_.writeVarint(tag.key);
+			out_.writeVarint(tag.value);
+		}
+		localKeyTags_.clear();
 	}
+
 	p = pTable;
-	if (globalTagCount)		// have to check in case of empty table
+	if (p.getUnalignedUnsignedInt() == TagsRef::EMPTY_TABLE_MARKER)
 	{
+		// TODO: not needed in the future, treated as normal tag
+		out_.writeByte(0);
+		out_.writeByte(0);
+	}
+	else
+	{
+		uint32_t prevKey = 0;
 		for (;;)
 		{
-			uint16_t key = p.getUnsignedShort();
-			out_.writeVarint(key & 0x7fff);
-			int valueType = key & 3;
+			uint32_t keyBits = p.getUnsignedShort();
+			uint32_t key = (keyBits & 0x7fff) >> 2;
+			int valueType = keyBits & 3;
+			out_.writeVarint(((key - prevKey) << 2) | valueType);
 			p += 2;
-			writeTagValue(p, valueType);
-			p += 2 + (key & 2);
-			if (key & 0x8000) break;
+			out_.writeVarint(getTagValue(p, valueType));
+			p += 2 + (keyBits & 2);
+			prevKey = key;
+			if (keyBits & 0x8000) break;
 		}
 	}
 }
 
+
+void TesWriter::writeFeatures()
+{
+	for (const auto& feature : features_)
+	{
+		switch (feature.typeCode())
+		{
+		case 0:
+			writeNode(reinterpret_cast<TNode*>(feature.feature()));
+			break;
+		case 1:
+			writeWay(reinterpret_cast<TWay*>(feature.feature()));
+			break;
+		case 2:
+			writeRelation(reinterpret_cast<TRelation*>(feature.feature()));
+			break;
+		}
+	}
+}
 
 void TesWriter::writeStub(const TFeature* feature, int flags)
 {
@@ -438,65 +447,30 @@ void TesWriter::writeBounds(FeatureRef feature)
 }
 
 
-void TesWriter::writeFeatures()
-{
-	size_t count = tile_.featureCount();
-	FeatureItem* features = tile_.arena().allocArray<FeatureItem>(count);
-	FeatureItem* p = features;
-	FeatureItem* pEnd = features + count;
-	FeatureTable::Iterator iter(&tile_.features());
-	while(p < pEnd)
-	{
-		TFeature* feature = iter.next();
-		assert(feature);
-		p->first = feature->id() | 
-			(static_cast<uint64_t>(feature->feature().typeCode()) << 56);
-		p->second = feature;
-		p++;
-	}
-
-	std::sort(features, pEnd);
-	p = features;
-	while (p < pEnd)
-	{
-		if ((p->first >> 56) != 0) break;
-		p++;
-	}
-	size_t nodeCount = p - features;
-	while (p < pEnd)
-	{
-		if ((p->first >> 56) != 1) break;
-		p++;
-	}
-	size_t wayCount = (p - features) - nodeCount;
-	size_t relationCount = count - nodeCount - wayCount;
-
-	p = features;
-	pEnd = p + nodeCount;
-	out_.writeVarint(nodeCount);
-	while (p < pEnd)
-	{
-		writeNode(reinterpret_cast<const TNode*>(p->second));
-		p++;
-	}
-	pEnd = p + wayCount;
-	out_.writeVarint(wayCount);
-	while (p < pEnd)
-	{
-		writeWay(reinterpret_cast<const TWay*>(p->second));
-		p++;
-	}
-	pEnd = p + relationCount;
-	out_.writeVarint(relationCount);
-	while (p < pEnd)
-	{
-		writeRelation(reinterpret_cast<const TRelation*>(p->second));
-		p++;
-	}
-}
-
-
 void TesWriter::writeRelationTable(const TRelationTable* relTable)
 {
+	out_.writeVarint(relTable->size());
 
+	int localRelCount = 0;
+	pointer pRelTable = relTable->data();
+	pointer p = pRelTable;
+	for(;;)
+	{
+		int32_t rel = p.getUnalignedInt();
+		if (rel & 2) break; // foreign
+		localRelCount++;
+		p += 4;
+		if (rel & 1) break; // last item
+	}
+	
+	out_.writeVarint(relTable->size());
+	out_.writeVarint(localRelCount);
+	p = pRelTable;
+	for (int i = 0; i < localRelCount; i++)
+	{
+		int32_t rel = p.getUnalignedInt() & 0xffff'fffc;
+		TReferencedElement* relation = tile_.getElement(p + rel);
+		assert(relation->location());
+		out_.writeVarint(relation->location());
+	}
 }

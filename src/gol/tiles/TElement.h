@@ -116,6 +116,17 @@ public:
 		memcpy(p, data_, size());
 	}
 
+	virtual bool operator<(const TSharedElement& other) const
+	{
+		uint32_t commonSize = std::min(size(), other.size());
+		int res = memcmp(data(), other.data(), commonSize);
+		if (res == 0)
+		{
+			return size() < other.size();
+		}
+		return res < 0;
+	}
+
 	int users() const { return users_; }
 	void addUser() { users_++; }
 	int category() const { return category_; }
