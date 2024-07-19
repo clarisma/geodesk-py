@@ -72,7 +72,7 @@ void TesWriter::writeStrings()
 {
 	gatherSharedItems(tile_.strings(), 0, 127);
 	out_.writeVarint(sharedElements_.size());
-	for (const auto& e : sharedElements_)
+	for (auto& e : sharedElements_)
 	{
 		TString* s = static_cast<TString*>(e);
 		out_.writeBytes(s->data(), s->size());
@@ -107,7 +107,7 @@ void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUs
 {
 	assert (firstGroupSize == 127 || firstGroupSize == 63);
 	sharedElements_.clear();
-	ElementDeduplicator<TSharedElement>::Iterator iter = items.iter();
+	auto iter = items.iter();
 	while (iter.hasNext())
 	{
 		TSharedElement* item = iter.next();
@@ -122,13 +122,13 @@ void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUs
 		});
 
 	size_t start = 0;
-	size_t end = std::min(firstGroupSize + 1, shared.size());
+	size_t end = std::min(firstGroupSize + 1, sharedElements_.size());
 	for (;;)
 	{
 		// Within each group, sort elements in their natural order
 		std::sort(sharedElements_.begin() + start, sharedElements_.begin() + end);
 		start = end;
-		end = std::min(end * 128, shared.size());
+		end = std::min(end * 128, sharedElements_.size());
 	}
 
 	for (int i = 0; i < sharedElements_.size(); i++)

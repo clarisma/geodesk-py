@@ -31,16 +31,18 @@ void GetCommand::setOption(std::string_view name, std::string_view value)
 
 */
 
-int GetCommand::run(char* argv[])
+int SaveCommand::run(char* argv[])
 {
-	CliCommand::run(argv);
+	GolCommand::run(argv);
 	
 	// int threads = std::thread::hardware_concurrency();
 	
+	/*
 	FeatureStore store;
 	store.open(GolCommand::golPath(golName_).c_str());
 
 	TileLoader loader(&store);
 	loader.load();
+	*/
 	return 0;
 }

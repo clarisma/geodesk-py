@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <common/io/File.h>
 #include <common/thread/TaskEngine.h>
 #include "geom/Tile.h"
 #include "gol/tiles/TesWriter.h"
@@ -36,7 +37,6 @@ public:
 
 private:
 	TileSaver* saver_;
-	TesWriter writer_;
 };
 
 class TileSaverOutputTask

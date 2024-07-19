@@ -9,7 +9,7 @@
 
 
 TileLoader::TileLoader(FeatureStore* store) :
-	TaskEngine(std::thread::hardware_concurrency()),
+	TaskEngine(1 /* std::thread::hardware_concurrency() */),
 	store_(store),
 	workCompleted_(0),
 	workPerTile_(0),

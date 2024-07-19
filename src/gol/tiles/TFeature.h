@@ -18,7 +18,8 @@ class TFeature : public TReferencedElement
 public:
 	TFeature(int32_t loc, uint32_t size, FeatureRef feature, int anchor) :
 		TReferencedElement(Type::FEATURE, loc, size, Alignment::DWORD, anchor),
-		feature_(feature)
+		feature_(feature),
+		nextById_(nullptr)
 	{
 	}
 
@@ -50,6 +51,7 @@ protected:
 		WayRef way_;
 		RelationRef relation_;
 	};
+	TFeature* nextById_;
 
 	friend class FeatureTable;
 };
@@ -133,7 +135,7 @@ private:
 	TRelationBody body_;
 };
 
-
+// TODO: Use nextById_ for lookup; next_ is used for forming chains or features
 class FeatureTable : public Lookup<FeatureTable, TFeature>
 {
 public:
@@ -144,6 +146,6 @@ public:
 
 	static TFeature** next(TFeature* elem)
 	{
-		return reinterpret_cast<TFeature**>(&elem->next_);
+		return reinterpret_cast<TFeature**>(&elem->nextById_);
 	}
 };

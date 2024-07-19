@@ -7,7 +7,7 @@
 
 TTagTable* TFeature::tags(TTile& tile) const
 {
-	return reinterpret_cast<TTagTable*>(tile.getElement(feature_.tags().ptr()));
+	return tile.getTags(feature_.tags().ptr());
 }
 
 void TFeature::write(const TTile& tile) const

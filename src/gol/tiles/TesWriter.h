@@ -73,9 +73,9 @@ private:
 	BufferWriter out_;
 	TTile& tile_;
 	Coordinate prevXY_;
-	std::vector<const SortedFeature> features_;
+	std::vector<SortedFeature> features_;
 	int nodeCount_;
 	int wayCount_;
 	std::vector<TSharedElement*> sharedElements_;
-	std::vector<const Tag> localKeyTags_;
+	std::vector<Tag> localKeyTags_;
 };

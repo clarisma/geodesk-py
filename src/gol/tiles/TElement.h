@@ -10,6 +10,14 @@
 #include <common/data/Linked.h>
 #include <common/data/Lookup.h>
 
+// TODO: In order to save 8 bytes per element, we use next_ (from Linked) to 
+// chain items in the same bucket in an ElementDeduplicator
+// However, we also use next_ for the chain of placed elements; this means
+// that once we start placing elements, we can no longer look up elements in
+// the ElementDeduplicator, becuase the hashmap chains are now invalid
+// This should not be a problem, but need to document
+// When placing elements, cannot assume that next_ is null!
+
 template <typename T> class ElementDeduplicator;
 
 class TElement : public Linked<TElement>

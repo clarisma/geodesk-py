@@ -28,20 +28,31 @@ public:
 	TTagTable* getTags(const void* p) const
 	{
 		p = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(p) & ~1);
-		return reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
+		TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
 			currentLocation(pointer(p))));
+		assert(!tags || tags->type() == TElement::Type::TAGS);
+		return tags;
 	}
 
 	TString* getString(const void* p) const
 	{
-		return reinterpret_cast<TString*>(elementsByLocation_.lookup(
+		TString* s = reinterpret_cast<TString*>(elementsByLocation_.lookup(
 			currentLocation(pointer(p))));
+		assert(!s || s->type() == TElement::Type::STRING);
+		return s;
 	}
 
 	TRelationTable* getRelationTable(const void* p) const
 	{
-		return reinterpret_cast<TRelationTable*>(elementsByLocation_.lookup(
-			currentLocation(pointer(p))));
+		TRelationTable* rels = reinterpret_cast<TRelationTable*>(
+			elementsByLocation_.lookup(currentLocation(pointer(p))));
+		// assert(!rels || rels->type() == TElement::Type::RELTABLE);
+		if (rels && rels->type() != TElement::Type::RELTABLE)
+		{
+			printf("  Requested location: %d\n", currentLocation(pointer(p)));
+			printf("    Element location: %d\n", rels->oldLocation());
+		}
+		return rels;
 	}
 
 	Arena& arena() { return arena_; }
