@@ -23,6 +23,8 @@ template <typename T> class ElementDeduplicator;
 class TElement : public Linked<TElement>
 {
 public:
+	using Handle = int32_t;
+
 	enum class Alignment : uint8_t
 	{
 		BYTE, WORD, DWORD, QWORD
@@ -42,12 +44,12 @@ public:
 		LEAF
 	};
 
-	TElement(Type type, int32_t location, uint32_t size, Alignment alignment, int anchor = 0) :
+	TElement(Type type, Handle handle, uint32_t size, Alignment alignment, int anchor = 0) :
 		Linked(nullptr),
 		location_(0), 
 		size_(size),
 		alignment_(static_cast<unsigned int>(alignment)),
-		oldLocation_(location),
+		handle_(handle),
 		type_(type),
 		isLast_(false),
 		isDeleted_(false),
@@ -60,7 +62,7 @@ public:
 	void setNext(TElement* next) { next_ = next; }
 	int32_t location() const { return location_; }
 	void setLocation(int32_t location) { location_ = location; }
-	int32_t oldLocation() const { return oldLocation_; }
+	Handle handle() const { return handle_; }
 	uint32_t size() const { return size_; }
 	void setAlignment(Alignment alignment) 
 	{ 
@@ -83,8 +85,11 @@ private:
 	int32_t location_;
 	unsigned int alignment_ :  2;
 	unsigned int size_      : 30;
-	int32_t oldLocation_;
+	Handle handle_;
 		// TODO: move oldLocation to TReferencedElement?
+		// No, need it here because of alignment
+		// If we were to take it out, this class only has 3 32-bit values,
+		// whcih would leave a gap
 	Type type_              :  6;
 	bool isLast_            :  1;
 	bool isDeleted_         :  1;
@@ -94,26 +99,26 @@ private:
 class TReferencedElement : public TElement
 {
 public:
-	TReferencedElement(Type  type, int32_t location, uint32_t size,
+	TReferencedElement(Type  type, Handle handle, uint32_t size,
 		Alignment alignment, int anchor) :
-		TElement(type, location, size, alignment, anchor), 
-		nextByLocation_(nullptr)
+		TElement(type, handle, size, alignment, anchor),
+		nextByHandle_(nullptr)
 	{
 	}
 
 private:
-	TReferencedElement* nextByLocation_;
+	TReferencedElement* nextByHandle_;
 
-	friend class LookupByLocation;
+	friend class LookupByHandle;
 };
 
 
 class TSharedElement : public TReferencedElement
 {
 public:
-	TSharedElement(Type type, int32_t location, const uint8_t* data, 
+	TSharedElement(Type type, Handle handle, const uint8_t* data,
 		uint32_t size, Alignment alignment, int anchor = 0) :
-		TReferencedElement(type, location, size, alignment, anchor),
+		TReferencedElement(type, handle, size, alignment, anchor),
 		data_(data), users_(0), category_(0)
 	{
 	}
@@ -150,17 +155,17 @@ protected:
 
 
 
-class LookupByLocation : public Lookup<LookupByLocation, TReferencedElement>
+class LookupByHandle : public Lookup<LookupByHandle, TReferencedElement>
 {
 public:
 	static uint64_t getId(TReferencedElement* element)
 	{
-		return element->oldLocation();
+		return element->handle();
 	}
 
 	static TReferencedElement** next(TReferencedElement* elem)
 	{
-		return &elem->nextByLocation_;
+		return &elem->nextByHandle_;
 	}
 };
 

@@ -1,53 +1,18 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "TTile.h"
-#include <algorithm>
-#include "TFeature.h"
-#include "Layout.h"
+#include "TileReader.h"
 #include <common/util/log.h>
 #include <common/util/varint.h>
 
-TTile::TTile(Tile tile) :
-	arena_(1024 * 1024, Arena::GrowthPolicy::GROW_50_PERCENT),
-	featureCount_(0),
-	pCurrentTile_(nullptr),
-	pNewTile_(nullptr),
-	currentTileSize_(0),
-#ifdef _DEBUG
-	currentLoadingFeature_(nullptr),
-#endif
-	tile_(tile)
-{
-}
-
-void TTile::initTables(size_t tileSize)
-{
-	size_t minTableSize = 1;
-	size_t tableSize = std::max(tileSize / 64 * 7, minTableSize);
-	elementsByLocation_.init(arena_.allocArray<TReferencedElement*>(tableSize), tableSize);
-
-	tableSize = std::max(tileSize / 512 * 37, minTableSize);
-	featuresById_.init(arena_.allocArray<TFeature*>(tableSize), tableSize);
-
-	tableSize = std::max(tileSize / 200, minTableSize);
-	strings_.init(arena_.allocArray<TString*>(tableSize), tableSize);
-
-	tableSize = std::max(tileSize / 90, minTableSize);
-	tagTables_.init(arena_.allocArray<TTagTable*>(tableSize), tableSize);
-
-	tableSize = std::max(tileSize / 3000, minTableSize);
-	relationTables_.init(arena_.allocArray<TRelationTable*>(tableSize), tableSize);
-}
-
-void TTile::readTile(pointer pTile)
+void TileReader::readTile(const DataPtr pTile)
 {
 	uint32_t tileSize = (pTile.getInt() & 0x3fff'ffff) + 4;
-		// Need to add header size (4 bytes) to payload size
+	// Need to add header size (4 bytes) to payload size
+	// TODO: will change
 
-	pCurrentTile_ = pTile;
-	currentTileSize_ = tileSize;
-	initTables(tileSize);
+	tile_.setSource(pTile, tileSize);
+	tile_.initTables(tileSize);
 	readTileFeatures(pTile);
 
 	// Now we have all features, tag-tables and strings in the old tile,
@@ -55,48 +20,40 @@ void TTile::readTile(pointer pTile)
 }
 
 
-void TTile::readNode(NodeRef node)
+void TileReader::readNode(NodeRef node)
 {
-	assertValidCurrentPointer(node.ptr());
 	readTagTable(node);
 	if (node.isRelationMember()) readRelationTable(node.bodyptr());
-	TNode* tnode = arena_.alloc<TNode>();
-	new(tnode) TNode(currentLocation(node.ptr()), node);
-	addFeatureToIndex(tnode);
+	tile_.addNode(node);
 }
 
-void TTile::readWay(WayRef way)
+void TileReader::readWay(WayRef way)
 {
-#ifdef _DEBUG
-	currentLoadingFeature_ = way;
-#endif
 	// LOG("Reading %s in %s...", way.toString().c_str(), tile_.toString().c_str());
-	assertValidCurrentPointer(way.ptr());
 	readTagTable(way);
-	TWay* tway = arena_.alloc<TWay>();
-	pointer pBody = way.bodyptr();
+	DataPtr pBody = way.bodyptr().asBytePointer();
 	uint32_t relTablePtrSize = way.flags() & 4;
 	uint32_t anchor;
 	if (way.flags() & FeatureFlags::WAYNODE)
 	{
-		pointer pNode(pBody);
+		DataPtr pNode(pBody);
 		pNode -= relTablePtrSize;		// skip pointer to reltable (4 bytes)
-		for(;;)
+		for (;;)
 		{
 			pNode -= 4;
-			int32_t wayNode = pNode.getUnalignedInt();
+			int32_t wayNode = pNode.getIntUnaligned();
 			if ((wayNode & (MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE)) ==
 				(MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE))
 			{
 				// foreign node in different tile
 				pNode -= 2;
-				pNode -= (pNode.getShort() & 1) << 1;   
-					// move backward by 2 extra bytes if the tip-delta is wide
-					// (denoted by Bit 0)
+				pNode -= (pNode.getShort() & 1) << 1;
+				// move backward by 2 extra bytes if the tip-delta is wide
+				// (denoted by Bit 0)
 			}
 			if (wayNode & MemberFlags::LAST) break;
 		}
-		anchor = pBody - pNode;
+		anchor = static_cast<uint32_t>(pBody - pNode);
 	}
 	else
 	{
@@ -109,14 +66,12 @@ void TTile::readWay(WayRef way)
 	uint32_t size = pointer(p) - pBody + anchor;
 	if (relTablePtrSize)
 	{
-		readRelationTable(pBody.followUnaligned(-4));
+		readRelationTable((pBody-4).followUnaligned());
 	}
 
-	new(tway) TWay(currentLocation(way.ptr()), way, pBody - anchor, size, anchor);
-	addFeatureToIndex(tway);
 }
 
-void TTile::readRelation(RelationRef relation)
+void TileReader::readRelation(RelationRef relation)
 {
 	// LOG("Reading relation/%ld", relation.id());
 	if (relation.id() == 184508)
@@ -127,7 +82,7 @@ void TTile::readRelation(RelationRef relation)
 	readTagTable(relation);
 	TRelation* trel = arena_.alloc<TRelation>();
 	pointer pBody = relation.bodyptr();
-	
+
 	pointer p(pBody);
 	for (;;)
 	{
@@ -168,24 +123,16 @@ void TTile::readRelation(RelationRef relation)
 	addFeatureToIndex(trel);
 }
 
-TString* TTile::readString(pointer p)
+TString* TileReader::readString(DataPtr p)
 {
-	assertValidCurrentPointer(p);
-	int32_t currentLoc = currentLocation(p);
-	TString* str = reinterpret_cast<TString*>(elementsByLocation_.lookup(currentLoc));
-	if (!str)
-	{
-		str = arena_.alloc<TString>();
-		new(str) TString(currentLoc, p);
-		elementsByLocation_.insert(str);
-		strings_.insertUnique(str);
-	}
+	TString* str = tile_.getString(p);
+	if (!str) tile_.addString(p);
 	str->addUser();
 	return str;
 }
 
 
-TTagTable* TTile::readTagTable(pointer pTagged)
+TTagTable* TileReader::readTagTable(DataPtr pTagged)
 {
 	pointer pTags = pointer::ofTagged(pTagged, ~1);
 	assertValidCurrentPointer(pTags);
@@ -222,7 +169,7 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 	{
 		anchor = 0;
 	}
-	
+
 	uint32_t size;
 	pointer p = pTags;
 	if (p.getUnalignedUnsignedInt() == TagsRef::EMPTY_TABLE_MARKER)
@@ -247,14 +194,14 @@ TTagTable* TTile::readTagTable(pointer pTagged)
 
 	assert((currentLoc & 1) == 0);
 	tags = arena_.alloc<TTagTable>();
-	new(tags) TTagTable(currentLoc, pTags-anchor, size, anchor);
+	new(tags) TTagTable(currentLoc, pTags - anchor, size, anchor);
 	elementsByLocation_.insert(tags);
 	tagTables_.insertUnique(tags);
 	return tags;
 }
 
 
-TRelationTable* TTile::readRelationTable(pointer pTable)
+TRelationTable* TTile::readRelationTable(DataPtr pTable)
 {
 	int32_t currentLoc = currentLocation(pTable);
 	TRelationTable* rels = getRelationTable(pTable);
@@ -286,46 +233,3 @@ TRelationTable* TTile::readRelationTable(pointer pTable)
 	return rels;
 }
 
-
-
-uint8_t* TTile::write(Layout& layout)
-{
-	LOG("Old size: %d | New size: %d", currentTileSize_, layout.size());
-
-	pNewTile_ = new uint8_t[layout.size()];
-	TElement* elem = layout.first();
-	do
-	{
-		switch (elem->type())
-		{
-		case TElement::Type::FEATURE:
-			reinterpret_cast<TFeature*>(elem)->write(*this);
-			break;
-		case TElement::Type::WAY_BODY:
-			reinterpret_cast<TWayBody*>(elem)->write(*this);
-			break;
-		case TElement::Type::RELATION_BODY:
-			reinterpret_cast<TRelationBody*>(elem)->write(*this);
-			break;
-		case TElement::Type::STRING:
-			reinterpret_cast<TString*>(elem)->write(newTileData() + elem->location());
-			break;
-		case TElement::Type::TAGS:
-			reinterpret_cast<TTagTable*>(elem)->write(*this);
-			break;
-		case TElement::Type::RELTABLE:
-			reinterpret_cast<TRelationTable*>(elem)->write(*this);
-			break;
-		case TElement::Type::INDEX:
-			reinterpret_cast<TIndex*>(elem)->write(*this);
-			break;
-		case TElement::Type::TRUNK:
-			reinterpret_cast<TIndexTrunk*>(elem)->write(*this);
-			break;
-
-		}
-		elem = elem->next();
-	}
-	while (elem);
-	return pNewTile_;
-}

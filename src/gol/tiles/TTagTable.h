@@ -13,8 +13,8 @@ class TTile;
 class TTagTable : public TSharedElement
 {
 public:
-	TTagTable(int32_t loc, const uint8_t* data, uint32_t size, uint32_t anchor) :
-		TSharedElement(Type::TAGS, loc, data, size, Alignment::WORD, anchor)
+	TTagTable(Handle handle, const uint8_t* data, uint32_t size, uint32_t anchor) :
+		TSharedElement(Type::TAGS, handle, data, size, Alignment::WORD, anchor)
 	{
 		setCategory(TIndex::UNASSIGNED_CATEGORY);
 	}

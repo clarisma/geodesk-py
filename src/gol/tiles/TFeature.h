@@ -4,7 +4,7 @@
 #pragma once
 
 #include "TElement.h"
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
 #include "feature/Node.h"
 #include "feature/Way.h"
 #include "feature/Relation.h"
@@ -16,8 +16,8 @@ class TTile;
 class TFeature : public TReferencedElement
 {
 public:
-	TFeature(int32_t loc, uint32_t size, FeatureRef feature, int anchor) :
-		TReferencedElement(Type::FEATURE, loc, size, Alignment::DWORD, anchor),
+	TFeature(Handle handle, uint32_t size, FeatureRef feature, int anchor) :
+		TReferencedElement(Type::FEATURE, handle, size, Alignment::DWORD, anchor),
 		feature_(feature),
 		nextById_(nullptr)
 	{
@@ -59,8 +59,8 @@ protected:
 class TNode : public TFeature
 {
 public:
-	TNode(int32_t loc, NodeRef node) :
-		TFeature(loc, 20 + (node.flags() & 4), node, 8)		// Bit 2 = member flag
+	TNode(Handle handle, NodeRef node) :
+		TFeature(handle, 20 + (node.flags() & 4), node, 8)		// Bit 2 = member flag
 	{
 	}
 
@@ -73,7 +73,7 @@ public:
 class TWayBody : public TElement
 {
 public:
-	TWayBody(pointer data, uint32_t size, uint32_t anchor) :
+	TWayBody(DataPtr data, uint32_t size, uint32_t anchor) :
 		TElement(Type::WAY_BODY, 0, size, anchor ? Alignment::WORD : Alignment::BYTE, anchor),
 		data_(data)
 	{
@@ -83,14 +83,14 @@ public:
 	void write(const TTile& tile) const;
 
 private:
-	pointer data_;
+	DataPtr data_;
 };
 
 class TWay : public TFeature
 {
 public:
-	TWay(int32_t loc, WayRef way, pointer pBodyData, uint32_t bodySize, uint32_t bodyAnchor) :
-		TFeature(loc, 32, way, 16),
+	TWay(Handle handle, WayRef way, DataPtr pBodyData, uint32_t bodySize, uint32_t bodyAnchor) :
+		TFeature(handle, 32, way, 16),
 		body_(pBodyData, bodySize, bodyAnchor)
 	{
 	}
@@ -122,8 +122,8 @@ private:
 class TRelation : public TFeature
 {
 public:
-	TRelation(int32_t loc, RelationRef relation, pointer pBodyData, uint32_t bodySize) :
-		TFeature(loc, 32, relation, 16),
+	TRelation(Handle handle, RelationRef relation, pointer pBodyData, uint32_t bodySize) :
+		TFeature(handle, 32, relation, 16),
 		body_(pBodyData, bodySize, relation.flags() & 4)		// 4 == member flag
 	{
 	}

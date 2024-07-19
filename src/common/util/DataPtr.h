@@ -11,9 +11,27 @@ class DataPtr
 {
 public:
     DataPtr() noexcept : p_(nullptr) {}
-    DataPtr(void* p) noexcept : p_(reinterpret_cast<uint8_t*>(p)) {}
+    DataPtr(uint8_t* p) noexcept : p_(p) {}
+    DataPtr(const uint8_t* p) noexcept : p_(const_cast<uint8_t*>(p)) {}
     DataPtr(const DataPtr& other) noexcept : p_(other.p_) {}
-    
+
+    DataPtr& operator=(uint8_t* p) noexcept
+    {
+        p_ = p;
+        return *this;
+    }
+
+    // Non-const assignment operator for const pointers
+    DataPtr& operator=(const uint8_t* p) noexcept
+    {
+        p_ = const_cast<uint8_t*>(p);
+        return *this;
+    }
+
+    // Deleted const assignment operators to prevent assigning non-const pointers
+    // to const DataPtr objects
+    DataPtr& operator=(uint8_t* p) const noexcept = delete;
+
     uint8_t getByte() const noexcept
     {
         return *reinterpret_cast<uint8_t*>(p_);
@@ -110,6 +128,16 @@ public:
     operator uint64_t* () const noexcept { return reinterpret_cast<uint64_t*>(p_); }
     operator float* () const noexcept { return reinterpret_cast<float*>(p_); }
     operator double* () const noexcept { return reinterpret_cast<double*>(p_); }
+    operator const int8_t* () const noexcept { return reinterpret_cast<const int8_t*>(p_); }
+    operator const uint8_t* () const noexcept { return reinterpret_cast<const uint8_t*>(p_); }
+    operator const int16_t* () const noexcept { return reinterpret_cast<const int16_t*>(p_); }
+    operator const uint16_t* () const noexcept { return reinterpret_cast<const uint16_t*>(p_); }
+    operator const int32_t* () const noexcept { return reinterpret_cast<const int32_t*>(p_); }
+    operator const uint32_t* () const noexcept { return reinterpret_cast<const uint32_t*>(p_); }
+    operator const int64_t* () const noexcept { return reinterpret_cast<const int64_t*>(p_); }
+    operator const uint64_t* () const noexcept { return reinterpret_cast<const uint64_t*>(p_); }
+    operator const float* () const noexcept { return reinterpret_cast<const float*>(p_); }
+    operator const double* () const noexcept { return reinterpret_cast<const double*>(p_); }
 
     DataPtr operator+(std::ptrdiff_t offset) const noexcept
     {
@@ -133,94 +161,14 @@ public:
         return *this;
     }
 
+    std::ptrdiff_t operator-(const DataPtr& other) const noexcept
+    {
+        return p_ - other.p_;
+    }
+
     bool operator!() const noexcept
     {
         return p_ == nullptr;
-    }
-
-    void putByte(uint8_t value) noexcept
-    {
-        *reinterpret_cast<uint8_t*>(p_) = value;
-    }
-
-    void putShort(int16_t value) noexcept
-    {
-        *reinterpret_cast<int16_t*>(p_) = value;
-    }
-
-    void putUnsignedShort(uint16_t value) noexcept
-    {
-        *reinterpret_cast<uint16_t*>(p_) = value;
-    }
-
-    void putInt(int32_t value) noexcept
-    {
-        *reinterpret_cast<int32_t*>(p_) = value;
-    }
-
-    void putUnsignedInt(uint32_t value) noexcept
-    {
-        *reinterpret_cast<uint32_t*>(p_) = value;
-    }
-
-    void putLong(int64_t value) noexcept
-    {
-        *reinterpret_cast<int64_t*>(p_) = value;
-    }
-
-    void putUnsignedLong(uint64_t value) noexcept
-    {
-        *reinterpret_cast<uint64_t*>(p_) = value;
-    }
-
-    void putFloat(float value) noexcept
-    {
-        *reinterpret_cast<float*>(p_) = value;
-    }
-
-    void putDouble(double value) noexcept
-    {
-        *reinterpret_cast<double*>(p_) = value;
-    }
-
-    void putShortUnaligned(int16_t value) noexcept
-    {
-        putUnaligned<int16_t>(p_, value);
-    }
-
-    void putUnsignedShortUnaligned(uint16_t value) noexcept
-    {
-        putUnaligned<uint16_t>(p_, value);
-    }
-
-    void putIntUnaligned(int32_t value) noexcept
-    {
-        putUnaligned<int32_t>(p_, value);
-    }
-
-    void putUnsignedIntUnaligned(uint32_t value) noexcept
-    {
-        putUnaligned<uint32_t>(p_, value);
-    }
-
-    void putLongUnaligned(int64_t value) noexcept
-    {
-        putUnaligned<int64_t>(p_, value);
-    }
-
-    void putUnsignedLongUnaligned(uint64_t value) noexcept
-    {
-        putUnaligned<uint64_t>(p_, value);
-    }
-
-    void putFloatUnaligned(float value) noexcept
-    {
-        putUnaligned<float>(p_, value);
-    }
-
-    void putDoubleUnaligned(double value) noexcept
-    {
-        putUnaligned<double>(p_, value);
     }
 
     DataPtr follow() const noexcept
@@ -228,7 +176,13 @@ public:
         return DataPtr(p_ + getInt());
     }
 
-private:
+    DataPtr followUnaligned() const noexcept
+    {
+        return DataPtr(p_ + getIntUnaligned());
+    }
+
+
+protected:
     template<typename T>
     static T getUnaligned(const uint8_t* p) noexcept
     {
@@ -242,18 +196,6 @@ private:
         T value;
         std::memcpy(&value, p, sizeof(value));
         return value;
-#endif
-    }
-
-    template<typename T>
-    static void putUnaligned(uint8_t* p, T value) noexcept
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        std::memcpy(p, &value, sizeof(value));
-#elif defined(_MSC_VER)
-        * reinterpret_cast<T __unaligned*>(p) = value;
-#else
-        std::memcpy(p, &value, sizeof(value));
 #endif
     }
 

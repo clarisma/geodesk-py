@@ -12,20 +12,31 @@
 #include "TTagTable.h"
 #include "geom/Tile.h"
 
-// TODO: Call this TileKit
 
-class TTile : public TileReader<TTile>
+class TileKit
 {
 public:
-	TTile(Tile tile);
-	void readTile(pointer pTile);
+	TileKit(Tile tile);
 
-	TReferencedElement* getElement(const void* p) const
+	void setSource(const uint8_t* pTile, uint32_t size)
+	{
+		pCurrentTile_ = pTile;
+		currentTileSize_ = size;
+	}
+
+	void initTables(size_t tileSize);
+	
+	TString* addString(int32_t location, const uint8_t* p, uint32_t size);
+	TString* addString(DataPtr p);
+	void addNode(NodeRef node);
+	void addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
+	
+	TReferencedElement* getElement(const uint8_t* p) const
 	{
 		return elementsByLocation_.lookup(currentLocation(pointer(p)));
 	}
 
-	TTagTable* getTags(const void* p) const
+	TTagTable* getTags(const uint8_t* p) const
 	{
 		p = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(p) & ~1);
 		TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
@@ -34,7 +45,7 @@ public:
 		return tags;
 	}
 
-	TString* getString(const void* p) const
+	TString* getString(const uint8_t* p) const
 	{
 		TString* s = reinterpret_cast<TString*>(elementsByLocation_.lookup(
 			currentLocation(pointer(p))));
@@ -71,24 +82,13 @@ public:
 	uint8_t* newTileData() const { return pNewTile_;	}
 	uint8_t* write(Layout& layout);
 
+	uint8_t* alloc(uint8_t size) {return arena_.alloc(size, 4); }
 
 private:
-	void readNode(NodeRef node);
-	void readWay(WayRef way);
-	void readRelation(RelationRef relation);
-	TString* readString(pointer p);
-	TTagTable* readTagTable(pointer pTagged);
-	TTagTable* readTagTable(FeatureRef feature)
+	
+	int32_t currentLocation(const uint8_t* p) const
 	{
-		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
-		tags->addUser();
-		return tags;
-	}
-	TRelationTable* readRelationTable(pointer p);
-
-	int32_t currentLocation(pointer p) const
-	{
-		return static_cast<int32_t>(pCurrentTile_ - p.asBytePointer());
+		return static_cast<int32_t>(pCurrentTile_ - p);
 		// We use negative values to indicate old location
 		// TODO: Change this approach
 	}
@@ -130,8 +130,6 @@ private:
 		featuresById_.insert(feature);
 		featureCount_++;
 	}
-
-	void initTables(size_t tileSize);
 
 	Arena arena_;
 	LookupByLocation elementsByLocation_;

@@ -8,8 +8,13 @@
 class TString : public TSharedElement
 {
 public:
-	TString(int32_t loc, const uint8_t* data) :
-		TSharedElement(Type::STRING, loc, data, getStringSize(data), Alignment::BYTE)
+	TString(Handle handle, const uint8_t* data, uint32_t size) :
+		TSharedElement(Type::STRING, handle, data, size, Alignment::BYTE)
+	{
+	}
+
+	TString(Handle handle, const uint8_t* data) :
+		TString(handle, data, getStringSize(data))
 	{
 	}
 
