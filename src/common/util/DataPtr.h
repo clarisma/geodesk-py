@@ -10,9 +10,9 @@
 class DataPtr
 {
 public:
-    DataPtr() : p_(nullptr) {}
-    DataPtr(void* p) : p_(reinterpret_cast<uint8_t*>(p)) {}
-    DataPtr(const DataPtr& other) : p_(other.p_) {}
+    DataPtr() noexcept : p_(nullptr) {}
+    DataPtr(void* p) noexcept : p_(reinterpret_cast<uint8_t*>(p)) {}
+    DataPtr(const DataPtr& other) noexcept : p_(other.p_) {}
     
     uint8_t getByte() const noexcept
     {
@@ -133,6 +133,11 @@ public:
         return *this;
     }
 
+    bool operator!() const noexcept
+    {
+        return p_ == nullptr;
+    }
+
     void putByte(uint8_t value) noexcept
     {
         *reinterpret_cast<uint8_t*>(p_) = value;
@@ -216,6 +221,11 @@ public:
     void putDoubleUnaligned(double value) noexcept
     {
         putUnaligned<double>(p_, value);
+    }
+
+    DataPtr follow() const noexcept
+    {
+        return DataPtr(p_ + getInt());
     }
 
 private:
