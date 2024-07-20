@@ -102,9 +102,12 @@ TTagTable* TesReader::readTagTable()
 	}
 
 	MutableDataPtr end = data + size;
+	uint32_t prevKeyShifted = 0;
 	do
 	{
-		uint32_t keyBits = readVarint32(p_);
+		// key is delta-coded
+		uint32_t keyBits = readVarint32(p_) + prevKeyShifted;
+		prevKeyShifted = keyBits & 0xfffc;
 		pPrevKey = pTag;
 		pTag.putUnsignedShort(static_cast<uint16_t>(keyBits));
 		hasher.addKey(keyBits >> 2);
