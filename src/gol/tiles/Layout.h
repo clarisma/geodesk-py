@@ -5,14 +5,14 @@
 #include <common/data/FixedQueue.h>
 #include "TElement.h"
 
-class TTile;
+class TileKit;
 
 class Layout
 {
 public:
 	Layout(TTile& tile);
 
-	TTile& tile() const { return tile_; }
+	TileKit& tile() const { return tile_; }
 	int32_t size() { return pos_; }
 	void place(TElement* elem);
 	void flush();
@@ -52,7 +52,7 @@ private:
 		placed_.addTail(elem);
 	}
 
-	TTile& tile_;
+	TileKit& tile_;
 	LinkedQueue<TElement> placed_;
 	LinkedQueue<TElement> bodies_;
 	FixedQueue<TElement*, DEFERRED_QUEUESIZE> deferred_;

@@ -15,10 +15,57 @@ class Filter;
 class StringTable;
 
 
+class FeatureHeader
+{
+public:
+	FeatureHeader(uint64_t idBits) : idBits_(idBits) {}
+
+	// TODO: This will change in 2.0
+	uint64_t id() const noexcept
+	{
+		uint32_t hi = static_cast< uint32_t>(idBits_) >> 8;
+		uint32_t lo = static_cast<uint32_t>(idBits_ >> 32);
+		return (static_cast<uint64_t>(hi) << 32) | lo;
+	}
+
+	// TODO: This will change in 2.0
+	int flags() const noexcept 
+	{ 
+		return static_cast<int>(idBits_);
+	}
+
+	int typeCode() const
+	{
+		return static_cast<int>(idBits_ >> 3) & 3;
+	}
+
+private:
+	uint64_t idBits_;
+};
+
+
+class TypedFeatureId
+{
+public:
+	static TypedFeatureId ofTypeAndId(int type, uint64_t id) noexcept
+	{
+		assert(type >= 0 && type <= 2);
+		return TypedFeatureId((id << 2) | type);
+	}
+
+	uint64_t id() const noexcept { return typedId_ >> 2; }
+	int type() const noexcept { return typedId_ & 3; }
+
+private:
+	TypedFeatureId(uint64_t typedId) noexcept : typedId_(typedId) {}
+
+	uint64_t typedId_;
+};
+
 class FeaturePtr
 {
 public:
-	FeaturePtr(uint8_t* p) { p_ = p; }
+	FeaturePtr(uint8_t* p) : p_(p) {}
 
 	uint64_t id() const noexcept
 	{
@@ -30,6 +77,11 @@ public:
 	uint64_t typedId() const noexcept
 	{
 		return (id() << 2) | typeCode();
+	}
+
+	FeatureHeader header()
+	{
+		return FeatureHeader(p_.getUnsignedLongUnaligned());
 	}
 
 	// TODO: should just get pointer
@@ -58,8 +110,7 @@ public:
 
 	TagsRef tags() const
 	{
-		pointer ppTags(p_ + 8);
-		return TagsRef(ppTags);
+		return TagsRef(p_ + 8);
 	}
 
 	DataPtr ptr() const { return p_; }
@@ -83,6 +134,8 @@ public:
 	/**
 	 * A 64-bit value that uniquely identifies the feature based on its
 	 * type and ID.
+	 * 
+	 * TODO: Changes in 2.0
 	 */
 	int64_t idBits() const
 	{

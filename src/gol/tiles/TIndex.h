@@ -12,7 +12,7 @@ class HilbertIndexBuilder;
 class IndexSettings;
 class Layout;
 class TFeature;
-class TTile;
+class TileKit;
 
 // TODO: No need for oldLocation on these elements, since they are
 //  always recreated
@@ -69,7 +69,7 @@ public:
 	TIndexBranch* firstChildBranch() const { return firstBranch_; }
 
 	void place(Layout& layout);
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
 
 private:
 	TIndexBranch* firstBranch_;
@@ -85,9 +85,9 @@ public:
 		roots_[category].addFeature(feature, indexBits);
 	}
 
-	void build(TTile& tile, const IndexSettings& settings);
+	void build(TileKit& tile, const IndexSettings& settings);
 	void place(Layout& layout);
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
 
 	static const int MAX_CATEGORIES = 30;
 	static const int NUMBER_OF_ROOTS = MAX_CATEGORIES + 2;
@@ -125,7 +125,7 @@ private:
 class Indexer
 {
 public:
-	Indexer(TTile& tile, const IndexSettings& settings);
+	Indexer(TileKit& tile, const IndexSettings& settings);
 	void addFeatures(const FeatureTable& features);
 	void build();
 	void place(Layout& layout);
@@ -142,7 +142,7 @@ private:
 		INVALID
 	};
 
-	TTile& tile_;
+	TileKit& tile_;
 	const IndexSettings& settings_;
 	TIndex indexes_[4];			// for nodes, ways, areas & relations
 };

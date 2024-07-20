@@ -4,6 +4,7 @@
 #pragma once
 
 #include "TileKit.h"
+#include <common/util/TaggedPtr.h>
 
 class TesReader
 {
@@ -11,8 +12,15 @@ public:
 	TesReader();
 
 private:
-	void readString();
+	void readFeatureIndex();
+	TString* readString();
+	void readStrings();
+	TTagTable* readTagTable();
 
 	TileKit& tile_;
 	const uint8_t* p_;
+	TString** strings_;
+	TTagTable** tagTables_;
+	TRelationTable** relationTables_;
+	TaggedPtr<TFeature,1>* features_;
 };

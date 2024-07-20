@@ -4,10 +4,10 @@
 #pragma once
 
 #include "TElement.h"
-#include <common/util/DataPtr.h>
-#include "feature/Node.h"
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/FeaturePtr.h"
+#include "feature/NodePtr.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 
 class Layout;
 class TTagTable;
@@ -16,27 +16,28 @@ class TTile;
 class TFeature : public TReferencedElement
 {
 public:
-	TFeature(Handle handle, uint32_t size, FeatureRef feature, int anchor) :
+	TFeature(Handle handle, uint32_t size, FeaturePtr feature, int anchor) :
 		TReferencedElement(Type::FEATURE, handle, size, Alignment::DWORD, anchor),
 		feature_(feature),
 		nextById_(nullptr)
 	{
 	}
 
-	FeatureRef feature() const { return feature_; }
+	FeaturePtr feature() const { return feature_; }
 	uint64_t id() const { return feature_.id(); }
 	uint64_t typeCode() const { return feature_.typeCode(); }
 	uint64_t idBits() const { return feature_.idBits(); }
-	int flags() const {	return feature_.flags(); }
+	int flags() const { return feature_.flags(); }
 	bool isRelationMember() const { return feature_.flags() & FeatureFlags::RELATION_MEMBER; }
-	TTagTable* tags(TTile& tile) const;
+	TTagTable* tags(TileKit& tile) const;
 	TFeature* nextFeature() const
 	{
 		assert(next_ == nullptr || next_->type() == Type::FEATURE);
 		return reinterpret_cast<TFeature*>(next_);
 	}
-	static void addRelationTable(Layout& layout, pointer ppRelTable);
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
+
+	static void addRelationTable(Layout& layout, DataPtr ppRelTable);
 
 	static bool compareById(const TFeature* a, const TFeature* b)
 	{
@@ -46,10 +47,10 @@ public:
 protected:
 	union
 	{
-		FeatureRef feature_;
-		NodeRef node_;
-		WayRef way_;
-		RelationRef relation_;
+		FeaturePtr feature_;
+		NodePtr node_;
+		WayPtr way_;
+		RelationPtr relation_;
 	};
 	TFeature* nextById_;
 
@@ -59,8 +60,8 @@ protected:
 class TNode : public TFeature
 {
 public:
-	TNode(Handle handle, NodeRef node) :
-		TFeature(handle, 20 + (node.flags() & 4), node, 8)		// Bit 2 = member flag
+	TNode(Handle handle, NodePtr node) :
+		TFeature(handle, 20 + (node.flags() & 4),  node, 8)		// Bit 2 = member flag
 	{
 	}
 
@@ -68,6 +69,10 @@ public:
 	{
 		if (node_.isRelationMember()) addRelationTable(layout, node_.ptr() + 12);
 	}
+
+private:
+	int32_t x_;
+	int32_t y_;
 };
 
 class TWayBody : public TElement
@@ -79,7 +84,7 @@ public:
 	{
 	}
 
-	pointer data() const { return data_; }
+	DataPtr data() const { return data_; }
 	void write(const TTile& tile) const;
 
 private:
@@ -89,7 +94,7 @@ private:
 class TWay : public TFeature
 {
 public:
-	TWay(Handle handle, WayRef way, DataPtr pBodyData, uint32_t bodySize, uint32_t bodyAnchor) :
+	TWay(Handle handle, WayPtr way, DataPtr pBodyData, uint32_t bodySize, uint32_t bodyAnchor) :
 		TFeature(handle, 32, way, 16),
 		body_(pBodyData, bodySize, bodyAnchor)
 	{
@@ -122,7 +127,7 @@ private:
 class TRelation : public TFeature
 {
 public:
-	TRelation(Handle handle, RelationRef relation, pointer pBodyData, uint32_t bodySize) :
+	TRelation(Handle handle, RelationPtr relation, pointer pBodyData, uint32_t bodySize) :
 		TFeature(handle, 32, relation, 16),
 		body_(pBodyData, bodySize, relation.flags() & 4)		// 4 == member flag
 	{

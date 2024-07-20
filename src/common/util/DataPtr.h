@@ -166,6 +166,11 @@ public:
         return p_ - other.p_;
     }
 
+    std::ptrdiff_t operator-(const uint8_t* other) const noexcept
+    {
+        return p_ - other;
+    }
+
     bool operator!() const noexcept
     {
         return p_ == nullptr;

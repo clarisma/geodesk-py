@@ -6,7 +6,7 @@
 #include <common/util/BufferWriter.h>
 #include "geom/Box.h"
 #include "geom/Coordinate.h"
-#include "TTile.h"
+#include "TileKit.h"
 
 class TNode;
 class TWay;
@@ -15,7 +15,7 @@ class TRelation;
 class TesWriter
 {
 public:
-	TesWriter(TTile& tile, Buffer* out);
+	TesWriter(TileKit& tile, Buffer* out);
 
 	void write();
 
@@ -71,7 +71,7 @@ private:
 	void writeBounds(FeatureRef feature);
 
 	BufferWriter out_;
-	TTile& tile_;
+	TileKit& tile_;
 	Coordinate prevXY_;
 	std::vector<SortedFeature> features_;
 	int nodeCount_;

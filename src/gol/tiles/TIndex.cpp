@@ -7,7 +7,7 @@
 #include "HilbertIndexBuilder.h"
 #include "IndexSettings.h"
 #include "TTagTable.h"
-#include "TTile.h"
+#include "TileKit.h"
 
 uint32_t TIndexLeaf::calculateSize(TFeature* firstFeature)
 {
@@ -51,7 +51,7 @@ uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
 }
 */
 
-void TIndexTrunk::write(const TTile& tile) const
+void TIndexTrunk::write(const TileKit& tile) const
 {
 	uint8_t pos = location();
 	uint8_t* p = tile.newTileData() + pos;
@@ -126,7 +126,7 @@ void TIndex::Root::build(HilbertIndexBuilder& rtreeBuilder)
 }
 
 
-void TIndex::build(TTile& tile, const IndexSettings& settings)
+void TIndex::build(TileKit& tile, const IndexSettings& settings)
 {
 	int maxRootCount = settings.maxKeyIndexes();
 	int minFeaturesPerRoot = settings.keyIndexMinFeatures();
@@ -316,7 +316,7 @@ void TIndexTrunk::place(Layout& layout)
 }
 
 
-void TIndex::write(const TTile& tile) const
+void TIndex::write(const TileKit& tile) const
 {
 	uint8_t pos = location();
 	uint8_t* p = tile.newTileData() + pos;
@@ -351,7 +351,7 @@ const uint8_t Indexer::FLAGS_TO_TYPE[16] =
 };
 
 
-Indexer::Indexer(TTile& tile, const IndexSettings& settings) :
+Indexer::Indexer(TileKit& tile, const IndexSettings& settings) :
 	tile_(tile),
 	settings_(settings)
 {

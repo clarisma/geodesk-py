@@ -3,7 +3,7 @@
 
 #pragma once
 #include <utility> // for std::pair
-#include "TTile.h"
+#include "TileKit.h"
 
 class TFeature;
 class TIndexBranch;
@@ -13,7 +13,7 @@ class TIndexTrunk;
 class HilbertIndexBuilder
 {
 public:
-	HilbertIndexBuilder(TTile& tile) :
+	HilbertIndexBuilder(TileKit& tile) :
 		arena_(tile.arena()),
 		tileBounds_(tile.bounds()),
 		rtreeBucketSize_(9)             // TODO

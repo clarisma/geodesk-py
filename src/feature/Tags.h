@@ -27,6 +27,7 @@ class TagsRef
 {
 public:
 	TagsRef(pointer ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
+	TagsRef(const uint64_t* ppTags) : TagsRef(pointer(ppTags)) {}
 
 	static TagsRef empty() { return TagsRef(&EMPTY_TABLE_STRUCT); }
 

@@ -32,10 +32,10 @@ void TFeature::write(const TTile& tile) const
 }
 
 
-void TFeature::addRelationTable(Layout& layout, pointer ppRelTable)
+void TFeature::addRelationTable(Layout& layout, DataPtr ppRelTable)
 {
-	TTile& tile = layout.tile();
-	int ofs = ppRelTable.getUnalignedInt();
+	TileKit& tile = layout.tile();
+	int ofs = ppRelTable.getIntUnaligned();
 	TRelationTable* relTable = tile.getRelationTable(ppRelTable + ofs);
 	assert(relTable);
 	assert(relTable->type() == TElement::Type::RELTABLE);

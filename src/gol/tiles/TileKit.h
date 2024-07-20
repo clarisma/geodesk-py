@@ -26,45 +26,46 @@ public:
 
 	void initTables(size_t tileSize);
 	
-	TString* addString(int32_t location, const uint8_t* p, uint32_t size);
+	TFeature* getFeature(TypedFeatureId typedId) const;
+
+	TElement::Handle newHandle();
+	TString* addString(const uint8_t* p, uint32_t size);
+	TString* addString(TElement::Handle handle, const uint8_t* p, uint32_t size);
 	TString* addString(DataPtr p);
 	void addNode(NodeRef node);
 	void addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
 	
-	TReferencedElement* getElement(const uint8_t* p) const
+	TReferencedElement* getElement(TElement::Handle handle) const
 	{
-		return elementsByLocation_.lookup(currentLocation(pointer(p)));
+		return elementsByHandle_.lookup(handle);
 	}
 
-	TTagTable* getTags(const uint8_t* p) const
+	TTagTable* getTags(TElement::Handle handle) const
 	{
-		p = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(p) & ~1);
-		TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(
-			currentLocation(pointer(p))));
-		assert(!tags || tags->type() == TElement::Type::TAGS);
-		return tags;
+		return TElement::cast<TTagTable>(getElement(handle));
 	}
 
-	TString* getString(const uint8_t* p) const
+	TString* getString(TElement::Handle handle) const
 	{
-		TString* s = reinterpret_cast<TString*>(elementsByLocation_.lookup(
+		return TElement::cast<TString>(getElement(handle));
+	}
+
+	TRelationTable* getRelationTable(TElement::Handle handle) const
+	{
+		return TElement::cast<TRelationTable>(getElement(handle));
+	}
+
+
+	/*
+	TString* getString(const uint8_t* s, uint32_t size) const
+	{
+		TString* s = strings_.reinterpret_cast<TString*>(elementsByLocation_.lookup(
 			currentLocation(pointer(p))));
 		assert(!s || s->type() == TElement::Type::STRING);
 		return s;
 	}
+	*/
 
-	TRelationTable* getRelationTable(const void* p) const
-	{
-		TRelationTable* rels = reinterpret_cast<TRelationTable*>(
-			elementsByLocation_.lookup(currentLocation(pointer(p))));
-		// assert(!rels || rels->type() == TElement::Type::RELTABLE);
-		if (rels && rels->type() != TElement::Type::RELTABLE)
-		{
-			printf("  Requested location: %d\n", currentLocation(pointer(p)));
-			printf("    Element location: %d\n", rels->oldLocation());
-		}
-		return rels;
-	}
 
 	Arena& arena() { return arena_; }
 	Box bounds() const { return tile_.bounds(); }
@@ -82,20 +83,32 @@ public:
 	uint8_t* newTileData() const { return pNewTile_;	}
 	uint8_t* write(Layout& layout);
 
-	uint8_t* alloc(uint8_t size) {return arena_.alloc(size, 4); }
+	TElement::Handle existingHandle(DataPtr p) const
+	{
+		TElement::Handle handle = static_cast<TElement::Handle>(p - pCurrentTile_);
+		assert(handle > 0 && handle < currentTileSize_);
+		return handle;
+	}
 
 private:
-	
+	/*
+	template <typename T>
+	T* createSharedElement(const uint8_t* data, uint32_t unencodedSize);
+	*/
+
+	/*
 	int32_t currentLocation(const uint8_t* p) const
 	{
 		return static_cast<int32_t>(pCurrentTile_ - p);
 		// We use negative values to indicate old location
 		// TODO: Change this approach
 	}
+	*/
 
 	/**
 	 * 
 	 */
+	/*
 	int32_t newRelativePointer(pointer p, int oldRel)
 	{
 		int pointerLoc = static_cast<int32_t>(pNewTile_ - p.asBytePointer());
@@ -105,11 +118,13 @@ private:
 		assert(elem);
 		return elem->location() - pointerLoc;
 	}
+	*/
 
 	/**
 	 * Asserts that the given pointer references a valid address in the
 	 * current tile data (i.e. the existing tile that is being read).
 	 */
+	/*
 	void assertValidCurrentPointer(const void* p)
 	{
 #ifdef _DEBUG
@@ -123,16 +138,17 @@ private:
 #endif
 		assert(p >= pCurrentTile_ && p <= pCurrentTile_ + currentTileSize_);
 	}
+	*/
 
 	void addFeatureToIndex(TFeature* feature)
 	{
-		elementsByLocation_.insert(feature);
+		elementsByHandle_.insert(feature);
 		featuresById_.insert(feature);
 		featureCount_++;
 	}
 
 	Arena arena_;
-	LookupByLocation elementsByLocation_;
+	LookupByHandle elementsByHandle_;
 	FeatureTable featuresById_;
 	ElementDeduplicator<TString> strings_;
 	ElementDeduplicator<TTagTable> tagTables_;

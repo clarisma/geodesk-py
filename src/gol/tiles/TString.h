@@ -4,12 +4,14 @@
 #pragma once
 
 #include "TElement.h"
+#include <common/util/Strings.h>
 
 class TString : public TSharedElement
 {
 public:
 	TString(Handle handle, const uint8_t* data, uint32_t size) :
-		TSharedElement(Type::STRING, handle, data, size, Alignment::BYTE)
+		TSharedElement(Type::STRING, handle, data, size, Alignment::BYTE, 
+			Strings::hash(reinterpret_cast<const char*>(data), size))
 	{
 	}
 
@@ -38,4 +40,6 @@ public:
 		uint32_t len = *data;
 		return (len & 0x80) ? (((len & 0xf7) | (*(data + 1) << 7)) + 2) : (len + 1);
 	}
+
+	static constexpr TElement::Type TYPE = TElement::Type::STRING;
 };

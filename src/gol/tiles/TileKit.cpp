@@ -40,15 +40,33 @@ void TileKit::initTables(size_t tileSize)
 	relationTables_.init(arena_.allocArray<TRelationTable*>(tableSize), tableSize);
 }
 
-TString* TileKit::addString(int32_t location, const uint8_t* p, uint32_t size)
+
+template <typename T>
+T* TileKit::createSharedElement(const uint8_t* data, uint32_t unencodedSize)
 {
-	TString* str = arena_.alloc<TString>();
-	new(str) TString(location, p, size);
-	elementsByLocation_.insert(str);
-	strings_.insertUnique(str);
+	uint8_t* bytes = arena_.alloc(sizeof(TSharedElement) + unencodedSize, alignof(TSharedElement));
+	T* element = reinterpret_cast<T*>(bytes);
+	new(element) T(bytes, unencodedSize);
+	memcpy(bytes + sizeof(TSharedElement), data, unencodedSize);
+	return element;
 }
 
 
+
+TString* TileKit::addString(const uint8_t* p, uint32_t size)
+{
+	TString* str = createSharedElement<TString>(p, size);
+	strings_.insertUnique(str);
+}
+
+TString* TileKit::addString(TElement::Handle handle, const uint8_t* p, uint32_t size)
+{
+	TString* str = addString(p, size);
+	elementsByLocation_.insert(str);
+}
+
+
+/*
 TString* TileKit::addString(DataPtr p)
 {
 	TString* str = arena_.alloc<TString>();
@@ -56,6 +74,7 @@ TString* TileKit::addString(DataPtr p)
 	elementsByLocation_.insert(str);
 	strings_.insertUnique(str);
 }
+*/
 
 void TileKit::addNode(NodeRef node)
 {

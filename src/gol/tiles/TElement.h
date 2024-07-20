@@ -57,6 +57,14 @@ public:
 	{
 	}
 
+	template<typename T>
+	static T* cast(TElement* e)
+	{
+		T* casted = reinterpret_cast<T*>(e);
+		assert(!casted || casted->type() == T::TYPE);
+		return casted;
+	}
+
 	Type type() const { return type_; }
 	TElement* next() const { return next_; }
 	void setNext(TElement* next) { next_ = next; }
@@ -99,7 +107,7 @@ private:
 class TReferencedElement : public TElement
 {
 public:
-	TReferencedElement(Type  type, Handle handle, uint32_t size,
+	TReferencedElement(Type type, Handle handle, uint32_t size,
 		Alignment alignment, int anchor) :
 		TElement(type, handle, size, alignment, anchor),
 		nextByHandle_(nullptr)
@@ -112,18 +120,21 @@ private:
 	friend class LookupByHandle;
 };
 
-
+// TODO: Would be useful to mark TTagTable to see if it can be quickly compared
+// bytewise since it does not contain string pointers
 class TSharedElement : public TReferencedElement
 {
 public:
-	TSharedElement(Type type, Handle handle, const uint8_t* data,
-		uint32_t size, Alignment alignment, int anchor = 0) :
+	TSharedElement(Type type, Handle handle, const uint8_t* data, 
+		uint32_t size, Alignment alignment, uint32_t hash, int anchor = 0) :
 		TReferencedElement(type, handle, size, alignment, anchor),
-		data_(data), users_(0), category_(0)
+		data_(data), hash_(hash), users_(0), category_(0)
 	{
 	}
 
 	const uint8_t* data() const { return data_; }
+	uint32_t hash() const { return hash_; }
+
 	void write(uint8_t* p) const
 	{
 		memcpy(p, data_, size());
@@ -149,8 +160,9 @@ public:
 
 protected:
 	const uint8_t* data_;
-	int users_;
-	int category_;
+	uint32_t hash_;
+	unsigned int users_ : 24;
+	unsigned int category_ : 8;
 };
 
 

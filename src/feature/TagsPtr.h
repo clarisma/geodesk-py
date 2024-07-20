@@ -12,6 +12,8 @@
 #include "StringTable.h"
 #include <common/util/pointer.h>
 
+// TODO -- WIP
+
 /*
 * Bit 0 : type (0 = number, 1 = string)
 * Bit 1 : size flag (0 = narrow, 1 = wide)

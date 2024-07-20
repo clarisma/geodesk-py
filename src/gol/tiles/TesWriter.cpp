@@ -5,7 +5,7 @@
 #include "TesFlags.h"
 #include "TFeature.h"
 
-TesWriter::TesWriter(TTile& tile, Buffer* out) :
+TesWriter::TesWriter(TileKit& tile, Buffer* out) :
 	tile_(tile),
 	out_(out),
 	prevXY_(0,0),
@@ -58,6 +58,7 @@ void TesWriter::writeFeatureIndex()
 			}
 			out_.writeByte(0);
 			prevType = type;
+			prevId = 0;		// ID space starts over 
 		}
 		uint64_t id = feature.id();
 		out_.writeVarint(((id - prevId) << 1) | 1);
@@ -239,7 +240,7 @@ void TesWriter::writeFeatures()
 
 void TesWriter::writeStub(const TFeature* feature, int flags)
 {
-	TTagTable* tags = feature->tags(tile_);
+	TTagTable* tags = feature->tags();
 	flags |= TesFlags::TAGS_CHANGED | TesFlags::GEOMETRY_CHANGED;
 	flags |= tags->location() ? TesFlags::SHARED_TAGS : 0;
 	flags |= feature->isRelationMember() ? TesFlags::RELATIONS_CHANGED : 0;
@@ -256,8 +257,7 @@ void TesWriter::writeStub(const TFeature* feature, int flags)
 
 	if (flags & TesFlags::RELATIONS_CHANGED)
 	{
-		TRelationTable* rels = tile_.getRelationTable(
-			feature->feature().relationTableFast());
+		TRelationTable* rels = feature->parentRelations();
 		if (rels->location())
 		{
 			out_.writeVarint(rels->location());
@@ -272,13 +272,12 @@ void TesWriter::writeStub(const TFeature* feature, int flags)
 
 void TesWriter::writeNode(const TNode* node)
 {
-	NodeRef nodeRef(node->feature());
-	bool isRelationMember = nodeRef.isRelationMember();
-	int flags = (node->feature().flags() & FeatureFlags::WAYNODE) ?
+	bool isRelationMember = node.isRelationMember();
+	int flags = (node->flags() & FeatureFlags::WAYNODE) ?
 		TesFlags::NODE_BELONGS_TO_WAY : 0;
 	writeStub(node, flags);  // TODO: has_shared_location / is_exception_node  
 
-	Coordinate xy = nodeRef.xy();
+	Coordinate xy = node.xy();
 	out_.writeSignedVarint(static_cast<int64_t>(xy.x) - prevXY_.x);
 	out_.writeSignedVarint(static_cast<int64_t>(xy.y) - prevXY_.y);
 	prevXY_ = xy;
