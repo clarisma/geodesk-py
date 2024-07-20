@@ -20,18 +20,18 @@ void TileReader::readTile(const DataPtr pTile)
 }
 
 
-void TileReader::readNode(NodeRef node)
+void TileReader::readNode(NodePtr node)
 {
 	readTagTable(node);
 	if (node.isRelationMember()) readRelationTable(node.bodyptr());
 	tile_.addNode(node);
 }
 
-void TileReader::readWay(WayRef way)
+void TileReader::readWay(WayPtr way)
 {
 	// LOG("Reading %s in %s...", way.toString().c_str(), tile_.toString().c_str());
 	readTagTable(way);
-	DataPtr pBody = way.bodyptr().asBytePointer();
+	DataPtr pBody = way.bodyptr();
 	uint32_t relTablePtrSize = way.flags() & 4;
 	uint32_t anchor;
 	if (way.flags() & FeatureFlags::WAYNODE)
@@ -63,30 +63,22 @@ void TileReader::readWay(WayRef way)
 	const uint8_t* p = pBody;
 	int nodeCount = readVarint32(p);
 	skipVarints(p, nodeCount * 2);		// (coordinate pairs)
-	uint32_t size = pointer(p) - pBody + anchor;
+	uint32_t size = p - pBody + anchor;
 	if (relTablePtrSize)
 	{
 		readRelationTable((pBody-4).followUnaligned());
 	}
-
+	tile_.addWay(way, pBody - anchor, size, anchor);
 }
 
-void TileReader::readRelation(RelationRef relation)
+void TileReader::readRelation(RelationPtr relation)
 {
 	// LOG("Reading relation/%ld", relation.id());
-	if (relation.id() == 184508)
-	{
-		LOG("Reading %s", relation.toString().c_str());
-	}
-	assertValidCurrentPointer(relation.ptr());
-	readTagTable(relation);
-	TRelation* trel = arena_.alloc<TRelation>();
-	pointer pBody = relation.bodyptr();
-
-	pointer p(pBody);
+	DataPtr pBody = relation.bodyptr();
+	DataPtr p = pBody;
 	for (;;)
 	{
-		int32_t member = p.getUnalignedInt();
+		int32_t member = p.getIntUnaligned();
 		p += 4;
 		if ((member & (MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE)) ==
 			(MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE))
@@ -112,15 +104,15 @@ void TileReader::readRelation(RelationRef relation)
 
 	uint32_t anchor = 0;
 	uint32_t size = p - pBody;
+	DataPtr bodyData = pBody;
 	if (relation.flags() & FeatureFlags::RELATION_MEMBER)
 	{
-		readRelationTable(pBody.follow(-4));		// TODO: This is an unaligned read!
+		readRelationTable((pBody - 4).followUnaligned());	
 		size += 4;
 		anchor = 4;
+		bodyData -= 4;
 	}
-
-	new(trel) TRelation(currentLocation(relation.ptr()), relation, pBody - anchor, size);
-	addFeatureToIndex(trel);
+	tile_.addRelation(relation, bodyData, size);
 }
 
 TString* TileReader::readString(DataPtr p)
@@ -133,6 +125,8 @@ TString* TileReader::readString(DataPtr p)
 
 // Hash is calculated as follows: 
 // local tags (traversal order), then global tags (traversal order),
+
+// TODO: addUser to tags!!!
 
 TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
 {
@@ -224,7 +218,7 @@ TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
 }
 
 
-TRelationTable* TTile::readRelationTable(DataPtr pTable)
+TRelationTable* TileReader::readRelationTable(DataPtr pTable)
 {
 	int32_t currentLoc = currentLocation(pTable);
 	TRelationTable* rels = getRelationTable(pTable);

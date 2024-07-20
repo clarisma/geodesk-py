@@ -106,19 +106,30 @@ TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash);
 	return tags;
 }
 
-void TileKit::addNode(NodeRef node)
+
+TNode* TileKit::addNode(NodePtr node)
 {
-	TNode* tnode = arena_.alloc<TNode>();
-	new(tnode) TNode(currentLocation(node.ptr()), node);
+	TNode* tnode = arena_.create<TNode>(existingHandle(node), node);
 	addFeatureToIndex(tnode);
+	return tnode;
 }
 
 
-void TileKit::addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
+void TileKit::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
 {
-	TWay* tway = arena_.alloc<TWay>();
-	new(tway) TWay(currentLocation(way.ptr()), way, pBodyStart, bodySize, bodyAnchor);
-	addFeatureToIndex(tway);
+	TWay* tway = arena_.create<TWay>(
+		existingHandle(way, way, pBodyStart, bodySize, bodyAnchor);
+	addFeatureToIndex(trel);
+	return trel;
+}
+
+
+TRelation* TileKit::addRelation(RelationPtr rel, DataPtr pBodyStart, uint32_t bodySize)
+{
+	TRelation* trel = arena_.create<TRelation>(
+		existingHandle(rel), rel, pBodyStart, bodySize);
+	addFeatureToIndex(trel);
+	return trel;
 }
 	
 

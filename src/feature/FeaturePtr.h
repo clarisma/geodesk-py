@@ -67,6 +67,8 @@ class FeaturePtr
 public:
 	FeaturePtr(uint8_t* p) : p_(p) {}
 
+	operator DataPtr () const noexcept { return p_; }
+
 	uint64_t id() const noexcept
 	{
 		uint32_t hi = p_.getUnsignedInt() >> 8;

@@ -15,18 +15,18 @@ public:
 	void readTile(const DataPtr pTile);
 
 private:
-	void readNode(NodeRef node);
-	void readWay(WayRef way);
-	void readRelation(RelationRef relation);
+	void readNode(NodePtr node);
+	void readWay(WayPtr way);
+	void readRelation(RelationPtr relation);
 	TString* readString(DataPtr p);
 	TTagTable* readTagTable(TaggedPtr<const uint8_t, 1> pTagged);
-	TTagTable* readTagTable(FeatureRef feature)
+	TTagTable* readTagTable(FeaturePtr feature)
 	{
 		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
 		tags->addUser();
 		return tags;
 	}
-	TRelationTable* readRelationTable(pointer p);
+	TRelationTable* readRelationTable(DataPtr p);
 
 
 	TileKit& tile_;

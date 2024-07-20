@@ -39,8 +39,11 @@ public:
 	TTagTable* completeTagTable(TTagTable* tags, uint32_t hash);
 
 
-	void addNode(NodeRef node);
-	void addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
+
+
+	TNode* addNode(NodePtr node);
+	TWay* addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
+	TRelation* addRelation(RelationPtr rel, DataPtr pBodyStart, uint32_t bodySize);
 	
 	TReferencedElement* getElement(TElement::Handle handle) const
 	{
