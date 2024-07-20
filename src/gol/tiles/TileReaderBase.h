@@ -4,7 +4,7 @@
 #pragma once
 
 #include <cstdint>
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
 #include "feature/Node.h"
 #include "feature/Way.h"
 #include "feature/Relation.h"
@@ -21,7 +21,7 @@ public:
 		readFeatures(pTile + RELATION_INDEX_OFS);
 	}
 
-    void readNodes(pointer ppIndex)
+    void readNodes(DataPtr ppIndex)
     {
         int32_t rel = ppIndex.getInt();
         if (rel == 0) return;
@@ -30,7 +30,7 @@ public:
             readNodeRoot(ppIndex);
             return;
         }
-        pointer p = ppIndex + (rel ^ 1);
+        DataPtr p = ppIndex + (rel ^ 1);
         for (;;)
         {
             int last = p.getInt() & 1;
@@ -40,7 +40,7 @@ public:
         }
     }
 
-    void readNodeRoot(pointer ppTree)
+    void readNodeRoot(DataPtr ppTree)
     {
         int32_t rel = ppTree.getInt();
         if (rel != 0)
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void readRoot(pointer ppTree)
+    void readRoot(DataPtr ppTree)
     {
         int32_t rel = ppTree.getInt();
         if (rel != 0)
@@ -72,7 +72,7 @@ public:
         }
     }
 
-    void readNodeTree(pointer p)
+    void readNodeTree(DataPtr p)
     {
         for (;;)
         {
@@ -91,7 +91,7 @@ public:
         }
     }
 
-    void readNodeLeaf(pointer p)
+    void readNodeLeaf(DataPtr p)
     {
         p += 8;
         for (;;)
@@ -105,7 +105,7 @@ public:
         }
     }
 
-    void readFeatures(pointer ppTree)
+    void readFeatures(DataPtr ppTree)
     {
         int32_t rel = ppTree.getInt();
         if (rel == 0) return;
@@ -124,7 +124,7 @@ public:
         }
     }
 
-    void readTree(pointer p)
+    void readTree(DataPtr p)
     {
         for (;;)
         {
@@ -143,7 +143,7 @@ public:
         }
     }
 
-    void readLeaf(pointer p)
+    void readLeaf(DataPtr p)
     {
         p += 16;
         for (;;)

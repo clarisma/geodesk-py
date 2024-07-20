@@ -115,12 +115,12 @@ TNode* TileKit::addNode(NodePtr node)
 }
 
 
-void TileKit::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
+TWay* TileKit::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
 {
 	TWay* tway = arena_.create<TWay>(
-		existingHandle(way, way, pBodyStart, bodySize, bodyAnchor);
-	addFeatureToIndex(trel);
-	return trel;
+		existingHandle(way), way, pBodyStart, bodySize, bodyAnchor);
+	addFeatureToIndex(tway);
+	return tway;
 }
 
 

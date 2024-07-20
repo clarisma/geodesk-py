@@ -129,7 +129,7 @@ private:
 class TRelation : public TFeature
 {
 public:
-	TRelation(Handle handle, RelationPtr relation, pointer pBodyData, uint32_t bodySize) :
+	TRelation(Handle handle, RelationPtr relation, DataPtr pBodyData, uint32_t bodySize) :
 		TFeature(handle, 32, relation, 16),
 		body_(pBodyData, bodySize, relation.flags() & 4)		// 4 == member flag
 	{
