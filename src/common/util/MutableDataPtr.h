@@ -7,9 +7,10 @@
 #include "DataPtr.h"
 // TODO: Should Byte be signed?
 
-class MutableDataPtr : DataPtr
+class MutableDataPtr : public DataPtr
 {
 public:
+    MutableDataPtr() noexcept : DataPtr() {}
     MutableDataPtr(uint8_t* p) noexcept : DataPtr(p) {}
     MutableDataPtr(const MutableDataPtr& other) noexcept : DataPtr(other.p_) {}
 
@@ -104,9 +105,31 @@ public:
         putUnaligned<double>(p_, value);
     }
 
-    DataPtr follow() const noexcept
+    MutableDataPtr operator+(std::ptrdiff_t offset) const noexcept
     {
-        return DataPtr(p_ + getInt());
+        return MutableDataPtr(p_ + offset);
+    }
+
+    MutableDataPtr operator-(std::ptrdiff_t offset) const noexcept
+    {
+        return MutableDataPtr(p_ - offset);
+    }
+
+    MutableDataPtr& operator+=(std::ptrdiff_t offset) noexcept
+    {
+        p_ += offset;
+        return *this;
+    }
+
+    MutableDataPtr& operator-=(std::ptrdiff_t offset) noexcept
+    {
+        p_ -= offset;
+        return *this;
+    }
+
+    std::ptrdiff_t operator-(const MutableDataPtr& other) const noexcept
+    {
+        return p_ - other.p_;
     }
 
 private:

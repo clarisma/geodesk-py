@@ -85,6 +85,7 @@ public:
 	uint32_t anchor() const { return anchor_; }
 	bool isLast() const { return isLast_; }
 	void setLast(bool last) { isLast_ = last; }
+	void setAnchor(uint32_t anchor) { anchor_ = anchor; }
 
 protected:
 	void setSize(uint32_t size) { size_ = size; }
@@ -135,6 +136,7 @@ public:
 	}
 
 	const uint8_t* data() const { return data_; }
+	uint8_t* mutableData() const { return data_; }
 	uint32_t hash() const { return hash_; }
 
 	void write(uint8_t* p) const
@@ -161,7 +163,7 @@ public:
 	static const int MIN_COMMON_USAGE = 4;
 
 protected:
-	const uint8_t* data_;
+	uint8_t* data_;
 	uint32_t hash_;
 	unsigned int users_ : 24;
 	unsigned int category_ : 8;

@@ -32,6 +32,13 @@ public:
 	TString* addString(const uint8_t* p, uint32_t size);
 	TString* addUniqueString(TElement::Handle handle, const uint8_t* p, uint32_t size);
 	TString* addUniqueString(DataPtr p);
+	TTagTable* addTagTable(TElement::Handle handle, const uint8_t* data, 
+		uint32_t size, uint32_t hash, uint32_t anchor);
+
+	TTagTable* beginTagTable(uint32_t size, uint32_t anchor);
+	TTagTable* completeTagTable(TTagTable* tags, uint32_t hash);
+
+
 	void addNode(NodeRef node);
 	void addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
 	

@@ -70,18 +70,76 @@ TTagTable* TesReader::readTagTable()
 {
 	uint32_t taggedSize = readVarint32(p_);
 	uint32_t size = taggedSize & 0xffff'fffe;
-	uint8_t* tags = tile_.alloc(size);
-	uint8_t* end = tags + size;
-	uint8_t* pTag = tags;
+	TTagTable* tags = tile_.beginTagTable(size, 0);
+	MutableDataPtr data = tags->mutableData();
+	MutableDataPtr pTag = data;
+	MutableDataPtr pPrevKey = pTag;
+
+	TTagTable::Hasher hasher;
+
 	if (taggedSize & 1) // has local keys
 	{
-		uint32_t localTagCount = readVarint32(p_);
-		for (int i = 0; i < localTagCount; i++)
+		uint32_t localTagsSize = readVarint32(p_) << 1;
+		tags->setAnchor(localTagsSize);
+		pTag += localTagsSize;
+		do
 		{
-			uint32_t key = readVarint32(p_);
-			TString* keyString = strings_[key >> 2];
+			pTag -= 4;
+			uint32_t keyBits = readVarint32(p_);
+			TString* keyString = strings_[keyBits >> 2];
 			keyString->setAlignment(TElement::Alignment::DWORD);
+			hasher.addKey(keyString);
+			pPrevKey = pTag;
 
+			// TODO: encode key pointer
+
+			pTag -= (keyBits & 2) + 2;
+			encodeTagValue(hasher, pTag, keyBits);
+		} 
+		while (pTag > data);
+		pPrevKey.putUnsignedShort(pPrevKey.getUnsignedShort() | 4);
+		pTag += localTagsSize;
+	}
+
+	MutableDataPtr end = data + size;
+	do
+	{
+		uint32_t keyBits = readVarint32(p_);
+		pPrevKey = pTag;
+		pTag.putUnsignedShort(static_cast<uint16_t>(keyBits));
+		hasher.addKey(keyBits >> 2);
+		pTag += 2;
+		encodeTagValue(hasher, pTag, keyBits);
+		pTag += (keyBits & 2) + 2;
+	} 
+	while (pTag < end);
+	pPrevKey.putUnsignedShort(pPrevKey.getUnsignedShort() | 0x8000);
+
+	return tile_.completeTagTable(tags, hasher.hash());
+}
+
+
+void TesReader::encodeTagValue(TTagTable::Hasher& hasher, MutableDataPtr p, uint32_t keyBits)
+{
+	uint32_t value = readVarint32(p_);
+
+	if (keyBits & 2)  // wide value ?
+	{
+		if (keyBits & 1)  // wide string ?
+		{
+			TString* valueString = strings_[value];
+			hasher.addValue(valueString);
+			// TODO: encode pointer
 		}
+		else
+		{
+			hasher.addValue(value);
+			p.putUnsignedIntUnaligned(value);
+		}
+	}
+	else
+	{
+		hasher.addValue(value);
+		p.putUnsignedShort(value);
 	}
 }

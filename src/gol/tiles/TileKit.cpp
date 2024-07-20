@@ -93,6 +93,19 @@ TTagTable* TileKit::addTagTable(TElement::Handle handle,
 	tagTables_.insertUnique(tags);
 }
 
+TTagTable* TileKit::beginTagTable(uint32_t size, uint32_t anchor)
+{
+	uint8_t* bytes = arena_.alloc(sizeof(TTagTable) + size, alignof(TTagTable));
+	return new(bytes) TTagTable (0, bytes + sizeof(TTagTable),
+		size, 0, anchor);
+}
+
+TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash);
+{
+	// TODO
+	return tags;
+}
+
 void TileKit::addNode(NodeRef node)
 {
 	TNode* tnode = arena_.alloc<TNode>();

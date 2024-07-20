@@ -16,6 +16,7 @@ private:
 	TString* readString();
 	void readStrings();
 	TTagTable* readTagTable();
+	void encodeTagValue(TTagTable::Hasher& hasher, MutableDataPtr p, uint32_t keyBits);
 
 	TileKit& tile_;
 	const uint8_t* p_;
