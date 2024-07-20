@@ -19,8 +19,9 @@ class TTile;
 class TTagTable : public TSharedElement
 {
 public:
-	TTagTable(Handle handle, const uint8_t* data, uint32_t size, uint32_t anchor) :
-		TSharedElement(TYPE, handle, data, size, Alignment::WORD, anchor)
+	TTagTable(Handle handle, const uint8_t* data, uint32_t size, 
+		uint32_t hash, uint32_t anchor) :
+		TSharedElement(TYPE, handle, data, size, Alignment::WORD, hash, anchor)
 	{
 		setCategory(TIndex::UNASSIGNED_CATEGORY);
 	}
@@ -36,37 +37,40 @@ public:
 		return reinterpret_cast<TTagTable*>(next_);
 	}
 
+	// TODO: does key include last-item marker?
+	// Keys must be stripped of all flags, just the code
 	class Hasher
 	{
 	public:
 		Hasher() noexcept : hash_(5381) {};		// djb2 start value
-		void tag(uint16_t key, uint32_t value) noexcept
-		{
-			add(key);
-			add(value);
-		}
-		void tag(uint16_t key, TString* value) noexcept
-		{
-			add(key);
-			hash_ ^= value->hash();
-		}
-		void tag(TString* key, uint32_t value) noexcept
-		{
-			hash_ ^= key->hash();
-			add(value);
-		}
+		
+		size_t hash() const noexcept { return hash_; }
+
 		void tag(TString* key, TString* value) noexcept
 		{
 			hash_ ^= key->hash();
 			hash_ ^= value->hash();
 		}
 
-		size_t hash() const noexcept { return hash_; }
+		void addKey(uint32_t k) noexcept
+		{
+			assert(k <= FeatureConstants::MAX_COMMON_KEY);
+			addValue(k);
+		}
 
-	private:
-		void add(uint32_t v) noexcept
+		void addKey(TString* v) noexcept
+		{
+			addValue(v);
+		}
+
+		void addValue(uint32_t v) noexcept
 		{
 			hash_ = ((hash_ << 5) + hash_) + v;
+		}
+
+		void addValue(TString* v) noexcept
+		{
+			hash_ ^= v->hash();
 		}
 
 		size_t hash_;

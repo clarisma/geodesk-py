@@ -70,6 +70,8 @@ public:
 		if (node_.isRelationMember()) addRelationTable(layout, node_.ptr() + 12);
 	}
 
+	Coordinate xy() const noexcept { return Coordinate(x_, y_); }
+
 private:
 	int32_t x_;
 	int32_t y_;
@@ -117,11 +119,11 @@ public:
 	{
 	}
 
-	pointer data() const { return data_; }
+	DataPtr data() const { return data_; }
 	void write(const TTile& tile) const;
 
 private:
-	pointer data_;
+	DataPtr data_;
 };
 
 class TRelation : public TFeature

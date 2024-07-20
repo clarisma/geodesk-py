@@ -44,14 +44,6 @@ private:
 		TFeature* feature_;
 	};
 
-	struct Tag
-	{
-		uint32_t key;
-		uint32_t value;
-
-		Tag(uint32_t k, uint32_t v) : key(k), value(v) {}
-	};
-
 	template <typename T>
 	void gatherSharedItems(const ElementDeduplicator<T>& items, int minUsers, size_t firstGroupSize);
 
@@ -61,14 +53,14 @@ private:
 	void writeTagTables();
 	void writeRelationTables();
 	void writeTagTable(const TTagTable* tags);
-	uint32_t getTagValue(pointer p, int valueFlags);
+	void writeTagValue(pointer p, int valueFlags);
 	void writeRelationTable(const TRelationTable* relTable);
 	void writeFeatures();
 	void writeNode(const TNode* node);
 	void writeWay(const TWay* way);
 	void writeRelation(const TRelation* relation);
 	void writeStub(const TFeature* feature, int flags);
-	void writeBounds(FeatureRef feature);
+	void writeBounds(FeaturePtr feature);
 
 	BufferWriter out_;
 	TileKit& tile_;
@@ -77,5 +69,4 @@ private:
 	int nodeCount_;
 	int wayCount_;
 	std::vector<TSharedElement*> sharedElements_;
-	std::vector<Tag> localKeyTags_;
 };

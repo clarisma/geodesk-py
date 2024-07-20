@@ -30,8 +30,8 @@ public:
 
 	TElement::Handle newHandle();
 	TString* addString(const uint8_t* p, uint32_t size);
-	TString* addString(TElement::Handle handle, const uint8_t* p, uint32_t size);
-	TString* addString(DataPtr p);
+	TString* addUniqueString(TElement::Handle handle, const uint8_t* p, uint32_t size);
+	TString* addUniqueString(DataPtr p);
 	void addNode(NodeRef node);
 	void addWay(WayRef way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
 	

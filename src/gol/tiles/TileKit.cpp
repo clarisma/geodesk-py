@@ -52,17 +52,25 @@ T* TileKit::createSharedElement(const uint8_t* data, uint32_t unencodedSize)
 }
 
 
-
+/*
 TString* TileKit::addString(const uint8_t* p, uint32_t size)
 {
 	TString* str = createSharedElement<TString>(p, size);
 	strings_.insertUnique(str);
 }
+*/
 
-TString* TileKit::addString(TElement::Handle handle, const uint8_t* p, uint32_t size)
+TString* TileKit::addUniqueString(TElement::Handle handle, const uint8_t* p, uint32_t size)
 {
-	TString* str = addString(p, size);
-	elementsByLocation_.insert(str);
+	TString* str = arena_.create<TString>(handle, p, size);
+	strings_.insertUnique(str);
+	elementsByHandle_.insert(str);
+	return str;
+}
+
+TString* TileKit::addUniqueString(DataPtr p)
+{
+	addUniqueString(existingHandle(p), p, TString::getStringSize(p));
 }
 
 
@@ -75,6 +83,15 @@ TString* TileKit::addString(DataPtr p)
 	strings_.insertUnique(str);
 }
 */
+
+
+TTagTable* TileKit::addTagTable(TElement::Handle handle,
+	const uint8_t* data, uint32_t size, uint32_t hash, uint32_t anchor)
+{
+	TTagTable* tags = arena_.create<TTagTable>(handle, data, size, hash, anchor);
+	elementsByHandle_.insert(tags);
+	tagTables_.insertUnique(tags);
+}
 
 void TileKit::addNode(NodeRef node)
 {

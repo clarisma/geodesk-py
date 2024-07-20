@@ -94,14 +94,16 @@ private:
 	unsigned int alignment_ :  2;
 	unsigned int size_      : 30;
 	Handle handle_;
-		// TODO: move oldLocation to TReferencedElement?
+		// TODO: move handle to TReferencedElement?
 		// No, need it here because of alignment
 		// If we were to take it out, this class only has 3 32-bit values,
-		// whcih would leave a gap
+		// which would leave a gap
 	Type type_              :  6;
 	bool isLast_            :  1;
 	bool isDeleted_         :  1;
 	unsigned int anchor_    : 24;
+		// If we could limit the anchor to 64K, we could free
+		// up 8 bits for flags
 };
 
 class TReferencedElement : public TElement

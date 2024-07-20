@@ -125,41 +125,55 @@ void TileReader::readRelation(RelationRef relation)
 
 TString* TileReader::readString(DataPtr p)
 {
-	TString* str = tile_.getString(p);
-	if (!str) tile_.addString(p);
+	TString* str = tile_.getString(tile_.existingHandle(p));
+	if (!str) tile_.addUniqueString(p);
 	str->addUser();
 	return str;
 }
 
+// Hash is calculated as follows: 
+// local tags (traversal order), then global tags (traversal order),
 
-TTagTable* TileReader::readTagTable(DataPtr pTagged)
+TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
 {
-	pointer pTags = pointer::ofTagged(pTagged, ~1);
-	assertValidCurrentPointer(pTags);
-	int32_t currentLoc = currentLocation(pTags);
-	int hasLocalTags = reinterpret_cast<uintptr_t>(pTagged.asBytePointer()) & 1;
-	assert((currentLoc & 1) == 0);
-	TTagTable* tags = reinterpret_cast<TTagTable*>(elementsByLocation_.lookup(currentLoc));
+	DataPtr pTags = pTagged.ptr();
+	int hasLocalTags = pTagged.flags();
+	TElement::Handle handle = tile_.existingHandle(pTags);
+	TTagTable* tags = tile_.getTags(handle);
 	if (tags) return tags;
+
+	TTagTable::Hasher hasher;
 
 	int anchor;
 	if (hasLocalTags)
 	{
-		pointer p = pTags;
-		pointer origin = pointer::ofTagged(p, 0xffff'ffff'ffff'fffcULL);
+		DataPtr p = pTags;
+		DataPtr origin = pointer::ofTagged(p, 0xffff'ffff'ffff'fffcULL);
 		for (;;)
 		{
 			p -= 4;
-			int32_t key = p.getUnalignedInt();
+			int32_t key = p.getIntUnaligned();
 			int flags = key & 7;
-			pointer pKeyString = origin + ((key ^ flags) >> 1);
+			DataPtr pKeyString = origin + ((key ^ flags) >> 1);
 			TString* keyString = readString(pKeyString);
 			// Force string to be 4-byte aligned
 			keyString->setAlignment(TElement::Alignment::DWORD);
+			hasher.addKey(keyString);
 			p -= 2 + (flags & 2);
-			if ((flags & 3) == 3) // wide-string value?
+			if (flags & 2) // wide value?
 			{
-				readString(p.follow());   // TODO: This is an unaligned read!
+				if (flags & 1) // wide-string value?
+				{
+					hasher.addValue(readString(p.followUnaligned()));
+				}
+				else
+				{
+					hasher.addValue(p.getUnsignedIntUnaligned());
+				}
+			}
+			else
+			{
+				hasher.addValue(p.getUnsignedShort());
 			}
 			if (flags & 4) break;  // last-tag?
 		}
@@ -171,8 +185,8 @@ TTagTable* TileReader::readTagTable(DataPtr pTagged)
 	}
 
 	uint32_t size;
-	pointer p = pTags;
-	if (p.getUnalignedUnsignedInt() == TagsRef::EMPTY_TABLE_MARKER)
+	DataPtr p = pTags;
+	if (p.getUnsignedIntUnaligned() == TagsRef::EMPTY_TABLE_MARKER)
 	{
 		// TODO: This will change, no more need for special check
 		size = 4;
@@ -182,22 +196,31 @@ TTagTable* TileReader::readTagTable(DataPtr pTagged)
 		for (;;)
 		{
 			uint16_t key = p.getUnsignedShort();
-			if ((key & 3) == 3)	// wide-string value?
+			hasher.addKey((key & 0x7fff) >> 2);
+			p += 2;
+			if (key & 2)	// wide value?
 			{
-				readString(p.follow(2));
+				if (key & 1)	// wide-string value?
+				{
+					hasher.addValue(readString(p.followUnaligned()));
+				}
+				else
+				{
+					hasher.addValue(p.getUnsignedIntUnaligned());
+				}
 			}
-			p += (key & 2) + 4;
+			else
+			{
+				hasher.addValue(p.getUnsignedShort());
+			}
+			p += (key & 2) + 2;
 			if (key & 0x8000) break;	// last global key
 		}
 		size = p - pTags + anchor;
 	}
 
-	assert((currentLoc & 1) == 0);
-	tags = arena_.alloc<TTagTable>();
-	new(tags) TTagTable(currentLoc, pTags - anchor, size, anchor);
-	elementsByLocation_.insert(tags);
-	tagTables_.insertUnique(tags);
-	return tags;
+	return tile_.addTagTable(tile_.existingHandle(pTags),
+		pTags - anchor, size, hasher.hash(), anchor);
 }
 
 

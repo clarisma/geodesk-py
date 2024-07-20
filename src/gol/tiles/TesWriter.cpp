@@ -140,7 +140,7 @@ void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUs
 
 
 
-uint32_t TesWriter::getTagValue(pointer p, int valueFlags)
+void TesWriter::writeTagValue(pointer p, int valueFlags)
 {
 	assert(valueFlags >= 0 && valueFlags <= 3);
 	uint32_t value;
@@ -158,7 +158,7 @@ uint32_t TesWriter::getTagValue(pointer p, int valueFlags)
 			value = valueStr->location();
 		}
 	}
-	return value;
+	out_.writeVarint(value);
 }
 
 void TesWriter::writeTagTable(const TTagTable* tags)
@@ -167,6 +167,7 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 	pointer p;
 	if (tags->hasLocalTags())
 	{
+		out_.writeVarint(tags->anchor() >> 1);
 		pointer origin = pointer::ofTagged(pTable, 0xffff'ffff'ffff'fffcULL);
 		p = pTable;
 		for (;;)
@@ -178,19 +179,10 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 			TString* keyStr = tile_.getString(pKeyString);
 			int valueType = flags & 3;
 			p -= 2 + (valueType & 2);
-			localKeyTags_.push_back(Tag(
-				(keyStr->location() << 2) | valueType,
-				getTagValue(p, valueType)));
+			out_.writeVarint((keyStr->location() << 2) | valueType);
+			writeTagValue(p, valueType);
 			if (flags & 4) break;  // last-tag?
 		}
-
-		out_.writeVarint(localKeyTags_.size());
-		for (Tag tag : localKeyTags_)
-		{
-			out_.writeVarint(tag.key);
-			out_.writeVarint(tag.value);
-		}
-		localKeyTags_.clear();
 	}
 
 	p = pTable;
@@ -210,7 +202,7 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 			int valueType = keyBits & 3;
 			out_.writeVarint(((key - prevKey) << 2) | valueType);
 			p += 2;
-			out_.writeVarint(getTagValue(p, valueType));
+			writeTagValue(p, valueType);
 			p += 2 + (keyBits & 2);
 			prevKey = key;
 			if (keyBits & 0x8000) break;
@@ -272,12 +264,12 @@ void TesWriter::writeStub(const TFeature* feature, int flags)
 
 void TesWriter::writeNode(const TNode* node)
 {
-	bool isRelationMember = node.isRelationMember();
+	bool isRelationMember = node->isRelationMember();
 	int flags = (node->flags() & FeatureFlags::WAYNODE) ?
 		TesFlags::NODE_BELONGS_TO_WAY : 0;
 	writeStub(node, flags);  // TODO: has_shared_location / is_exception_node  
 
-	Coordinate xy = node.xy();
+	Coordinate xy = node->xy();
 	out_.writeSignedVarint(static_cast<int64_t>(xy.x) - prevXY_.x);
 	out_.writeSignedVarint(static_cast<int64_t>(xy.y) - prevXY_.y);
 	prevXY_ = xy;
@@ -286,7 +278,7 @@ void TesWriter::writeNode(const TNode* node)
 
 void TesWriter::writeWay(const TWay* way)
 {
-	WayRef wayRef(way->feature());
+	WayPtr wayRef(way->feature());
 	bool hasFeatureNodes = (wayRef.flags() & FeatureFlags::WAYNODE);
 	int flags = 
 		(hasFeatureNodes ? TesFlags::MEMBERS_CHANGED : 0) |
@@ -294,7 +286,7 @@ void TesWriter::writeWay(const TWay* way)
 		TesFlags::NODE_IDS_CHANGED;
 	writeStub(way, flags);
 	
-	pointer pBody = way->body().data();
+	DataPtr pBody = way->body().data();
 	int anchor = way->body().anchor();
 
 	Coordinate xy = wayRef.bounds().bottomLeft();
@@ -302,17 +294,17 @@ void TesWriter::writeWay(const TWay* way)
 	out_.writeSignedVarint(static_cast<int64_t>(xy.y) - prevXY_.y);
 	prevXY_ = xy;
 
-	out_.writeBytes(pBody.asBytePointer() + anchor, way->body().size() - anchor);
+	out_.writeBytes(pBody + anchor, way->body().size() - anchor);
 
 	if (hasFeatureNodes)
 	{
 		int skipReltablePointer = (wayRef.flags() & FeatureFlags::RELATION_MEMBER) ? 4 : 0;
 		out_.writeVarint(anchor - skipReltablePointer);
-		pointer p = pBody + anchor - skipReltablePointer;
+		DataPtr p = pBody + anchor - skipReltablePointer;
 		for (;;)
 		{
 			p -= 4;
-			int32_t node = p.getUnalignedInt();
+			int32_t node = p.getIntUnaligned();
 			if (node & MemberFlags::FOREIGN)
 			{
 				uint32_t ref = static_cast<uint32_t>(node) >> 4;
@@ -338,9 +330,9 @@ void TesWriter::writeWay(const TWay* way)
 			}
 			else
 			{
-				TNode* wayNode = reinterpret_cast<TNode*>(tile_.getElement(
-					p + (static_cast<int32_t>((node >> 2) << 1))));
-				// LOG("Way-node node/%lld", wayNode->id());
+				TElement::Handle nodeHandle = tile_.existingHandle(
+					p + (static_cast<int32_t>((node >> 2) << 1)));
+				TNode* wayNode = tile_.getElement(handle);				// LOG("Way-node node/%lld", wayNode->id());
 				out_.writeVarint(wayNode->location() << 1);
 			}
 			if (node & MemberFlags::LAST) break;
@@ -350,7 +342,7 @@ void TesWriter::writeWay(const TWay* way)
 
 void TesWriter::writeRelation(const TRelation* relation)
 {
-	RelationRef relationRef(relation->feature());
+	RelationPtr relationRef(relation->feature());
 	int flags =
 		(relationRef.isArea() ? TesFlags::IS_AREA : 0) |
 		TesFlags::MEMBERS_CHANGED | TesFlags::BBOX_CHANGED;
@@ -359,17 +351,17 @@ void TesWriter::writeRelation(const TRelation* relation)
 	// LOG("Writing relation/%lld", relationRef.id());
 
 	const TRelationBody& body = relation->body();
-	pointer pBody = body.data();
+	DataPtr pBody = body.data();
 
 	writeBounds(relationRef);
 
 	int anchor = body.anchor();
 	out_.writeVarint(body.size() - anchor);
 
-	pointer p = pBody + anchor;
+	DataPtr p = pBody + anchor;
 	for (;;)
 	{
-		int32_t member = p.getUnalignedInt();
+		int32_t member = p.getIntUnaligned();
 		int rolechangedFlag = (member & MemberFlags::DIFFERENT_ROLE) ? 2 : 0;
 		if (member & MemberFlags::FOREIGN)
 		{
@@ -397,11 +389,11 @@ void TesWriter::writeRelation(const TRelation* relation)
 		}
 		else
 		{
-			pointer pMember = (p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1);
+			DataPtr pMember = (p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1);
 			TFeature* memberFeature = reinterpret_cast<TFeature*>(tile_.getElement(pMember));
 			if (memberFeature == nullptr)
 			{
-				FeatureRef xxx(pMember);
+				FeaturePtr xxx(pMember);
 				FORCE_LOG("Not found: %s", xxx.toString().c_str());
 			}
 			else
@@ -421,7 +413,7 @@ void TesWriter::writeRelation(const TRelation* relation)
 			}
 			else
 			{
-				TString* roleStr = tile_.getString(p + (p.getUnalignedInt() >> 1));
+				TString* roleStr = tile_.getString(p + (p.getIntUnaligned() >> 1));
 				roleValue = roleStr->location() << 1;
 				p += 4;
 			}
@@ -432,7 +424,7 @@ void TesWriter::writeRelation(const TRelation* relation)
 }
 
 
-void TesWriter::writeBounds(FeatureRef feature)
+void TesWriter::writeBounds(FeaturePtr feature)
 {
 	const Box& bounds = feature.bounds();
 	out_.writeSignedVarint(static_cast<int64_t>(bounds.minX()) - prevXY_.x);
@@ -448,10 +440,10 @@ void TesWriter::writeBounds(FeatureRef feature)
 void TesWriter::writeRelationTable(const TRelationTable* relTable)
 {
 	out_.writeVarint(relTable->size());
-	pointer p = relTable->data();
+	DataPtr p = relTable->data();
 	for (;;)
 	{
-		uint32_t rel = p.getUnalignedInt();
+		uint32_t rel = p.getIntUnaligned();
 		p += 4;		
 			// TODO: When we switch to TEX, <rel> could be 2 or 4 bytes
 		if (rel & MemberFlags::FOREIGN)

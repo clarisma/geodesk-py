@@ -4,6 +4,7 @@
 #pragma once
 #include "TileReaderBase.h"
 #include <common/util/DataPtr.h>
+#include <common/util/TaggedPtr.h>
 #include "TileKit.h"
 
 class TileReader : public TileReaderBase<TileReader>
@@ -18,7 +19,7 @@ private:
 	void readWay(WayRef way);
 	void readRelation(RelationRef relation);
 	TString* readString(DataPtr p);
-	TTagTable* readTagTable(DataPtr pTagged);
+	TTagTable* readTagTable(TaggedPtr<const uint8_t, 1> pTagged);
 	TTagTable* readTagTable(FeatureRef feature)
 	{
 		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
