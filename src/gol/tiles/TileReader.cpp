@@ -123,6 +123,8 @@ TString* TileReader::readString(DataPtr p)
 	return str;
 }
 
+
+
 // Hash is calculated as follows: 
 // local tags (traversal order), then global tags (traversal order),
 
@@ -142,7 +144,7 @@ TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
 	if (hasLocalTags)
 	{
 		DataPtr p = pTags;
-		DataPtr origin = pointer::ofTagged(p, 0xffff'ffff'ffff'fffcULL);
+		DataPtr origin = p & 0xffff'ffff'ffff'fffcULL;
 		for (;;)
 		{
 			p -= 4;

@@ -10,6 +10,11 @@
 #include <feature/RelationPtr.h>
 #include "TileKit.h"
 
+class TString;
+class TTagTable;
+class TRelationTable;
+
+
 class TileReader : public TileReaderBase<TileReader>
 {
 public:
@@ -30,7 +35,6 @@ private:
 		return tags;
 	}
 	TRelationTable* readRelationTable(DataPtr p);
-
 
 	TileKit& tile_;
 };

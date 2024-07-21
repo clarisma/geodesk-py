@@ -169,6 +169,11 @@ public:
         return DataPtr(p_ - offset);
     }
 
+    DataPtr operator-(unsigned int offset) const noexcept
+    {
+        return DataPtr(p_ - offset);
+    }
+
     DataPtr& operator+=(std::ptrdiff_t offset) noexcept
     {
         p_ += offset;
@@ -181,6 +186,12 @@ public:
         return *this;
     }
 
+    DataPtr& operator+=(unsigned int offset) noexcept
+    {
+        p_ += offset;
+        return *this;
+    }
+
     DataPtr& operator-=(std::ptrdiff_t offset) noexcept
     {
         p_ -= offset;
@@ -188,6 +199,12 @@ public:
     }
 
     DataPtr& operator-=(int offset) noexcept
+    {
+        p_ -= offset;
+        return *this;
+    }
+
+    DataPtr& operator-=(unsigned int offset) noexcept
     {
         p_ -= offset;
         return *this;

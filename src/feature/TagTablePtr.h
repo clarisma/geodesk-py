@@ -29,7 +29,7 @@ typedef int64_t TagBits;
 class TagTablePtr
 {
 public:
-	TagTablePtr(DataPtr ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
+	TagTablePtr(DataPtr ppTags) : taggedPtr_(ppTags + ppTags.getInt()) {}
 
 	uint32_t count() const;
 	TagBits getKeyValue(PyObject* key, const StringTable& strings) const;
@@ -39,7 +39,7 @@ public:
 	TagBits getLocalKeyValue(const char* key, int len) const;
 	bool hasLocalKeys() const
 	{
-		return reinterpret_cast<std::uintptr_t>(taggedPtr_) & 1;
+		return taggedPtr_.flags();
 	}
 
 	#ifdef GEODESK_PYTHON

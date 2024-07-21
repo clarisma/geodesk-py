@@ -8,6 +8,9 @@
 #include "feature/Node.h"
 #include "feature/Way.h"
 #include "feature/Relation.h"
+#include "TileConstants.h"
+
+using namespace TileConstants;
 
 template<typename Derived>
 class TileReaderBase
@@ -168,9 +171,4 @@ private:
     {
         return *static_cast<Derived*>(this);
     }
-
-	static const int NODE_INDEX_OFS = 8;
-	static const int WAY_INDEX_OFS = 12;
-	static const int AREA_INDEX_OFS = 16;
-	static const int RELATION_INDEX_OFS = 24;
 };

@@ -11,6 +11,7 @@
 
 class Layout;
 class TTagTable;
+class TRelationTable;
 class TileKit;
 
 class TFeature : public TReferencedElement

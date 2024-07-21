@@ -136,7 +136,7 @@ public:
 	}
 
 	const uint8_t* data() const { return data_; }
-	uint8_t* mutableData() const { return data_; }
+	uint8_t* mutableData() const { return const_cast<uint8_t*>(data_); }
 	uint32_t hash() const { return hash_; }
 
 	void write(uint8_t* p) const
@@ -163,7 +163,7 @@ public:
 	static const int MIN_COMMON_USAGE = 4;
 
 protected:
-	uint8_t* data_;
+	const uint8_t* data_;
 	uint32_t hash_;
 	unsigned int users_ : 24;
 	unsigned int category_ : 8;
