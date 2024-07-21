@@ -11,7 +11,7 @@
 class TesReader
 {
 public:
-	TesReader();
+	TesReader(TileKit& tile);
 
 private:
 	void readFeatureIndex();

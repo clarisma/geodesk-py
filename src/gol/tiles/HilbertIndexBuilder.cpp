@@ -20,10 +20,10 @@ TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
 	TFeature* feature = firstFeature;
 	do
 	{
-		FeatureRef f = feature->feature();
+		FeaturePtr f = feature->feature();
 		if (f.isNode())
 		{
-			p->first = hilbert::calculateHilbertDistance(NodeRef(f).xy(), tileBounds_);
+			p->first = hilbert::calculateHilbertDistance(NodePtr(f).xy(), tileBounds_);
 		}
 		else
 		{
@@ -103,10 +103,10 @@ TIndexLeaf* HilbertIndexBuilder::createLeaf(HilbertItem* pChildren, int count)
 		assert(feature->type() == TElement::Type::FEATURE);
 		feature->setNext(firstFeature);
 		firstFeature = feature;
-		FeatureRef f = feature->feature();
+		FeaturePtr f = feature->feature();
 		if (f.isNode())
 		{
-			bounds.expandToInclude(NodeRef(f).xy());
+			bounds.expandToInclude(NodePtr(f).xy());
 		}
 		else
 		{

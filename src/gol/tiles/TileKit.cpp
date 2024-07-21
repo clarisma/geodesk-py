@@ -25,7 +25,7 @@ void TileKit::initTables(size_t tileSize)
 {
 	size_t minTableSize = 1;
 	size_t tableSize = std::max(tileSize / 64 * 7, minTableSize);
-	elementsByLocation_.init(arena_.allocArray<TReferencedElement*>(tableSize), tableSize);
+	elementsByHandle_.init(arena_.allocArray<TReferencedElement*>(tableSize), tableSize);
 
 	tableSize = std::max(tileSize / 512 * 37, minTableSize);
 	featuresById_.init(arena_.allocArray<TFeature*>(tableSize), tableSize);
@@ -40,7 +40,7 @@ void TileKit::initTables(size_t tileSize)
 	relationTables_.init(arena_.allocArray<TRelationTable*>(tableSize), tableSize);
 }
 
-
+/*
 template <typename T>
 T* TileKit::createSharedElement(const uint8_t* data, uint32_t unencodedSize)
 {
@@ -50,7 +50,7 @@ T* TileKit::createSharedElement(const uint8_t* data, uint32_t unencodedSize)
 	memcpy(bytes + sizeof(TSharedElement), data, unencodedSize);
 	return element;
 }
-
+*/
 
 /*
 TString* TileKit::addString(const uint8_t* p, uint32_t size)
@@ -100,7 +100,7 @@ TTagTable* TileKit::beginTagTable(uint32_t size, uint32_t anchor)
 		size, 0, anchor);
 }
 
-TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash);
+TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash)
 {
 	// TODO
 	return tags;

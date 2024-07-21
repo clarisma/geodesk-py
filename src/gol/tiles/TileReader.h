@@ -5,6 +5,9 @@
 #include "TileReaderBase.h"
 #include <common/util/DataPtr.h>
 #include <common/util/TaggedPtr.h>
+#include <feature/NodePtr.h>
+#include <feature/WayPtr.h>
+#include <feature/RelationPtr.h>
 #include "TileKit.h"
 
 class TileReader : public TileReaderBase<TileReader>

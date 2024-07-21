@@ -1,6 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#pragma once
+
 #include <cstdint>
 #include <iostream>
 #include <type_traits>
@@ -13,20 +15,20 @@ class TaggedPtr
 public:
     // Constructor
     TaggedPtr(T* ptr = nullptr, uintptr_t flags = 0) noexcept :
-        data_(reinterpret_cast<uintptr_t>(ptr) | (flags & flag_mask()))
+        data_(reinterpret_cast<uintptr_t>(ptr) | (flags & flagMask()))
     {
     }
 
     // Get the pointer with flags
     T* ptr() const noexcept
     {
-        return reinterpret_cast<T*>(data_ & ~flag_mask());
+        return reinterpret_cast<T*>(data_ & ~flagMask());
     }
 
     // Get the flags
     int flags() const noexcept
     {
-        return data_ & flag_mask();
+        return data_ & flagMask();
     }
 
     // Implicit conversion to a regular pointer

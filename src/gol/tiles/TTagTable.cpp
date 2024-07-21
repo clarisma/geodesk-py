@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TTagTable.h"
-#include "TTile.h"
+#include "TileKit.h"
 #include "IndexSettings.h"
 
-void TTagTable::write(const TTile& tile) const
+void TTagTable::write(const TileKit& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	TSharedElement::write(p);

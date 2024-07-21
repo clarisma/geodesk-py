@@ -3,14 +3,16 @@
 
 #include "TFeature.h"
 #include "Layout.h"
-#include "TTile.h"
+#include "TileKit.h"
 
-TTagTable* TFeature::tags(TTile& tile) const
+TTagTable* TFeature::tags(TileKit& tile) const
 {
-	return tile.getTags(feature_.tags().ptr());
+	// TODO: fix so it can be used for new handles as well
+	return tile.getTags(tile.existingHandle(feature_.tags().ptr()));
 }
 
-void TFeature::write(const TTile& tile) const
+
+void TFeature::write(const TileKit& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	int32_t* pInt;
@@ -35,10 +37,11 @@ void TFeature::write(const TTile& tile) const
 void TFeature::addRelationTable(Layout& layout, DataPtr ppRelTable)
 {
 	TileKit& tile = layout.tile();
-	int ofs = ppRelTable.getIntUnaligned();
-	TRelationTable* relTable = tile.getRelationTable(ppRelTable + ofs);
+	
+	// TODO: fix, need handle for new elemetns as well
+	DataPtr pRelTable = ppRelTable.followUnaligned();
+	TRelationTable* relTable = tile.getRelationTable(tile.existingHandle(pRelTable));
 	assert(relTable);
-	assert(relTable->type() == TElement::Type::RELTABLE);
 	if (relTable->location() <= 0)
 	{
 		layout.place(relTable);
@@ -67,7 +70,7 @@ void TRelation::placeBody(Layout& layout)
 }
 
 
-void TWayBody::write(const TTile& tile) const
+void TWayBody::write(const TileKit& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	memcpy(p, data_, size());
@@ -75,7 +78,7 @@ void TWayBody::write(const TTile& tile) const
 	// TODO: adjust pointers to local nodes
 }
 
-void TRelationBody::write(const TTile& tile) const
+void TRelationBody::write(const TileKit& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	memcpy(p, data_, size());

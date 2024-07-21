@@ -12,6 +12,7 @@
 #include "TTagTable.h"
 #include "geom/Tile.h"
 
+// TODO: Call it TileModel
 
 class TileKit
 {
@@ -37,9 +38,6 @@ public:
 
 	TTagTable* beginTagTable(uint32_t size, uint32_t anchor);
 	TTagTable* completeTagTable(TTagTable* tags, uint32_t hash);
-
-
-
 
 	TNode* addNode(NodePtr node);
 	TWay* addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor);
@@ -101,55 +99,6 @@ public:
 	}
 
 private:
-	/*
-	template <typename T>
-	T* createSharedElement(const uint8_t* data, uint32_t unencodedSize);
-	*/
-
-	/*
-	int32_t currentLocation(const uint8_t* p) const
-	{
-		return static_cast<int32_t>(pCurrentTile_ - p);
-		// We use negative values to indicate old location
-		// TODO: Change this approach
-	}
-	*/
-
-	/**
-	 * 
-	 */
-	/*
-	int32_t newRelativePointer(pointer p, int oldRel)
-	{
-		int pointerLoc = static_cast<int32_t>(pNewTile_ - p.asBytePointer());
-		int oldLoc = pointerLoc + oldRel;
-		// We use negative values to indicate old location
-		TElement* elem = elementsByLocation_.lookup(oldLoc);
-		assert(elem);
-		return elem->location() - pointerLoc;
-	}
-	*/
-
-	/**
-	 * Asserts that the given pointer references a valid address in the
-	 * current tile data (i.e. the existing tile that is being read).
-	 */
-	/*
-	void assertValidCurrentPointer(const void* p)
-	{
-#ifdef _DEBUG
-		if (p < pCurrentTile_ || p > pCurrentTile_ + currentTileSize_)
-		{
-			LOG("While reading % s in % s:", currentLoadingFeature_.toString().c_str(), tile_.toString().c_str());
-			LOG("  Pointer:    %016llX", reinterpret_cast<uintptr_t>(p));
-			LOG("  Tile start: %016llX", reinterpret_cast<uintptr_t>(pCurrentTile_));
-			LOG("  Tile end:   %016llX", reinterpret_cast<uintptr_t>(pCurrentTile_ + currentTileSize_));
-		}
-#endif
-		assert(p >= pCurrentTile_ && p <= pCurrentTile_ + currentTileSize_);
-	}
-	*/
-
 	void addFeatureToIndex(TFeature* feature)
 	{
 		elementsByHandle_.insert(feature);
@@ -171,5 +120,4 @@ private:
 #ifdef _DEBUG
 	FeatureRef currentLoadingFeature_;
 #endif
-	friend class TileReader<TTile>;
 };

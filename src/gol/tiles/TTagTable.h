@@ -6,6 +6,7 @@
 #include "TElement.h"
 #include "TIndex.h"
 #include <common/util/DataPtr.h>
+#include <feature/types.h>
 
 class IndexSettings;
 class TTile;
@@ -28,7 +29,7 @@ public:
 
 	bool hasLocalTags() const { return anchor() != 0; }
 	void addStrings(Layout& layout) const;
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
 	uint32_t assignIndexCategory(const IndexSettings& indexSettings);
 
 	TTagTable* nextTags() const
@@ -45,12 +46,6 @@ public:
 		Hasher() noexcept : hash_(5381) {};		// djb2 start value
 		
 		size_t hash() const noexcept { return hash_; }
-
-		void tag(TString* key, TString* value) noexcept
-		{
-			hash_ ^= key->hash();
-			hash_ ^= value->hash();
-		}
 
 		void addKey(uint32_t k) noexcept
 		{

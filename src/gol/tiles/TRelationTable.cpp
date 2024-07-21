@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TRelationTable.h"
-#include "TTile.h"
+#include "TileKit.h"
 
-void TRelationTable::write(const TTile& tile) const
+void TRelationTable::write(const TileKit& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	TSharedElement::write(p);

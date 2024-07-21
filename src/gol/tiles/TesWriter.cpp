@@ -232,7 +232,7 @@ void TesWriter::writeFeatures()
 
 void TesWriter::writeStub(const TFeature* feature, int flags)
 {
-	TTagTable* tags = feature->tags();
+	TTagTable* tags = feature->tags(tile_);
 	flags |= TesFlags::TAGS_CHANGED | TesFlags::GEOMETRY_CHANGED;
 	flags |= tags->location() ? TesFlags::SHARED_TAGS : 0;
 	flags |= feature->isRelationMember() ? TesFlags::RELATIONS_CHANGED : 0;
@@ -249,7 +249,7 @@ void TesWriter::writeStub(const TFeature* feature, int flags)
 
 	if (flags & TesFlags::RELATIONS_CHANGED)
 	{
-		TRelationTable* rels = feature->parentRelations();
+		TRelationTable* rels = feature->parentRelations(tile_);
 		if (rels->location())
 		{
 			out_.writeVarint(rels->location());
@@ -332,7 +332,7 @@ void TesWriter::writeWay(const TWay* way)
 			{
 				TElement::Handle nodeHandle = tile_.existingHandle(
 					p + (static_cast<int32_t>((node >> 2) << 1)));
-				TNode* wayNode = tile_.getElement(handle);				// LOG("Way-node node/%lld", wayNode->id());
+				TReferencedElement* wayNode = tile_.getElement(nodeHandle);		
 				out_.writeVarint(wayNode->location() << 1);
 			}
 			if (node & MemberFlags::LAST) break;
@@ -390,7 +390,9 @@ void TesWriter::writeRelation(const TRelation* relation)
 		else
 		{
 			DataPtr pMember = (p & 0xffff'ffff'ffff'fffcULL) + ((int32_t)(member & 0xffff'fff8) >> 1);
-			TFeature* memberFeature = reinterpret_cast<TFeature*>(tile_.getElement(pMember));
+			// TODO: allow new handles as well
+			TFeature* memberFeature = reinterpret_cast<TFeature*>(
+				tile_.getElement(tile_.existingHandle(pMember)));
 			if (memberFeature == nullptr)
 			{
 				FeaturePtr xxx(pMember);
@@ -413,7 +415,9 @@ void TesWriter::writeRelation(const TRelation* relation)
 			}
 			else
 			{
-				TString* roleStr = tile_.getString(p + (p.getIntUnaligned() >> 1));
+				DataPtr pRoleStr = p + (p.getIntUnaligned() >> 1);
+				// TODO: allow new handles as well
+				TString* roleStr = tile_.getString(tile_.existingHandle(pRoleStr));
 				roleValue = roleStr->location() << 1;
 				p += 4;
 			}

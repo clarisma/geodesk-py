@@ -10,7 +10,7 @@ class TileKit;
 class Layout
 {
 public:
-	Layout(TTile& tile);
+	Layout(TileKit& tile);
 
 	TileKit& tile() const { return tile_; }
 	int32_t size() { return pos_; }

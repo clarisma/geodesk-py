@@ -5,7 +5,8 @@
 #include "query/TileIndexWalker.h"
 #include "gol/tiles/IndexSettings.h"
 #include "gol/tiles/Layout.h"
-#include "gol/tiles/TTile.h"
+#include "gol/tiles/TileKit.h"
+#include "gol/tiles/TileReader.h"
 
 
 TileLoader::TileLoader(FeatureStore* store) :
@@ -46,13 +47,14 @@ void TileLoader::load()
 void TileLoaderContext::processTask(TileLoaderTask& task)
 {
 	FeatureStore* store = loader_->store_;
-	pointer pTile = store->fetchTile(task.tip());
+	DataPtr pTile = store->fetchTile(task.tip()).asBytePointer();
 	// uint32_t size = pTile.getInt() & 0x3fff'ffff;
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
-	TTile tile(task.tile());
+	TileKit tile(task.tile());
 	// store->prefetchBlob(pTile);
-	tile.readTile(pTile);
+	TileReader reader(tile);
+	reader.readTile(pTile);
 
 	IndexSettings indexSettings(store, 8, 8, 300); // TODO
 	Indexer indexer(tile, indexSettings);

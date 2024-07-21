@@ -5,7 +5,7 @@
 #include "query/TileIndexWalker.h"
 #include "IndexSettings.h"
 #include "Layout.h"
-#include "TTile.h"
+#include "TileKit.h"
 #include "TIndex.h"
 #include "TesWriter.h"
 

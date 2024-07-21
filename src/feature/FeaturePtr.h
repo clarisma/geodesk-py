@@ -4,7 +4,7 @@
 #pragma once
 
 #include <common/util/DataPtr.h>
-#include "Tags.h"
+#include "TagTablePtr.h"
 #include "geom/Box.h"
 #include "geom/Coordinate.h"
 
@@ -110,9 +110,9 @@ public:
 			(p_-4).getInt() < bounds.minY()));
 	}
 
-	TagsRef tags() const
+	TagTablePtr tags() const
 	{
-		return TagsRef(p_ + 8);
+		return TagTablePtr(p_ + 8);
 	}
 
 	DataPtr ptr() const { return p_; }

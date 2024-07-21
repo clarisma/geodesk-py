@@ -11,7 +11,7 @@
 
 class Layout;
 class TTagTable;
-class TTile;
+class TileKit;
 
 class TFeature : public TReferencedElement
 {
@@ -30,6 +30,7 @@ public:
 	int flags() const { return feature_.flags(); }
 	bool isRelationMember() const { return feature_.flags() & FeatureFlags::RELATION_MEMBER; }
 	TTagTable* tags(TileKit& tile) const;
+	TRelationTable* parentRelations(TileKit& tile) const;
 	TFeature* nextFeature() const
 	{
 		assert(next_ == nullptr || next_->type() == Type::FEATURE);
@@ -87,7 +88,7 @@ public:
 	}
 
 	DataPtr data() const { return data_; }
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
 
 private:
 	DataPtr data_;
@@ -113,14 +114,14 @@ private:
 class TRelationBody : public TElement
 {
 public:
-	TRelationBody(pointer data, uint32_t size, int anchor) :
+	TRelationBody(DataPtr data, uint32_t size, int anchor) :
 		TElement(Type::RELATION_BODY, 0, size, Alignment::WORD, anchor),
 		data_(data)
 	{
 	}
 
 	DataPtr data() const { return data_; }
-	void write(const TTile& tile) const;
+	void write(const TileKit& tile) const;
 
 private:
 	DataPtr data_;

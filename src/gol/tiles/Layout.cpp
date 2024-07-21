@@ -4,7 +4,7 @@
 #include "Layout.h"
 #include "TIndex.h"
 
-Layout::Layout(TTile& tile) :
+Layout::Layout(TileKit& tile) :
     pos_(0),
     tile_(tile)
 {

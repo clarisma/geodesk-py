@@ -1,6 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#pragma once
+
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -12,6 +14,7 @@ class DataPtr
 public:
     DataPtr() noexcept : p_(nullptr) {}
     DataPtr(uint8_t* p) noexcept : p_(p) {}
+    DataPtr(uintptr_t p) noexcept : p_(reinterpret_cast<uint8_t*>(p)) {}
     DataPtr(const uint8_t* p) noexcept : p_(const_cast<uint8_t*>(p)) {}
     DataPtr(const DataPtr& other) noexcept : p_(other.p_) {}
 
@@ -118,6 +121,7 @@ public:
     }
 
     // Implicit conversions to pointer types
+    operator uintptr_t () const noexcept { return reinterpret_cast<uintptr_t>(p_); }
     operator int8_t* () const noexcept { return reinterpret_cast<int8_t*>(p_); }
     operator uint8_t* () const noexcept { return reinterpret_cast<uint8_t*>(p_); }
     operator int16_t* () const noexcept { return reinterpret_cast<int16_t*>(p_); }
@@ -128,6 +132,7 @@ public:
     operator uint64_t* () const noexcept { return reinterpret_cast<uint64_t*>(p_); }
     operator float* () const noexcept { return reinterpret_cast<float*>(p_); }
     operator double* () const noexcept { return reinterpret_cast<double*>(p_); }
+    operator const void* () const noexcept { return reinterpret_cast<const void*>(p_); }
     operator const int8_t* () const noexcept { return reinterpret_cast<const int8_t*>(p_); }
     operator const uint8_t* () const noexcept { return reinterpret_cast<const uint8_t*>(p_); }
     operator const int16_t* () const noexcept { return reinterpret_cast<const int16_t*>(p_); }
@@ -144,7 +149,22 @@ public:
         return DataPtr(p_ + offset);
     }
 
+    DataPtr operator+(int offset) const noexcept
+    {
+        return DataPtr(p_ + offset);
+    }
+
+    DataPtr operator+(unsigned int offset) const noexcept
+    {
+        return DataPtr(p_ + offset);
+    }
+
     DataPtr operator-(std::ptrdiff_t offset) const noexcept
+    {
+        return DataPtr(p_ - offset);
+    }
+
+    DataPtr operator-(int offset) const noexcept
     {
         return DataPtr(p_ - offset);
     }
@@ -155,7 +175,19 @@ public:
         return *this;
     }
 
+    DataPtr& operator+=(int offset) noexcept
+    {
+        p_ += offset;
+        return *this;
+    }
+
     DataPtr& operator-=(std::ptrdiff_t offset) noexcept
+    {
+        p_ -= offset;
+        return *this;
+    }
+
+    DataPtr& operator-=(int offset) noexcept
     {
         p_ -= offset;
         return *this;

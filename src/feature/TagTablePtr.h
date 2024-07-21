@@ -10,7 +10,8 @@
 #endif
 #include "types.h"
 #include "StringTable.h"
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
+#include <common/util/TaggedPtr.h>
 
 // TODO -- WIP
 
@@ -25,12 +26,10 @@
 */
 typedef int64_t TagBits;
 
-class TagsRef
+class TagTablePtr
 {
 public:
-	TagsRef(pointer ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
-
-	static TagsRef empty() { return TagsRef(&EMPTY_TABLE_STRUCT); }
+	TagTablePtr(DataPtr ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
 
 	uint32_t count() const;
 	TagBits getKeyValue(PyObject* key, const StringTable& strings) const;
@@ -50,17 +49,11 @@ public:
 	PyObject* getValue(PyObject* key, StringTable& strings) const;
 	#endif
 
-	pointer ptr() const { return pointer::ofTagged(taggedPtr_, -2); }
-	pointer taggedPtr() const { return taggedPtr_; }
-	pointer alignedBasePtr() const { return pointer::ofTagged(taggedPtr_, -4); }
-	int32_t pointerOffset(pointer p) { return p - taggedPtr_; }
+	DataPtr ptr() const { return taggedPtr_.ptr(); }
+	TaggedPtr<const uint8_t, 1> taggedPtr() const { return taggedPtr_; }
+	// pointer alignedBasePtr() const { return pointer::ofTagged(taggedPtr_, -4); }
+	// int32_t pointerOffset(pointer p) { return p - taggedPtr_; }
 	// This is always based off the tagged pointer , not the actual pointer
-
-	static const int MAX_COMMON_KEY = (1 << 13) - 2;
-	static const int MIN_NUMBER = -256;
-	static const int MAX_WIDE_NUMBER = (1 << 30) - 1 + MIN_NUMBER;
-	static const int MAX_NARROW_NUMBER = (1 << 16) - 1 + MIN_NUMBER;
-	// TODO: duplicated in TagValue!
 
 	// TODO: This value may change!
 	static const uint32_t EMPTY_TABLE_MARKER = 0xffff'ffff;
@@ -97,7 +90,7 @@ private:
 	}
 	#endif
 
-	const uint8_t* taggedPtr_;
+	TaggedPtr<const uint8_t, 1> taggedPtr_;
 
 	friend class FeatureWriter;
 };
