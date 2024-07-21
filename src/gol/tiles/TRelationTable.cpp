@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TRelationTable.h"
-#include "TileKit.h"
+#include "TileModel.h"
 
 void TRelationTable::write(const TileModel& tile) const
 {

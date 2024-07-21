@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TTagTable.h"
-#include "TileKit.h"
+#include "TileModel.h"
 #include "IndexSettings.h"
 
 void TTagTable::write(const TileModel& tile) const

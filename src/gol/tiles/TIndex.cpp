@@ -7,7 +7,7 @@
 #include "HilbertIndexBuilder.h"
 #include "IndexSettings.h"
 #include "TTagTable.h"
-#include "TileKit.h"
+#include "TileModel.h"
 
 uint32_t TIndexLeaf::calculateSize(TFeature* firstFeature)
 {

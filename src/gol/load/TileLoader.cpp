@@ -5,7 +5,7 @@
 #include "query/TileIndexWalker.h"
 #include "gol/tiles/IndexSettings.h"
 #include "gol/tiles/Layout.h"
-#include "gol/tiles/TileKit.h"
+#include "gol/tiles/TileModel.h"
 #include "gol/tiles/TileReader.h"
 
 

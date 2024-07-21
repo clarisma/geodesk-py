@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <cstdint>
-// #include <common/alloc/Arena.h>
 #include <common/data/Deduplicator.h>
 #include <common/data/Linked.h>
 #include <common/data/Lookup.h>

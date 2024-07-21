@@ -6,7 +6,7 @@
 #include <common/util/BufferWriter.h>
 #include "geom/Box.h"
 #include "geom/Coordinate.h"
-#include "TileKit.h"
+#include "TileModel.h"
 
 class TNode;
 class TWay;

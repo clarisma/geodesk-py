@@ -3,7 +3,7 @@
 
 #pragma once
 #include <utility> // for std::pair
-#include "TileKit.h"
+#include "TileModel.h"
 
 class TFeature;
 class TIndexBranch;

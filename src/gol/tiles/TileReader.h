@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include "TileKit.h"
+#include "TileModel.h"
 #include <common/util/DataPtr.h>
 #include <common/util/TaggedPtr.h>
 #include <feature/NodePtr.h>

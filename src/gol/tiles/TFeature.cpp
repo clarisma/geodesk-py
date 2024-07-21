@@ -3,7 +3,7 @@
 
 #include "TFeature.h"
 #include "Layout.h"
-#include "TileKit.h"
+#include "TileModel.h"
 
 TTagTable* TFeature::tags(TileModel& tile) const
 {
