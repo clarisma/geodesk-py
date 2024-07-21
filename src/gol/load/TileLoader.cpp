@@ -3,10 +3,10 @@
 
 #include "TileLoader.h"
 #include "query/TileIndexWalker.h"
-#include "gol/tiles/IndexSettings.h"
-#include "gol/tiles/Layout.h"
-#include "gol/tiles/TileModel.h"
-#include "gol/tiles/TileReader.h"
+#include "tile/compiler/IndexSettings.h"
+#include "tile/model/Layout.h"
+#include "tile/model/TileModel.h"
+#include "tile/model/TileReader.h"
 
 
 TileLoader::TileLoader(FeatureStore* store) :

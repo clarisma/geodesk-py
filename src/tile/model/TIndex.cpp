@@ -4,10 +4,10 @@
 #include "TIndex.h"
 #include <common/util/log.h>
 #include "Layout.h"
-#include "HilbertIndexBuilder.h"
-#include "IndexSettings.h"
 #include "TTagTable.h"
 #include "TileModel.h"
+#include "tile/compiler/HilbertIndexBuilder.h"
+#include "tile/compiler/IndexSettings.h"
 
 uint32_t TIndexLeaf::calculateSize(TFeature* firstFeature)
 {

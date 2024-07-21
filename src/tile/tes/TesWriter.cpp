@@ -3,7 +3,7 @@
 
 #include "TesWriter.h"
 #include "TesFlags.h"
-#include "TFeature.h"
+#include "tile/model/TFeature.h"
 
 TesWriter::TesWriter(TileModel& tile, Buffer* out) :
 	tile_(tile),

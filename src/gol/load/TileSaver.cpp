@@ -4,8 +4,8 @@
 #include "TileSaver.h"
 #include <zlib.h>
 #include "query/TileIndexWalker.h"
-#include "gol/tiles/TileModel.h"
-#include "gol/tiles/TileReader.h"
+#include "tile/model/TileModel.h"
+#include "tile/model/TileReader.h"
 
 
 TileSaver::TileSaver(FeatureStore* store) :

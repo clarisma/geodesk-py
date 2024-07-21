@@ -3,7 +3,7 @@
 
 #include "TTagTable.h"
 #include "TileModel.h"
-#include "IndexSettings.h"
+#include "tile/compiler/IndexSettings.h"
 
 void TTagTable::write(const TileModel& tile) const
 {
@@ -13,7 +13,7 @@ void TTagTable::write(const TileModel& tile) const
 	// TODO: adjust string pointers
 }
 
-
+// TODO: move this to compiler
 uint32_t TTagTable::assignIndexCategory(const IndexSettings& indexSettings)
 {
 	int maxIndexedKey = indexSettings.maxIndexedKey();

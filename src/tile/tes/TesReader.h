@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "TileModel.h"
 #include <common/util/MutableDataPtr.h>
 #include <common/util/TaggedPtr.h>
+#include "tile/model/TileModel.h"
 
 
 class TesReader

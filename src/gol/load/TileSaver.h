@@ -6,7 +6,7 @@
 #include <common/io/File.h>
 #include <common/thread/TaskEngine.h>
 #include "geom/Tile.h"
-#include "gol/tiles/TesWriter.h"
+#include "tile/tes/TesWriter.h"
 
 class TileSaver;
 class FeatureStore;

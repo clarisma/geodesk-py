@@ -3,9 +3,9 @@
 
 #include "HilbertIndexBuilder.h"
 #include <common/util/log.h>
-#include "TFeature.h"
-#include "TIndex.h"
 #include "geom/rtree/hilbert.h"
+#include "tile/model/TFeature.h"
+#include "tile/model/TIndex.h"
 
 
 TIndexTrunk* HilbertIndexBuilder::build(TFeature* firstFeature, int count)
