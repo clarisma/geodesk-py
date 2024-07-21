@@ -27,13 +27,8 @@ private:
 	void readWay(WayPtr way);
 	void readRelation(RelationPtr relation);
 	TString* readString(DataPtr p);
-	TTagTable* readTagTable(TaggedPtr<const uint8_t, 1> pTagged);
-	TTagTable* readTagTable(FeaturePtr feature)
-	{
-		TTagTable* tags = readTagTable(feature.tags().taggedPtr());
-		tags->addUser();
-		return tags;
-	}
+	TTagTable* readTagTable(TagTablePtr pTags);
+	TTagTable* readTagTable(FeaturePtr feature);
 	TRelationTable* readRelationTable(DataPtr p);
 
 	TileKit& tile_;

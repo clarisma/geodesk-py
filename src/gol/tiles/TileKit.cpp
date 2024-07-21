@@ -14,9 +14,6 @@ TileKit::TileKit(Tile tile) :
 	pCurrentTile_(nullptr),
 	pNewTile_(nullptr),
 	currentTileSize_(0),
-#ifdef _DEBUG
-	currentLoadingFeature_(nullptr),
-#endif
 	tile_(tile)
 {
 }
@@ -70,7 +67,7 @@ TString* TileKit::addUniqueString(TElement::Handle handle, const uint8_t* p, uin
 
 TString* TileKit::addUniqueString(DataPtr p)
 {
-	addUniqueString(existingHandle(p), p, TString::getStringSize(p));
+	return addUniqueString(existingHandle(p), p, TString::getStringSize(p));
 }
 
 
@@ -91,6 +88,7 @@ TTagTable* TileKit::addTagTable(TElement::Handle handle,
 	TTagTable* tags = arena_.create<TTagTable>(handle, data, size, hash, anchor);
 	elementsByHandle_.insert(tags);
 	tagTables_.insertUnique(tags);
+	return tags;
 }
 
 TTagTable* TileKit::beginTagTable(uint32_t size, uint32_t anchor)
@@ -104,6 +102,15 @@ TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash)
 {
 	// TODO
 	return tags;
+}
+
+TRelationTable* TileKit::addRelationTable(TElement::Handle handle, const uint8_t* data,
+	uint32_t size, uint32_t hash)
+{
+	TRelationTable* rels = arena_.create<TRelationTable>(handle, data, size, hash);
+	elementsByHandle_.insert(rels);
+	relationTables_.insertUnique(rels);
+	return rels;
 }
 
 

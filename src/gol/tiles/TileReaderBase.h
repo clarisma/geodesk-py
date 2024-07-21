@@ -5,9 +5,9 @@
 
 #include <cstdint>
 #include <common/util/DataPtr.h>
-#include "feature/Node.h"
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/NodePtr.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 #include "TileConstants.h"
 
 using namespace TileConstants;
@@ -100,7 +100,7 @@ public:
         for (;;)
         {
             int flags = p.getInt();
-            self().readNode(NodeRef(p));
+            self().readNode(NodePtr(p));
             if ((flags & 1) != 0) break;
             p += 20 + (flags & 4);
             // If Node is member of relation (flag bit 2), add
@@ -117,7 +117,7 @@ public:
             readRoot(ppTree);
             return;
         }
-        pointer p = ppTree + (rel ^ 1);
+        DataPtr p = ppTree + (rel ^ 1);
         for (;;)
         {
             int last = p.getInt() & 1;
@@ -154,12 +154,12 @@ public:
             int flags = p.getInt();
             if ((flags & (3 << 3)) == (1 << 3))
             {
-                self().readWay(WayRef(p));
+                self().readWay(WayPtr(p));
             }
             else
             {
                 assert((flags & (3 << 3)) == (2 << 3));
-                self().readRelation(RelationRef(p));
+                self().readRelation(RelationPtr(p));
             }
             if ((flags & 1) != 0) break;
             p += 32;

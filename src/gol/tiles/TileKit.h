@@ -35,6 +35,8 @@ public:
 	TString* addUniqueString(DataPtr p);
 	TTagTable* addTagTable(TElement::Handle handle, const uint8_t* data, 
 		uint32_t size, uint32_t hash, uint32_t anchor);
+	TRelationTable* addRelationTable(TElement::Handle handle, const uint8_t* data,
+		uint32_t size, uint32_t hash);
 
 	TTagTable* beginTagTable(uint32_t size, uint32_t anchor);
 	TTagTable* completeTagTable(TTagTable* tags, uint32_t hash);
@@ -117,7 +119,4 @@ private:
 	uint32_t currentTileSize_;
 	uint32_t featureCount_;
 	Tile tile_;
-#ifdef _DEBUG
-	FeatureRef currentLoadingFeature_;
-#endif
 };

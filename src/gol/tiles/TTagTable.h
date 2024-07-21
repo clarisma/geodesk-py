@@ -5,11 +5,12 @@
 
 #include "TElement.h"
 #include "TIndex.h"
+#include "TString.h"
 #include <common/util/DataPtr.h>
 #include <feature/types.h>
 
 class IndexSettings;
-class TTile;
+class TileKit;
 
 // TODO: We cannot simply compare the binary data of two tab-tables
 // Local-key pointers may have the same bit pattern as a global-key encoding
@@ -68,6 +69,7 @@ public:
 			hash_ ^= v->hash();
 		}
 
+	private:
 		size_t hash_;
 	};
 

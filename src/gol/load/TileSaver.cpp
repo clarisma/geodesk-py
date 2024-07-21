@@ -37,9 +37,10 @@ void TileSaverContext::processTask(TileSaverTask& task)
 {
 	FeatureStore* store = saver_->store_;
 	pointer pTile = store->fetchTile(task.tip());
-	TTile tile(task.tile());
+	TileKit tile(task.tile());
+	TileReader reader(tile);
 	// store->prefetchBlob(pTile);
-	tile.readTile(pTile);
+	reader.readTile(pTile.asBytePointer());
 
 	DynamicBuffer buf(1024 * 1024);
 	TesWriter writer(tile, &buf);

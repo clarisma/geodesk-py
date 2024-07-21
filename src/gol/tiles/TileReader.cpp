@@ -74,6 +74,7 @@ void TileReader::readWay(WayPtr way)
 void TileReader::readRelation(RelationPtr relation)
 {
 	// LOG("Reading relation/%ld", relation.id());
+	readTagTable(relation);
 	DataPtr pBody = relation.bodyptr();
 	DataPtr p = pBody;
 	for (;;)
@@ -125,15 +126,23 @@ TString* TileReader::readString(DataPtr p)
 
 
 
+TTagTable *TileReader::readTagTable(FeaturePtr feature)
+{
+	TTagTable* tags = readTagTable(feature.tags());
+	tags->addUser();
+	return tags;
+}
+
+
 // Hash is calculated as follows: 
 // local tags (traversal order), then global tags (traversal order),
 
-// TODO: addUser to tags!!!
+// TODO: Document that this does not add user count
 
-TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
+TTagTable* TileReader::readTagTable(TagTablePtr pTagTable)
 {
-	DataPtr pTags = pTagged.ptr();
-	int hasLocalTags = pTagged.flags();
+	DataPtr pTags = pTagTable.ptr();
+	bool hasLocalTags = pTagTable.hasLocalKeys();
 	TElement::Handle handle = tile_.existingHandle(pTags);
 	TTagTable* tags = tile_.getTags(handle);
 	if (tags) return tags;
@@ -222,14 +231,16 @@ TTagTable* TileReader::readTagTable(TaggedPtr<const uint8_t, 1> pTagged)
 
 TRelationTable* TileReader::readRelationTable(DataPtr pTable)
 {
-	int32_t currentLoc = currentLocation(pTable);
-	TRelationTable* rels = getRelationTable(pTable);
+	TElement::Handle handle = tile_.existingHandle(pTable);
+	TRelationTable* rels = tile_.getRelationTable(handle);
 	if (!rels)
 	{
-		pointer p = pTable;
+		// TODO: calculate hash code!!!
+		TRelationTable::Hasher hasher;
+		DataPtr p = pTable;
 		for (;;)
 		{
-			int32_t rel = p.getUnalignedInt();
+			int32_t rel = p.getIntUnaligned();
 			p += 4;
 			if ((rel & (MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE)) ==
 				(MemberFlags::FOREIGN | MemberFlags::DIFFERENT_TILE))
@@ -243,10 +254,7 @@ TRelationTable* TileReader::readRelationTable(DataPtr pTable)
 			if (rel & MemberFlags::LAST) break;
 		}
 		uint32_t size = p - pTable;
-		rels = arena_.alloc<TRelationTable>();
-		new(rels) TRelationTable(currentLocation(pTable), pTable, size);
-		elementsByLocation_.insert(rels);
-		relationTables_.insertUnique(rels);
+		rels = tile_.addRelationTable(handle, pTable, size, hasher.hash());
 	}
 	rels->addUser();
 	return rels;
