@@ -37,6 +37,12 @@ void TileKit::initTables(size_t tileSize)
 	relationTables_.init(arena_.allocArray<TRelationTable*>(tableSize), tableSize);
 }
 
+
+TFeature* TileKit::getFeature(TypedFeatureId typedId) const
+{
+	return featuresById_.lookup(typedId.asIdBits());
+}
+
 /*
 template <typename T>
 T* TileKit::createSharedElement(const uint8_t* data, uint32_t unencodedSize)

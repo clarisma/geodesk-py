@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include "TileReaderBase.h"
+#include "TileKit.h"
 #include <common/util/DataPtr.h>
 #include <common/util/TaggedPtr.h>
 #include <feature/NodePtr.h>
 #include <feature/WayPtr.h>
 #include <feature/RelationPtr.h>
-#include "TileKit.h"
+#include "TileReaderBase.h"
 
 class TString;
 class TTagTable;
@@ -32,4 +32,6 @@ private:
 	TRelationTable* readRelationTable(DataPtr p);
 
 	TileKit& tile_;
+
+	friend class TileReaderBase<TileReader>;
 };

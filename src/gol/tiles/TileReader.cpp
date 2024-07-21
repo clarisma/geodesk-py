@@ -63,7 +63,7 @@ void TileReader::readWay(WayPtr way)
 	const uint8_t* p = pBody;
 	int nodeCount = readVarint32(p);
 	skipVarints(p, nodeCount * 2);		// (coordinate pairs)
-	uint32_t size = p - pBody + anchor;
+	uint32_t size = p - pBody.ptr() + anchor;
 	if (relTablePtrSize)
 	{
 		readRelationTable((pBody-4).followUnaligned());
@@ -191,7 +191,7 @@ TTagTable* TileReader::readTagTable(TagTablePtr pTagTable)
 
 	uint32_t size;
 	DataPtr p = pTags;
-	if (p.getUnsignedIntUnaligned() == TagsRef::EMPTY_TABLE_MARKER)
+	if (p.getUnsignedIntUnaligned() == TagTablePtr::EMPTY_TABLE_MARKER)
 	{
 		// TODO: This will change, no more need for special check
 		size = 4;

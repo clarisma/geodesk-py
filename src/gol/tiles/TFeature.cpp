@@ -8,9 +8,18 @@
 TTagTable* TFeature::tags(TileKit& tile) const
 {
 	// TODO: fix so it can be used for new handles as well
-	return tile.getTags(tile.existingHandle(feature_.tags().ptr()));
+	TElement::Handle handle = tile.existingHandle(feature_.tags().ptr());
+	return tile.getTags(handle);
 }
 
+
+TRelationTable* TFeature::parentRelations(TileKit& tile) const
+{
+	if (!feature_.isRelationMember()) return nullptr;
+	// TODO: fix so it can be used for new handles as well
+	TElement::Handle handle = tile.existingHandle(feature_.relationTableFast());
+	return tile.getRelationTable(handle);
+}
 
 void TFeature::write(const TileKit& tile) const
 {

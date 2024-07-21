@@ -107,12 +107,14 @@ public:
         putUnaligned<double>(p_, value);
     }
 
-    MutableDataPtr operator+(std::ptrdiff_t offset) const noexcept
+    template<typename T>
+    MutableDataPtr operator+(T offset) const noexcept
     {
         return MutableDataPtr(p_ + offset);
     }
 
-    MutableDataPtr operator-(std::ptrdiff_t offset) const noexcept
+    template<typename T>
+    MutableDataPtr operator-(T offset) const noexcept
     {
         return MutableDataPtr(p_ - offset);
     }

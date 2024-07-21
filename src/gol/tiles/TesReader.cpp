@@ -55,6 +55,10 @@ void TesReader::readStrings()
 
 TString* TesReader::readString()
 {
+	// TODO
+	return nullptr;
+
+	/*
 	uint32_t size = TString::getStringSize(p_);
 
 	// Check if string exists already
@@ -64,6 +68,7 @@ TString* TesReader::readString()
 	memcpy(copy, p_, size);
 	p_ += size;
 	return tile_.addString(tile_.newHandle(), copy, size);
+	*/
 }
 
 

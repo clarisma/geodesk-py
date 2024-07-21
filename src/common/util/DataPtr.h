@@ -18,6 +18,8 @@ public:
     DataPtr(const uint8_t* p) noexcept : p_(const_cast<uint8_t*>(p)) {}
     DataPtr(const DataPtr& other) noexcept : p_(other.p_) {}
 
+    uint8_t* ptr() const noexcept { return p_; }
+
     DataPtr& operator=(uint8_t* p) noexcept
     {
         p_ = p;
@@ -143,6 +145,14 @@ public:
     operator const uint64_t* () const noexcept { return reinterpret_cast<const uint64_t*>(p_); }
     operator const float* () const noexcept { return reinterpret_cast<const float*>(p_); }
     operator const double* () const noexcept { return reinterpret_cast<const double*>(p_); }
+
+    // Comparion operators
+    bool operator==(const DataPtr& other) const noexcept { return p_ == other.p_; }
+    bool operator!=(const DataPtr& other) const noexcept { return p_ != other.p_; }
+    bool operator<(const DataPtr& other) const noexcept { return p_ < other.p_; }
+    bool operator>(const DataPtr& other) const noexcept { return p_ > other.p_; }
+    bool operator<=(const DataPtr& other) const noexcept { return p_ <= other.p_; }
+    bool operator>=(const DataPtr& other) const noexcept { return p_ >= other.p_; }
 
     DataPtr operator+(std::ptrdiff_t offset) const noexcept
     {

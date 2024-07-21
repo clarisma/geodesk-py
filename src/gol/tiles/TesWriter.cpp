@@ -186,7 +186,7 @@ void TesWriter::writeTagTable(const TTagTable* tags)
 	}
 
 	p = pTable;
-	if (p.getUnalignedUnsignedInt() == TagsRef::EMPTY_TABLE_MARKER)
+	if (p.getUnalignedUnsignedInt() == TagTablePtr::EMPTY_TABLE_MARKER)
 	{
 		// TODO: not needed in the future, treated as normal tag
 		out_.writeByte(0);

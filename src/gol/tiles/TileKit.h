@@ -5,7 +5,6 @@
 // #include <unordered_map>
 #include <common/alloc/Arena.h>
 #include <common/util/log.h>
-#include "TileReader.h"
 #include "TFeature.h"
 #include "TRelationTable.h"
 #include "TString.h"
