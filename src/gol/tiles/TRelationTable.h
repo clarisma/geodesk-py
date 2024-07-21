@@ -7,7 +7,7 @@
 #include "TFeature.h"
 #include <common/util/pointer.h>
 
-class TileKit;
+class TileModel;
 
 class TRelationTable : public TSharedElement
 {
@@ -17,7 +17,7 @@ public:
 	{
 	}
 
-	void write(const TileKit& tile) const;
+	void write(const TileModel& tile) const;
 
 	class Hasher
 	{

@@ -5,7 +5,7 @@
 #include "TesFlags.h"
 #include "TFeature.h"
 
-TesWriter::TesWriter(TileKit& tile, Buffer* out) :
+TesWriter::TesWriter(TileModel& tile, Buffer* out) :
 	tile_(tile),
 	out_(out),
 	prevXY_(0,0),

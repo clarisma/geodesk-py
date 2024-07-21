@@ -10,7 +10,7 @@
 #include <feature/types.h>
 
 class IndexSettings;
-class TileKit;
+class TileModel;
 
 // TODO: We cannot simply compare the binary data of two tab-tables
 // Local-key pointers may have the same bit pattern as a global-key encoding
@@ -30,7 +30,7 @@ public:
 
 	bool hasLocalTags() const { return anchor() != 0; }
 	void addStrings(Layout& layout) const;
-	void write(const TileKit& tile) const;
+	void write(const TileModel& tile) const;
 	uint32_t assignIndexCategory(const IndexSettings& indexSettings);
 
 	TTagTable* nextTags() const

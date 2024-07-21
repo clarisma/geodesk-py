@@ -4,7 +4,7 @@
 #include "TesReader.h"
 #include <common/util/varint.h>
 
-TesReader::TesReader(TileKit& tile) :
+TesReader::TesReader(TileModel& tile) :
 	tile_(tile)
 {
 

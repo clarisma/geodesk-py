@@ -15,7 +15,7 @@ class TRelation;
 class TesWriter
 {
 public:
-	TesWriter(TileKit& tile, Buffer* out);
+	TesWriter(TileModel& tile, Buffer* out);
 
 	void write();
 
@@ -63,7 +63,7 @@ private:
 	void writeBounds(FeaturePtr feature);
 
 	BufferWriter out_;
-	TileKit& tile_;
+	TileModel& tile_;
 	Coordinate prevXY_;
 	std::vector<SortedFeature> features_;
 	int nodeCount_;

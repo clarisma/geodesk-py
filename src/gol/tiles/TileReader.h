@@ -18,7 +18,7 @@ class TRelationTable;
 class TileReader : public TileReaderBase<TileReader>
 {
 public:
-	TileReader(TileKit& tile) : tile_(tile) {}
+	TileReader(TileModel& tile) : tile_(tile) {}
 
 	void readTile(const DataPtr pTile);
 
@@ -31,7 +31,7 @@ private:
 	TTagTable* readTagTable(FeaturePtr feature);
 	TRelationTable* readRelationTable(DataPtr p);
 
-	TileKit& tile_;
+	TileModel& tile_;
 
 	friend class TileReaderBase<TileReader>;
 };

@@ -5,7 +5,7 @@
 #include "TileKit.h"
 #include "IndexSettings.h"
 
-void TTagTable::write(const TileKit& tile) const
+void TTagTable::write(const TileModel& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	TSharedElement::write(p);

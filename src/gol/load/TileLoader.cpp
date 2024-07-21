@@ -51,7 +51,7 @@ void TileLoaderContext::processTask(TileLoaderTask& task)
 	// uint32_t size = pTile.getInt() & 0x3fff'ffff;
 	// uint8_t* pLoadedTile = new uint8_t[size];
 
-	TileKit tile(task.tile());
+	TileModel tile(task.tile());
 	// store->prefetchBlob(pTile);
 	TileReader reader(tile);
 	reader.readTile(pTile);

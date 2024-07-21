@@ -12,7 +12,7 @@
 class Layout;
 class TTagTable;
 class TRelationTable;
-class TileKit;
+class TileModel;
 
 class TFeature : public TReferencedElement
 {
@@ -30,14 +30,14 @@ public:
 	uint64_t idBits() const { return feature_.idBits(); }
 	int flags() const { return feature_.flags(); }
 	bool isRelationMember() const { return feature_.flags() & FeatureFlags::RELATION_MEMBER; }
-	TTagTable* tags(TileKit& tile) const;
-	TRelationTable* parentRelations(TileKit& tile) const;
+	TTagTable* tags(TileModel& tile) const;
+	TRelationTable* parentRelations(TileModel& tile) const;
 	TFeature* nextFeature() const
 	{
 		assert(next_ == nullptr || next_->type() == Type::FEATURE);
 		return reinterpret_cast<TFeature*>(next_);
 	}
-	void write(const TileKit& tile) const;
+	void write(const TileModel& tile) const;
 
 	static void addRelationTable(Layout& layout, DataPtr ppRelTable);
 
@@ -89,7 +89,7 @@ public:
 	}
 
 	DataPtr data() const { return data_; }
-	void write(const TileKit& tile) const;
+	void write(const TileModel& tile) const;
 
 private:
 	DataPtr data_;
@@ -122,7 +122,7 @@ public:
 	}
 
 	DataPtr data() const { return data_; }
-	void write(const TileKit& tile) const;
+	void write(const TileModel& tile) const;
 
 private:
 	DataPtr data_;

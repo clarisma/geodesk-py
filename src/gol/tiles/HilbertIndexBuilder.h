@@ -13,7 +13,7 @@ class TIndexTrunk;
 class HilbertIndexBuilder
 {
 public:
-	HilbertIndexBuilder(TileKit& tile) :
+	HilbertIndexBuilder(TileModel& tile) :
 		arena_(tile.arena()),
 		tileBounds_(tile.bounds()),
 		rtreeBucketSize_(9)             // TODO

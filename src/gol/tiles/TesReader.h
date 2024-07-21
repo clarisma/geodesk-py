@@ -11,7 +11,7 @@
 class TesReader
 {
 public:
-	TesReader(TileKit& tile);
+	TesReader(TileModel& tile);
 
 private:
 	void readFeatureIndex();
@@ -20,7 +20,7 @@ private:
 	TTagTable* readTagTable();
 	void encodeTagValue(TTagTable::Hasher& hasher, MutableDataPtr p, uint32_t keyBits);
 
-	TileKit& tile_;
+	TileModel& tile_;
 	const uint8_t* p_;
 	TString** strings_;
 	TTagTable** tagTables_;

@@ -4,7 +4,7 @@
 #include "TRelationTable.h"
 #include "TileKit.h"
 
-void TRelationTable::write(const TileKit& tile) const
+void TRelationTable::write(const TileModel& tile) const
 {
 	uint8_t* p = tile.newTileData() + location();
 	TSharedElement::write(p);

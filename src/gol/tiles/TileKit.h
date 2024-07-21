@@ -11,12 +11,10 @@
 #include "TTagTable.h"
 #include "geom/Tile.h"
 
-// TODO: Call it TileModel
-
-class TileKit
+class TileModel
 {
 public:
-	TileKit(Tile tile);
+	TileModel(Tile tile);
 
 	void setSource(const uint8_t* pTile, uint32_t size)
 	{

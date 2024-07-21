@@ -8,7 +8,7 @@
 #include <common/util/log.h>
 #include <common/util/varint.h>
 
-TileKit::TileKit(Tile tile) :
+TileModel::TileModel(Tile tile) :
 	arena_(1024 * 1024, Arena::GrowthPolicy::GROW_50_PERCENT),
 	featureCount_(0),
 	pCurrentTile_(nullptr),
@@ -18,7 +18,7 @@ TileKit::TileKit(Tile tile) :
 {
 }
 
-void TileKit::initTables(size_t tileSize)
+void TileModel::initTables(size_t tileSize)
 {
 	size_t minTableSize = 1;
 	size_t tableSize = std::max(tileSize / 64 * 7, minTableSize);
@@ -38,7 +38,7 @@ void TileKit::initTables(size_t tileSize)
 }
 
 
-TFeature* TileKit::getFeature(TypedFeatureId typedId) const
+TFeature* TileModel::getFeature(TypedFeatureId typedId) const
 {
 	return featuresById_.lookup(typedId.asIdBits());
 }
@@ -63,7 +63,7 @@ TString* TileKit::addString(const uint8_t* p, uint32_t size)
 }
 */
 
-TString* TileKit::addUniqueString(TElement::Handle handle, const uint8_t* p, uint32_t size)
+TString* TileModel::addUniqueString(TElement::Handle handle, const uint8_t* p, uint32_t size)
 {
 	TString* str = arena_.create<TString>(handle, p, size);
 	strings_.insertUnique(str);
@@ -71,7 +71,7 @@ TString* TileKit::addUniqueString(TElement::Handle handle, const uint8_t* p, uin
 	return str;
 }
 
-TString* TileKit::addUniqueString(DataPtr p)
+TString* TileModel::addUniqueString(DataPtr p)
 {
 	return addUniqueString(existingHandle(p), p, TString::getStringSize(p));
 }
@@ -88,7 +88,7 @@ TString* TileKit::addString(DataPtr p)
 */
 
 
-TTagTable* TileKit::addTagTable(TElement::Handle handle,
+TTagTable* TileModel::addTagTable(TElement::Handle handle,
 	const uint8_t* data, uint32_t size, uint32_t hash, uint32_t anchor)
 {
 	TTagTable* tags = arena_.create<TTagTable>(handle, data, size, hash, anchor);
@@ -97,20 +97,20 @@ TTagTable* TileKit::addTagTable(TElement::Handle handle,
 	return tags;
 }
 
-TTagTable* TileKit::beginTagTable(uint32_t size, uint32_t anchor)
+TTagTable* TileModel::beginTagTable(uint32_t size, uint32_t anchor)
 {
 	uint8_t* bytes = arena_.alloc(sizeof(TTagTable) + size, alignof(TTagTable));
 	return new(bytes) TTagTable (0, bytes + sizeof(TTagTable),
 		size, 0, anchor);
 }
 
-TTagTable* TileKit::completeTagTable(TTagTable* tags, uint32_t hash)
+TTagTable* TileModel::completeTagTable(TTagTable* tags, uint32_t hash)
 {
 	// TODO
 	return tags;
 }
 
-TRelationTable* TileKit::addRelationTable(TElement::Handle handle, const uint8_t* data,
+TRelationTable* TileModel::addRelationTable(TElement::Handle handle, const uint8_t* data,
 	uint32_t size, uint32_t hash)
 {
 	TRelationTable* rels = arena_.create<TRelationTable>(handle, data, size, hash);
@@ -120,7 +120,7 @@ TRelationTable* TileKit::addRelationTable(TElement::Handle handle, const uint8_t
 }
 
 
-TNode* TileKit::addNode(NodePtr node)
+TNode* TileModel::addNode(NodePtr node)
 {
 	TNode* tnode = arena_.create<TNode>(existingHandle(node), node);
 	addFeatureToIndex(tnode);
@@ -128,7 +128,7 @@ TNode* TileKit::addNode(NodePtr node)
 }
 
 
-TWay* TileKit::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
+TWay* TileModel::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_t bodyAnchor)
 {
 	TWay* tway = arena_.create<TWay>(
 		existingHandle(way), way, pBodyStart, bodySize, bodyAnchor);
@@ -137,7 +137,7 @@ TWay* TileKit::addWay(WayPtr way, DataPtr pBodyStart, uint32_t bodySize, uint32_
 }
 
 
-TRelation* TileKit::addRelation(RelationPtr rel, DataPtr pBodyStart, uint32_t bodySize)
+TRelation* TileModel::addRelation(RelationPtr rel, DataPtr pBodyStart, uint32_t bodySize)
 {
 	TRelation* trel = arena_.create<TRelation>(
 		existingHandle(rel), rel, pBodyStart, bodySize);
@@ -146,7 +146,7 @@ TRelation* TileKit::addRelation(RelationPtr rel, DataPtr pBodyStart, uint32_t bo
 }
 	
 
-uint8_t* TileKit::write(Layout& layout)
+uint8_t* TileModel::write(Layout& layout)
 {
 	LOG("Old size: %d | New size: %d", currentTileSize_, layout.size());
 
