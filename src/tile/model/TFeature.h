@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "TElement.h"
+#include "TReferencedElement.h"
 #include "feature/FeaturePtr.h"
 #include "feature/NodePtr.h"
 #include "feature/WayPtr.h"

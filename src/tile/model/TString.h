@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "TElement.h"
+#include "TSharedElement.h"
 #include <common/util/Strings.h>
 
 class TString : public TSharedElement

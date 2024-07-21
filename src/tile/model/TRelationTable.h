@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "TElement.h"
+#include "TSharedElement.h"
 #include "TFeature.h"
 #include <common/util/pointer.h>
 
