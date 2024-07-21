@@ -67,6 +67,8 @@ TString* TileModel::addUniqueString(TElement::Handle handle, const uint8_t* p, u
 {
 	TString* str = arena_.create<TString>(handle, p, size);
 	strings_.insertUnique(str);
+	assert(handle == str->handle());
+	// LOG("Inserting string at %d", handle);
 	elementsByHandle_.insert(str);
 	return str;
 }
@@ -92,6 +94,8 @@ TTagTable* TileModel::addTagTable(TElement::Handle handle,
 	const uint8_t* data, uint32_t size, uint32_t hash, uint32_t anchor)
 {
 	TTagTable* tags = arena_.create<TTagTable>(handle, data, size, hash, anchor);
+	assert(handle == tags->handle());
+	// LOG("Inserting tags at %d", handle);
 	elementsByHandle_.insert(tags);
 	tagTables_.insertUnique(tags);
 	return tags;

@@ -5,6 +5,10 @@
 
 #include "TElement.h"
 
+/**
+ * A TElement that can be indexed by its Handle 
+ * (TFeature, TString, TTagTable, TRelationTable)
+ */
 class TReferencedElement : public TElement
 {
 public:

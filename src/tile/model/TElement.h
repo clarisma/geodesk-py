@@ -60,7 +60,12 @@ public:
 	static T* cast(TElement* e)
 	{
 		T* casted = reinterpret_cast<T*>(e);
-		assert(!casted || casted->type() == T::TYPE);
+		if (e != nullptr && e->type() != T::TYPE)
+		{
+			printf("Expected type %d but got %d\n", T::TYPE, e->type());
+			assert(false);
+		}
+		// assert(casted==nullptr || casted->type() == T::TYPE);
 		return casted;
 	}
 
@@ -99,10 +104,12 @@ private:
 		// If we were to take it out, this class only has 3 32-bit values,
 		// which would leave a gap
 	Type type_              :  6;
-	bool isLast_            :  1;
-	bool isDeleted_         :  1;
+	unsigned int isLast_    :  1;
+	unsigned int isDeleted_ :  1;
 	unsigned int anchor_    : 24;
 		// If we could limit the anchor to 64K, we could free
 		// up 8 bits for flags
 };
+
+// TODO: Changing bool to int gives expected alignment on MSVC
 

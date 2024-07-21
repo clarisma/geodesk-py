@@ -7,8 +7,6 @@
 #include "filter/IntersectsFilter.h"
 #include "geom/Area.h"
 #include "geom/Length.h"
-// #include "gol/load/TileLoader.h"
-#include "gol/tiles/TileCompiler.h"
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/format/PyFormatter.h"
@@ -1037,8 +1035,8 @@ PyObject* PyFeatures::load(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
     // TileLoader loader(self->store);
     // loader.load();
-    TileCompiler compiler(self->store);
-    compiler.compile();
+    // TileCompiler compiler(self->store);
+    // compiler.compile();
     Py_RETURN_NONE;
     /*
     PyErr_SetString(PyExc_NotImplementedError,

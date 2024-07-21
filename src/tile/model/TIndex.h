@@ -14,8 +14,6 @@ class Layout;
 class TFeature;
 class TileModel;
 
-// TODO: No need for oldLocation on these elements, since they are
-//  always recreated
 
 class TIndexBranch : public TElement
 {

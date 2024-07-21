@@ -5,6 +5,9 @@
 
 #include "TReferencedElement.h"
 
+// TODO: Fix sorting of elements, don't use anything virtual
+// because it bloats the class
+
 // TODO: Would be useful to mark TTagTable to see if it can be quickly compared
 // bytewise since it does not contain string pointers
 class TSharedElement : public TReferencedElement
@@ -26,7 +29,7 @@ public:
 		memcpy(p, data_, size());
 	}
 
-	virtual bool operator<(const TSharedElement& other) const
+	bool operator<(const TSharedElement& other) const
 	{
 		uint32_t commonSize = std::min(size(), other.size());
 		int res = memcmp(data(), other.data(), commonSize);

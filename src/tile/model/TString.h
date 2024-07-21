@@ -20,6 +20,7 @@ public:
 	{
 	}
 
+	/*
 	bool operator<(const TSharedElement& other) const override
 	{
 		uint32_t ofs1 = 1 + (*data() >> 7);
@@ -34,6 +35,7 @@ public:
 		}
 		return res < 0;
 	}
+	*/
 
 	static uint32_t getStringSize(const uint8_t* data)
 	{

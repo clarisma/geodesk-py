@@ -49,12 +49,16 @@ public:
 
 	TTagTable* getTags(TElement::Handle handle) const
 	{
+		//LOG("Getting tags at %d", handle);
 		return TElement::cast<TTagTable>(getElement(handle));
 	}
 
 	TString* getString(TElement::Handle handle) const
 	{
-		return TElement::cast<TString>(getElement(handle));
+		//LOG("Getting string at %d", handle);
+		TString* str = TElement::cast<TString>(getElement(handle));
+		assert(str==nullptr || str->anchor() == 0);
+		return str;
 	}
 
 	TRelationTable* getRelationTable(TElement::Handle handle) const

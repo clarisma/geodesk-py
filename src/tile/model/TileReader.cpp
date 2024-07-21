@@ -118,12 +118,15 @@ void TileReader::readRelation(RelationPtr relation)
 
 TString* TileReader::readString(DataPtr p)
 {
+	if (tile_.existingHandle(p) == 43328)
+	{
+		printf("!!!");
+	}
 	TString* str = tile_.getString(tile_.existingHandle(p));
-	if (!str) tile_.addUniqueString(p);
+	if (!str) str = tile_.addUniqueString(p);
 	str->addUser();
 	return str;
 }
-
 
 
 TTagTable *TileReader::readTagTable(FeaturePtr feature)
