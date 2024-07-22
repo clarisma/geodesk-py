@@ -3,6 +3,7 @@
 
 #include "GolTool.h"
 #include "GetCommand.h"
+#include "SaveCommand.h"
 
 GolTool::GolTool()
 {
@@ -17,6 +18,10 @@ int GolTool::run(char* argv[])
 		if (strcmp(cmd, "get") == 0)
 		{
 			return GetCommand().run(argv);
+		}
+		if (strcmp(cmd, "save") == 0)
+		{
+			return SaveCommand().run(argv);
 		}
 	}
 }

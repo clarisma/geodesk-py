@@ -145,6 +145,8 @@ private:
 };
 
 // TODO: Use nextById_ for lookup; next_ is used for forming chains or features
+//  Could use next_ if we're careful about iterating, and if we ensure that ID
+//  lookup is no longer needed once we start adding features to the indexes
 class FeatureTable : public Lookup<FeatureTable, TFeature>
 {
 public:

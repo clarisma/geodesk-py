@@ -9,8 +9,8 @@
 #include "tile/model/TileReader.h"
 
 
-TileLoader::TileLoader(FeatureStore* store) :
-	TaskEngine(1 /* std::thread::hardware_concurrency() */),
+TileLoader::TileLoader(FeatureStore* store, int numberOfThreads) :
+	TaskEngine(numberOfThreads),
 	store_(store),
 	workCompleted_(0),
 	workPerTile_(0),
@@ -41,7 +41,11 @@ void TileLoader::load()
 		postWork(TileLoaderTask(tiw2.currentTile(), tiw2.currentTip()));
 	}
 	end();
+
 	printf("Total bytes written: %lld\n", totalBytesWritten_);
+#ifdef _DEBUG
+	totalCounts_.dump();
+#endif
 }
 
 void TileLoaderContext::processTask(TileLoaderTask& task)
@@ -65,6 +69,12 @@ void TileLoaderContext::processTask(TileLoaderTask& task)
 	indexer.place(layout);
 	layout.flush();
 	layout.placeBodies();
+
+#ifdef _DEBUG
+	reader.counts_.check(layout.counts_);
+	loader_->addCounts(layout.counts_);
+#endif
+
 	uint8_t* newTileData = tile.write(layout);
 
 	loader_->postOutput(TileLoaderOutputTask(task.tip(), 
@@ -78,3 +88,11 @@ void TileLoader::processTask(TileLoaderOutputTask& task)
 	Console::get()->setProgress(static_cast<int>(workCompleted_));
 	totalBytesWritten_ += task.size();
 }
+
+#ifdef _DEBUG
+void TileLoader::addCounts(const ElementCounts subTotal)
+{
+	std::lock_guard<std::mutex> lock(counterMutex_);
+	totalCounts_ += subTotal;
+}
+#endif

@@ -53,7 +53,7 @@ private:
 	void writeTagTables();
 	void writeRelationTables();
 	void writeTagTable(const TTagTable* tags);
-	void writeTagValue(pointer p, int valueFlags);
+	void writeStringValue(DataPtr pStr);
 	void writeRelationTable(const TRelationTable* relTable);
 	void writeFeatures();
 	void writeNode(const TNode* node);

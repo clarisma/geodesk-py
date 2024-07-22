@@ -23,7 +23,7 @@ public:
 		return pathWithExtension(path, ".gol");
 	}
 
-private:
+protected:
 	void setParam(int number, std::string_view value) override;
 	void setOption(std::string_view name, std::string_view value) override;
 

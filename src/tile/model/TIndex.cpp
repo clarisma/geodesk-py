@@ -53,7 +53,7 @@ uint32_t TIndexTrunk::calculateSize(TIndexBranch* firstBranch)
 
 void TIndexTrunk::write(const TileModel& tile) const
 {
-	uint8_t pos = location();
+	int pos = location();
 	uint8_t* p = tile.newTileData() + pos;
 	TIndexBranch* child = firstChildBranch();
 	do
@@ -69,6 +69,14 @@ void TIndexTrunk::write(const TileModel& tile) const
 		child = nextChild;
 	}
 	while (child);
+#ifdef _DEBUG
+	if (pos - location() != size())
+	{
+		printf("TIndexTrunk stated size = %d, but wrote %d bytes\n",
+			size(), pos - location());
+		assert(false);
+	}
+#endif
 }
 
 
@@ -254,19 +262,19 @@ void TIndexLeaf::place(Layout& layout)
 	for(;;)
 	{
 		TFeature* nextFeature = feature->nextFeature();
-		layout.place(feature);
+		layout.place(feature);	// place changes `next`
 		TTagTable* tags = feature->tags(layout.tile());
 		assert(tags);
-		if (tags->location() <= 0)
+		if (tags->location() == 0)
 		{
 			tagTables.addTail(tags);
+			tags->setLocation(-1);
 		}
 		if (!nextFeature)
 		{
 			feature->setLast(true);
 			break;
 		}
-		tags->addStrings(layout);
 		switch (feature->feature().typeCode())
 		{
 		case 0:
@@ -290,6 +298,7 @@ void TIndexLeaf::place(Layout& layout)
 	{
 		TTagTable* nextTags = tags->nextTags();
 		layout.place(tags);		// place() changes `next`
+		tags->addStrings(layout);
 		tags = nextTags;
 	}
 }

@@ -42,7 +42,6 @@ void TFeature::write(const TileModel& tile) const
 	// TODO: encode body pointer
 }
 
-
 void TFeature::addRelationTable(Layout& layout, DataPtr ppRelTable)
 {
 	TileModel& tile = layout.tile();
@@ -51,9 +50,9 @@ void TFeature::addRelationTable(Layout& layout, DataPtr ppRelTable)
 	DataPtr pRelTable = ppRelTable.followUnaligned();
 	TRelationTable* relTable = tile.getRelationTable(tile.existingHandle(pRelTable));
 	assert(relTable);
-	if (relTable->location() <= 0)
+	if (relTable->location() == 0)
 	{
-		layout.place(relTable);
+		layout.addBodyElement(relTable);
 	}
 }
 

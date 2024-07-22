@@ -33,12 +33,15 @@ int GetCommand::run(char* argv[])
 {
 	CliCommand::run(argv);
 	
-	// int threads = std::thread::hardware_concurrency();
+	int threads = std::thread::hardware_concurrency();
+#ifdef _DEBUG
+	threads = 1;
+#endif
 	
 	FeatureStore store;
 	store.open(GolCommand::golPath(golName_).c_str());
 
-	TileLoader loader(&store);
+	TileLoader loader(&store, threads);
 	loader.load();
 	return 0;
 }

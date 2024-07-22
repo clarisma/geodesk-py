@@ -37,6 +37,8 @@ public:
         return ptr();
     }
 
+    uintptr_t raw() const noexcept { return data_; }
+
     // Set the flags
     void setFlags(uintptr_t flags) noexcept
     {

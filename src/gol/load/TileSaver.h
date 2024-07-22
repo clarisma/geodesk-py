@@ -60,9 +60,9 @@ private:
 class TileSaver : public TaskEngine<TileSaver, TileSaverContext, TileSaverTask, TileSaverOutputTask>
 {
 public:
-	TileSaver(FeatureStore* store);
+	TileSaver(FeatureStore* store, int threadCount);
 
-	void save(const char* fileName, std::vector<std::pair<Tile,int>> tiles);
+	void save(const char* fileName, std::vector<std::pair<Tile,int>>& tiles);
 	void processTask(TileSaverOutputTask& task);
 	int64_t totalBytesWritten() const { return totalBytesWritten_; }
 

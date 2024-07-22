@@ -120,7 +120,7 @@ public:
 
 	TagTablePtr tags() const
 	{
-		return TagTablePtr(p_ + 8);
+		return TagTablePtr::readFrom(p_ + 8);
 	}
 
 	DataPtr ptr() const { return p_; }

@@ -42,6 +42,7 @@ public:
         workQueue_(workQueueSize == 0 ? (numberOfThreads * 2) : workQueueSize),
         outputQueue_(outputQueueSize == 0 ? (numberOfThreads * 2) : outputQueueSize)
     {
+        assert(numberOfThreads >= 1);
         workContexts_.reserve(numberOfThreads);
         threads_.reserve(numberOfThreads + 1);
     }

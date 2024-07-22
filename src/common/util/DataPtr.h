@@ -122,6 +122,9 @@ public:
         return getUnaligned<double>(p_);
     }
 
+    template <typename T>
+    T* cast() const noexcept { return reinterpret_cast<T*>(p_); }
+
     // Implicit conversions to pointer types
     operator uintptr_t () const noexcept { return reinterpret_cast<uintptr_t>(p_); }
     operator int8_t* () const noexcept { return reinterpret_cast<int8_t*>(p_); }

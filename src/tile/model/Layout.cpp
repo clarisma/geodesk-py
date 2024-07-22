@@ -52,6 +52,23 @@ void Layout::flush()
     while (!deferred_.isEmpty()) put(deferred_.remove());
 }
 
+#ifdef _DEBUG
+void Layout::count(TElement* e)
+{
+    switch (e->type())
+    {
+    case TElement::Type::FEATURE:
+        counts_.featureCount++;
+        break;
+    case TElement::Type::STRING:
+        counts_.stringCount++;
+        break;
+    case TElement::Type::TAGS:
+        counts_.tagTableCount++;
+        break;
+    }
+}
+#endif
 
 /*
 void Layout::layoutIndex(TIndex* index)

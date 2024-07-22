@@ -34,6 +34,12 @@ public:
 		return first_;
 	}
 
+	void clear()
+	{
+		first_ = nullptr;
+		pNext_ = &first_;
+	}
+
 private:
 	T* first_;
 	T** pNext_;

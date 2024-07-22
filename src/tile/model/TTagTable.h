@@ -6,8 +6,7 @@
 #include "TSharedElement.h"
 #include "TIndex.h"
 #include "TString.h"
-#include <common/util/DataPtr.h>
-#include <feature/types.h>
+#include <feature/TagTablePtr.h>
 
 class IndexSettings;
 class TileModel;
@@ -28,6 +27,7 @@ public:
 		setCategory(TIndex::UNASSIGNED_CATEGORY);
 	}
 
+	TagTablePtr tags() const { return TagTablePtr(data() + anchor(), hasLocalTags()); }
 	bool hasLocalTags() const { return anchor() != 0; }
 	void addStrings(Layout& layout) const;
 	void write(const TileModel& tile) const;
@@ -74,4 +74,7 @@ public:
 	};
 
 	static constexpr TElement::Type TYPE = TElement::Type::TAGS;
+
+private:
+	static void addString(Layout& layout, DataPtr str);
 };

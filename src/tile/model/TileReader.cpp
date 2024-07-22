@@ -25,6 +25,9 @@ void TileReader::readNode(NodePtr node)
 	readTagTable(node);
 	if (node.isRelationMember()) readRelationTable(node.bodyptr());
 	tile_.addNode(node);
+#ifdef _DEBUG
+	counts_.featureCount++;
+#endif
 }
 
 void TileReader::readWay(WayPtr way)
@@ -69,6 +72,9 @@ void TileReader::readWay(WayPtr way)
 		readRelationTable((pBody-4).followUnaligned());
 	}
 	tile_.addWay(way, pBody - anchor, size, anchor);
+#ifdef _DEBUG
+	counts_.featureCount++;
+#endif
 }
 
 void TileReader::readRelation(RelationPtr relation)
@@ -114,16 +120,21 @@ void TileReader::readRelation(RelationPtr relation)
 		bodyData -= 4;
 	}
 	tile_.addRelation(relation, bodyData, size);
+#ifdef _DEBUG
+	counts_.featureCount++;
+#endif
 }
 
 TString* TileReader::readString(DataPtr p)
 {
-	if (tile_.existingHandle(p) == 43328)
-	{
-		printf("!!!");
-	}
 	TString* str = tile_.getString(tile_.existingHandle(p));
-	if (!str) str = tile_.addUniqueString(p);
+	if (!str)
+	{
+		str = tile_.addUniqueString(p);
+#ifdef _DEBUG
+		counts_.stringCount++;
+#endif
+	}
 	str->addUser();
 	return str;
 }
@@ -226,6 +237,10 @@ TTagTable* TileReader::readTagTable(TagTablePtr pTagTable)
 		}
 		size = p - pTags + anchor;
 	}
+
+#ifdef _DEBUG
+	counts_.tagTableCount++;
+#endif
 
 	return tile_.addTagTable(tile_.existingHandle(pTags),
 		pTags - anchor, size, hasher.hash(), anchor);

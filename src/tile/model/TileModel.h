@@ -11,6 +11,7 @@
 #include "TTagTable.h"
 #include "geom/Tile.h"
 
+
 class TileModel
 {
 public:
@@ -121,3 +122,50 @@ private:
 	uint32_t featureCount_;
 	Tile tile_;
 };
+
+
+#ifdef _DEBUG
+struct ElementCounts
+{
+	ElementCounts()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+
+	void check(const ElementCounts& other) const
+	{
+		if (!check("features", featureCount, other.featureCount) ||
+			// !check("strings", stringCount, other.stringCount) ||
+			!check("tagTables", tagTableCount, other.tagTableCount))
+		{
+			assert(false);
+		}
+	}
+
+	bool check(const char* s, int a, int b) const
+	{
+		if (a == b) return true;
+		printf("Number of %s differs: %d vs. %d\n", s, a, b);
+		return false;
+	}
+
+	ElementCounts& operator+=(const ElementCounts& other) noexcept
+	{
+		featureCount += other.featureCount;
+		stringCount += other.stringCount;
+		tagTableCount += other.tagTableCount;
+		return *this;
+	}
+
+	void dump() const
+	{
+		printf("%d features\n", featureCount);
+		printf("%d strings\n", stringCount);
+		printf("%d tag tables\n", tagTableCount);
+	}
+
+	int featureCount;
+	int stringCount;
+	int tagTableCount;
+};
+#endif

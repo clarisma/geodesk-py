@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TTagTable.h"
+#include "Layout.h"
 #include "TileModel.h"
 #include "tile/compiler/IndexSettings.h"
 
@@ -47,9 +48,43 @@ uint32_t TTagTable::assignIndexCategory(const IndexSettings& indexSettings)
 }
 
 
+void TTagTable::addString(Layout& layout, DataPtr pStr)
+{
+	// TODO: handle to new strings
+	TileModel& tile = layout.tile();
+	TElement::Handle handle = layout.tile().existingHandle(pStr);
+	TString* str = tile.getString(handle);
+	if (str->location() == 0)
+	{
+		layout.addBodyElement(str);
+	}
+}
+
 void TTagTable::addStrings(Layout& layout) const
 {
-	// TODO
+	TagTablePtr pTags = tags();
+	LocalTagIterator localTags(pTags);
+	while (localTags.next())
+	{
+		addString(layout, localTags.keyString());
+		if (localTags.hasLocalStringValue())
+		{
+			addString(layout, localTags.stringValueFast());
+		}
+	}
+
+	GlobalTagIterator globalTags(pTags);
+	while (globalTags.next())
+	{
+		if (globalTags.hasLocalStringValue())
+		{
+			/*
+			printf("- %s\n", globalTags.stringValueFast().cast<const ShortVarString>()
+				->toString().c_str());
+			*/
+			addString(layout, globalTags.stringValueFast());
+		}
+	}
 }
 
 

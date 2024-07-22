@@ -3,9 +3,7 @@
 
 #pragma once
 #include <common/data/FixedQueue.h>
-#include "TElement.h"
-
-class TileModel;
+#include "TileModel.h"
 
 class Layout
 {
@@ -27,7 +25,9 @@ public:
 
 	void addBodyElement(TElement* elem)
 	{
+		assert(elem->location() == 0);
 		bodies_.addTail(elem);
+		elem->setLocation(-1);
 	}
 
 	void placeBodies()
@@ -47,9 +47,13 @@ private:
 
 	void put(TElement* elem, int pos)
 	{
+		assert(elem->location() <= 0);
 		elem->setLocation(pos);
 		pos_ = pos + elem->size();
 		placed_.addTail(elem);
+#ifdef _DEBUG
+		count(elem);
+#endif
 	}
 
 	TileModel& tile_;
@@ -57,4 +61,10 @@ private:
 	LinkedQueue<TElement> bodies_;
 	FixedQueue<TElement*, DEFERRED_QUEUESIZE> deferred_;
 	int32_t pos_;
+
+#ifdef _DEBUG
+	void count(TElement* e);
+public:
+	ElementCounts counts_;
+#endif
 };

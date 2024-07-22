@@ -142,6 +142,12 @@ public:
         return memcmp(&bytes_[ofs], other.data(), len) == 0;
     }
 
+    std::string toString() const noexcept
+    {
+        uint32_t ofs = (bytes_[0] >> 7) + 1;
+        return std::string(reinterpret_cast<const char*>(&bytes_[ofs]), length());
+    }
+
     std::string_view toStringView() const noexcept
     {
         uint32_t ofs = (bytes_[0] >> 7) + 1;

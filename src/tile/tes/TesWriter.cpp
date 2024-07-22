@@ -21,7 +21,7 @@ void TesWriter::write()
 	writeFeatureIndex();
 	writeStrings();
 	writeTagTables();
-	writeRelationTables();
+	// writeRelationTables();  // TODO
 	writeFeatures();
 	out_.writeByte(0); // no removed features
 	// TODO: ExportTable
@@ -124,7 +124,7 @@ void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUs
 
 	size_t start = 0;
 	size_t end = std::min(firstGroupSize + 1, sharedElements_.size());
-	for (;;)
+	while(start < end)
 	{
 		// Within each group, sort elements in their natural order
 		std::sort(sharedElements_.begin() + start, sharedElements_.begin() + end);
@@ -139,8 +139,8 @@ void TesWriter::gatherSharedItems(const ElementDeduplicator<T>& items, int minUs
 }
 
 
-
-void TesWriter::writeTagValue(pointer p, int valueFlags)
+/*
+void TesWriter::writeTagValue(DataPtr p, int valueFlags)
 {
 	assert(valueFlags >= 0 && valueFlags <= 3);
 	uint32_t value;
@@ -150,62 +150,67 @@ void TesWriter::writeTagValue(pointer p, int valueFlags)
 	}
 	else                              // wide value
 	{
-		value = p.getUnalignedUnsignedInt();
+		value = p.getUnsignedIntUnaligned();
 		if (valueFlags == 3)
 		{
-			TString* valueStr = tile_.getString(p + static_cast<int32_t>(value));
+			// TODO:
+			TElement::Handle handle = tile_.existingHandle(p + static_cast<int32_t>(value));
+			TString* valueStr = tile_.getString(handle);
 			assert(valueStr);
 			value = valueStr->location();
 		}
 	}
 	out_.writeVarint(value);
 }
+*/
+
+void TesWriter::writeStringValue(DataPtr pStr)
+{
+	TElement::Handle handle = tile_.existingHandle(pStr);
+	TString* str = tile_.getString(handle);
+	assert(str);
+	out_.writeVarint(str->location());
+}
 
 void TesWriter::writeTagTable(const TTagTable* tags)
 {
-	pointer pTable = tags->data() + tags->anchor();
-	pointer p;
+	TagTablePtr pTags = tags->tags();
 	if (tags->hasLocalTags())
 	{
 		out_.writeVarint(tags->anchor() >> 1);
-		pointer origin = pointer::ofTagged(pTable, 0xffff'ffff'ffff'fffcULL);
-		p = pTable;
-		for (;;)
+		LocalTagIterator localTags(pTags);
+		while (localTags.next())
 		{
-			p -= 4;
-			int32_t key = p.getUnalignedInt();
-			int flags = key & 7;
-			pointer pKeyString = origin + ((key ^ flags) >> 1);
-			TString* keyStr = tile_.getString(pKeyString);
-			int valueType = flags & 3;
-			p -= 2 + (valueType & 2);
-			out_.writeVarint((keyStr->location() << 2) | valueType);
-			writeTagValue(p, valueType);
-			if (flags & 4) break;  // last-tag?
+			// TODO
+			TElement::Handle handle = tile_.existingHandle(localTags.keyString());
+			TString* keyStr = tile_.getString(handle);
+			assert(keyStr);
+			out_.writeVarint((keyStr->location() << 2) | (localTags.keyBits() & 3));
+			if (localTags.hasLocalStringValue())
+			{
+				writeStringValue(localTags.stringValueFast());
+			}
+			else
+			{
+				out_.writeVarint(localTags.value());
+			}
 		}
 	}
 
-	p = pTable;
-	if (p.getUnalignedUnsignedInt() == TagTablePtr::EMPTY_TABLE_MARKER)
+	uint32_t prevKey = 0;
+	GlobalTagIterator globalTags(pTags);
+	while (globalTags.next())
 	{
-		// TODO: not needed in the future, treated as normal tag
-		out_.writeByte(0);
-		out_.writeByte(0);
-	}
-	else
-	{
-		uint32_t prevKey = 0;
-		for (;;)
+		uint32_t key = globalTags.key();
+		out_.writeVarint(((key - prevKey) << 2) | (globalTags.keyBits() & 3));
+		prevKey = key;
+		if (globalTags.hasLocalStringValue())
 		{
-			uint32_t keyBits = p.getUnsignedShort();
-			uint32_t key = (keyBits & 0x7fff) >> 2;
-			int valueType = keyBits & 3;
-			out_.writeVarint(((key - prevKey) << 2) | valueType);
-			p += 2;
-			writeTagValue(p, valueType);
-			p += 2 + (keyBits & 2);
-			prevKey = key;
-			if (keyBits & 0x8000) break;
+			writeStringValue(globalTags.stringValueFast());
+		}
+		else
+		{
+			out_.writeVarint(globalTags.value());
 		}
 	}
 }
@@ -256,7 +261,7 @@ void TesWriter::writeStub(const TFeature* feature, int flags)
 		}
 		else
 		{
-			writeRelationTable(rels);
+			// writeRelationTable(rels);   // TODO
 		}
 	}
 }
@@ -448,10 +453,10 @@ void TesWriter::writeRelationTable(const TRelationTable* relTable)
 	for (;;)
 	{
 		uint32_t rel = p.getIntUnaligned();
-		p += 4;		
 			// TODO: When we switch to TEX, <rel> could be 2 or 4 bytes
 		if (rel & MemberFlags::FOREIGN)
 		{
+			p += 4;
 			out_.writeVarint((rel >> 3) |  // TODO: changes to TEX_DELTA in future, >> 4
 				(rel & MemberFlags::DIFFERENT_TILE) ? 1 : 0);
 			if (rel & MemberFlags::DIFFERENT_TILE)
@@ -470,11 +475,19 @@ void TesWriter::writeRelationTable(const TRelationTable* relTable)
 		}
 		else
 		{
-			TReferencedElement* relation = tile_.getElement(p + (rel & 0xffff'fffc));
-			assert(relation->location());
-			out_.writeVarint((relation->location() - nodeCount_ - wayCount_) << 1);
-			// *Relation* number, not feature number
-			// Bit 0 is always clear
+			// TODO
+			DataPtr pRel = p + (rel & 0xffff'fffc);
+			TElement::Handle handle = tile_.existingHandle(pRel);
+			TReferencedElement* relation = tile_.getRelationTable(handle);
+			if (relation) // TODO
+			{
+				assert(relation);
+				assert(relation->location());
+				out_.writeVarint((relation->location() - nodeCount_ - wayCount_) << 1);
+				// *Relation* number, not feature number
+				// Bit 0 is always clear
+			}
+			p += 4;
 		}
 		if (rel & MemberFlags::LAST) break;
 	}

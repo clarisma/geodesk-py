@@ -8,8 +8,8 @@
 #include "tile/model/TileReader.h"
 
 
-TileSaver::TileSaver(FeatureStore* store) :
-	TaskEngine(std::thread::hardware_concurrency()),
+TileSaver::TileSaver(FeatureStore* store, int threadCount) :
+	TaskEngine(threadCount),
 	store_(store),
 	workCompleted_(0),
 	workPerTile_(0),
@@ -17,7 +17,7 @@ TileSaver::TileSaver(FeatureStore* store) :
 {
 }
 
-void TileSaver::save(const char* fileName, std::vector<std::pair<Tile, int>> tiles)
+void TileSaver::save(const char* fileName, std::vector<std::pair<Tile, int>>& tiles)
 {
 	workPerTile_ = 100.0 / tiles.size();
 	workCompleted_ = 0;

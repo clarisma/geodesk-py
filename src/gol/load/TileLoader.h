@@ -3,9 +3,11 @@
 
 #pragma once
 
+#include <mutex>
 #include <common/thread/TaskEngine.h>
 // #include "feature/FeatureStore.h"
 #include "geom/Tile.h"
+#include <tile/model/TileModel.h>
 
 class TileLoader;
 class FeatureStore;
@@ -60,7 +62,7 @@ private:
 class TileLoader : public TaskEngine<TileLoader, TileLoaderContext, TileLoaderTask, TileLoaderOutputTask>
 {
 public:
-	TileLoader(FeatureStore* store);
+	TileLoader(FeatureStore* store, int numberOfThreads);
 
 	void load();
 	void processTask(TileLoaderOutputTask& task);
@@ -72,6 +74,11 @@ private:
 	double workCompleted_;
 	int64_t totalBytesWritten_;
 
+#ifdef _DEBUG
+	ElementCounts totalCounts_;
+	std::mutex counterMutex_;
+	void addCounts(const ElementCounts subTotal);
+#endif
 	friend class TileLoaderContext;
 };
 

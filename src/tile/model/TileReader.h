@@ -33,5 +33,10 @@ private:
 
 	TileModel& tile_;
 
+#ifdef _DEBUG
+public:
+	ElementCounts counts_;
+#endif
+
 	friend class TileReaderBase<TileReader>;
 };
