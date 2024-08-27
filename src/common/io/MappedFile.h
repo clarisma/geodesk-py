@@ -25,10 +25,11 @@ public:
 
     void* map(uint64_t offset, uint64_t length, int /* MappingMode */ mode);
 
+    /*
     template<typename T>
     MappedSegment<T> mapSegment(uint64_t offset, uint64_t length)
     {
-        return MappedSegment(map(offset, length, MappingMode::READ || MappingMode::WRITE));
+        return MappedSegment(map(offset, length, MappingMode::READ | MappingMode::WRITE));
     }
 
     template<typename T>
@@ -36,6 +37,7 @@ public:
     {
         return MappedSegment(map(offset, length, MappingMode::READ));
     }
+    */
 
     static void unmap(void* address, uint64_t length);
     void prefetch(void* address, uint64_t length);
