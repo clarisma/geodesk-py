@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 #ifdef _DEBUG
 #define LOG(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
 #else

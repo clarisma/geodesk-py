@@ -27,6 +27,7 @@ class TagsRef
 {
 public:
 	TagsRef(pointer ppTags) { taggedPtr_ = ppTags + ppTags.getInt(); }
+	TagsRef(const uint64_t* ppTags) : TagsRef(pointer(ppTags)) {}
 
 	static TagsRef empty() { return TagsRef(&EMPTY_TABLE_STRUCT); }
 
@@ -55,7 +56,7 @@ public:
 	// This is always based off the tagged pointer , not the actual pointer
 
 	static const int MAX_COMMON_KEY = (1 << 13) - 2;
-	static const int MIN_NUMBER = -256;
+	static const int MIN_NUMBER = -256;		// TODO: duplicated in TagValue namespace
 	static const int MAX_WIDE_NUMBER = (1 << 30) - 1 + MIN_NUMBER;
 	static const int MAX_NARROW_NUMBER = (1 << 16) - 1 + MIN_NUMBER;
 	// TODO: duplicated in TagValue!

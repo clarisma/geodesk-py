@@ -38,13 +38,13 @@ private:
     const QueryResults* take();
     void requestTiles();
 
-    static const int MAX_PENDING_TILES = 8;
+    // static const int MAX_PENDING_TILES = 8;
 
     FeatureStore* store_;
     FeatureTypes types_;
     const MatcherHolder* matcher_;
     const Filter* filter_;
-    int32_t pendingTiles_;
+    int32_t pendingTiles_;      // TODO: rearrange to avoid needless gaps
     const QueryResults* currentResults_;
     int32_t currentPos_;
     bool allTilesRequested_;

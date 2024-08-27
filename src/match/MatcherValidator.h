@@ -25,11 +25,14 @@ public:
 private:
 	void validateOp(OpNode* node);
 
+	static OpNode* findWrongTypeOp(OpNode* firstValOp);
 	OpNode* validateAllSelectors(Selector* first);
 	OpNode* validateSelector(Selector* sel);
 	void insertLoadOps(TagClause* clause);
+	OpNode* createMultiTypeLoadOps(uint32_t valueFlags, OpNode* valOp);
 	OpNode* createValueOps(const OpNode* keyOp, uint32_t acceptedValues);
-	OpNode* cloneValueOps(const OpNode* valOps, uint32_t acceptedValues, OpNode* falseOp);
+	OpNode* cloneValueOp(OpNode* valOp, uint32_t acceptedValues);
+	OpNode* cloneValueOps(const OpNode* valOps, uint32_t acceptedValues, OpNode* falseOp);  // TODO: remove
 
 	OpGraph& graph_;
 	uint32_t totalInstructionWords_;

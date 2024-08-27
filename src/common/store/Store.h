@@ -4,8 +4,10 @@
 #pragma once
 
 #include <cassert>
+#include <unordered_map>
+#include <vector>
 #include <common/io/FileLock.h>
-#include <common/io/MappedFile.h>
+#include <common/io/ExpandableMappedFile.h>
 #include <common/util/enum_flags.h>
 
 class StoreException : public IOException
@@ -25,7 +27,7 @@ public:
 };
 
 
-class Store
+class Store : protected ExpandableMappedFile
 {
 public:
 	enum OpenMode
@@ -51,21 +53,13 @@ protected:
 	virtual uint64_t getTrueSize() const = 0;
 	// void* mapSegment(uint32_t segNumber, uint32_t segCount);
 
-	inline uint8_t* data(uint64_t ofs) const
+	inline uint8_t* data(uint64_t ofs) 
 	{
-		// TODO: extended mappings
-		assert(ofs < mainMappingLength_);
-		return reinterpret_cast<uint8_t*>(mainMapping_) + ofs;
+		return translate(ofs);
 	}
 
-	void* mainMapping() const { return mainMapping_; }
 	void error(const char* msg) const;
-	void prefetch(void* p, size_t len)
-	{
-		file_.prefetch(p, len);
-	}
 
-private:
 	enum LockLevel
 	{
 		LOCK_NONE = 0,
@@ -73,47 +67,98 @@ private:
 		LOCK_APPEND = 2,
 		LOCK_EXCLUSIVE = 3
 	};
-	static const uint64_t SEGMENT_LENGTH = 1024 * 1024 * 1024;		// 1 GB
-	static const int EXTENDED_MAPPINGS_SLOT_COUNT = 16;
 
 	class TransactionBlock
 	{
 	public:
+		TransactionBlock(uint8_t* original) :
+			original_(original)
+		{
+			memcpy(current_, original, SIZE);
+		}
+		uint8_t* original() { return original_; }
+		uint8_t* current() { return current_; }
+
 		static const int SIZE = 4096;
 
 	private:
-		uint64_t pos_;
-		void* original_;
+		uint8_t* original_;
 		uint8_t current_[SIZE];
 	};
 
+	class Transaction
+	{
+	public:
+		Transaction(Store* store);
+		~Transaction();
+
+		uint8_t* getBlock(uint64_t pos);
+		const uint8_t* getConstBlock(uint64_t pos);
+		void commit();
+
+	protected:
+		void saveJournal();
+		void clearJournal();
+
+		Store* store_;
+		File journalFile_;
+		/**
+		 * The true file size of the Store before a transaction has been opened
+		 * (or the last time commit has been called). We don't need to journal
+		 * any blocks that lie at or above this offset, because there was no
+		 * actual data (Changes are rolled back simply by restoring the true
+		 * file size, effectively truncating any newly written data)
+		 */
+		uint64_t preCommitStoreSize_;
+
+		/**
+		 * A mapping of file locations (which must be evenly divisible by 4K) to
+		 * the 4-KB blocks where changes are staged until commit() or rollback()
+		 * is called.
+		 */
+		std::unordered_map<uint64_t, TransactionBlock*> blocks_;
+
+		/**
+		 * A list of those TransactionBlocks that lie in the metadata portion
+		 * of the store. In commit(), these are written to the store *after*
+		 * all other blocks have been written, in order to prevent a data race
+		 * by other processes that are accessing metadata (For example, we
+		 * must set the page number of a tile in the Tile Index of a FeatureStore
+		 * only once all of the actual tile data has been written to the Store.
+		 */
+		std::vector<TransactionBlock*> metadataBlocks_;
+	};
+
+private:
 	LockLevel lock(LockLevel newLevel);
 	bool tryExclusiveLock();
-	void unmapSegments();
+	
+	static const uint64_t JOURNAL_END_MARKER = 0xffff'ffff'ffff'ffffUll;
+	
+	void checkJournal();
+	std::string getJournalFileName() const
+	{
+		return fileName_ + ".journal";
+	}
+	bool isJournalValid(File& file);
+	void applyJournal(File& file);
 
 	std::string fileName_;
-	MappedFile file_;
 	int openMode_;
 	LockLevel lockLevel_;
 	FileLock lockRead_;
 	FileLock lockWrite_;
-	void* mainMapping_;
-	uint64_t mainMappingLength_;
-	/**
-	 * This table holds the mappings for segments that are added as the Store
-	 * grows in size, and is only used if the Store is writable. 
-	 * The first slot holds the first 1-GB segment that comes immediately 
-	 * after mainMapping_, the second slot holds 2 1-GB segments (as a single 
-	 * 2-GB mapping), then 4-GB etc. This way, 16 slots are enough to accommodate 
-	 * growth of about 64 TB since the store has been opened (When a store is 
-	 * closed and reopened, all these new segments will be covered by 
-	 * mainMapping_; this implementation differs com.clarisma.common.store.Store, 
-	 * since Java's MappedByteBuffer is limited to an int32_t range).
-	 * TODO: access to this table must be guarded by a mutex to make
-	 * Store threadsafe.
-	 */
-	void* extendedMappings_[EXTENDED_MAPPINGS_SLOT_COUNT];
-	File journalFile_;
 
+	/**
+	 * The currently open transaction, or nullptr if none.
+	 */
+	Transaction* transaction_;
+
+	/**
+	 * The mutex that must be held any time transaction_ is accessed.
+	 */
+	std::mutex transactionMutex_;
+
+	friend class Transaction;
 };
 

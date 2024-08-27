@@ -7,6 +7,13 @@
 #if defined(_WIN32) 
 #include <Windows.h>
 
+/*
+void IOException::getError(char* buf)
+{
+
+}
+*/
+
 void IOException::checkAndThrow()
 {
 	DWORD errorCode = GetLastError();
@@ -43,3 +50,12 @@ void IOException::checkAndThrow()
 #else
 #error "Platform not supported"
 #endif
+
+void IOException::alwaysThrow()
+{
+    checkAndThrow();
+    throw IOException("Unnown IO error");
+}
+
+
+// static void alwaysThrow(const char* msg);

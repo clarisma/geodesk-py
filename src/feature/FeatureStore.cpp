@@ -84,6 +84,7 @@ FeatureStore::~FeatureStore()
 	openStores_.erase(fileName());
 }
 
+// TODO: Return TilePtr
 pointer FeatureStore::fetchTile(Tip tip)
 {
 	uint32_t pageEntry = (tileIndex() + (tip << 2)).getUnsignedInt();

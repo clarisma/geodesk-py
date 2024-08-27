@@ -4,7 +4,11 @@ import os
 classname = sys.argv[1]
 is_py = classname.startswith("Py")
 
-pymethods = [ \
+fileheader = \
+    '// Copyright (c) 2024 Clarisma / GeoDesk contributors\n' \
+    '// SPDX-License-Identifier: LGPL-3.0-only\n'
+
+pymethods = [ 
     ("PyObject*", "call", ", PyObject* args, PyObject* kwargs"),
     ("void", "dealloc", ""),
     ("PyObject*", "getattro", ", PyObject *attr"),
@@ -35,7 +39,8 @@ def write_py_impl(f, method):
 
 # Create the files
 with open(f"{classname}.h", 'x') as f:       # "x" means don't overwrite existing
-    f.write('#pragma once\n')
+    f.write(fileheader)
+    f.write('\n#pragma once\n')
     if is_py:
         f.write('#include <Python.h>\n')
         f.write('#include <structmember.h>\n\n')
@@ -62,7 +67,8 @@ with open(f"{classname}.h", 'x') as f:       # "x" means don't overwrite existin
     f.write('};\n')
 
 with open(f"{classname}.cpp", 'x') as f:        # "x" means don't overwrite existing
-    f.write(f'#include "{classname}.h"\n\n')
+    f.write(fileheader)
+    f.write(f'\n#include "{classname}.h"\n\n')
     if is_py:
         for m in pymethods:
             write_py_impl(f, m)

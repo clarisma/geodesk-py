@@ -5,7 +5,7 @@
 #include "OpGraph.h"
 #include "feature/Feature.h"
 #include "feature/FeatureStore.h"
-#include <common/util/math.h>
+#include <common/math/Math.h>
 
 
 // IN: pTag_, ip_; OUT: tagKey_, valueOfs_

@@ -5,10 +5,9 @@
 #include "feature/GeometryBuilder.h"
 #include "filter/ComboFilter.h"
 #include "filter/IntersectsFilter.h"
+#include "match/MatcherDecoder.h"
 #include "geom/Area.h"
 #include "geom/Length.h"
-// #include "gol/load/TileLoader.h"
-#include "gol/tiles/TileCompiler.h"
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/format/PyFormatter.h"
@@ -114,45 +113,55 @@ PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selection
 
 PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-    const char* fileName;
-    if (!PyArg_ParseTuple(args, "s", &fileName))
+    Py_ssize_t argCount = PySequence_Length(args);
+    if (argCount < 1)
     {
+        PyErr_SetString(PyExc_TypeError, "Missing argument <gol_file>");
         return NULL;
     }
-    FeatureStore* store;
-    try
+    if (argCount == 1 && !kwds)
     {
-        store = FeatureStore::openSingle(std::string_view(fileName, strlen(fileName)));
-        // TODO: get string_view directly from param
+        PyObject* arg = PyTuple_GetItem(args, 0);
+        std::string_view fileName = Python::getStringView(arg);
+        if (!fileName.data()) return NULL;
+        FeatureStore* store;
+        try
+        {
+            store = FeatureStore::openSingle(fileName);
+        }
+        catch (const FileNotFoundException& ex)
+        {
+            PyErr_SetString(PyExc_FileNotFoundError, ex.what());
+            return NULL;
+        }
+        catch (const std::bad_alloc&)
+        {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        catch (const std::exception& ex)
+        {
+            PyErr_SetString(PyExc_RuntimeError, ex.what());
+            return NULL;
+        }
+        PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
+        if (self)
+        {
+            self->selectionType = &World::SUBTYPE;
+            store->addref();
+            self->store = store;
+            self->flags = SelectionFlags::USES_BOUNDS;
+            self->acceptedTypes = FeatureTypes::ALL;
+            self->matcher = store->getAllMatcher();
+            self->filter = NULL;
+            self->bounds = Box::ofWorld();
+        }
+        return self;
     }
-    catch (const FileNotFoundException& ex)
-    {
-        PyErr_SetString(PyExc_FileNotFoundError, ex.what());
-        return NULL;
-    }
-    catch (const std::bad_alloc&)
-    {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    catch (const std::exception& ex)
-    {
-        PyErr_SetString(PyExc_RuntimeError, ex.what());
-        return NULL;
-    }
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = &World::SUBTYPE;
-        store->addref();
-        self->store = store;
-        self->flags = SelectionFlags::USES_BOUNDS;
-        self->acceptedTypes = FeatureTypes::ALL;
-        self->matcher = store->getAllMatcher();
-        self->filter = NULL;
-        self->bounds = Box::ofWorld();
-    }
-    return self;
+    PyErr_SetString(PyExc_TypeError, "Expected single argument (name of GOL file)");
+    return NULL;
+
+    // return build(args, kwds); // TODO
 }
 
 
@@ -1030,8 +1039,8 @@ PyObject* PyFeatures::load(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
     // TileLoader loader(self->store);
     // loader.load();
-    TileCompiler compiler(self->store);
-    compiler.compile();
+    // TileCompiler compiler(self->store);
+    // compiler.compile();
     Py_RETURN_NONE;
     /*
     PyErr_SetString(PyExc_NotImplementedError,
@@ -1045,5 +1054,38 @@ PyObject* PyFeatures::update(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
     PyErr_SetString(PyExc_NotImplementedError,
         "update will be available in Version 0.2.0");
+    return NULL;
+}
+
+
+PyObject* PyFeatures::explain(PyFeatures* self, PyObject* args, PyObject* kwargs)
+{
+    Py_ssize_t argCount = PyTuple_Size(args);
+    if (argCount == 1)
+    {
+        // single argument
+        PyObject* arg = PyTuple_GetItem(args, 0);
+        PyTypeObject* type = Py_TYPE(arg);
+        if (type == &PyUnicode_Type)
+        {
+            Py_ssize_t len;
+            const char* query = PyUnicode_AsUTF8AndSize(arg, &len);
+            if (!query) return NULL;
+            const MatcherHolder* m = self->store->getMatcher(query);
+            
+            // TODO: broken, only works for bytecode matchers, not for
+            // templated matchers
+            DynamicBuffer buf(1024);
+            BufferWriter out(&buf);
+            MatcherDecoder decoder(self->store, out,
+                reinterpret_cast<const uint16_t*>(
+                    reinterpret_cast<const uint8_t*>(&m->mainMatcher()) + sizeof(Matcher)));
+            decoder.decode();
+            PyObject* str = PyUnicode_FromStringAndSize(buf.data(), buf.length());
+            m->release();
+            return str;
+        }
+    }
+    PyErr_SetString(PyExc_TypeError, "Expected query");
     return NULL;
 }

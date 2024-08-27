@@ -44,3 +44,41 @@ def no_test_filter_members(monaco):
     for route in routes:
         map.add(route.members.within(monte_carlo), color="red")
     map.show()    
+
+def query(features, s):
+    print(f"Query: {s}")  
+    features(s)
+    # print(f"Query: {s}\n{features.explain(s)}")
+
+def no_test_negated_query(features):
+    query(features, "w[highway=residential][maxspeed>20][maxspeed=*mph]")
+    """
+    query(features, "w[highway][bridge]")
+    query(features, "w[!highway][!bridge]")
+    query(features, "w[highway=primary,secondary]")
+    query(features, "w[highway!=primary,secondary]")
+    query(features, "w[highway][highway!=secondary,primary]")
+    query(features, "w[highway][highway!=primary,secondary,tertiary,service,residential,path,footway]")
+    """
+    
+# TODO: This test may fail if there are misspelled values of "highway"
+# keys in the features dataset (e.g. "highway=sceondary")    
+def test_issue_53(features):
+    c1 = features("w[highway=*ary,residential]").count
+    c2 = features("w[highway=primary,secondary,tertiary,residential]").count
+    assert(c1 > 100)
+    assert(c2 > 100)
+    assert(c1 == c2)
+    c1 = features("w[highway!=*ary,residential]").count
+    c2 = features("w[highway!=primary,secondary,tertiary,residential]").count
+    assert(c1 > 100)
+    assert(c2 > 100)
+    assert(c1 == c2)
+    c1 = features("w[highway][highway!=*ary,residential]").count
+    c2 = features("w[highway][highway!=primary,secondary,tertiary,residential]").count
+    assert(c1 > 100)
+    assert(c2 > 100)
+    assert(c1 == c2)
+    
+
+    

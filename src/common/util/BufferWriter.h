@@ -12,9 +12,12 @@
 #ifdef GEODESK_PYTHON
 #include <Python.h>
 #endif
+#include <common/data/Span.h>
 
 // TODO: use p_ and end_ of buffer, enable buffer to be safely used by multiple
 // writers, and avoid need to flush for memory-based buffers
+
+// TODO: should destructor auto-flush?
 
 class BufferWriter
 {
@@ -34,6 +37,43 @@ public:
 		buf_ = buf;
 		p_ = buf->pos();
 		end_ = buf->end();
+	}
+
+	// TODO: make const uint8_t instead?
+	const char* data() const
+	{
+		return buf_->data();
+	}
+
+	ByteSpan span() const
+	{
+		return ByteSpan(reinterpret_cast<const uint8_t*>(buf_->data()), length());
+	}
+
+	// OK to implcitly convert to Bytespan 
+	operator ByteSpan() const
+	{
+		return span();
+	}
+
+	const size_t length() const
+	{
+		return p_ - buf_->start();
+	}
+
+	const size_t size() const		// same as length(); TODO: standardize
+	{
+		return p_ - buf_->start();
+	}
+
+	bool isEmpty() const
+	{
+		return p_ == buf_->start();
+	}
+
+	void clear()
+	{
+		p_ = buf_->start();
 	}
 
 
@@ -69,8 +109,9 @@ public:
 		if (p_ == end_) filled();
 	}
 
-	void writeBytes(const char* b, size_t len)
+	void writeBytes(const void* data, size_t len)
 	{
+		const char* b = reinterpret_cast<const char*>(data);
 		for (;;)
 		{
 			size_t remainingCapacity = capacityRemaining();
@@ -88,9 +129,22 @@ public:
 		}
 	}
 
+	/*
 	void writeBytes(const uint8_t* b, size_t len)
 	{
 		writeBytes(reinterpret_cast<const char*>(b), len);
+	}
+
+	void writeBytes(const void* b, size_t len)
+	{
+		writeBytes(reinterpret_cast<const char*>(b), len);
+	}
+	*/
+
+	template<typename T>
+	void writeBinary(const T& obj)
+	{
+		writeBytes(reinterpret_cast<const char*>(&obj), sizeof(T));
 	}
 
 	void writeVarint(uint64_t v)
@@ -164,6 +218,7 @@ public:
 	}
 
 	void formatInt(int64_t d);	// TODO: rename
+	void formatUnsignedInt(uint64_t v);
 	void formatDouble(double d, int precision = 15, bool zeroFill = false);
 
 	void writeJsonEscapedString(const char* s, size_t len);
@@ -176,6 +231,31 @@ public:
 	{
 		// TODO: use smarter approach?
 		for (int i = 0; i < times; i++) writeByte(ch);
+	}
+
+	BufferWriter& operator<<(char ch)
+	{
+		writeByte(ch);
+		return *this;
+	}
+
+	BufferWriter& operator<<(uint32_t value)
+	{
+		formatUnsignedInt(value);
+		return *this;
+	}
+
+	BufferWriter& operator<<(uint64_t value)
+	{
+		formatUnsignedInt(value);
+		return *this;
+	}
+
+	template<typename T>
+	BufferWriter& operator<<(const T& value) 
+	{
+		value.write(*this);
+		return *this;
 	}
 
 protected:
@@ -221,7 +301,7 @@ protected:
 		*(end - 1) = '-';
 		return end - negative;
 	}
-	
+
 private:
 	void filled()
 	{

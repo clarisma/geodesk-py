@@ -149,6 +149,10 @@ struct OpNode
 	}
 
 	bool isValueOp() const { return opcode <= Opcode::GT; }
+	bool isReturnFalseOp() const 
+	{ 
+		return opcode == Opcode::RETURN && operand.code==0; 
+	}
 	OpNode* nextIf(bool t) const { return next[t]; }
 	void setNegated(bool t) { flags = (flags & ~OpFlags::NEGATE) | (t ? OpFlags::NEGATE : 0); }
 	void setStringOperand(std::string_view sv)

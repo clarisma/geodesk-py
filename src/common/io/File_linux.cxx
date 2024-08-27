@@ -26,8 +26,15 @@ void File::open(const char* filename, int mode)
     {
         flags |= O_WRONLY;
     }
-
-    if (mode & OpenMode::CREATE) flags |= O_CREAT;
+    
+    if (mode & REPLACE_EXISTING)
+    {
+        flags |= O_TRUNC;
+    }
+    if (mode & OpenMode::CREATE)
+    {
+        flags |= O_CREAT;
+    }
 
     fileHandle_ = ::open(filename, flags, 0666);
 
@@ -117,4 +124,52 @@ size_t File::read(void* buf, size_t length)
         IOException::checkAndThrow();
     }
     return bytesRead;
+}
+
+size_t File::read(uint64_t ofs, void* buf, size_t length)
+{
+    ssize_t bytesRead = pread(fileHandle_, buf, length, ofs);
+    if (bytesRead < 0)
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesRead;
+}
+
+
+size_t File::write(const void* buf, size_t length)
+{
+    ssize_t bytesWritten = ::write(fileHandle_, buf, length);
+    if (bytesWritten < 0)
+    {
+        IOException::checkAndThrow();
+    }
+    return bytesWritten;
+}
+
+
+std::string File::fileName() const
+{
+    char fdPath[1024];
+    char filePath[1024];
+    snprintf(fdPath, sizeof(fdPath), "/proc/self/fd/%d", fileHandle_);
+    ssize_t len = readlink(fdPath, filePath, sizeof(filePath) - 1);
+    if (len != -1) 
+    {
+        filePath[len] = '\0'; // Null-terminate the result
+        return std::string(filePath);
+    }
+    else 
+    {
+        return "<invalid file>";
+    }
+}
+
+
+void File::allocate(uint64_t ofs, size_t length)
+{
+    if (fallocate(fileHandle_, 0, ofs, length) != 0)
+    {
+        IOException::checkAndThrow();
+    }
 }

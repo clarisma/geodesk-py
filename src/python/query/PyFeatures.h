@@ -113,6 +113,8 @@ public:
         // return Environment::get().getEmptyFeatures();
     }
 
+    // static PyFeatures* build(PyObject* args, PyObject* kwds);
+
     /*
     bool hasMatcher() const
     {
@@ -174,6 +176,7 @@ public:
     // Methods
 
     static PyObject* auto_load(PyFeatures* self, PyObject* args, PyObject* kwargs);
+    static PyObject* explain(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* load(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* update(PyFeatures* self, PyObject* args, PyObject* kwargs);
 

@@ -1,5 +1,12 @@
 ﻿# TODO: Make sure to compile libgeos using option -fPIC on Linux!
 
+# TODO: enable SIMD instructions
+# (try -march=native, but don't use on GitHub's CI/CD)
+# Probably safe to use -msse4.2 -mavx2 -mfma -mbmi2 
+# -mpclmul -maes -mpopcnt -mlzcnt -mf16c -mmovbe   -mfsgsbase
+# Available but probably don't apply (except maybe https support?)
+# -mrdseed -mrdrnd -maes
+
 option(BUILD_WHEELS "Build wheels via cibuildwheel" OFF)
 
 cmake_minimum_required (VERSION 3.8)
@@ -7,7 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
-
+ 
 # Used for testing, disable in release!
 # add_definitions(-DGEODESK_TEST_PERFORMANCE)
 
@@ -39,15 +46,21 @@ project ("geodesk-py")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
+
+# TODO: Make config more flexible
+#if(MSVC)
+#    add_compile_options(/arch:AVX2)
+#endif()
+
 add_subdirectory(third_party/geos)
+add_subdirectory(third_party/zlib)
+add_subdirectory(third_party/catch2)
+
+# Set the CMAKE_CXX_FLAGS_RELWITHDEBINFO variable to remove the NDEBUG definition
+# This approach ensures that assertions are enabled in RelWithDebInfo configuration
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -U NDEBUG")
 
 include_directories(src)
-
-# ZLIB (not needed for now)
-# include_directories(third-party/zlib)
-# add_subdirectory(third-party/zlib)
-# link_directories(third-party/zlib/out/build/x64-Release)
-# include_directories(third-party/zlib/out/build/x64-Release)
 
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)
@@ -70,50 +83,43 @@ endif()
 # link_directories(third-party/asmjit/out/build/x64-Release)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
-list(REMOVE_ITEM SOURCE_FILES "/src/main.cpp")
 
-# set(BOOST_ROOT "third-party/boost_1_81_0")
-# set(Boost_USE_STATIC_LIBS ON)  # Use static libraries. Switch to OFF if you want to use dynamic
-# set(Boost_USE_MULTITHREADED ON)
-# set(Boost_USE_STATIC_RUNTIME OFF)  # Adjust as per your needs
-# set(BOOST_THREAD_USE_LIB OFF)
-# find_package(Boost 1.81.0 REQUIRED COMPONENTS thread iostreams)  
-# find_package(Boost 1.81.0 REQUIRED)  
-# include_directories(${Boost_INCLUDE_DIRS})
+set(GEOS_ROOT "${CMAKE_BINARY_DIR}/third_party/geos")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(GEOS_ROOT "${CMAKE_SOURCE_DIR}/out/build/x64-debug/geos")
-else()
-	set(GEOS_ROOT "${CMAKE_SOURCE_DIR}/out/build/x64-release/geos")
-endif()
 
 set(GEOS_LIBRARY_DIR "${GEOS_ROOT}/lib")
 
 set(LIBRARIES 
 	${Python_LIBRARIES}
-	# ${Boost_LIBRARIES}
-	# zlibstatic
+	zlibstatic
 	# asmjit
 	geos_c
 	geos
 )
 
-# Conditionally add Ws2_32 for Windows builds (required for ntohl in OsmPbfReader)
-if(WIN32)
-    list(APPEND LIBRARIES Ws2_32)
-endif()
+set(INCLUDES
+	"${GEOS_ROOT}/include/capi" 
+	"${GEOS_ROOT}/include"
+	third_party/zlib
+	"${CMAKE_BINARY_DIR}/third_party/zlib"
+)
 
 if(NOT BUILD_WHEELS)
 	# Create test harness
-	add_executable (geodesk-py "src/main.cpp" ${SOURCE_FILES})
-	target_include_directories(geodesk-py PRIVATE "${GEOS_ROOT}/include/capi" "${GEOS_ROOT}/include")
+	add_executable (geodesk-py "src/main.cxx" ${SOURCE_FILES})
+	target_include_directories(geodesk-py PRIVATE ${INCLUDES})
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
-	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON=1)
+	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
+
+	file(GLOB_RECURSE TEST_SOURCE_FILES "test_cpp/*.cpp")
+	add_executable (geodesk-test ${GOL_SOURCE_FILES} ${TEST_SOURCE_FILES})
+	target_include_directories(geodesk-test PRIVATE ${INCLUDES} third_party/catch2/src)
+	target_link_libraries(geodesk-test PRIVATE ${LIBRARIES} Catch2::Catch2WithMain)
 endif()
 
-add_library(geodesk MODULE ${SOURCE_FILES} )
-target_include_directories(geodesk PRIVATE "${GEOS_ROOT}/include/capi" "${GEOS_ROOT}/include")
+add_library(geodesk MODULE ${SOURCE_FILES})
+target_include_directories(geodesk PRIVATE ${INCLUDES})
 target_link_libraries(geodesk ${LIBRARIES})
 if(BUILD_WHEELS)
 	python_extension_module(geodesk)
@@ -124,8 +130,9 @@ else()
 	endif()
 endif()
 
-target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON=1)
-target_compile_definitions(geodesk PRIVATE _WIN32_WINNT=0x0601)
+# message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
+  
+target_compile_definitions(geodesk PRIVATE GEODESK_PYTHON)
 # TODO: Add tests and install targets if needed.
 
 if(BUILD_WHEELS)

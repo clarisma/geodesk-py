@@ -4,6 +4,7 @@
 #pragma once
 #include <cassert>
 #include <cstdio>
+#include <common/alloc/Block.h>
 
 class Buffer
 {
@@ -17,6 +18,7 @@ public:
 	char* end() const { return end_; }
 	size_t length() const { return p_ - buf_; }
 	size_t capacity() const { return end_ - buf_; }
+	bool isEmpty() const { return p_ == buf_; }
 
 	virtual void filled(char *p) = 0;
 	virtual void flush(char* p) = 0;
@@ -34,9 +36,38 @@ public:
 	DynamicBuffer(size_t initialCapacity);
 	virtual ~DynamicBuffer();
 
-	virtual void filled(char* p);
+	DynamicBuffer(DynamicBuffer&& other) noexcept
+	{
+		buf_ = other.buf_;
+		p_ = other.p_;
+		end_ = other.end_;
+		other.buf_ = nullptr;
+		other.p_ = nullptr;
+		other.end_ = nullptr;
+	}
+
+	DynamicBuffer& operator=(DynamicBuffer&& other) noexcept
+	{
+		if (this != &other)
+		{
+			if(buf_) delete[] buf_;
+			buf_ = other.buf_;
+			p_ = other.p_;
+			end_ = other.end_;
+			other.buf_ = nullptr;
+			other.p_ = nullptr;
+			other.end_ = nullptr;
+		}
+		return *this;
+	}
+
+	// Disable copy constructor and copy assignment operator
+	DynamicBuffer(const DynamicBuffer&) = delete;
+	DynamicBuffer& operator=(const DynamicBuffer&) = delete;
+
+	virtual void filled(char* p);		// TODO: why does this take a pointer??
 	virtual void flush(char* p);
-	char* take();
+	ByteBlock takeBytes();
 
 protected:
 	void grow();

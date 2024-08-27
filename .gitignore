@@ -33,10 +33,10 @@
 
 # Local directories
 .vs/
-build/
-out/
-_skbuild/
-dist/
+/build/
+/out/
+/_skbuild/
+/dist/
 /third_party/
 .idea/
 cmake-build-*/

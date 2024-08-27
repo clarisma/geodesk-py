@@ -49,6 +49,7 @@ RelationRef ParentRelationIterator::next()
         {
             assert((pCurrent.pointerAsULong() & 1) == 0); // Reltable must be 2-byte aligned
             rel = RelationRef(pCurrent + ((int32_t)(currentRel_ & 0xffff'fffc) >> 1));
+                // TODO: shift should not be needed, flaw in Tile Spec 1.0
         }
         if (matcher_->mainMatcher().accept(rel.ptr()))
         {

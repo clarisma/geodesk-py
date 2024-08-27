@@ -3,6 +3,7 @@
 
 #pragma once
 #include "LookupBase.h"
+#include <common/util/log.h>
 
 /**
  * Template for classes that look up items in a hashtable using a 64-bit 
@@ -47,6 +48,7 @@ public:
 	 */
 	T* lookup(uint64_t id) const
 	{
+		// LOG("Looking up %llu", id);
 		size_t slot = id % this->tableSize_;
 		T* item = this->table_[slot];
 		while (item)

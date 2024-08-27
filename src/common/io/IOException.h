@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <common/text/Format.h>
 
 class IOException : public std::runtime_error 
 {
@@ -13,12 +14,20 @@ public:
     explicit IOException(const std::string& message)
         : std::runtime_error(message) {}
 
+    template <typename... Args>
+    explicit IOException(const char* message, Args... args)
+        : std::runtime_error(Format::format(message, args...)) {}
+
+    // static void getError(char* buf);
+
     /**
      * On Linux, this function must only be called if the caller
      * is certain that an error occurred (errno is set) -- typically,
      * because a system call returned -1.
      */
     static void checkAndThrow();
+    static void alwaysThrow();
+    // static void alwaysThrow(const char* msg);
 };
 
 

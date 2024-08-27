@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <common/store/BlobStore.h>
-#include <common/util/Bits.h>
 #include <common/util/ThreadPool.h>
 
 #include "StringTable.h"
@@ -16,18 +15,6 @@
 
 class MatcherHolder;
 class PyFeatures;
-
-class ZoomLevels
-{
-public:
-    inline int count()
-    {
-        return Bits::bitCount(m_levels);
-    }
-
-private:
-    uint32_t m_levels;
-};
 
 
 //  Possible threadpool alternatives:

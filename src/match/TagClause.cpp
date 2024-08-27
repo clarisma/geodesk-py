@@ -103,6 +103,7 @@ bool TagClause::isOrClause() const
 /**
  * Merges two tag clauses together, e.g. [k>3][k<5] or [k][k!=a]
  */
+// TODO: Broken !!!!
 void TagClause::absorb(TagClause* other)
 {
 	assert(keyOp.opcode == other->keyOp.opcode);
@@ -111,6 +112,15 @@ void TagClause::absorb(TagClause* other)
 		keyOp.setNegated(false);
 		std::swap(keyOp.next[0], keyOp.next[1]);
 	}
+
+	/*
+	if (other->keyOp.isNegated() && !keyOp.isNegated())
+	{
+		other->keyOp.setNegated(false);
+		std::swap(other->keyOp.next[0], other->keyOp.next[1]);
+	}
+	*/
+
 	flags |= other->flags;
 	if ((flags & COMPLEX_BOOLEAN_CLAUSE) != 0 || isOrClause() ||
 		other->isOrClause())
@@ -144,8 +154,9 @@ void TagClause::absorb(TagClause* other)
 	OpNode** pNext = &keyOp.next[!keyOp.isNegated()];
 	while (valOp->opcode != Opcode::RETURN)
 	{
+		OpNode* otherNext = valOp->next[1];
 		pNext = insertValueOp(valOp, true);
-		valOp = valOp->next[1];
+		valOp = otherNext;
 	}
 }
 

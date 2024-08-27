@@ -80,7 +80,7 @@ public:
 	{
 		if (minX() > maxX())
 		{
-			// empty or Animeridian-crossing
+			// empty or Antimeridian-crossing
 			if (minY() > maxY()) return false;  // empty box cannot contain anything
 			// If 180 longitude crossed, minX and maxY are swapped
 			return (x >= maxX() && x <= minX() &&
@@ -281,6 +281,9 @@ public:
 		m_maxX = std::numeric_limits<int32_t>::min();
 		m_maxY = std::numeric_limits<int32_t>::min();
 	}
+
+	void format(char* buf) const;
+	std::string toString() const;
 
 private:
 	/**

@@ -1,4 +1,4 @@
-from geodesk import *;
+from geodesk import Features, Box;
 from shapely import *;
 
 coords = [
@@ -11,8 +11,6 @@ streets = germany("w[highway][maxspeed]")
 
 for c in coords:
     c_lon, c_lat = c
-    b = Box(lon=c_lon, lat=c_lat)
-    b2=b.buffer(3)
     box = Box(lon=c_lon, lat=c_lat).buffer(meters = 30)
     p = Point(box.centroid)
     nearby_streets = streets(box)

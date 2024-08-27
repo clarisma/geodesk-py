@@ -9,7 +9,10 @@
 #include <cstdint>
 #include <cstring>
 #include <string_view>
+#include <common/math/Decimal.h>
 #include <common/util/pointer.h>
+#include "TagValue.h"
+#include "Tip.h"
 
 enum FeatureType
 {
@@ -104,33 +107,17 @@ private:
 };
 
 
-class Tip
-{
-public:
-    Tip(uint32_t tip) : tip_(tip) {}
-
-    operator uint32_t() const
-    {
-        return tip_;
-    }
-
-    Tip& operator+=(int delta)
-    {
-        tip_ += delta;
-        return *this;
-    }
-
-
-private:
-    uint32_t tip_;
-};
-
 enum MemberFlags
 {
     LAST = 1,
     FOREIGN = 2,
     DIFFERENT_ROLE = 4,
-    DIFFERENT_TILE = 8
+    DIFFERENT_TILE = 8,     
+        // TODO: This will change in 2.0 for relation tables and feature-node tables
+        // (moves to Bit 2 == value 4, to accommodate more TEX bits)
+    WIDE_NODE_TEX = 8,
+    WIDE_RELATION_TEX = 8,
+    WIDE_MEMBER_TEX = 16,
 };
 
 namespace FeatureConstants
@@ -140,7 +127,7 @@ namespace FeatureConstants
     static const int MAX_COMMON_ROLE = (1 << 15) - 1;
 };
 
-
+// TODO: Replace with ShortVarString
 class GlobalString
 {
 public:
@@ -221,19 +208,3 @@ private:
 // No! Don't change this, compiled matcher assumes local and global strings
 // have same format. (But could require globals to be 127 char max)
 typedef GlobalString LocalString;
-
-namespace TagValue
-{
-    static const int MIN_NUMBER = -256;
-    static const int MAX_WIDE_NUMBER = (1 << 30) - 1 + MIN_NUMBER;
-    static const int MAX_NARROW_NUMBER = (1 << 16) - 1 + MIN_NUMBER;
-
-    static const double SCALE_FACTORS[] = { 1.0, 0.1, 0.01, 0.001 };
-
-    static inline double doubleFromWideNumber(uint32_t val)
-    {
-        double mantissa = (int32_t)(val >> 2) + MIN_NUMBER;
-        int scale = val & 3;
-        return mantissa * SCALE_FACTORS[scale];
-    }
-}

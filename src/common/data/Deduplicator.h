@@ -20,14 +20,13 @@
  * 
  * Needs the following functions in the derived class:
  * 
- * - static const void* data(T* item)
- *   Returns a pointer to the raw bytes that represent the given item
- * 
- * - static int length(T* item)
- *   Returns the number of bytes that make up the contents of the given item
+ * - static size_t hash(T* item)
+ *   Returns the hash of the given item
  * 
  * - static T** next(T* item)
  *   Returns the location of the "next item" pointer in the given item
+ * 
+ * Items must implement the == operator for equality check
  */
 
 template<typename Derived, typename T>
@@ -44,7 +43,7 @@ public:
 
 	void insertUnique(T* item)
 	{
-		int slot = hash(item) % this->tableSize_;
+		size_t slot = Derived::hash(item) % this->tableSize_;
 		*Derived::next(item) = this->table_[slot];
 		this->table_[slot] = item;
 		count_++;
@@ -55,25 +54,19 @@ public:
 	 * If so, adds to the refcount of the exiting item and returns a pointer 
 	 * to it; otherwise, inserts the given item (without touching its refcount)
 	 * and returns a pointer to it.
+	 * 
+	 * TODO: refCount
 	 */
 	T* insert(T* item)
 	{
-		int itemLen = Derived::length(item);
-		void* itemData = Derived::data(item);
-		int slot = hash(item) % this->tableSize_;
+		size_t slot = Derived::hash(item) % this->tableSize_;
 		T* existing = this->table_[slot];
 		while (existing)
 		{
-			int existingLen = Derived::length(existing);
-			if (existingLen == itemLen && 
-				memcmp(itemData, Derived::data(existing), itemLen) == 0)
-			{
-				// Derived::addRef(existing);
-				return existing;
-			}
+			if (*item == *existing) return existing;
 			existing = *Derived::next(existing);
 		}
-		item->next = this->table_[slot];
+		*Derived::next(item) = this->table_[slot];
 		this->table_[slot] = item;
 		count_++;
 		return item;
@@ -87,18 +80,5 @@ public:
 	}
 
 private:
-	uint32_t hash(T* item) const
-	{
-		uint32_t hash = 0;
-		const uint8_t* p = reinterpret_cast<const uint8_t*>(Derived::data(item));
-		const uint8_t* end = p + Derived::length(item);
-		do
-		{
-			hash = hash * 31 + *p++;
-		}
-		while (p < end);
-		return hash;
-	}
-
 	size_t count_;
 };

@@ -63,7 +63,7 @@ void MatcherDecoder::decode()
 void MatcherDecoder::writeAddress(const uint16_t* p, bool padded)
 {
 	char buf[32];
-	sprintf(buf, padded ? "%5d" : "%d", (p - pCodeStart_));
+	Format::unsafe(buf, padded ? "%5d" : "%d", (p - pCodeStart_));
 	out_.writeString(buf);
 }
 

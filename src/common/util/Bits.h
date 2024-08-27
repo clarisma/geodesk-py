@@ -143,11 +143,8 @@ namespace Bits
 
 #endif
 
-    inline uint32_t reverseByteOrder32(uint32_t value)
+    inline int64_t signedFromBit0(uint64_t val)
     {
-        return ((value & 0x000000FF) << 24) |
-            ((value & 0x0000FF00) << 8) |
-            ((value & 0x00FF0000) >> 8) |
-            ((value & 0xFF000000) >> 24);
+        return static_cast<int64_t>((val >> 1) ^ -(val & 1));
     }
 }

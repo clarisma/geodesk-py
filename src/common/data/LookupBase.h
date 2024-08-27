@@ -4,6 +4,7 @@
 #pragma once
 #include <cstdint>
 #include <cstring>
+#include <vector>
 #include <common/alloc/Arena.h>
 
 /**
@@ -34,7 +35,12 @@ public:
 	{
 		table_ = table;
 		tableSize_ = tableSize;
-		memset(table, 0, sizeof(T*) * tableSize);
+		clear();
+	}
+
+	void clear()
+	{
+		memset(table_, 0, sizeof(T*) * tableSize_);
 	}
 
 	class Iterator
@@ -109,6 +115,18 @@ public:
 			*p++ = item;
 		}
 		return pa;
+	}
+
+	// TODO: should pre-size
+	std::vector<T*> toVector() const
+	{
+		std::vector<T*> items;
+		Iterator iter(this);
+		while (iter.hasNext())
+		{
+			items.push_back(iter.next());
+		}
+		return items;
 	}
 
 protected:

@@ -21,6 +21,17 @@ void* MappedFile::map(uint64_t offset, uint64_t length, int mode)
     return mappedAddress;
 }
 
+
+void MappedFile::sync(const void* addr, uint64_t length)
+{
+    // TODO: Check if we should make MS_INVALIDATE optional
+
+    if (msync(const_cast<void*>(addr), length, MS_SYNC | MS_INVALIDATE) == -1)
+    {
+        IOException::checkAndThrow();
+    }
+}
+
 void MappedFile::unmap(void* address, uint64_t length)
 {
     munmap(address, length);
@@ -34,7 +45,5 @@ void MappedFile::prefetch(void* address, uint64_t length)
     }
 }
 
-void MappedFile::close()
-{
-    File::close();
-}
+
+

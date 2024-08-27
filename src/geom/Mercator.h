@@ -5,7 +5,7 @@
 
 #include <cmath>
 #include <common/util/log.h>
-#include <common/util/math.h>
+#include <common/math/Math.h>
 #include "Coordinate.h"
 
 #ifndef M_PI

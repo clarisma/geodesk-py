@@ -71,23 +71,33 @@ void MatcherValidator::validateOp(OpNode* node)
 }
 
 
+OpNode* MatcherValidator::findWrongTypeOp(OpNode* firstValueOp)
+{
+	OpNode* wrongTypeOp = firstValueOp;
+	for (;;)
+	{
+		wrongTypeOp = wrongTypeOp->next[wrongTypeOp->isNegated()];
+		if (!wrongTypeOp->isValueOp()) return wrongTypeOp;
+	}
+}
+
 /**
  * Inserts and links up LOAD_CODE, LOAD_STR or LOAD_NUM as needed based
  * on the operand types of the value ops (summarized in flags). Also
  * inserts CODE_TO_STR and STR_TO_NUM, if needed.
  */
+// TODO: Broken; for [k][k!=v], clause *succeeds* if wrong type
 void MatcherValidator::insertLoadOps(TagClause* clause)
 {
 	OpNode* keyOp = &clause->keyOp;
 	bool negated = keyOp->isNegated();
+
+	// TODO:
+	// Still broken for [k][k!=v]
 	
 	OpNode* firstValueOp = keyOp->next[!negated];
-	// For k = a, value ops are evaluated if key-op is true
-	// For k != a, value ops are evaluated if key-op is false
-	OpNode* wrongTypeOp = keyOp->next[negated];
-	// For k = a, we jump to false-target if tag has wrong type
-	// For k != a, we jump to true-target if tag has wrong type
-
+	OpNode* wrongTypeOp = findWrongTypeOp(firstValueOp);
+	
 	OpNode* loadOp = wrongTypeOp;
 	uint32_t clauseFlags = clause->flags;
 	uint32_t valueFlags = clauseFlags & 
@@ -96,12 +106,6 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 	{
 		// Most common case: all value-ops are EQ_CODE
 
-		// for unary clauses ([k] or [!k]), we jump to the success target
-		// if load of global-code fails (because it cannot be "no")
-		// TODO: make this code cleaner
-
-		bool isUnaryOp = negated != firstValueOp->isNegated();
-		wrongTypeOp = isUnaryOp ? firstValueOp->next[!negated] : keyOp->next[negated];
 		loadOp = graph_.newOp(Opcode::LOAD_CODE, wrongTypeOp, firstValueOp);
 	}
 	else if (valueFlags == TagClause::VALUE_LOCAL_STRING)  // only string (== is ok)
@@ -123,62 +127,100 @@ void MatcherValidator::insertLoadOps(TagClause* clause)
 	}
 	else
 	{
-		// Create a path for each type
-		if (valueFlags & TagClause::VALUE_ANY_NUMBER)
-		{
-			OpNode* op = createValueOps(keyOp, TagClause::VALUE_ANY_NUMBER);
-			if (op)
-			{
-				loadOp = graph_.newOp(Opcode::LOAD_NUM, loadOp, op);
-			}
-		}
-		if (valueFlags & (TagClause::VALUE_LOCAL_STRING |
-			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
-		{
-			OpNode* op = createValueOps(keyOp, (TagClause::VALUE_LOCAL_STRING |
-				TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
-			if (op)
-			{
-				if (valueFlags & TagClause::VALUE_ANY_NUMBER)
-				{
-					op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
-					// If string is not a number, the double value will be NaN;
-					// for simplicity, we can continue to value checks in both
-					// false and true case
-				}
-				loadOp = graph_.newOp(Opcode::LOAD_STRING, loadOp, op);
-			}
-		}
-		if (valueFlags & (TagClause::VALUE_GLOBAL_STRING |
-			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
-		{
-			OpNode* op = createValueOps(keyOp, (TagClause::VALUE_GLOBAL_STRING |
-				TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
-			if (op)
-			{
-				if (valueFlags & TagClause::VALUE_ANY_NUMBER)
-				{
-					op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
-					// If string is not a number, the double value will be NaN;
-					// for simplicity, we can continue to value checks in both
-					// false and true case
-				}
-				if (valueFlags & (TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
-				{
-					op = graph_.newOp(Opcode::CODE_TO_STR, op, nullptr);
-				}
-				loadOp = graph_.newOp(Opcode::LOAD_CODE, loadOp, op);
-			}
-		}
+		loadOp = createMultiTypeLoadOps(valueFlags, firstValueOp);
 	}
 	keyOp->next[!negated] = loadOp;
 }
+
+
+OpNode* MatcherValidator::createMultiTypeLoadOps(uint32_t valueFlags, OpNode* valOp)
+{
+	assert(valOp->isValueOp());
+	// Create a path for each type
+	
+	OpNode* nextOp = nullptr;
+	if (valueFlags & TagClause::VALUE_ANY_NUMBER)
+	{
+		OpNode* op = cloneValueOp(valOp, TagClause::VALUE_ANY_NUMBER);
+		if (op->isValueOp())
+		{
+			nextOp = graph_.newOp(Opcode::LOAD_NUM, findWrongTypeOp(op), op);
+		}
+	}
+	if (valueFlags & (TagClause::VALUE_LOCAL_STRING |
+		TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
+	{
+		OpNode* op = cloneValueOp(valOp, (TagClause::VALUE_LOCAL_STRING |
+			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
+		if (op->isValueOp())
+		{
+			if (valueFlags & TagClause::VALUE_ANY_NUMBER)
+			{
+				op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
+				// If string is not a number, the double value will be NaN;
+				// for simplicity, we can continue to value checks in both
+				// false and true case
+			}
+			nextOp = graph_.newOp(Opcode::LOAD_STRING, 
+				nextOp ? nextOp : findWrongTypeOp(op), op);
+		}
+	}
+	if (valueFlags & (TagClause::VALUE_GLOBAL_STRING |
+		TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
+	{
+		OpNode* op = cloneValueOp(valOp, (TagClause::VALUE_GLOBAL_STRING |
+			TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER));
+		if (op->isValueOp())
+		{
+			if (valueFlags & TagClause::VALUE_ANY_NUMBER)
+			{
+				op = graph_.newOp(Opcode::STR_TO_NUM, op, op);
+				// If string is not a number, the double value will be NaN;
+				// for simplicity, we can continue to value checks in both
+				// false and true case
+			}
+			if (valueFlags & (TagClause::VALUE_ANY_STRING | TagClause::VALUE_ANY_NUMBER))
+			{
+				op = graph_.newOp(Opcode::CODE_TO_STR, op, nullptr);
+			}
+			nextOp = graph_.newOp(Opcode::LOAD_CODE, 
+				nextOp ? nextOp : findWrongTypeOp(op), op);
+		}
+	}
+	assert(nextOp);		// At least one suitable op must have been found
+	return nextOp;
+}
+
+/**
+ * Creates a copy of the given value op, if it is suitable for acceptedValues.
+ * If the value op does not apply, returns the op (or its copy, in case of a
+ * value op) for the true or false path of this op, instead.
+ * 
+ * - If a value op that is omitted (because it is not suitable for the given type):
+ *   - Its false-path op is returned (cloned, if needed), unless the value-op is
+ *     negated, in which case the true-path is returned
+ * 
+ */
+OpNode* MatcherValidator::cloneValueOp(OpNode* valOp, uint32_t acceptedValues)
+{
+	if (!valOp->isValueOp()) return valOp;
+	if (TagClause::OPCODE_VALUE_TYPES[valOp->opcode] & acceptedValues)
+	{
+		OpNode* clonedOp = graph_.copyOp(valOp);
+		clonedOp->next[0] = cloneValueOp(clonedOp->next[0], acceptedValues);
+		clonedOp->next[1] = cloneValueOp(clonedOp->next[1], acceptedValues);
+		return clonedOp;
+	}
+	return cloneValueOp(valOp->next[valOp->isNegated()], acceptedValues);
+}
+
 
 /**
  * Creates a copy of an OR-chain of value ops, consisiting only of ops that
  * apply to acceptedValues (TagClause::Flags)
  * Returns null if no ops in the chain apply to the given values.
  */
+/*
 OpNode* MatcherValidator::cloneValueOps(
 	const OpNode* valOps, uint32_t acceptedValues, 
 	OpNode* falseOp)
@@ -229,7 +271,7 @@ OpNode* MatcherValidator::createValueOps(const OpNode* keyOp, uint32_t acceptedV
 	}
 	return firstClonedOp;
 }
-
+*/
 
 /**
  * Creates load ops for the accepted values of each tag clause, then links
@@ -269,7 +311,7 @@ OpNode* MatcherValidator::validateSelector(Selector* sel)
 			if (!clause->keyOp.isNegated()) allLocalKeyOpsNegated = false;
 		}
 
-		insertLoadOps(clause);
+		insertLoadOps(clause);		// TODO: broken
 		if (lastClause)
 		{
 			lastClause->trueOp = clause->keyOp;

@@ -3,6 +3,7 @@
 
 #include "Buffer.h"
 #include <cstring>
+#include <common/util/log.h>
 
 FileBuffer::FileBuffer(FILE* file, size_t capacity) :
 	file_(file)
@@ -16,7 +17,7 @@ FileBuffer::FileBuffer(FILE* file, size_t capacity) :
 FileBuffer::~FileBuffer()
 {
 	if (buf_) delete[] buf_;
-    fclose(file_);
+    fclose(file_);          // TODO: Check!!!!!
 }
 
 void FileBuffer::filled(char* p)
@@ -33,6 +34,7 @@ void FileBuffer::flush(char* p)
 	p_ = buf_;
 }
 
+// TODO: Check the way DynamicBuffer grows!
 
 DynamicBuffer::DynamicBuffer(size_t initialCapacity)
 {
@@ -44,7 +46,11 @@ DynamicBuffer::DynamicBuffer(size_t initialCapacity)
 
 DynamicBuffer::~DynamicBuffer()
 {
-	if (buf_) delete[] buf_;
+    if (buf_)
+    {
+        // LOG("Freeing DynamicBuffer %p", buf_);
+        delete[] buf_;
+    }
 }
 
 
@@ -76,12 +82,16 @@ void DynamicBuffer::flush(char* p)
     p_ = p;
 }
 
-char* DynamicBuffer::take()
+
+ByteBlock DynamicBuffer::takeBytes()
 {
-    char* buf = buf_;
-    p_ = buf_ = end_ = nullptr;
-    return buf;
+    ByteBlock block(reinterpret_cast<uint8_t*>(buf_), length());
+    p_ = nullptr;
+    buf_ = nullptr;
+    end_ = nullptr;
+    return block;
 }
+
 
 
 /*

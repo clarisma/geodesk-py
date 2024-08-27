@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
+#include <common/math/Math.h>
 #include <common/util/log.h>
-#include <common/util/math.h>
 #include "python/Environment.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"

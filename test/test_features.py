@@ -106,7 +106,7 @@ def test_bool(features):
 def test_city_names(features):
     count = 0
     name_len = 0
-    for city in features("na[place=city]"):
+    for city in features("na[place=city][name]"):
         count += 1
         name_len += len(city.name)
     name_len /= count

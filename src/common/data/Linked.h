@@ -8,6 +8,9 @@
 template <typename T>
 class Linked
 {
+public:
+	T* next() const { return next_; }
+
 protected:
 	Linked(T* next) : next_(next) {}
 
@@ -32,6 +35,12 @@ public:
 	T* first() const
 	{
 		return first_;
+	}
+
+	void clear()
+	{
+		first_ = nullptr;
+		pNext_ = &first_;
 	}
 
 private:
