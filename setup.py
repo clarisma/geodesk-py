@@ -12,7 +12,7 @@ setup(
     description='Python port of GeoDesk, a fast and storage-efficient spatial database engine for OpenStreetMap features',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    author="Clarisma / GeoDesk contributors",
+    # author="Clarisma / GeoDesk contributors",
     license="LGPL-3.0-only",  
     packages=["geodesk"],  # If you have Python packages as well
     cmake_args=['-DCMAKE_BUILD_TYPE=Release', '-DBUILD_WHEELS:BOOL=ON'],  # or Debug, or any other args you need
