@@ -168,8 +168,19 @@ std::string File::fileName() const
 
 void File::allocate(uint64_t ofs, size_t length)
 {
+#ifdef __APPLE__
+    // Use posix_fallocate on macOS
+    result = posix_fallocate(fileHandle_, ofs, length);
+    if (result != 0) 
+    {
+        errno = result;  // posix_fallocate does not set errno, so set it manually
+        IOException::checkAndThrow();
+    }
+#else
+    // Could use posix_fallocate on Linux as well, buf fallocate is more efficient
     if (fallocate(fileHandle_, 0, ofs, length) != 0)
     {
         IOException::checkAndThrow();
     }
+#endif
 }
