@@ -105,11 +105,7 @@ void File::force()
 
 void File::seek(uint64_t posAbsolute)
 {
-#if defined(__APPLE__) 
     if (lseek(fileHandle_, static_cast<off_t>(posAbsolute), SEEK_SET) == -1)
-#else
-    if (lseek64(fileHandle_, posAbsolute, SEEK_SET) == -1)
-#endif
     {
         IOException::checkAndThrow();
     }
