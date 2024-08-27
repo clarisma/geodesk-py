@@ -170,7 +170,7 @@ void File::allocate(uint64_t ofs, size_t length)
 {
 #ifdef __APPLE__
     // Use posix_fallocate on macOS
-    result = posix_fallocate(fileHandle_, ofs, length);
+    int result = posix_fallocate(fileHandle_, ofs, length);
     if (result != 0) 
     {
         errno = result;  // posix_fallocate does not set errno, so set it manually
