@@ -7,6 +7,13 @@
 #include <common/util/PbfDecoder.h>
 #include <common/util/Strings.h>
 
+#ifdef GEODESK_PYTHON
+// TODO: Python 3.13 moves _Py_HashBytes out of the public API, but it remains
+// linkable (because it is used by Python's _datetime shared extension)
+// This is an ugly workaround that may break in future versions
+PyAPI_FUNC(Py_hash_t) _Py_HashBytes(const void*, Py_ssize_t);
+#endif
+
 StringTable::StringTable() :
 	arena_(nullptr)
 {
