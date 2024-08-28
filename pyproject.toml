@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "cibuildwheel", "scikit-build", "ninja"]
+requires = ["setuptools>=70", "wheel", "cibuildwheel", "scikit-build", "ninja"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
