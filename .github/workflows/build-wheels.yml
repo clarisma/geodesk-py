@@ -30,9 +30,7 @@ jobs:
         CIBW_ARCHS_MACOS: x86_64  # Build only for x86_64 on macOS
         CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15+ for c++17 support
         CIBW_BEFORE_BUILD: >-
-            pip install -r build-requirements.txt
             pip install --upgrade scikit-build
-            pip install setuptools==74.0.0
     
     - name: Upload wheels
       uses: actions/upload-artifact@v3
