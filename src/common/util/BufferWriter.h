@@ -251,6 +251,7 @@ public:
 		return *this;
 	}
 
+	//TODO: remove
 	template<typename T>
 	BufferWriter& operator<<(const T& value) 
 	{

@@ -105,11 +105,7 @@ void File::force()
 
 void File::seek(uint64_t posAbsolute)
 {
-#if defined(__APPLE__) 
     if (lseek(fileHandle_, static_cast<off_t>(posAbsolute), SEEK_SET) == -1)
-#else
-    if (lseek64(fileHandle_, posAbsolute, SEEK_SET) == -1)
-#endif
     {
         IOException::checkAndThrow();
     }
@@ -168,8 +164,14 @@ std::string File::fileName() const
 
 void File::allocate(uint64_t ofs, size_t length)
 {
+#ifdef __APPLE__
+    // TODO: no native implementation of fallocate() on MacOS,
+    //  do nothing for now
+#else
+    // Could use posix_fallocate on Linux as well, buf fallocate is more efficient
     if (fallocate(fileHandle_, 0, ofs, length) != 0)
     {
         IOException::checkAndThrow();
     }
+#endif
 }

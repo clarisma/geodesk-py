@@ -28,12 +28,17 @@ class Tip
 {
 public:
     constexpr Tip() : tip_(0) {}
-    constexpr Tip(uint32_t tip) : tip_(tip) 
+    constexpr explicit Tip(uint32_t tip) : tip_(tip)
     {
         assert(tip <= MAX_TIP_VALUE);
     }
 
     static const uint32_t MAX_TIP_VALUE = 0xffffff;
+
+    bool isNull() const
+    {
+        return tip_ == 0;
+    }
 
     operator uint32_t() const
     {
@@ -71,6 +76,15 @@ public:
 private:
     uint32_t tip_;
 };
+
+template<typename Stream>
+Stream& operator<<(Stream& out, const Tip& tip)
+{
+    char buf[8];
+    tip.format(buf);
+    out.write(buf, 6);
+    return out;
+}
 
 namespace std
 {

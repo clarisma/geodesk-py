@@ -20,6 +20,24 @@ namespace Strings
         return hash;
     }
 
+    /**
+     * Slightly more efficient variant, but is only safe for non-empty strings.
+     */
+    inline size_t hashNonEmpty(const char* str, size_t length)
+    {
+        assert(length > 0);
+        size_t hash = 5381;  // Initial value for djb2 algorithm
+        int i = 0;
+        do
+        {
+            // hash * 33 + c
+            hash = ((hash << 5) + hash) + static_cast<unsigned char>(str[i]);
+            i++;
+        }
+        while (i < length);
+        return hash;
+    }
+
     template <typename S>
     inline size_t hash(const S& str)
     {

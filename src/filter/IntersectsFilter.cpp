@@ -21,6 +21,8 @@ struct StoredRelation
 	RelationRef relation;
 };
 
+// TODO: use a list of representative points? (one for each polygon in multipolygon)
+
 static bool chainContainedByAreaRelation(
 	const RTree<const MonotoneChain>::Node* node, const StoredRelation* storedRel)
 {

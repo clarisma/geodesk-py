@@ -4,13 +4,14 @@
 #pragma once
 #include <Python.h>
 #include "feature/FeatureStore.h"
+#include "feature/Tip.h"
 
 class PyTile : public PyObject
 {
 public:
 	FeatureStore* store;
 	Tile tile;
-	uint32_t tip;
+	Tip tip;
 
 	static PyTypeObject TYPE;
 	static PyMethodDef METHODS[];
@@ -20,7 +21,7 @@ public:
 	static PySequenceMethods SEQUENCE_METHODS;
 	static PyMappingMethods MAPPING_METHODS;
 
-	static PyTile* create(FeatureStore* store, Tile tile, uint32_t tip);
+	static PyTile* create(FeatureStore* store, Tile tile, Tip tip);
 	static void dealloc(PyTile* self);
 	static PyObject* getattro(PyTile* self, PyObject *attr);
 	static Py_hash_t hash(PyTile* self);

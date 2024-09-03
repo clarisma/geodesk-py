@@ -93,11 +93,11 @@ int32_t TagsRef::narrowNumber(TagBits value)
 	return static_cast<int32_t>(static_cast<uint32_t>(value) >> 16) + MIN_NUMBER;
 }
 
-double TagsRef::wideNumber(TagBits value) const
+Decimal TagsRef::wideNumber(TagBits value) const
 {
 	assert((value & 3) == 2);
 	pointer pValue(taggedPtr_ + (value >> 32));
-	return TagValue::doubleFromWideNumber(pValue.getUnsignedInt());
+	return TagValue::decimalFromWideNumber(pValue.getUnsignedInt());
 }
 
 #ifdef GEODESK_PYTHON
@@ -115,11 +115,11 @@ PyObject* TagsRef::valueAsString(TagBits value, StringTable& strings) const
 
 	pointer pValue(taggedPtr_ + (value >> 32));
 	uint32_t rawValue = pValue.getUnsignedInt();
-	int scale = rawValue & 3;
-	StringBuilder buf;
-	buf.formatDouble(TagValue::doubleFromWideNumber(rawValue), scale, true);
-		// TODO: use Decimal?
-	return buf.toPythonString();
+
+	Decimal d = TagValue::decimalFromWideNumber(rawValue);
+	char buf[32];
+	char* p = d.format(buf);
+	return PyUnicode_FromStringAndSize(buf, p-buf);
 }
 
 PyObject* TagsRef::valueAsObject(TagBits value, StringTable& strings) const
@@ -137,11 +137,12 @@ PyObject* TagsRef::valueAsObject(TagBits value, StringTable& strings) const
 		return PyLong_FromLong(narrowNumber(value));
 	}
 	assert(typeAndSize == 2);
-	return PyFloat_FromDouble(wideNumber(value));
-	// TODO: use PyLong_FromLong if scale == 0
+	Decimal d = wideNumber(value);
+	if(d.scale() == 0) PyLong_FromLong(d.mantissa());
+	return PyFloat_FromDouble(static_cast<double>(d));
 }
 
-
+// TODO: Fix !!!!
 PyObject* TagsRef::valueAsNumber(TagBits value, StringTable& strings) const
 {
 	if (value == 0) return PyLong_FromLong(0);
@@ -152,13 +153,17 @@ PyObject* TagsRef::valueAsNumber(TagBits value, StringTable& strings) const
 	}
 	if (typeAndSize == 2)
 	{
-		return PyFloat_FromDouble(wideNumber(value));
+		Decimal d = wideNumber(value);
+		if (d.scale() == 0) PyLong_FromLong(d.mantissa());
+		return PyFloat_FromDouble(static_cast<double>(d));
 	}
 	if (typeAndSize == 3)
 	{
+		// TODO: Fix!
 		double v = localString(value).toDouble();
 		return PyFloat_FromDouble(v);
 	}
+	// TODO: Fix!
 	assert(typeAndSize == 0);	// global string
 	double v = globalString(value, strings).toDouble();
 	return PyFloat_FromDouble(v);

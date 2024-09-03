@@ -7,6 +7,32 @@
 #include <common/util/PbfDecoder.h>
 #include <common/util/Strings.h>
 
+// TODO: We have the problem that strign table index 0 is a valid entry (empty string)
+// However, during lookup, when we encounter a next-slot value of 0, we don't know
+// whether this means the next entry is #0, or we're at the end of the list
+// We can mitigate this by always indexing "" last, so it is always indexed at the
+// head of the chain (i.e. no entry will ever have it as the next entry)
+// We are already indexing the strings from highest to lowest, to ensure that the 
+// most frequently indexed strings are towards the heads of the collision chain
+// --> No, does not work, initial lookup would still be 0 for "", need to 
+//     use 1-based indexes
+// Or, could simply test for 0-length string and return code 0; the hash function
+// will be more efficient if we can guarantee non-zero length string
+
+// TODO: To support Python 3.13, we'll have to stop using _Py_HashBytes;
+// instead, we use Strings::hash. This means we no longer can call PyObject_Hash()
+// when looking up global-key codes using a Python string. PyObject_Hash() will return
+// the cached hash, instead of re-calculating it each time. But our hash implementation
+// is very fast (and key strings are short), and will likely be inlined, so it may 
+// end up being faster than calling the Python.dll function (which also dispatches 
+// virtually again via the tp_hash slot of the PyUnicode object)
+// Alternative: eagerly load all strings as Python string objects, and put them in
+// a separate lookup table (we still need to support lookup via std::string_view
+// for our internal needs, and we can't use the same table because we no longer have 
+// access to Python's hash function (unless we first turn the std::string_view into
+// a temoporary Python string)
+
+
 StringTable::StringTable() :
 	arena_(nullptr)
 {
@@ -51,18 +77,19 @@ void StringTable::create(const uint8_t* pStrings)
 	for (uint32_t i = 1; i < stringCount_; i++)
 	{
 		entries_[i].relPointer = static_cast<uint32_t>(data.pointer() - pStrings);
-		// next has already been initialzied with 0
+		// next has already been initialized with 0
 		uint32_t len = data.readVarint32();
 		data.skip(len);
 	}
+
+	// We'll index strings starting with highest numbers first,
+	// so more commonly used strings will be placed towards the head
+	// of the collision list
+
 	for (int i = stringCount_ - 1; i > 0; i--)
 	{
 		GlobalString str(stringBase_ + entries_[i].relPointer);
-		#ifdef GEODESK_PYTHON
-		HashCode hash = _Py_HashBytes(str.data(), str.length());
-		#else
-		HashCode hash = Strings::hash(str.data(), str.length());
-		#endif
+		size_t hash = Strings::hashNonEmpty(str.data(), str.length());
 		int bucket = hash & lookupMask_;
 		uint16_t oldEntry = buckets_[bucket];
 		if (oldEntry) entries_[i].next = oldEntry;
@@ -101,7 +128,7 @@ GlobalString StringTable::getGlobalString(int code)
 
 bool StringTable::isValidCode(int code)
 {
-	return code >= 0 && code < stringCount_;
+	return code >= 0 && code < static_cast<int>(stringCount_);
 }
 
 // TODO: toStringObject() may return NULL in case of failure!
@@ -121,7 +148,7 @@ PyObject* StringTable::getStringObject(int code)
 }
 #endif
 
-int StringTable::getCode(HashCode hash, const char* str, int len) const
+int StringTable::getCode(size_t hash, const char* str, int len) const
 {
 	int bucket = hash & lookupMask_;
 	uint16_t code = buckets_[bucket];
@@ -135,23 +162,14 @@ int StringTable::getCode(HashCode hash, const char* str, int len) const
 	return -1;
 }
 
-int StringTable::getCode(const char* str, int len) const
+int StringTable::getCode(const char* str, size_t len) const
 {
-	#ifdef GEODESK_PYTHON
-	HashCode hash = _Py_HashBytes(str, len);
-	#else
-	HashCode hash = Strings::hash(str, len);
-	#endif
+	if (len == 0) return 0;		
+		// "" is always global code #0; by doing this check upfront,
+		// we avoid the problem of having entry 0 in any of the hashtable
+		// chains, as we use 0 as the end-of-chain marker
+		// We can then use the slightly faster hash function for non-empty strings
+	size_t hash = Strings::hashNonEmpty(str, len);
 	return getCode(hash, str, len);
 }
 
-#ifdef GEODESK_PYTHON
-int StringTable::getCode(PyObject* strObj) const
-{
-	const char* str;
-	Py_ssize_t len;
-	str = PyUnicode_AsUTF8AndSize(strObj, &len);
-	return getCode(PyObject_Hash(strObj), str, static_cast<int>(len));
-	// TODO: Could get hash directly, but this is not in the public API
-}
-#endif

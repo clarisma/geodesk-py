@@ -6,7 +6,7 @@
 
 #include "PyTile_lookup.cxx"
 
-PyTile* PyTile::create(FeatureStore* store, Tile tile, uint32_t tip)
+PyTile* PyTile::create(FeatureStore* store, Tile tile, Tip tip)
 {
 	PyTile* self = (PyTile*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)

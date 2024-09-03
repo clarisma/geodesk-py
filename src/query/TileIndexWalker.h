@@ -5,6 +5,7 @@
 
 #include <unordered_set>
 #include "feature/FeatureStore.h"
+#include "feature/Tip.h"
 #include "geom/Box.h"
 #include "geom/Tile.h"
 
@@ -17,7 +18,7 @@ public:
         const Box& box, const Filter* filter);
 
     bool next();
-    uint32_t currentTip() const { return currentTip_; }
+    Tip currentTip() const { return Tip(currentTip_); }
     Tile currentTile() const { return currentTile_; }
     uint32_t northwestFlags() const { return northwestFlags_; }
     uint32_t turboFlags() const { return turboFlags_; }

@@ -36,6 +36,16 @@ public:
 		intialSizeAndPolicy_((chunkSize << 8) | (uint8_t)growth)
 	{
 	}
+
+	uint64_t initialSize() const
+	{
+		return intialSizeAndPolicy_ >> 8;
+	}
+
+	uint64_t nextSize(uint64_t currentSize) const
+	{
+		return currentSize + (currentSize >> (intialSizeAndPolicy_ & 0xff));
+	}
 	
 	~Arena()
 	{
@@ -46,6 +56,25 @@ public:
 			delete[] reinterpret_cast<uint8_t*>(chunk);
 			chunk = next;
 		}
+	}
+
+	void clear()
+	{
+		// TODO: If we could make sure that the oldest chunk in the chain
+		// is <initialSize> (i.e. not a whale, which may be smaller), we
+		// could keep the oldest chunk instead of freeing all chunks
+
+		Chunk* chunk = current_;
+		while (chunk)
+		{
+			Chunk* next = chunk->next;
+			delete[] reinterpret_cast<uint8_t*>(chunk);
+			chunk = next;
+		}
+		nextSize_ = initialSize();
+		current_ = nullptr;
+		p_ = nullptr;
+		end_ = nullptr;
 	}
 
 	uint8_t* alloc(size_t size, int align)

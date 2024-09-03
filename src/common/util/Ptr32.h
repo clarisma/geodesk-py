@@ -11,20 +11,21 @@
  * Since we are working in a 64-bit environment, we have to resolve
  * this kind of pointer against a base pointer in order to dereference it.
  */
+
+// TODO: Should offset be based on bytes or sizeof(T)?
+
 template <typename T>
-class Pointer32
+class Ptr32
 {
 public:
-	Pointer32(uint32_t ofs) : ofs_(ofs) {}
-	static Pointer32<T> fromPointerAndBase(T* p, T* base)
+	Ptr32(uint32_t ofs) : ofs_(ofs) {}
+	Ptr32(T* p, T* base) : ofs_(static_cast<uint32_t>(p - base))
 	{
 		assert(p >= base);
-		ptrdiff_t ofs = p - base;
-		assert(ofs < (1ULL << 32));
-		return Pointer32<T>(static_cast<uint32_t>(ofs));
+		assert(ofs_ == p - base_)
 	}
 
-	T* resolve(T* base) { return base + ofs_; }
+	T* operator(T* base) { return base + ofs_; }
 
 private:
 	uint32_t ofs_;

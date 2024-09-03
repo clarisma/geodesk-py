@@ -15,6 +15,7 @@ public:
 	Coordinate(double x_, double y_) :
 		x(static_cast<int32_t>(std::round(x_))),
 		y(static_cast<int32_t>(std::round(y_))) {}
+	constexpr Coordinate() : x(0), y(0) {}
 
 	bool operator== (const Coordinate& other) const
 	{

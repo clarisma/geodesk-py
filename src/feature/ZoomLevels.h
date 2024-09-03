@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <common/text/Format.h>
 #include <common/util/BitIterator.h>
 #include <common/util/Bits.h>
 #include <common/validate/Validate.h>
@@ -76,6 +77,27 @@ public:
         int parentZoom = 31 - Bits::countLeadingZerosInNonZero32((levels_ & mask) | 1);
         assert(parentZoom < zoom);
         return parentZoom;
+    }
+
+    void format(char* buf) const
+    {
+        Iterator it = iter();
+        char* p = buf;
+        for (;;)
+        {
+            int zoom = it.next();
+            if (zoom < 0) break;
+            if (p > buf) *p++ = '/';
+            Format::integer(p, zoom);
+        }
+        *p = 0;
+    }
+
+    std::string toString() const
+    {
+        char buf[64];
+        format(buf);
+        return std::string(buf);
     }
 
 private:

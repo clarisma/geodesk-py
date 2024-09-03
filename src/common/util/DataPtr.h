@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <stddef.h>
 
 // TODO: Should Byte be signed?
 

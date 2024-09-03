@@ -75,6 +75,7 @@ void Arena::allocChunk(size_t size)
 	{
 		size = nextSize_;
 		nextSize_ += nextSize_ >> (intialSizeAndPolicy_ & 0xff);
+		// TODO: nextSize_ = nextSize(nextSize_);
 	}
 	uint8_t* newChunkRaw = new uint8_t[sizeof(Chunk) + size];
 	Chunk* newChunk = reinterpret_cast<Chunk*>(newChunkRaw);

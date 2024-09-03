@@ -50,10 +50,12 @@ def check_format(feature):
     check_wkt_format(feature.wkt(pretty=True), feature_shape)
     check_wkt_format(feature.wkt(pretty=False), feature_shape)
     
-def test_test_basic_shapes(features):
+def test_format_point(features):
     point = features("n").first
-    linestring = features("w").first
     check_format(point)
+    
+def test_format_linestrng(features):
+    linestring = features("w").first
     check_format(linestring)
     
 def test_relations(features):

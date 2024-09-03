@@ -18,7 +18,7 @@ QueryResults* const QueryResults::EMPTY = reinterpret_cast<QueryResults*>(&EMPTY
 
 void TileQueryTask::operator()()
 {
-	uint32_t tip = tipAndFlags_ >> 8;
+	Tip tip = Tip(tipAndFlags_ >> 8);
 	pTile_ = query_->store()->fetchTile(tip);
 	uint32_t types = query_->types();
 

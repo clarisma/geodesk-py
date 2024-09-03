@@ -55,31 +55,6 @@ private:
 };
 
 
-class TypedFeatureId
-{
-public:
-	static TypedFeatureId ofTypeAndId(int type, uint64_t id) noexcept
-	{
-		assert(type >= 0 && type <= 2);
-		return TypedFeatureId((id << 2) | type);
-	}
-
-	uint64_t id() const noexcept { return typedId_ >> 2; }
-	int type() const noexcept { return typedId_ & 3; }
-
-	// TODO: will change in 2.0
-	uint64_t asIdBits() const noexcept
-	{
-		uint64_t hi = (typedId_ >> 34) << 8;
-		uint64_t lo = (typedId_ >> 2) << 32;
-		return hi | lo | (type() << 3);
-	}
-
-private:
-	TypedFeatureId(uint64_t typedId) noexcept : typedId_(typedId) {}
-
-	uint64_t typedId_;
-};
 
 class FeaturePtr
 {
