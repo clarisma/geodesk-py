@@ -11,6 +11,8 @@ template <typename T>
 class Span
 {
 public:
+    using value_type = T;
+
     Span() : p_(nullptr), size_(0) {}
     Span(T* p, size_t size) : p_(p), size_(size) {}
     Span(T* begin, T* end) : p_(begin), size_(end - begin) {}

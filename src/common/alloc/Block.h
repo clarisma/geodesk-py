@@ -12,6 +12,8 @@ template <typename T>
 class Block
 {
 public:
+    using value_type = T;
+
     // Default constructor creates an empty block
     Block() :
         data_(nullptr),

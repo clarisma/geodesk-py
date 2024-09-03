@@ -151,10 +151,10 @@ inline uint32_t toZigzag(int32_t v)
 
 inline int64_t fromZigzag(uint64_t v) 
 {
-	return (v >> 1) ^ -(v & 1);
+	return static_cast<int64_t>((v >> 1) ^ -(v & 1));
 }
 
 inline int32_t fromZigzag(uint32_t v)
 {
-	return (v >> 1) ^ -(v & 1);
+	return static_cast<int32_t>((v >> 1) ^ -(v & 1));
 }

@@ -45,7 +45,8 @@ public:
     void sync(const void* address, uint64_t length);
 };
 
-
+// TODO: broken, needs to set size!!!
+// REsolve whether size is in bytes or elements
 template<typename T>
 class MappedSegment
 {

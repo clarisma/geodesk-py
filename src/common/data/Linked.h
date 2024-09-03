@@ -49,4 +49,54 @@ private:
 };
 
 
+template <typename T>
+class LinkedList
+{
+public:
+	LinkedList() : first_(nullptr) {}
+
+	void addHead(T* item)
+	{
+		item->next_ = first_;
+		first_ = item;
+	}
+
+	T* first() const
+	{
+		return first_;
+	}
+
+	void clear()
+	{
+		first_ = nullptr;
+	}
+
+    class Iterator
+    {
+    public:
+        Iterator(T* current) : current_(current) {}
+
+        bool hasNext() const { return current_ != nullptr; }
+        T* next() 
+        {
+            T* next = current_;
+            current_ = reinterpret_cast<T*>(current_->next_);
+            return next;
+        }
+
+    private:
+        T* current_;
+    };
+
+	Iterator iter() const
+	{
+		return Iterator(first_);
+	}
+
+private:
+	T* first_;
+};
+
+
+
 

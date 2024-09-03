@@ -25,7 +25,10 @@ void FeatureWriter::writeTagValue(TagsRef tags, TagBits value, StringTable& stri
 	{
 		if (value & 2)
 		{
-			formatDouble(tags.wideNumber(value));
+			Decimal d = tags.wideNumber(value);
+			char buf[64];
+			char* p = d.format(buf);
+			writeBytes(buf, p - buf);
 		}
 		else
 		{

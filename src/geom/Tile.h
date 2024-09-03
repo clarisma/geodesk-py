@@ -70,8 +70,11 @@ public:
 		return Tile(col, row, zoom);
 	}
 
+	// TODO: only works for positive deltas, and does not wrap!
 	Tile relative(int deltaCol, int deltaRow) const
 	{
+		assert(deltaCol >= 0);
+		assert(deltaRow >= 0);
 		return Tile(tile_ + (deltaRow << 12) + deltaCol);
 	}
 

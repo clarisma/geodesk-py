@@ -68,7 +68,7 @@ public:
 private:
 	// Note: wideNumber / localString rely on tagPtr_, hence cannot be static
 	static int32_t narrowNumber(int64_t value);
-	double wideNumber(TagBits value) const;
+	Decimal wideNumber(TagBits value) const;
 
 	static GlobalString globalString(TagBits value, StringTable& strings)
 	{

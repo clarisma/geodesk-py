@@ -14,6 +14,7 @@
 #include "TagValue.h"
 #include "Tip.h"
 
+
 enum FeatureType
 {
     NODE = 0,
@@ -122,7 +123,9 @@ enum MemberFlags
 
 namespace FeatureConstants
 {
-    static const Tip START_TIP(0x4000);
+    static const Tip START_TIP(0x4000);     
+        // TODO: move to Tip? No, not really a characteriastic of TIP,
+        // it is driven by the encoding used by member/node/relation tables
     static const int MAX_COMMON_KEY = (1 << 13) - 2;
     static const int MAX_COMMON_ROLE = (1 << 15) - 1;
 };

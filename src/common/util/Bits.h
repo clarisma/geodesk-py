@@ -143,8 +143,10 @@ namespace Bits
 
 #endif
 
+    /*
     inline int64_t signedFromBit0(uint64_t val)
     {
         return static_cast<int64_t>((val >> 1) ^ -(val & 1));
     }
+    */
 }

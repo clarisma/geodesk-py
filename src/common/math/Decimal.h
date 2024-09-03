@@ -5,14 +5,21 @@
 
 #include "Math.h"
 #include <limits>
+#include <string_view>
 #include <common/text/Format.h>
 
 class Decimal
 {
 public:
-	Decimal(const char* s, bool strict = false) :
+	Decimal(std::string_view s, bool strict = false) :
 		value_(parse(s, strict))
 	{
+	}
+
+	Decimal(int64_t mantissa, int scale) :
+		value_((mantissa << 4) | scale)
+	{
+		assert(scale >= 0 && scale <= 15);
 	}
 
 	bool isValid() const noexcept { return value_ != INVALID;  }
@@ -60,7 +67,7 @@ public:
 
 		char temp[32];
 		char* end = temp + sizeof(temp);
-		char* start = Format::integerReverse(value_, end);
+		char* start = Format::integerReverse(mantissa(), end);
 		size_t len = end - start;
 		int scale = this->scale();
 		if (scale == 0)
@@ -69,7 +76,7 @@ public:
 		}
 		else
 		{
-			int wholePartLen = len - scale;
+			size_t wholePartLen = len - scale;
 			memcpy(buf, start, wholePartLen);
 			buf[wholePartLen] = '.';
 			memcpy(buf + wholePartLen + 1, start + wholePartLen, len - wholePartLen);
@@ -80,7 +87,7 @@ public:
 	}
 
 private:
-	static int64_t parse(const char* s, bool strict)
+	static int64_t parse(std::string_view s, bool strict)
 	{
 		int64_t value = 0;
 		int scale = 0;
@@ -88,12 +95,13 @@ private:
 		bool seenNonZeroDigit = false;
 		bool seenDot = false;
 		bool negative = false;
-		const char* p = s;
+		const char* p = s.data();
+		const char* end = s.data() + s.size();
 		
-		for (;;)
+		while(p < end)
 		{
 			char ch = *p++;
-			if (ch == 0) break;
+			// if (ch == 0) break;
 			if (ch == '-')
 			{
 				if (p != s) return INVALID;
@@ -140,3 +148,13 @@ private:
 
 	int64_t value_;
 };
+
+
+template<typename Stream>
+Stream& operator<<(Stream& out, const Decimal& d)
+{
+	char buf[32];
+	char* p = d.format(buf);
+	out.write(buf, p - buf);
+	return out;
+}

@@ -3,9 +3,11 @@
 
 #pragma once
 
-#include "Store.h"
+#include "Store_v2.h"
 #include <unordered_map>
 #include <common/util/pointer.h>
+
+namespace clarisma {
 
 class BlobStore : public Store
 {
@@ -23,13 +25,13 @@ public:
 		uint32_t magic;
 		uint16_t versionLow;
 		uint16_t versionHigh;
-		uint64_t creationTimestamp;
-		uint8_t  guid[16];
+		DateTime creationTimestamp;
+		// uint8_t  guid[16];
 		uint8_t  pageSize;
-		uint32_t reserved : 24;
+		uint8_t  reserved[3];
 		uint32_t metadataSize;
 		uint32_t propertiesPointer;
-		uint32_t indexPointer;
+		// uint32_t indexPointer;
 
 		/**
 		 * The total number of pages in use (includes free blobs and metadata pages).
@@ -41,8 +43,9 @@ public:
 		 * have at least one slot that is non-zero.
 		 */
 		uint32_t trunkFreeTableRanges;
-		uint32_t datasetVersion;
-		uint32_t reserved2;
+
+		// uint32_t datasetVersion;
+		uint8_t reserved2[28];
 		uint8_t  subtypeData[64];
 
 		/**
@@ -50,41 +53,7 @@ public:
 		 */
 		PageNum trunkFreeTable[512];
 	};
-
-	//struct Header
-	//{
-	//	uint32_t magic;
-	//	uint16_t versionLow;
-	//	uint16_t versionHigh;
-	//	DateTime creationTimestamp;
-	//	// uint8_t  guid[16];
-	//	uint8_t  pageSize;
-	//	uint8_t  reserved[3];
-	//	uint32_t metadataSize;
-	//	uint32_t propertiesPointer;
-	//	// uint32_t indexPointer;
-
-	//	/**
-	//	 * The total number of pages in use (includes free blobs and metadata pages).
-	//	 */
-	//	uint32_t totalPageCount;
-
-	//	/**
-	//	 * A bitfield indicating which spans of 16 slots in the Trunk Free-Table
-	//	 * have at least one slot that is non-zero.
-	//	 */
-	//	uint32_t trunkFreeTableRanges;
-
-	//	// uint32_t datasetVersion;
-	//	uint8_t reserved2[28];
-	//	uint8_t  subtypeData[64];
-
-	//	/**
-	//	 * The Trunk Free-Table
-	//	 */
-	//	PageNum trunkFreeTable[512];
-	//};
-	// static_assert(offsetof(Header, subtypeData) == 64, "Expected 64-byte Header");
+	static_assert(offsetof(Header, subtypeData) == 64, "Expected 64-byte Header");
 
 	struct Blob
 	{
@@ -113,15 +82,15 @@ public:
 		void commit();
 
 	private:
-		Header* getRootBlock() 
-		{ 
-			return reinterpret_cast<Header*>(getBlock(0)); 
+		Header* getRootBlock()
+		{
+			return reinterpret_cast<Header*>(getBlock(0));
 		}
 
 		Blob* getBlobBlock(PageNum page)
 		{
 			return reinterpret_cast<Blob*>(
-				getBlock(static_cast<uint64_t>(page) 
+				getBlock(static_cast<uint64_t>(page)
 					<< store()->pageSizeShift_));
 		}
 
@@ -150,37 +119,37 @@ protected:
 	 * A bit mask that, when applied to a Blob's header word, yields
 	 * the size of the Blob's payload (max. 1 GB - 8).
 	 */
-	// static const uint32_t PAYLOAD_SIZE_MASK = 0x3fff'ffff;
+	 // static const uint32_t PAYLOAD_SIZE_MASK = 0x3fff'ffff;
 
-	/**
-	 * Flag to indicate that a Blob is free. Stored in the payload length
-	 * field of the Blob Header
-	 */
-	// static const uint32_t FREE_BLOB_FLAG = 0x8000'0000;
+	 /**
+	  * Flag to indicate that a Blob is free. Stored in the payload length
+	  * field of the Blob Header
+	  */
+	  // static const uint32_t FREE_BLOB_FLAG = 0x8000'0000;
 
-	// static const int FREE_TABLE_LEN = 2048;
-	
-	/*
-	static const int VERSION_OFS = 4;
-	static const int LOCAL_CREATION_TIMESTAMP_OFS = 8;
-	static const int TOTAL_PAGES_OFS = 16;		// TODO: will change
-	static const int TRUNK_FT_RANGE_BITS_OFS = 52;
-	*/
+	  // static const int FREE_TABLE_LEN = 2048;
 
-	/**
-	 * Offset of the trunk free-table.
-	 * (This offset must be evenly divisible by 64)
-	 */
-	// static const int TRUNK_FREE_TABLE_OFS = 128;     // must be divisible by 64
+	  /*
+	  static const int VERSION_OFS = 4;
+	  static const int LOCAL_CREATION_TIMESTAMP_OFS = 8;
+	  static const int TOTAL_PAGES_OFS = 16;		// TODO: will change
+	  static const int TRUNK_FT_RANGE_BITS_OFS = 52;
+	  */
 
-	/*
-	static const int PREV_FREE_BLOB_OFS = 8;
-	static const int NEXT_FREE_BLOB_OFS = 12;
-	static const int LEAF_FT_RANGE_BITS_OFS = 16;
-	static const int LEAF_FREE_TABLE_OFS = 64;     // must be divisible by 64
-	*/
+	  /**
+	   * Offset of the trunk free-table.
+	   * (This offset must be evenly divisible by 64)
+	   */
+	   // static const int TRUNK_FREE_TABLE_OFS = 128;     // must be divisible by 64
 
-	// TODO: Return BlobPtr
+	   /*
+	   static const int PREV_FREE_BLOB_OFS = 8;
+	   static const int NEXT_FREE_BLOB_OFS = 12;
+	   static const int LEAF_FT_RANGE_BITS_OFS = 16;
+	   static const int LEAF_FREE_TABLE_OFS = 64;     // must be divisible by 64
+	   */
+
+	   // TODO: Return BlobPtr
 	pointer pagePointer(PageNum page)
 	{
 		return pointer(data(static_cast<uint64_t>(page) << pageSizeShift_));
@@ -195,13 +164,13 @@ protected:
 		return reinterpret_cast<Header*>(mainMapping());
 	}
 
-	uint64_t getLocalCreationTimestamp() const override;
+	DateTime getLocalCreationTimestamp() const override;
 	uint64_t getTrueSize() const override;
 	uint32_t pagesForPayloadSize(uint32_t payloadSize) const;
-	
-		
+
+
 private:
 	uint32_t pageSizeShift_ = 12;	// TODO: default 4KB page
 };
 
-
+} // namespace clarisma

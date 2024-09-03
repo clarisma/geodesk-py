@@ -47,7 +47,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
             // TODO: could calculate tighter bounds based on accepted members
         while (tiw.next())
         {
-            Tip tip = tiw.currentTip();
+            Tip tip = Tip(tiw.currentTip());
             if (tips.find(tip) == tips.end()) continue;
             PyTile* tile = PyTile::create(store, tiw.currentTile(), tip);
             if (tile)

@@ -112,6 +112,13 @@ if(NOT BUILD_WHEELS)
 	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
 
+	set(GOL_SOURCE_FILES ${SOURCE_FILES})
+	list(FILTER GOL_SOURCE_FILES EXCLUDE REGEX "src/python/.*")
+	add_executable (gol "src/gol/main.cxx" ${GOL_SOURCE_FILES})
+	target_include_directories(gol PRIVATE ${INCLUDES})
+	target_link_libraries(gol PRIVATE ${LIBRARIES})
+	target_compile_definitions(gol PRIVATE _WIN32_WINNT=0x0601)
+
 	file(GLOB_RECURSE TEST_SOURCE_FILES "test_cpp/*.cpp")
 	add_executable (geodesk-test ${GOL_SOURCE_FILES} ${TEST_SOURCE_FILES})
 	target_include_directories(geodesk-test PRIVATE ${INCLUDES} third_party/catch2/src)

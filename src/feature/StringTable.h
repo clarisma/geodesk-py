@@ -39,9 +39,26 @@ public:
     #endif
     GlobalString getGlobalString(int code);
     bool isValidCode(int code);
-    int getCode(PyObject* strObj) const;
-    int getCode(const char* str, int len) const;
+    int getCode(const char* str, size_t len) const;
+#ifdef GEODESK_PYTHON
+    int getCode(PyObject* strObj) const
+    {
+        const char* str;
+        Py_ssize_t len;
+        str = PyUnicode_AsUTF8AndSize(strObj, &len);
+        return getCode(str, len);
+    }
+#endif
+
     uint32_t stringCount() const { return stringCount_; }
+
+    enum Constant
+    {
+        NO = 1,
+        YES = 2,
+        OUTER = 3,
+        INNER = 4
+    };
 
 private:
     struct Entry
@@ -50,7 +67,7 @@ private:
         uint32_t next;
     };
 
-    int getCode(HashCode hash, const char* str, int len) const;
+    int getCode(size_t hash, const char* str, int len) const;
 
     uint32_t stringCount_;
     uint32_t lookupMask_;

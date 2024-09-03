@@ -89,6 +89,13 @@ public:
     size_t read(uint64_t ofs, void* buf, size_t length);
     size_t write(const void* buf, size_t length);
 
+    template <typename Container>
+    size_t write(const Container& container)
+    {
+        using T = typename Container::value_type;  // Get the type of elements
+        return write(container.data(), container.size() * sizeof(T));
+    }
+
     void makeSparse();
     void allocate(uint64_t ofs, size_t length);
     void deallocate(uint64_t ofs, size_t length);

@@ -8,6 +8,11 @@ Licensed under GNU Lesser General Public License v3.0
 GeoDesk contains the following third-party contributions:
 
 -----------------------------------------------------------------------------------
+Catch2
+Licensed under BSL-1.0
+https://github.com/catchorg/Catch2/blob/devel/LICENSE.txt
+
+-----------------------------------------------------------------------------------
 Flatbush by Volodymyr Agafonkin
 https://github.com/mourner/flatbush
 (Ported to C++)
@@ -92,3 +97,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 (https://github.com/mourner/rbush/blob/master/LICENSE)
+
+-----------------------------------------------------------------------------------
+ZLib 
+https://github.com/madler/zlib
+(C) 1995-2024 Jean-loup Gailly and Mark Adler
+
+
+

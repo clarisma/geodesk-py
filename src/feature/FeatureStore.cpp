@@ -87,7 +87,7 @@ FeatureStore::~FeatureStore()
 // TODO: Return TilePtr
 pointer FeatureStore::fetchTile(Tip tip)
 {
-	uint32_t pageEntry = (tileIndex() + (tip << 2)).getUnsignedInt();
+	uint32_t pageEntry = (tileIndex() + (tip * 4)).getUnsignedInt();
 	// Bit 0 is a flag bit (page vs. child pointer)
 	// TODO: load tiles
 
