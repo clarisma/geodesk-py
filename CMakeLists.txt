@@ -10,7 +10,7 @@
 option(BUILD_WHEELS "Build wheels via cibuildwheel" OFF)
 
 cmake_minimum_required (VERSION 3.8)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
@@ -112,13 +112,6 @@ if(NOT BUILD_WHEELS)
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
 	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
-
-	set(GOL_SOURCE_FILES ${SOURCE_FILES})
-	list(FILTER GOL_SOURCE_FILES EXCLUDE REGEX "src/python/.*")
-	add_executable (gol "src/gol/main.cxx" ${GOL_SOURCE_FILES})
-	target_include_directories(gol PRIVATE ${INCLUDES})
-	target_link_libraries(gol PRIVATE ${LIBRARIES})
-	target_compile_definitions(gol PRIVATE _WIN32_WINNT=0x0601)
 
 	file(GLOB_RECURSE TEST_SOURCE_FILES "test_cpp/*.cpp")
 	add_executable (geodesk-test ${GOL_SOURCE_FILES} ${TEST_SOURCE_FILES})
