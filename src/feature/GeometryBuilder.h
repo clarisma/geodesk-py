@@ -5,19 +5,18 @@
 
 #include <cmath>
 #include <geos_c.h>
-#include "Feature.h"
-#include "Relation.h"
-#include "Way.h"
+#include "RelationPtr.h"
+#include "WayPtr.h"
 #include "geom/Box.h"
 
 class GeometryBuilder
 {
 public:
-	static GEOSGeometry* buildFeatureGeometry(FeatureStore* store, const FeatureRef feature, GEOSContextHandle_t geosContext);
-	static GEOSGeometry* buildNodeGeometry(const NodeRef node, GEOSContextHandle_t geosContext);
-	static GEOSGeometry* buildWayGeometry(const FeatureRef way, GEOSContextHandle_t geosContext);
-	static GEOSGeometry* buildAreaRelationGeometry(FeatureStore* store, const RelationRef relation, GEOSContextHandle_t geosContext);
-	static GEOSGeometry* buildRelationGeometry(FeatureStore *store, const RelationRef relation, GEOSContextHandle_t geosContext);
+	static GEOSGeometry* buildFeatureGeometry(FeatureStore* store, FeaturePtr feature, GEOSContextHandle_t geosContext);
+	static GEOSGeometry* buildNodeGeometry(NodePtr node, GEOSContextHandle_t geosContext);
+	static GEOSGeometry* buildWayGeometry(FeaturePtr way, GEOSContextHandle_t geosContext);
+	static GEOSGeometry* buildAreaRelationGeometry(FeatureStore* store, RelationPtr relation, GEOSContextHandle_t geosContext);
+	static GEOSGeometry* buildRelationGeometry(FeatureStore *store, RelationPtr relation, GEOSContextHandle_t geosContext);
 	static GEOSGeometry* buildPointGeometry(int32_t x, int32_t y, GEOSContextHandle_t geosContext);
 	static GEOSGeometry* buildBoxGeometry(const Box& box, GEOSContextHandle_t geosContext);
 };
@@ -26,11 +25,11 @@ public:
 class RelationGeometryBuilder
 {
 public:
-	RelationGeometryBuilder(FeatureStore* store, const RelationRef relation, GEOSContextHandle_t geosContext);
+	RelationGeometryBuilder(FeatureStore* store, RelationPtr relation, GEOSContextHandle_t geosContext);
 	GEOSGeometry* build();
 
 private:
-	void gatherMembers(const RelationRef relation);
+	void gatherMembers(RelationPtr relation);
 
 	FeatureStore* store_;
 	GEOSContextHandle_t context_;

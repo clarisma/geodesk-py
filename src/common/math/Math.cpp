@@ -35,7 +35,7 @@ bool Math::parseDouble(const char* s, size_t len, double* pResult)
         {
             bool negative = false;
             bool seenDigit = false;
-            const char* decimal = end;
+            const char* decimal = nullptr;
             double value = 0;
 
             if (*s == '-')
@@ -54,7 +54,7 @@ bool Math::parseDouble(const char* s, size_t len, double* pResult)
                 }
                 if (ch == '.')
                 {
-                    if (decimal != end) break;
+                    if (decimal) break;
                     decimal = s + 1;
                     continue;
                 }
@@ -63,7 +63,7 @@ bool Math::parseDouble(const char* s, size_t len, double* pResult)
             if (seenDigit)
             {
                 value = negative ? (-value) : value;
-                *pResult = value / POWERS_OF_10[end - decimal];
+                *pResult = value / POWERS_OF_10[decimal ? (s - decimal) : 0];
                 // TODO: use multiplication (factors) instead? Faster?
                 return true;
             }

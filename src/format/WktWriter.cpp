@@ -26,14 +26,14 @@ void WktWriter::writeAnonymousNodeNode(Coordinate point)
 }
 
 
-void WktWriter::writeNodeGeometry(NodeRef node)
+void WktWriter::writeNodeGeometry(NodePtr node)
 {
 	writeConstString("POINT(");
 	writeCoordinate(node.xy());
 	writeByte(')');
 }
 
-void WktWriter::writeWayGeometry(WayRef way)
+void WktWriter::writeWayGeometry(WayPtr way)
 {
 	if (way.isArea())
 	{
@@ -46,7 +46,7 @@ void WktWriter::writeWayGeometry(WayRef way)
 	writeWayCoordinates(way, way.isArea());
 }
 
-void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relation)
+void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationPtr relation)
 {
 	Polygonizer polygonizer;
 	polygonizer.createRings(store, relation);
@@ -72,7 +72,7 @@ void WktWriter::writeAreaRelationGeometry(FeatureStore* store, RelationRef relat
 }
 
 
-void WktWriter::writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation)
+void WktWriter::writeCollectionRelationGeometry(FeatureStore* store, RelationPtr relation)
 {
 	writeConstString("GEOMETRYCOLLECTION");
 	if (writeMemberGeometries(store, relation) == 0) writeConstString(" EMPTY");
@@ -80,7 +80,7 @@ void WktWriter::writeCollectionRelationGeometry(FeatureStore* store, RelationRef
 
 
 
-void WktWriter::writeFeature(FeatureStore* store, FeatureRef feature)
+void WktWriter::writeFeature(FeatureStore* store, FeaturePtr feature)
 {
 	if (!firstFeature_) writeConstString(", ");
 	writeFeatureGeometry(store, feature); 

@@ -6,6 +6,7 @@
 #include <common/util/DataPtr.h>
 #include <common/util/log.h>
 #include "TagTablePtr.h"
+#include "Tags.h"			// TODO: deprecated
 #include "geom/Box.h"
 #include "geom/Coordinate.h"
 
@@ -65,11 +66,13 @@ public:
 
 	operator DataPtr () const noexcept { return p_; }
 
+	/*
 	FeaturePtr& operator=(const FeaturePtr& other) noexcept
 	{
 		p_ = other.p_;
 		return *this;
 	}
+	*/
 
 	uint64_t id() const noexcept
 	{
@@ -115,6 +118,13 @@ public:
 	TagTablePtr tags() const
 	{
 		return TagTablePtr::readFrom(p_ + 8);
+	}
+
+	// TODO: deprecated
+	TagsRef tagsOld() const
+	{
+		pointer ppTags(p_ + 8);
+		return TagsRef(ppTags);
 	}
 
 	DataPtr ptr() const { return p_; }

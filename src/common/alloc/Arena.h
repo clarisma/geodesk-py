@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
+#include <cstring>
 #include <utility>
 #include <new>
 #include <common/data/Span.h>

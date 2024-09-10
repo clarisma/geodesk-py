@@ -4,14 +4,14 @@
 #pragma once
 
 #include <cstdint>
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
 
 struct QueryResults;
 
 struct QueryResultsHeader
 {
     QueryResults* next;
-    pointer pTile;
+    DataPtr pTile;
     uint32_t count;
 };
 

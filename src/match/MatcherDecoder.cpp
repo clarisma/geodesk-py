@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "MatcherDecoder.h"
-#include <cstdio>
+#include <common/util/ShortVarString.h>
 #include "MatcherEmitter.h"			// TODO: refactor
 #include "OpGraph.h"
 #include "feature/FeatureStore.h"
@@ -87,9 +87,9 @@ void MatcherDecoder::writeBranchingOp(const uint16_t* p)
 		case OperandType::CODE:
 		{
 			uint16_t code = *p++;
-			GlobalString str = store_->strings().getGlobalString(code);
+			const ShortVarString* str = store_->strings().getGlobalString(code);
 			out_.writeByte(' ');
-			out_.writeBytes(str.data(), str.length());
+			out_.writeBytes(str->data(), str->length());
 			out_.writeString(" (");
 			out_.formatInt(code);
 			out_.writeByte(')');

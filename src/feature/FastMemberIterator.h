@@ -3,21 +3,21 @@
 
 #pragma once
 
-#include "Relation.h"
+#include "RelationPtr.h"
 
 class FastMemberIterator
 {
 public:
-	FastMemberIterator(FeatureStore* store, const RelationRef relation);
+	FastMemberIterator(FeatureStore* store, RelationPtr relation);
 
 	FeatureStore* store() const { return store_; }
-	FeatureRef next();
+	FeaturePtr next();
 
 private:
 	FeatureStore* store_;
 	Tip currentTip_;
 	int32_t currentMember_;
-	pointer p_;
-	pointer pForeignTile_;
+	DataPtr p_;
+	DataPtr pForeignTile_;
 };
 

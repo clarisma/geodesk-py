@@ -56,7 +56,7 @@ protected:
 	virtual uint64_t getTrueSize() const = 0;
 	// void* mapSegment(uint32_t segNumber, uint32_t segCount);
 
-	inline uint8_t* data(uint64_t ofs) 
+	inline byte* data(uint64_t ofs)
 	{
 		return translate(ofs);
 	}
@@ -74,21 +74,21 @@ protected:
 	class TransactionBlock
 	{
 	public:
-		TransactionBlock(uint8_t* original) :
+		TransactionBlock(byte* original) :
 			original_(original),
 			next_(nullptr)
 		{
 			memcpy(current_, original, SIZE);
 		}
-		uint8_t* original() { return original_; }
-		uint8_t* current() { return current_; }
+		byte* original() { return original_; }
+		byte* current() { return current_; }
 
 		static const int SIZE = 4096;
 
 	private:
-		uint8_t* original_;
+		byte* original_;
 		TransactionBlock* next_;
-		uint8_t current_[SIZE];
+		byte current_[SIZE];
 	};
 
 	class Transaction
@@ -104,8 +104,8 @@ protected:
 		Transaction(Store* store);
 		~Transaction();
 
-		uint8_t* getBlock(uint64_t pos);
-		const uint8_t* getConstBlock(uint64_t pos);
+		byte* getBlock(uint64_t pos);
+		const byte* getConstBlock(uint64_t pos);
 		void commit();
 
 	protected:

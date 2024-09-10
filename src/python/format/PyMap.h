@@ -3,12 +3,9 @@
 
 #pragma once
 #include <Python.h>
-#include <string_view>
 #include "format/GeometryWriter.h"
 #include "geom/Box.h"
 #include "geom/Coordinate.h"
-#include "feature/Way.h"
-#include "feature/Relation.h"
 #include <common/alloc/Arena.h>
 
 
@@ -172,9 +169,9 @@ private:
 	void writePoint(Coordinate c);
 	void writeBox(const Box& box);
 	void writePolygonOrPolyline(bool polygon);
-	void writeWay(WayRef way);
-	void writeRelation(FeatureStore* store, RelationRef relation);
-	void writeRelationMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard);
+	void writeWay(WayPtr way);
+	void writeRelation(FeatureStore* store, RelationPtr relation);
+	void writeRelationMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard);
 	bool writeFeature(PyFeature* feature);
 	void writeGeometry(GEOSContextHandle_t context, const GEOSGeometry* geom);
 	void writeGeometryCollection(GEOSContextHandle_t context, const GEOSGeometry* multi);

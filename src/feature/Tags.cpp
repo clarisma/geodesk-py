@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Tags.h"
+#include <common/util/ShortVarString.h>
 #include <common/util/StringBuilder.h>
 
 /**
@@ -33,7 +34,7 @@ int64_t TagsRef::getKeyValue(PyObject* key, const StringTable& strings) const
 
 #endif
 
-int64_t TagsRef::getKeyValue(const char* key, int len,
+int64_t TagsRef::getKeyValue(const char* key, size_t len,
 	const StringTable& strings) const
 {
 	int code = strings.getCode(key, len);
@@ -56,8 +57,9 @@ TagBits TagsRef::getLocalKeyValue(const char* key, int len) const
 		int32_t rawPointer = static_cast<int32_t>(tag >> 16);
 		int32_t flags = rawPointer & 7;
 		// uncommon keys are relative to the 4-byte-aligned tagtable address
-		LocalString keyString(origin + ((rawPointer ^ flags) >> 1));
-		if (keyString.equals(key, len))
+		const ShortVarString* keyString = reinterpret_cast<const ShortVarString*>
+			(origin.asBytePointer() + ((rawPointer ^ flags) >> 1));
+		if (keyString->equals(key, len))
 		{
 			return (static_cast<TagBits>(p - taggedPtr_ - 2) << 32) |
 				((tag & 0xffff) << 16) | flags;
@@ -97,7 +99,7 @@ Decimal TagsRef::wideNumber(TagBits value) const
 {
 	assert((value & 3) == 2);
 	pointer pValue(taggedPtr_ + (value >> 32));
-	return TagValue::decimalFromWideNumber(pValue.getUnsignedInt());
+	return TagValue::decimalFromWideNumber(pValue.getUnalignedUnsignedInt());
 }
 
 #ifdef GEODESK_PYTHON
@@ -157,16 +159,16 @@ PyObject* TagsRef::valueAsNumber(TagBits value, StringTable& strings) const
 		if (d.scale() == 0) PyLong_FromLong(d.mantissa());
 		return PyFloat_FromDouble(static_cast<double>(d));
 	}
-	if (typeAndSize == 3)
+	if (typeAndSize == 3)	// local string
 	{
-		// TODO: Fix!
-		double v = localString(value).toDouble();
-		return PyFloat_FromDouble(v);
+		double val;
+		if(!Math::parseDouble(localString(value)->toStringView(), &val)) val = 0.0;
+		return PyFloat_FromDouble(val);
 	}
-	// TODO: Fix!
-	assert(typeAndSize == 0);	// global string
-	double v = globalString(value, strings).toDouble();
-	return PyFloat_FromDouble(v);
+	assert(typeAndSize == 1);	// global string
+	double val;
+	if(!Math::parseDouble(globalString(value, strings)->toStringView(), &val)) val = 0.0;
+	return PyFloat_FromDouble(val);
 }
 
 #endif // GEODESK_PYTHON
@@ -200,3 +202,5 @@ uint32_t TagsRef::count() const
 	}
 	return count;
 }
+
+const double TagValue::SCALE_FACTORS[] = { 1.0, 0.1, 0.01, 0.001 };

@@ -3,40 +3,40 @@
 
 #include "MemberCollection.h"
 #include "FastMemberIterator.h"
-#include "Node.h"
-#include "Way.h"
+#include "NodePtr.h"
+#include "WayPtr.h"
 
-MemberCollection::MemberCollection(FeatureStore* store, RelationRef relation) :
+MemberCollection::MemberCollection(FeatureStore* store, RelationPtr relation) :
 	types_(0)
 {
 	RecursionGuard guard(relation);
 	collect(store, relation, guard);
 }
 
-void MemberCollection::collect(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+void MemberCollection::collect(FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
 {
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			types_ |= LINEAL;
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			types_ |= PUNTAL;
 		}
 		else
 		{
 			assert(memberType == 2);
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			if (childRel.isArea())
 			{

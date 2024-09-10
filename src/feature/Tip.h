@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <common/text/Format.h>
 
+// internal; needed by GOL
+
 class TipDelta
 {
 public:

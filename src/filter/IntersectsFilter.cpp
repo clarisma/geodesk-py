@@ -3,12 +3,9 @@
 
 #include "IntersectsFilter.h"
 #include "feature/polygon/PointInPolygon.h"
-#include "feature/FastMemberIterator.h"
 
-static bool chainContainedByAreaWay(
-	const RTree<const MonotoneChain>::Node* node, const uint8_t* pWay)
+static bool chainContainedByAreaWay(const RTree<const MonotoneChain>::Node* node, WayPtr way)
 {
-	WayRef way(pWay);
 	if (!way.bounds().containsSimple(node->bounds)) return false;
 	PointInPolygon tester(node->item()->first());
 	tester.testAgainstWay(way);
@@ -18,7 +15,7 @@ static bool chainContainedByAreaWay(
 struct StoredRelation
 {
 	FeatureStore* const store;
-	RelationRef relation;
+	RelationPtr relation;
 };
 
 // TODO: use a list of representative points? (one for each polygon in multipolygon)
@@ -26,7 +23,7 @@ struct StoredRelation
 static bool chainContainedByAreaRelation(
 	const RTree<const MonotoneChain>::Node* node, const StoredRelation* storedRel)
 {
-	RelationRef relation = storedRel->relation;
+	RelationPtr relation = storedRel->relation;
 	if (!relation.bounds().containsSimple(node->bounds)) return false;
 	PointInPolygon tester(node->item()->first());
 	tester.testAgainstRelation(storedRel->store, relation);
@@ -34,7 +31,7 @@ static bool chainContainedByAreaRelation(
 }
 
 
-bool IntersectsPolygonFilter::acceptWay(WayRef way) const
+bool IntersectsPolygonFilter::acceptWay(WayPtr way) const
 {
 	Box bounds = way.bounds();
 	int loc = index_.maybeLocateBox(bounds);
@@ -50,17 +47,17 @@ bool IntersectsPolygonFilter::acceptWay(WayRef way) const
 		//         - If so, the features intersect
 		// - OR: Perform this before the chain-crossing tests?
 
-		return index_.findChains(bounds, chainContainedByAreaWay, way.asBytePointer());
+		return index_.findChains(bounds, chainContainedByAreaWay, way);
 	}
 	return false;
 }
 
-bool IntersectsPolygonFilter::acceptNode(NodeRef node) const
+bool IntersectsPolygonFilter::acceptNode(NodePtr node) const
 {
 	return index_.containsPoint(node.xy());
 }
 
-bool IntersectsPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
+bool IntersectsPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationPtr relation) const
 {
 	// TODO: check ways only
 	RecursionGuard guard(relation);
@@ -76,7 +73,7 @@ bool IntersectsPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRe
 }
 
 
-bool IntersectsPolygonFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool IntersectsPolygonFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
 	if (fast.turboFlags) return true;
 	return acceptFeature(store, feature);
@@ -92,19 +89,19 @@ int IntersectsPolygonFilter::acceptTile(Tile tile) const
 }
 
 
-bool IntersectsLinealFilter::acceptWay(WayRef way) const
+bool IntersectsLinealFilter::acceptWay(WayPtr way) const
 {
 	if(anySegmentsCross(way)) return true;
 	if (!way.isArea()) return false;
-	return index_.findChains(way.bounds(), chainContainedByAreaWay, way.asBytePointer());
+	return index_.findChains(way.bounds(), chainContainedByAreaWay, way);
 }
 
-bool IntersectsLinealFilter::acceptNode(NodeRef node) const
+bool IntersectsLinealFilter::acceptNode(NodePtr node) const
 {
 	return index_.pointOnBoundary(node.xy());
 }
 
-bool IntersectsLinealFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
+bool IntersectsLinealFilter::acceptAreaRelation(FeatureStore* store, RelationPtr relation) const
 {
 	// TODO: check ways only
 	RecursionGuard guard(relation);
@@ -116,7 +113,7 @@ bool IntersectsLinealFilter::acceptAreaRelation(FeatureStore* store, RelationRef
 }
 
 
-bool IntersectsLinealFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool IntersectsLinealFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
 	if (fast.turboFlags) return true;
 	return acceptFeature(store, feature);

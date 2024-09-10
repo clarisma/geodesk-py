@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "feature/Relation.h"
 #include "geom/mc/MCIndexBuilder.h"
 #include "ContainsPointFilter.h"
 #include "PreparedSpatialFilter.h"
@@ -19,13 +18,13 @@ public:
 		acceptedTypes_ = accepted;
 	}
 
-	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+	bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
 	int acceptTile(Tile tile) const override;
 
 protected:
-	bool acceptWay(WayRef way) const override;
-	bool acceptNode(NodeRef node) const override;
-	bool acceptAreaRelation(FeatureStore* store, RelationRef relation) const override;
+	bool acceptWay(WayPtr way) const override;
+	bool acceptNode(NodePtr node) const override;
+	bool acceptAreaRelation(FeatureStore* store, RelationPtr relation) const override;
 };
 
 
@@ -46,7 +45,7 @@ public:
 			bounds(), buildIndex());
 	}
 
-	const Filter* forNonAreaRelation(FeatureStore* store, RelationRef rel) override
+	const Filter* forNonAreaRelation(FeatureStore* store, RelationPtr rel) override
 	{
 		return forLineal();
 	}

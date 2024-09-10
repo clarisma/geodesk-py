@@ -4,7 +4,7 @@
 #include "PreparedSpatialFilter.h"
 #include "geom/mc/WaySlicer.h"
 
-bool PreparedSpatialFilter::anyNodesInPolygon(WayRef way) const
+bool PreparedSpatialFilter::anyNodesInPolygon(WayPtr way) const
 {
 	WayCoordinateIterator iter;
 	iter.start(way, 0);
@@ -16,7 +16,7 @@ bool PreparedSpatialFilter::anyNodesInPolygon(WayRef way) const
 	}
 }
 
-bool PreparedSpatialFilter::anySegmentsCross(WayRef way) const
+bool PreparedSpatialFilter::anySegmentsCross(WayPtr way) const
 {
 	WaySlicer slicer(way);
 	uint8_t buf[MonotoneChain::storageSize(MAX_CANDIDATE_MC_LENGTH)];
@@ -31,7 +31,7 @@ bool PreparedSpatialFilter::anySegmentsCross(WayRef way) const
 	return false;
 }
 
-bool PreparedSpatialFilter::wayIntersectsPolygon(WayRef way) const
+bool PreparedSpatialFilter::wayIntersectsPolygon(WayPtr way) const
 {
 
 	// First, check if any nodes lie inside the polygon or on its boundary

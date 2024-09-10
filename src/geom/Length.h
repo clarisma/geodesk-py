@@ -3,15 +3,15 @@
 
 #pragma once
 
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 
 class Length
 {
 public:
-	static double ofWay(WayRef way);
-	static double ofRelation(FeatureStore* store, RelationRef relation);
+	static double ofWay(WayPtr way);
+	static double ofRelation(FeatureStore* store, RelationPtr relation);
 
 private:
-	static double ofRelation(FeatureStore* store, RelationRef rel, RecursionGuard& guard);
+	static double ofRelation(FeatureStore* store, RelationPtr rel, RecursionGuard& guard);
 };

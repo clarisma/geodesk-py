@@ -9,7 +9,7 @@
 
 
 
-Coordinate Centroid::ofWay(WayRef way)
+Coordinate Centroid::ofWay(WayPtr way)
 {
 	WayCoordinateIterator iter(way);
 	if (way.isArea())
@@ -27,7 +27,7 @@ Coordinate Centroid::ofWay(WayRef way)
 }
 
 
-void Centroid::Areal::addAreaRelation(FeatureStore* store, RelationRef relation)
+void Centroid::Areal::addAreaRelation(FeatureStore* store, RelationPtr relation)
 {
 	Polygonizer polygonizer;
 	polygonizer.createRings(store, relation);
@@ -48,7 +48,7 @@ void Centroid::Areal::addAreaRelation(FeatureStore* store, RelationRef relation)
 }
 
 
-Coordinate Centroid::ofRelation(FeatureStore* store, RelationRef relation)
+Coordinate Centroid::ofRelation(FeatureStore* store, RelationPtr relation)
 {
 	if (relation.isArea())
 	{
@@ -73,7 +73,7 @@ Coordinate Centroid::ofRelation(FeatureStore* store, RelationRef relation)
 }
 
 
-void Centroid::addWay(WayRef way)
+void Centroid::addWay(WayPtr way)
 {
 	WayCoordinateIterator iter(way);
 	if (way.isArea())
@@ -87,29 +87,29 @@ void Centroid::addWay(WayRef way)
 }
 
 
-void Centroid::addRelation(FeatureStore* store, RelationRef rel, RecursionGuard& guard)
+void Centroid::addRelation(FeatureStore* store, RelationPtr rel, RecursionGuard& guard)
 {
 	FastMemberIterator iter(store, rel);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if(!memberWay.isPlaceholder()) addWay(memberWay);
 		}
 		else if (memberType == 0)
 		{
 			// Node
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if(!memberNode.isPlaceholder()) puntal_.addPoint(memberNode.xy());
 		}
 		else
 		{
 			// Relation
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (!childRel.isPlaceholder() && guard.checkAndAdd(childRel))
 			{
 				addRelation(store, childRel, guard);
@@ -119,7 +119,7 @@ void Centroid::addRelation(FeatureStore* store, RelationRef rel, RecursionGuard&
 }
 
 
-void Centroid::Lineal::addLineSegments(WayRef way)
+void Centroid::Lineal::addLineSegments(WayPtr way)
 {
 	WayCoordinateIterator iter(way);
 	Coordinate c = iter.next();
@@ -150,13 +150,13 @@ void Centroid::Puntal::addPoint(Coordinate point)
 }
 
 
-Coordinate Centroid::ofFeature(FeatureStore* store, FeatureRef feature)
+Coordinate Centroid::ofFeature(FeatureStore* store, FeaturePtr feature)
 {
 	if (feature.isWay())
 	{
-		return ofWay(WayRef(feature));
+		return ofWay(WayPtr(feature));
 	}
-	if (feature.isNode()) return NodeRef(feature).xy();
+	if (feature.isNode()) return NodePtr(feature).xy();
 	assert(feature.isRelation());
-	return ofRelation(store, RelationRef(feature));
+	return ofRelation(store, RelationPtr(feature));
 }

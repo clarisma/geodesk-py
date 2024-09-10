@@ -60,7 +60,7 @@ add_subdirectory(third_party/catch2)
 # This approach ensures that assertions are enabled in RelWithDebInfo configuration
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -U NDEBUG")
 
-include_directories(src)
+include_directories(src include/geodesk)
 
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)

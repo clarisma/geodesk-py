@@ -5,13 +5,14 @@
 #include <cstddef>   // for offsetof
 #include <regex>
 
-const Matcher* MatcherHolder::defaultRoleMethod(const RoleMatcher* matcher, const uint8_t*)
+const Matcher* MatcherHolder::defaultRoleMethod(const RoleMatcher* matcher, FeaturePtr)
 {
+	// TODO: fix!
 	return (const Matcher*)matcher + (offsetof(MatcherHolder, mainMatcher_) - 
 		offsetof(MatcherHolder, defaultRoleMatcher_));
 }
 
-bool MatcherHolder::matchAllMethod(const Matcher*, const uint8_t*)
+bool MatcherHolder::matchAllMethod(const Matcher*, FeaturePtr)
 {
 	return true;
 }
@@ -88,17 +89,17 @@ public:
         Matcher(matchKeyValue, nullptr),	// don't need store access
         tagBits_((keyCode << 2) | (valueCode << 16) | 1) {}
 
-	static bool matchKeyValue(const Matcher* matcher, const uint8_t* pFeature)
+	static bool matchKeyValue(const Matcher* matcher, FeaturePtr pFeature)
 	{
 		uint32_t tagBits = ((GlobalTagMatcher*)matcher)->tagBits_;
 		uint16_t keyBits = static_cast<uint16_t>(tagBits);
-		pointer p(pFeature+8);
-		p = p.followTagged(~1);
+		DataPtr p(pFeature.ptr() + 8);
+		p = p.followTagged(~1);			// TODO: clean up
 		for (; ; )
 		{
 			// TODO: maybe just fetch key/value separately
 			// to avoid unaligned read issue altogether
-			uint32_t tag = p.getUnalignedUnsignedInt();
+			uint32_t tag = p.getUnsignedIntUnaligned();
 			if ((tag & 0xffff) >= keyBits)
 			{
 				return (tag & 0xffff'7fff) == tagBits;
@@ -122,11 +123,11 @@ public:
 		Matcher(matchKeyValue, nullptr),	// don't need store access
 		tagBits_((keyCode << 2) | (codeNo << 16)) {}
 
-	static bool matchKeyValue(const Matcher* matcher, const uint8_t* pFeature)
+	static bool matchKeyValue(const Matcher* matcher, FeaturePtr pFeature)
 	{
 		uint32_t tagBits = ((GlobalKeyMatcher*)matcher)->tagBits_;
 		uint16_t keyBits = static_cast<uint16_t>(tagBits);
-		pointer p(pFeature + 8);
+		pointer p(pFeature.ptr() + 8);
 		p = p.followTagged(~1);
 		for (; ; )
 		{
@@ -180,7 +181,7 @@ public:
 	ComboMatcher(FeatureStore* store) :
 		Matcher(matchCombo, store) {}
 
-	static bool matchCombo(const Matcher* matcher, const uint8_t* pFeature)
+	static bool matchCombo(const Matcher* matcher, FeaturePtr pFeature)
 	{
 		const uint8_t* p = reinterpret_cast<const uint8_t*>(matcher) -
 			offsetof(MatcherHolder, mainMatcher_) - sizeof(MatcherHolder*) * 2;

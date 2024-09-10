@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <stddef.h>
@@ -16,6 +17,7 @@ public:
     DataPtr() noexcept : p_(nullptr) {}
     DataPtr(uint8_t* p) noexcept : p_(p) {}
     DataPtr(uintptr_t p) noexcept : p_(reinterpret_cast<uint8_t*>(p)) {}
+    DataPtr(std::byte* p) noexcept : p_(reinterpret_cast<uint8_t*>(p)) {}
     DataPtr(const uint8_t* p) noexcept : p_(const_cast<uint8_t*>(p)) {}
     DataPtr(const DataPtr& other) noexcept : p_(other.p_) {}
 
@@ -30,6 +32,12 @@ public:
     DataPtr& operator=(uint8_t* p) noexcept
     {
         p_ = p;
+        return *this;
+    }
+
+    DataPtr& operator=(std::nullptr_t)
+    {
+        p_ = nullptr;
         return *this;
     }
 
@@ -135,6 +143,7 @@ public:
     // Implicit conversions to pointer types
     operator uintptr_t () const noexcept { return reinterpret_cast<uintptr_t>(p_); }
     // operator int8_t* () const noexcept { return reinterpret_cast<int8_t*>(p_); }
+    // operator std::byte* () const noexcept { return reinterpret_cast<std::byte*>(p_); }
     operator uint8_t* () const noexcept { return reinterpret_cast<uint8_t*>(p_); }
     /*
     operator int16_t* () const noexcept { return reinterpret_cast<int16_t*>(p_); }
@@ -253,6 +262,12 @@ public:
         return DataPtr(p_ + getInt());
     }
 
+    // TODO: remove, don't allow
+    DataPtr followTagged(uint64_t mask) const
+    {
+        return DataPtr(p_ + (getInt() & mask));
+    }
+
     DataPtr followUnaligned() const noexcept
     {
         return DataPtr(p_ + getIntUnaligned());
@@ -263,6 +278,13 @@ public:
         int_fast32_t d = static_cast<int_fast32_t>(delta);
         assert(d == delta);
         return d;
+    }
+
+    DataPtr andMask(uint64_t mask) const
+    {
+        return DataPtr(
+            reinterpret_cast<const uint8_t*>(
+                reinterpret_cast<uintptr_t>(p_) & mask));
     }
 
 protected:

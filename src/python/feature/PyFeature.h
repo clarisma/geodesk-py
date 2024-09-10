@@ -4,7 +4,7 @@
 #pragma once
 
 #include <Python.h>
-#include "feature/Way.h"
+#include "feature/WayPtr.h"
 #include "feature/FeatureStore.h"
 #include "feature/MemberIterator.h"
 
@@ -17,7 +17,7 @@ class PyFeature : public PyObject
 {
 public:
     FeatureStore* store;
-    FeatureRef feature;
+    FeaturePtr feature;
     PyObject* roleString;
 
     static PyTypeObject TYPE;
@@ -25,7 +25,7 @@ public:
     static PyMappingMethods MAPPING_METHODS;
     static const AttrFunctionPtr* SUBTYPE_FEATURE_METHODS[];
 
-    static PyFeature* create(FeatureStore* store, FeatureRef feature, PyObject* role);
+    static PyFeature* create(FeatureStore* store, FeaturePtr feature, PyObject* role);
     static void dealloc(PyFeature* self);
     static PyObject* getattr(PyFeature* self, PyObject* name);
     static PyObject* getattr0(PyFeature* self, PyObject* nameObj, const AttrFunctionPtr* const table);

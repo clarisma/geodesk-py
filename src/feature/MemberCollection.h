@@ -4,12 +4,12 @@
 #pragma once
 
 #include <vector>
-#include "Relation.h"
+#include "RelationPtr.h"
 
-class MemberCollection : public std::vector<FeatureRef>
+class MemberCollection : public std::vector<FeaturePtr>
 {
 public:
-	MemberCollection(FeatureStore* store, RelationRef relation);
+	MemberCollection(FeatureStore* store, RelationPtr relation);
 
 	enum
 	{
@@ -19,7 +19,7 @@ public:
 	};
 
 private:
-	void collect(FeatureStore* store, RelationRef relation, RecursionGuard& guard);
+	void collect(FeatureStore* store, RelationPtr relation, RecursionGuard& guard);
 
 	int types_;
 };

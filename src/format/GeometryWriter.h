@@ -5,8 +5,8 @@
 
 #include <common/util/BufferWriter.h>
 #include <geos_c.h>
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 #include "geom/Coordinate.h"
 #include <functional>
 
@@ -69,7 +69,7 @@ protected:
 
 	// ==== Feature Geometries ====
 
-	void writeWayCoordinates(WayRef way, bool group);
+	void writeWayCoordinates(WayPtr way, bool group);
 	void writePolygonizedCoordinates(const Polygonizer& polygonizer);
 
 	int precision_ = 7;

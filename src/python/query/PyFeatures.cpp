@@ -22,6 +22,10 @@
 #include "PyFeatures_attr.cxx"
 #include "PyFeatures_lookup.cxx"
 
+// TODO: Looks like an empty view is not properly refcounted; if a PyFeatures
+// object that holds an empty view survives all other refs to the FeatureStore,
+// it may become invalid. 
+
 // steals the refs to matcher and filter
 PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
     FeatureTypes acceptedTypes, const Box* bounds,
@@ -61,14 +65,14 @@ PyFeatures* PyFeatures::createEmpty(FeatureStore* store, const MatcherHolder* ma
         self->acceptedTypes = 0;
         self->matcher = matcher;
         self->filter = nullptr;
-        self->relatedFeature = FeatureRef(nullptr);
+        self->relatedFeature = FeaturePtr(nullptr);
     }
     return self;
 }
 
 
 PyFeatures* PyFeatures::create(SelectionType* selectionType, FeatureStore* store,
-    FeatureRef relatedFeature, FeatureTypes acceptedTypes)
+    FeaturePtr relatedFeature, FeatureTypes acceptedTypes)
 {
     PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -86,7 +90,7 @@ PyFeatures* PyFeatures::create(SelectionType* selectionType, FeatureStore* store
 }
 
 PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selectionType,
-    FeatureRef relatedFeature, FeatureTypes acceptedTypes)
+    FeaturePtr relatedFeature, FeatureTypes acceptedTypes)
 {
     acceptedTypes &= base->acceptedTypes;
     if (!acceptedTypes) return base->getEmpty();
@@ -310,7 +314,7 @@ PyObject* PyFeatures::World::countFeatures(PyFeatures* self)
 {
     int64_t count = 0;
     Query query(self->store, self->bounds, self->acceptedTypes, self->matcher, self->filter);
-    while (query.next()) count++;
+    while (!query.next().isNull()) count++;
     // TODO: error handling
     return PyLong_FromLongLong(count);
 }
@@ -762,7 +766,7 @@ int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
 
     // Check if feature originates from the same GOL
     if (featureObj->store != self->store) return 0;
-    FeatureRef feature = featureObj->feature;
+    FeaturePtr feature = featureObj->feature;
 
     // Check if the type is accepted
     if(!self->acceptedTypes.acceptFlags(feature.flags())) return 0;
@@ -770,7 +774,7 @@ int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
     // Check if feature lies within the query's bbox
     if (feature.isNode())
     {
-        if (!NodeRef(feature).intersects(self->bounds)) return 0;
+        if (!NodePtr(feature).intersects(self->bounds)) return 0;
     }
     else
     {
@@ -780,7 +784,7 @@ int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
     }
 
     // Apply matcher (always present) and filter (optional)
-    if (!self->matcher->mainMatcher().accept(feature.ptr())) return 0;
+    if (!self->matcher->mainMatcher().accept(feature)) return 0;
     if (self->filter == NULL) return 1;
     return self->filter->accept(self->store, feature, FastFilterHint());
 }
@@ -816,18 +820,18 @@ PyObject* PyFeatures::area(PyFeatures* self)
         if (Py_TYPE(item) == &PyFeature::TYPE)
         {
             PyFeature* feature = (PyFeature*)item;
-            FeatureRef f = feature->feature;
+            FeaturePtr f = feature->feature;
             if (f.isArea())
             {
                 double area;
                 if (f.isWay())
                 {
-                    area = Area::ofWay(WayRef(f));
+                    area = Area::ofWay(WayPtr(f));
                 }
                 else
                 {
                     assert(f.isRelation());
-                    area = Area::ofRelation(feature->store, RelationRef(f));
+                    area = Area::ofRelation(feature->store, RelationPtr(f));
                 }
                 totalArea += area;
             }
@@ -866,15 +870,15 @@ PyObject* PyFeatures::length(PyFeatures* self)
         if (Py_TYPE(item) == &PyFeature::TYPE)
         {
             PyFeature* feature = (PyFeature*)item;
-            FeatureRef f = feature->feature;
+            FeaturePtr f = feature->feature;
             double length;
             if (f.isWay())
             {
-                length = Length::ofWay(WayRef(f));
+                length = Length::ofWay(WayPtr(f));
             }
             else if (f.isRelation())
             {
-                length = Length::ofRelation(feature->store, RelationRef(f));
+                length = Length::ofRelation(feature->store, RelationPtr(f));
             }
             totalLength += length;
         }

@@ -10,7 +10,7 @@
 extern volatile uint32_t performance_blackhole;
 #endif 
 
-MemberIterator::MemberIterator(FeatureStore* store, pointer pMembers,
+MemberIterator::MemberIterator(FeatureStore* store, DataPtr pMembers,
     FeatureTypes types, const MatcherHolder* matcher, const Filter* filter) : 
     store_(store),
     types_(types),
@@ -19,11 +19,11 @@ MemberIterator::MemberIterator(FeatureStore* store, pointer pMembers,
     p_(pMembers),
     currentTip_(FeatureConstants::START_TIP),
     currentRoleCode_(0),
-    currentRoleStr_(nullptr),
-    pForeignTile_(nullptr)
+    currentRoleStr_(nullptr)
+    // pForeignTile_(nullptr)   // null by default
 {
     // check for empty relation
-    currentMember_ = p_.getUnalignedInt() == 0 ? MemberFlags::LAST : 0;
+    currentMember_ = p_.getIntUnaligned() == 0 ? MemberFlags::LAST : 0;
     currentMatcher_ = &matcher->mainMatcher(); // TODO: select based on role
     #ifdef GEODESK_PYTHON
     // currentRoleObject_ = store->strings().getStringObject(0);
@@ -36,18 +36,18 @@ MemberIterator::MemberIterator(FeatureStore* store, pointer pMembers,
     #endif
 }
 
-FeatureRef MemberIterator::next()
+FeaturePtr MemberIterator::next()
 {
 	while ((currentMember_ & MemberFlags::LAST) == 0)
 	{
-        pointer pCurrent = p_;
-		currentMember_ = p_.getUnalignedInt();
+        DataPtr pCurrent = p_;
+		currentMember_ = p_.getIntUnaligned();
 		p_ += 4;
         if (currentMember_ & MemberFlags::FOREIGN)
         {
             if (currentMember_ & MemberFlags::DIFFERENT_TILE)
             {
-                pForeignTile_ = nullptr;
+                pForeignTile_ = DataPtr();
                 int32_t tipDelta = p_.getShort();
                 p_ += 2;
                 if (tipDelta & 1)
@@ -90,7 +90,8 @@ FeatureRef MemberIterator::next()
             {
                 rawRole |= static_cast<int>(p_.getShort()) << 16;
                 currentRoleCode_ = -1;
-                currentRoleStr_ = p_ + ((rawRole >> 1) - 2); // signed
+                currentRoleStr_ = reinterpret_cast<const ShortVarString*>(
+                    p_.ptr() + ((rawRole >> 1) - 2)); // signed
                 #ifdef GEODESK_PYTHON
                 if (currentRoleObject_)
                 {
@@ -115,7 +116,7 @@ FeatureRef MemberIterator::next()
             // Current member's role is acceptable
             // (i.e. currentMatcher_ is not null)
 
-            FeatureRef feature(nullptr);
+            FeaturePtr feature(nullptr);
             if (currentMember_ & MemberFlags::FOREIGN)
             {
                 if (!pForeignTile_)
@@ -123,7 +124,7 @@ FeatureRef MemberIterator::next()
                     // foreign tile not resolved yet
                     pForeignTile_ = store_->fetchTile(currentTip_);
                 }
-                feature = FeatureRef(pForeignTile_ + 
+                feature = FeaturePtr(pForeignTile_ +
                     ((currentMember_ & 0xffff'fff0) >> 2));
 
 #ifdef GEODESK_TEST_PERFORMANCE
@@ -158,8 +159,8 @@ FeatureRef MemberIterator::next()
                 LOG("offset_v3 = %d", ((int32_t)(currentMember_ & 0xffff'fff8) >> 1));
                 */
 
-                feature = FeatureRef((pCurrent &
-                    0xffff'ffff'ffff'fffcULL) +
+                feature = FeaturePtr(
+                    pCurrent.andMask(0xffff'ffff'ffff'fffc) +
                     ((int32_t)(currentMember_ & 0xffff'fff8) >> 1));
             }
 
@@ -167,7 +168,7 @@ FeatureRef MemberIterator::next()
 
             if (types_.acceptFlags(feature.flags()))
             {
-                if (currentMatcher_->accept(feature.ptr()))
+                if (currentMatcher_->accept(feature))
                 {
                     if (filter_ == nullptr || filter_->
                         accept(store_, feature, FastFilterHint()))
@@ -182,5 +183,5 @@ FeatureRef MemberIterator::next()
 #ifdef GEODESK_TEST_PERFORMANCE
     printf((performance_blackhole & 1) ? "odd\n" : "even\n");
 #endif
-    return FeatureRef(nullptr);
+    return FeaturePtr(nullptr);
 }

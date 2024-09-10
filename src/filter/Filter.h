@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include <vector>
-#include "feature/Feature.h"
+#include "feature/FeaturePtr.h"
 #include "geom/Tile.h"
 #include <common/util/RefCounted.h>
 
@@ -77,7 +76,7 @@ public:
     Box getBounds() const;
     FeatureTypes acceptedTypes() const { return acceptedTypes_; }
 
-    virtual bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+    virtual bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
     {
         return false;
     }

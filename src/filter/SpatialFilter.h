@@ -4,9 +4,9 @@
 #pragma once
 
 #include "Filter.h"
-#include "feature/Node.h"
-#include "feature/Relation.h"
-#include "feature/Way.h"
+#include "feature/NodePtr.h"
+#include "feature/RelationPtr.h"
+#include "feature/WayPtr.h"
 
 class SpatialFilter : public Filter
 {
@@ -24,11 +24,11 @@ public:
     const Box& bounds() const { return bounds_; }
 
 protected:
-    bool acceptFeature(FeatureStore* store, FeatureRef feature) const;
+    bool acceptFeature(FeatureStore* store, FeaturePtr feature) const;
     
-    virtual bool acceptWay(WayRef way) const { return false; }
-    virtual bool acceptNode(NodeRef node) const { return false; }
-    virtual bool acceptAreaRelation(FeatureStore* store, RelationRef relation) const { return false; }
-    virtual bool acceptMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const;
+    virtual bool acceptWay(WayPtr way) const { return false; }
+    virtual bool acceptNode(NodePtr node) const { return false; }
+    virtual bool acceptAreaRelation(FeatureStore* store, RelationPtr relation) const { return false; }
+    virtual bool acceptMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const;
     Box bounds_;
 };

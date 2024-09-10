@@ -175,3 +175,15 @@ void File::allocate(uint64_t ofs, size_t length)
     }
 #endif
 }
+
+
+bool File::exists(const char* fileName)
+{
+    struct stat buffer;
+    if (stat(fileName, &buffer) != 0)
+    {
+        if(errno != ENOENT) IOException::checkAndThrow();
+        return false;
+    }
+    return true;
+}

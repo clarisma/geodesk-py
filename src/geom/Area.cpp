@@ -31,7 +31,7 @@ double Area::ofWaySigned(const WayRef way)
 */
 
 
-double Area::signedMercatorOfWay(const WayRef way)
+double Area::signedMercatorOfWay(const WayPtr way)
 {
     assert(way.isArea());
     WayCoordinateIterator iter;
@@ -47,7 +47,7 @@ double Area::signedMercatorOfRing(const Polygonizer::Ring* ring)
 }
 
 
-double Area::ofRelation(FeatureStore* store, const RelationRef relation)
+double Area::ofRelation(FeatureStore* store, const RelationPtr relation)
 {
     assert(relation.isArea());
     int32_t avgY = (static_cast<int64_t>(relation.minY()) + relation.maxY()) / 2;

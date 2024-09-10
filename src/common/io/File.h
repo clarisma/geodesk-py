@@ -106,6 +106,8 @@ public:
 
     void error(const char* what);
 
+    static bool exists(const char* fileName);
+
     /**
      * Returns the extension of the given filename (as pointer to ".ext"),
      * or an empty string if the filename does not have an extension.

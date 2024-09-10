@@ -6,6 +6,8 @@
 #include <atomic>
 #include <mutex>
 
+using std::byte;
+
 // TODO: Allow setting initial size, may be more efficient to access?
 
 /**
@@ -43,9 +45,9 @@ public:
 	 * (The next byte across a boundary may be in a different 
 	 * mapping, and hence at a different virtual memory address).
 	 */
-	uint8_t* translate(uint64_t ofs);
-	uint8_t* mainMapping() const { return mainMapping_; }
-	uint8_t* mapping(int n);
+	byte* translate(uint64_t ofs);
+	byte* mainMapping() const { return mainMapping_; }
+	byte* mapping(int n);
 	size_t mappingSize(int n) const;
 	int mappingNumber(uint64_t ofs) const;
 
@@ -61,9 +63,9 @@ protected:
 	void unmapSegments();
 
 private:
-	uint8_t* createExtendedMapping(int slot);
+	byte* createExtendedMapping(int slot);
 
-	uint8_t* mainMapping_;
+	byte* mainMapping_;
 	size_t mainMappingSize_;
 
 	/**
@@ -77,7 +79,7 @@ private:
 	 * mainMapping_; this implementation differs com.clarisma.common.store.Store,
 	 * since Java's MappedByteBuffer is limited to an int32_t range).
 	 */
-	std::atomic<uint8_t*> extendedMappings_[EXTENDED_MAPPINGS_SLOT_COUNT];
+	std::atomic<byte*> extendedMappings_[EXTENDED_MAPPINGS_SLOT_COUNT];
 
 	/**
 	 * This mutex must be held to modify entries in extendedMappings_

@@ -19,7 +19,7 @@ public:
     };
 
     Segment* next;
-    WayRef way;
+    WayPtr way;
     bool backward;
     uint8_t status;
     uint16_t vertexCount;      // TODO: 16 bits enough? No more than 64K per segment 

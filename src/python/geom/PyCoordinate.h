@@ -83,6 +83,7 @@ public:
         return std::round(value * factor) / factor;
     }
 
+    // TODO: Use Mercator::lon100ndFromX
     static PyObject* niceLonFromX(int32_t x)
     {
         return PyFloat_FromDouble(precision7(Mercator::lonFromX(x)));

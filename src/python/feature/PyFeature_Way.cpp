@@ -22,7 +22,7 @@ PyObject* PyWay::iter(PyFeature* self)
 
 PyObject* PyFeature::Way::area(PyFeature* self)
 {
-    WayRef way(self->feature);
+    WayPtr way(self->feature);
     if (!way.isArea()) return PyLong_FromLong(0);
     return PyFloat_FromDouble(Area::ofWay(way));
 }
@@ -30,17 +30,17 @@ PyObject* PyFeature::Way::area(PyFeature* self)
 
 PyObject* PyFeature::Way::centroid(PyFeature* self)
 {
-    return PyCoordinate::create(Centroid::ofWay(WayRef(self->feature)));
+    return PyCoordinate::create(Centroid::ofWay(WayPtr(self->feature)));
 }
 
 PyObject* PyFeature::Way::is_placeholder(PyFeature* self)
 {
-    return Python::boolValue(WayRef(self->feature).isPlaceholder());
+    return Python::boolValue(WayPtr(self->feature).isPlaceholder());
 }
 
 PyObject* PyFeature::Way::length(PyFeature* self)
 {
-    return PyFloat_FromDouble(Length::ofWay(WayRef(self->feature)));
+    return PyFloat_FromDouble(Length::ofWay(WayPtr(self->feature)));
 }
 
 PyObject* PyFeature::Way::nodes(PyFeature* self)

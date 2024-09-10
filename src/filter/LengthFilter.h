@@ -13,16 +13,16 @@ public:
 	{
 	}
 
-	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override
+	bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
 	{
 		double len;
 		if (feature.isWay())
 		{
-			len = Length::ofWay(WayRef(feature));
+			len = Length::ofWay(WayPtr(feature));
 		}
 		else if(feature.isRelation())
 		{
-			len = Length::ofRelation(store, RelationRef(feature));
+			len = Length::ofRelation(store, RelationPtr(feature));
 		}
 		else
 		{

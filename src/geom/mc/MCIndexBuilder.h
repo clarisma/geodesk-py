@@ -6,8 +6,8 @@
 #include <geos_c.h>
 #include "MonotoneChain.h"
 #include "MCIndex.h"
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 #include <common/alloc/Arena.h>
 
 class MCIndexBuilder
@@ -15,13 +15,13 @@ class MCIndexBuilder
 public:
 	MCIndexBuilder();
 	void addLineSegment(Coordinate start, Coordinate end);
-	void segmentizeWay(WayRef way);
+	void segmentizeWay(WayPtr way);
 	void segmentizeCoords(GEOSContextHandle_t context, const GEOSCoordSequence* coords);
 	void segmentizePolygon(GEOSContextHandle_t context, const GEOSGeometry* polygon);
-	void segmentizeAreaRelation(FeatureStore* store, RelationRef rel);
-	void segmentizeMembers(FeatureStore* store, RelationRef rel, RecursionGuard& guard);
+	void segmentizeAreaRelation(FeatureStore* store, RelationPtr rel);
+	void segmentizeMembers(FeatureStore* store, RelationPtr rel, RecursionGuard& guard);
 	MCIndex build(Box bounds);
-	static MCIndex buildFromAreaRelation(FeatureStore* store, RelationRef rel)
+	static MCIndex buildFromAreaRelation(FeatureStore* store, RelationPtr rel)
 	{
 		MCIndexBuilder builder;
 		builder.segmentizeAreaRelation(store, rel);

@@ -16,7 +16,7 @@
 // for now, we dispense with edge check
 
 
-bool WithinPolygonFilter::acceptWay(WayRef way) const
+bool WithinPolygonFilter::acceptWay(WayPtr way) const
 {
 	// TODO: bbox check first to quickly determine if way does not 
 	// interact with the bboxes of the monotone chains. If so,
@@ -40,13 +40,13 @@ bool WithinPolygonFilter::acceptWay(WayRef way) const
 	// are considered to be within each other
 }
 
-bool WithinPolygonFilter::acceptNode(NodeRef node) const
+bool WithinPolygonFilter::acceptNode(NodePtr node) const
 {
 	return index_.properlyContainsPoint(node.xy());
 }
 
 
-bool WithinPolygonFilter::acceptMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const
+bool WithinPolygonFilter::acceptMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const
 {
 	return locateMembers(store, relation, guard) > 0;
 		// all must lie inide or on boundary, and at least one point
@@ -54,18 +54,18 @@ bool WithinPolygonFilter::acceptMembers(FeatureStore* store, RelationRef relatio
 }
 
 
-int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const
+int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const
 {
 	int where = 0;
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			int wayLocation = locateWayNodes(memberWay);
 			if (wayLocation < 0) return -1;
@@ -73,7 +73,7 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			int pointLocation = index_.locatePoint(memberNode.xy());
 			if (pointLocation < 0) return -1;
@@ -82,7 +82,7 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 		else
 		{
 			assert(memberType == 2);
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			int relLocation = locateMembers(store, childRel, guard);
 			if (relLocation < 0) return -1;
@@ -93,18 +93,18 @@ int WithinPolygonFilter::locateMembers(FeatureStore* store, RelationRef relation
 }
 
 
-bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
+bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationPtr relation) const
 {
 	// We only check ways (i.e. ignore label nodes and sub-areas)
 
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		if (member.isWay())
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			if (locateWayNodes(memberWay) < 0) return false;
 		}
@@ -120,7 +120,7 @@ bool WithinPolygonFilter::acceptAreaRelation(FeatureStore* store, RelationRef re
 }
 
 
-bool WithinPolygonFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool WithinPolygonFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
 	if (fast.turboFlags)
 	{
@@ -215,7 +215,7 @@ bool WithinPolygonFilter::accept(FeatureStore* store, FeatureRef feature, FastFi
 // -1 = outside
 //  0 = completely on boundary
 //  1 = inside
-int WithinPolygonFilter::locateWayNodes(WayRef way) const
+int WithinPolygonFilter::locateWayNodes(WayPtr way) const
 {
 	int where = 0;
 	WayCoordinateIterator iter;

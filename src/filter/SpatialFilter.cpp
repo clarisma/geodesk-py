@@ -4,45 +4,45 @@
 #include "SpatialFilter.h"
 #include "feature/FastMemberIterator.h"
 
-bool SpatialFilter::acceptFeature(FeatureStore* store, FeatureRef feature) const
+bool SpatialFilter::acceptFeature(FeatureStore* store, FeaturePtr feature) const
 {
 	int type = feature.typeCode();
-	if (type == 1) return acceptWay(WayRef(feature));
-	if (type == 0) return acceptNode(NodeRef(feature));
+	if (type == 1) return acceptWay(WayPtr(feature));
+	if (type == 0) return acceptNode(NodePtr(feature));
 	
 	assert(feature.isRelation());
-	RelationRef relation(feature);
+	RelationPtr relation(feature);
 	if (relation.isArea()) return acceptAreaRelation(store, relation);
 	RecursionGuard guard(relation);
 	return acceptMembers(store, relation, guard);
 }
 
 // TODO: check member bboxes as a quick way to eliminate
-bool SpatialFilter::acceptMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const
+bool SpatialFilter::acceptMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const
 {
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		bool memberAccepted;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			memberAccepted = acceptWay(memberWay);
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			memberAccepted = acceptNode(memberNode);
 		}
 		else
 		{
 			assert(memberType == 2);
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			if (childRel.isArea())
 			{

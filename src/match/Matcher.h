@@ -6,16 +6,15 @@
 #include <cassert>
 #include <cstdint>
 #include "feature/types.h"
-#include "feature/Feature.h"
-#include <common/util/pointer.h>
+#include "feature/FeaturePtr.h"
 
 class FeatureStore;
 class Matcher;
 class MatcherHolder;
 class RoleMatcher;
 
-typedef bool (*MatcherMethod)(const Matcher*, const uint8_t*);
-typedef const Matcher* (*RoleMatcherMethod)(const RoleMatcher*, const uint8_t*);
+typedef bool (*MatcherMethod)(const Matcher*, FeaturePtr);
+typedef const Matcher* (*RoleMatcherMethod)(const RoleMatcher*, FeaturePtr);
 
 // MatcherHolder is a variable-length structure that bundles one or more Matchers,
 // a RoleMatcher and their associated resources (pointers to other MatcherHolder
@@ -40,7 +39,7 @@ class Matcher
 public:
     Matcher(MatcherMethod func, FeatureStore* store) : function_(func), store_(store) {}
 
-    inline bool accept(pointer feature) const
+    inline bool accept(FeaturePtr feature) const
     {
         return function_(this, feature);
     }
@@ -57,7 +56,7 @@ class RoleMatcher
 public:
     RoleMatcher(RoleMatcherMethod func, FeatureStore* store) : function_(func), store_(store) {}
 
-    inline const Matcher* accept(pointer feature) const
+    const Matcher* accept(FeaturePtr feature) const
     {
         return function_(this, feature);
     }
@@ -110,8 +109,8 @@ public:
     }
 
 private:
-    static const Matcher* defaultRoleMethod(const RoleMatcher* matcher, const uint8_t*);
-    static bool matchAllMethod(const Matcher*, const uint8_t*);
+    static const Matcher* defaultRoleMethod(const RoleMatcher* matcher, FeaturePtr);
+    static bool matchAllMethod(const Matcher*, FeaturePtr);
     static uint8_t* alloc(size_t size) { return new uint8_t[size]; };
 
     mutable uint32_t refcount_;

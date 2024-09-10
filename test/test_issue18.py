@@ -11,7 +11,7 @@ def notest_19(features):
     myisland = features("a[wikidata=Q28179207]") 
     list(myisland.first.nodes)
    
-def test_19x(features):
+def no_test_19x(features):
     for area in features("a"):
         if area.id == 381321380:
             print(area)

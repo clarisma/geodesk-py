@@ -3,9 +3,11 @@
 
 #include "StringTable.h"
 
+#include <api/StringValue.h>
 #include <common/util/Bits.h>
 #include <common/util/PbfDecoder.h>
 #include <common/util/Strings.h>
+#include <python/util/util.h>
 
 // TODO: We have the problem that strign table index 0 is a valid entry (empty string)
 // However, during lookup, when we encounter a next-slot value of 0, we don't know
@@ -88,8 +90,8 @@ void StringTable::create(const uint8_t* pStrings)
 
 	for (int i = stringCount_ - 1; i > 0; i--)
 	{
-		GlobalString str(stringBase_ + entries_[i].relPointer);
-		size_t hash = Strings::hashNonEmpty(str.data(), str.length());
+		const ShortVarString* str = getGlobalString(i);
+		size_t hash = Strings::hashNonEmpty(str->data(), str->length());
 		int bucket = hash & lookupMask_;
 		uint16_t oldEntry = buckets_[bucket];
 		if (oldEntry) entries_[i].next = oldEntry;
@@ -120,12 +122,6 @@ StringTable::~StringTable()
 }
 
 
-GlobalString StringTable::getGlobalString(int code)
-{
-	assert(code >= 0 && code < stringCount_);
-	return GlobalString(stringBase_ + entries_[code].relPointer);
-}
-
 bool StringTable::isValidCode(int code)
 {
 	return code >= 0 && code < static_cast<int>(stringCount_);
@@ -139,8 +135,9 @@ PyObject* StringTable::getStringObject(int code)
 	PyObject* strObj = stringObjects_[code];
 	if (!strObj)
 	{
-		GlobalString str(stringBase_ + entries_[code].relPointer);
-		strObj = str.toStringObject();
+		geodesk::StringValue str(stringBase_ + entries_[code].relPointer);
+		strObj = Python::toStringObject(str);
+		assert(strObj);
 		stringObjects_[code] = strObj;
 	}
 	Py_INCREF(strObj);
@@ -148,15 +145,16 @@ PyObject* StringTable::getStringObject(int code)
 }
 #endif
 
-int StringTable::getCode(size_t hash, const char* str, int len) const
+int StringTable::getCode(size_t hash, const char* str, size_t len) const
 {
 	int bucket = hash & lookupMask_;
 	uint16_t code = buckets_[bucket];
 	while (code)
 	{
 		const Entry& entry = entries_[code];
-		GlobalString candidate(stringBase_ + entry.relPointer);
-		if (candidate.equals(str, len)) return code;
+		const ShortVarString* candidate =
+			reinterpret_cast<const ShortVarString*>(stringBase_ + entry.relPointer);
+		if (candidate->equals(str, len)) return code;
 		code = entry.next;
 	}
 	return -1;

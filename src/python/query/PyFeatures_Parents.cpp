@@ -92,7 +92,7 @@ PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
     else
     {
         FeatureTypes acceptedTypes = features->acceptedTypes;
-        FeatureRef feature = features->relatedFeature;
+        FeaturePtr feature = features->relatedFeature;
         if ((acceptedTypes & FeatureTypes::WAYS) == 0)
         {
             // only parent relations accepted
@@ -102,7 +102,7 @@ PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
         else
         {
             assert(feature.isNode());
-            NodeRef node(feature);
+            NodePtr node(feature);
             return (PyObject*)PyNodeParentIterator::create(features, node, 
                 (acceptedTypes & FeatureTypes::RELATIONS) == 0 ?
                 PyNodeParentIterator::IterationStatus::WAYS :
@@ -127,7 +127,7 @@ SelectionType PyFeatures::Parents::SUBTYPE =
 };
 
 
-PyObject* PyParentRelationIterator::create(PyFeatures* features, pointer pRelTable)
+PyObject* PyParentRelationIterator::create(PyFeatures* features, DataPtr pRelTable)
 {
     PyParentRelationIterator* self = (PyParentRelationIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -151,7 +151,7 @@ void PyParentRelationIterator::dealloc(PyParentRelationIterator* self)
 
 PyObject* PyParentRelationIterator::next(PyParentRelationIterator* self)
 {
-    RelationRef rel = self->iter.next();
+    RelationPtr rel = self->iter.next();
     if (rel.isNull()) return NULL;
     return PyFeature::create(self->iter.store(), rel, Py_None);
 }
@@ -168,29 +168,30 @@ PyTypeObject PyParentRelationIterator::TYPE =
 
 
 
-bool FeatureNodeFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const 
+bool FeatureNodeFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
     // TODO: Ignore missing tiles; by definition, we cannot find the
     // candidate node in a missing tile
     // LOG("Checking %s...", feature.toString().c_str());
     assert(feature.isWay());
-    WayRef way(feature);
+    WayPtr way(feature);
     FeatureNodeIterator iter(store);
     iter.start(way.bodyptr(), way.flags(), store->borrowAllMatcher(), nullptr);
     for (;;)
     {
-        NodeRef node = iter.next();
+        NodePtr node = iter.next();
         if (node.isNull()) return false;
-        if (node.asBytePointer() == node_.asBytePointer()) break;
+        if (node.ptr() == node_.ptr()) break;
+            // Important: Check exact pointers, not conceptual equality
     }
     return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
 }
 
 
-bool WayNodeFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const 
+bool WayNodeFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
     assert(feature.isWay());
-    WayRef way(feature);
+    WayPtr way(feature);
     // LOG("Checking way/%llu", way.id());
     WayCoordinateIterator iter;
     iter.start(way, 0);
@@ -233,7 +234,7 @@ PyObject* PyNodeParentIterator::create(PyFeatures* features, Coordinate wayNodeX
     return (PyObject*)self;
 }
 
-PyObject* PyNodeParentIterator::create(PyFeatures* features, NodeRef node, int startWith)
+PyObject* PyNodeParentIterator::create(PyFeatures* features, NodePtr node, int startWith)
 {
     PyNodeParentIterator* self = (PyNodeParentIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -276,10 +277,11 @@ void PyNodeParentIterator::dealloc(PyNodeParentIterator* self)
     // Wait for query to complete, otherwise we risk deallocating
     // filters while the query engine threads may still be accessing
     // them
+    // TODO: Use cleaner way to do this
     if (self->status != IterationStatus::DONE)
     {
-        while (self->wayQuery->query.next());
-        // All possible remainging ways have been returned at 
+        while (!self->wayQuery->query.next().isNull());
+        // All possible remaining ways have been returned at
         // this point and the query has shut down
     }
     Py_DECREF(self->wayQuery);
@@ -291,7 +293,7 @@ PyObject* PyNodeParentIterator::next(PyNodeParentIterator* self)
 {
     if (self->status == IterationStatus::RELATIONS)
     {
-        RelationRef relation = self->relationIter.next();
+        RelationPtr relation = self->relationIter.next();
         if (!relation.isNull())
         {
             return PyFeature::create(self->relationIter.store(), relation, Py_None);
@@ -302,8 +304,8 @@ PyObject* PyNodeParentIterator::next(PyNodeParentIterator* self)
     // We need to distinguish between "no more features" and 
     // "PyFeature allocation failed", hence we call the underlying
     // query directly
-    pointer pFeature = self->wayQuery->query.next();
-    if (pFeature)
+    FeaturePtr pFeature = self->wayQuery->query.next();
+    if (!pFeature.isNull())
     {
         return PyFeature::create(self->target->store, pFeature, Py_None);
     }

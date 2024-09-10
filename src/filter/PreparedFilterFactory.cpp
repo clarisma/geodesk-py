@@ -4,37 +4,37 @@
 #include "PreparedFilterFactory.h"
 #include "geom/geos/Geos.h"
 
-const Filter* PreparedFilterFactory::forFeature(FeatureStore* store, FeatureRef feature)
+const Filter* PreparedFilterFactory::forFeature(FeatureStore* store, FeaturePtr feature)
 {
 	if (feature.isType(FeatureTypes::RELATIONS & FeatureTypes::AREAS))
 	{
-		RelationRef relation(feature);
+		RelationPtr relation(feature);
 		bounds_ = relation.bounds();
 		indexBuilder_.segmentizeAreaRelation(store, relation);
 		return forPolygonal();
 	}
 	if (feature.isType(FeatureTypes::WAYS & FeatureTypes::AREAS))
 	{
-		WayRef way(feature);
+		WayPtr way(feature);
 		bounds_ = way.bounds();
 		indexBuilder_.segmentizeWay(way);
 		return forPolygonal();
 	}
 	if (feature.isNode())
 	{
-		NodeRef node(feature);
+		NodePtr node(feature);
 		return forCoordinate(node.xy());
 	}
 	if (feature.isRelation())
 	{
-		RelationRef relation(feature);
+		RelationPtr relation(feature);
 		RecursionGuard guard(relation);
 		bounds_ = relation.bounds();
 		indexBuilder_.segmentizeMembers(store, relation, guard);
 		return forNonAreaRelation(store, relation);
 	}
 	assert(feature.isWay());
-	WayRef way(feature);
+	WayPtr way(feature);
 	bounds_ = way.bounds();
 	indexBuilder_.segmentizeWay(way);
 	return forLineal();

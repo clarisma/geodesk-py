@@ -267,9 +267,14 @@ Store::Transaction::~Transaction()
     {
         delete pair.second;
     }
+    if (journalFile_.isOpen())
+    {
+        journalFile_.close();
+
+    }
 }
 
-uint8_t* Store::Transaction::getBlock(uint64_t pos)
+byte* Store::Transaction::getBlock(uint64_t pos)
 {
     if (pos >= preCommitStoreSize_) return store_->translate(pos);
     TransactionBlock* block;
@@ -287,7 +292,7 @@ uint8_t* Store::Transaction::getBlock(uint64_t pos)
 }
 
 
-const uint8_t* Store::Transaction::getConstBlock(uint64_t pos)
+const byte* Store::Transaction::getConstBlock(uint64_t pos)
 {
     TransactionBlock* block;
     auto it = blocks_.find(pos);
