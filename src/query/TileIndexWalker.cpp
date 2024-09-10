@@ -4,7 +4,6 @@
 #include "TileIndexWalker.h"
 
 #include <common/util/Bits.h>
-#include "feature/Feature.h"
 #include "filter/Filter.h"
 
 TileIndexWalker::TileIndexWalker(

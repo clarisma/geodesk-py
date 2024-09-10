@@ -1,2 +1,0 @@
-setuptools==74.0.0
-scikit-build==0.18.0

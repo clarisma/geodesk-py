@@ -60,7 +60,8 @@ add_subdirectory(third_party/catch2)
 # This approach ensures that assertions are enabled in RelWithDebInfo configuration
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -U NDEBUG")
 
-include_directories(src include/geodesk)
+include_directories(src)
+# include_directories(src include/geodesk)
 
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)
@@ -106,11 +107,18 @@ set(INCLUDES
 
 if(NOT BUILD_WHEELS)
 	# Create test harness
-   	add_executable (geodesk-py "src/main.cxx" ${SOURCE_FILES})
+	add_executable (geodesk-py "src/main.cxx" ${SOURCE_FILES})
 	target_include_directories(geodesk-py PRIVATE ${INCLUDES})
 	target_link_libraries(geodesk-py PRIVATE ${LIBRARIES})
 	target_compile_definitions(geodesk-py PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py PRIVATE _WIN32_WINNT=0x0601)
+
+	set(GOL_SOURCE_FILES ${SOURCE_FILES})
+	list(FILTER GOL_SOURCE_FILES EXCLUDE REGEX "src/python/.*")
+	add_executable (gol "src/gol/main.cxx" ${GOL_SOURCE_FILES})
+	target_include_directories(gol PRIVATE ${INCLUDES})
+	target_link_libraries(gol PRIVATE ${LIBRARIES})
+	target_compile_definitions(gol PRIVATE _WIN32_WINNT=0x0601)
 
 	file(GLOB_RECURSE TEST_SOURCE_FILES "test_cpp/*.cpp")
 	add_executable (geodesk-test ${GOL_SOURCE_FILES} ${TEST_SOURCE_FILES})

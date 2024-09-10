@@ -4,7 +4,6 @@
 #include "MatcherEngine.h"
 #include "OpGraph.h"
 #include "api/StringValue.h"
-#include "feature/Feature.h"
 #include "feature/FeatureStore.h"
 #include <common/math/Math.h>
 

@@ -32,7 +32,8 @@
 // a separate lookup table (we still need to support lookup via std::string_view
 // for our internal needs, and we can't use the same table because we no longer have 
 // access to Python's hash function (unless we first turn the std::string_view into
-// a temporary Python string)
+// a temoporary Python string)
+
 
 StringTable::StringTable() :
 	arena_(nullptr)

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "feature/Node.h"
 #include "filter/PointDistanceFilter.h"
 #include "geom/Centroid.h"
 #include "geom/LengthUnit.h"

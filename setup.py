@@ -12,14 +12,14 @@ setup(
     description='Python port of GeoDesk, a fast and storage-efficient spatial database engine for OpenStreetMap features',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    # author="Clarisma / GeoDesk contributors",
+    author="Clarisma / GeoDesk contributors",
     license="LGPL-3.0-only",  
     packages=["geodesk"],  # If you have Python packages as well
     cmake_args=['-DCMAKE_BUILD_TYPE=Release', '-DBUILD_WHEELS:BOOL=ON'],  # or Debug, or any other args you need
     # install_requires=[  # If you have Python dependencies
     #     "somepythonpackage>=1.0",
     # ],
-    # install_requires=['shapely>=2.0.3'],
+    install_requires=['shapely>=2.0.3'],
     # include_package_data=True,
     # exclude_package_data={ "": ["*h.", "*.a", "*.lib"]},
     cmake_process_manifest_hook = \

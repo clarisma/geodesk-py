@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "feature/Node.h"
 #include "filter/ContainsPointFilter.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
