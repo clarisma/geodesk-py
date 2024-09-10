@@ -8,10 +8,6 @@
 #include <intrin.h>
 #endif
 
-#ifdef __GNUC__
-#include <x86intrin.h>
-#endif
-
 namespace Bits
 {
     /*
