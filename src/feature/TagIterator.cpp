@@ -44,7 +44,7 @@ bool TagIterator::next(std::string_view& key, TagBits& value)
 		value = (reinterpret_cast<TagBits>(p_.ptr() - tags_.taggedPtr() + 2) << 32) | tag;
 		int lastFlag = tag & 0x8000;
 		p_ = lastFlag ? (tags_.hasLocalKeys() ? 
-			(tags_.ptr() - 6) : static_cast<uint8_t*>(nullptr))
+			(tags_.ptr().asBytePointer() - 6) : static_cast<uint8_t*>(nullptr))
 			  : (p_.ptr() + 4 + (tag & 2));
 	}
 	return true;
