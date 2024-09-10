@@ -24,8 +24,8 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         # Ensure no conflicts with snprintf on Windows/MSVC
-        set CXXFLAGS=/D_USE_MSC_VER /DNDEBUG
-        set CFLAGS=/D_USE_MSC_VER /DNDEBUG
+        set CXXFLAGS=/D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
+        set CFLAGS=/D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.20.0
