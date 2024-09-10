@@ -11,6 +11,12 @@ template <typename T, int N>
 class TaggedPtr
 {
     static_assert(N > 0 && N < 4, "Flags bits must be 1,2 or 3");
+    /*
+    static_assert(alignof(T) >= (1 << N),
+        "Alignment of pointer does not support the desired number of flag bits");
+    // fails for TagTablePtr 
+    */
+
 
 public:
     // Constructor

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "feature/Relation.h"
+#include "feature/RelationPtr.h"
 #include "geom/mc/MCIndexBuilder.h"
 #include "PreparedSpatialFilter.h"
 #include "PreparedFilterFactory.h"
@@ -21,25 +21,25 @@ public:
 			FilterFlags::STRICT_BBOX;
 	}
 
-	WithinPolygonFilter(FeatureStore* store, RelationRef areaRelation) :
+	WithinPolygonFilter(FeatureStore* store, RelationPtr areaRelation) :
 		PreparedSpatialFilter(
 			areaRelation.bounds(),
 			MCIndexBuilder::buildFromAreaRelation(store, areaRelation))
 	{
 	}
 
-	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+	bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
 	int acceptTile(Tile tile) const override;
 	
 protected:
-	bool acceptWay(WayRef way) const override;
-	bool acceptNode(NodeRef node) const override;
-	bool acceptAreaRelation(FeatureStore* store, RelationRef relation) const override;
-	bool acceptMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const override;
-	int locateMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const;
+	bool acceptWay(WayPtr way) const override;
+	bool acceptNode(NodePtr node) const override;
+	bool acceptAreaRelation(FeatureStore* store, RelationPtr relation) const override;
+	bool acceptMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const override;
+	int locateMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const;
 
-	int locateWayNodes(WayRef way) const;
-	bool containsWay(WayRef way) const;
+	int locateWayNodes(WayPtr way) const;
+	bool containsWay(WayPtr way) const;
 };
 
 

@@ -5,7 +5,7 @@
 #include "feature/polygon/RingCoordinateIterator.h"
 
 
-double LambertArea::signedOfWay(const WayRef way)
+double LambertArea::signedOfWay(const WayPtr way)
 {
     assert(way.isArea());
     WayCoordinateIterator iter;
@@ -21,7 +21,7 @@ double LambertArea::signedOfRing(const Polygonizer::Ring* ring)
 }
 
 
-double LambertArea::ofRelation(FeatureStore* store, const RelationRef relation)
+double LambertArea::ofRelation(FeatureStore* store, const RelationPtr relation)
 {
     assert(relation.isArea());
     double totalArea = 0;

@@ -723,7 +723,7 @@ void MapWriter::writePolygonOrPolyline(bool polygon)
 	}
 }
 
-void MapWriter::writeWay(WayRef way)
+void MapWriter::writeWay(WayPtr way)
 {
 	writePolygonOrPolyline(way.isArea());
 	writeWayCoordinates(way, false);
@@ -731,7 +731,7 @@ void MapWriter::writeWay(WayRef way)
 }
 
 // TODO: don't allow placeholders/empty rels
-void MapWriter::writeRelation(FeatureStore* store, RelationRef relation)
+void MapWriter::writeRelation(FeatureStore* store, RelationPtr relation)
 {
 	if (relation.isArea())
 	{
@@ -758,32 +758,32 @@ void MapWriter::writeRelation(FeatureStore* store, RelationRef relation)
 	
 }
 
-void MapWriter::writeRelationMembers(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+void MapWriter::writeRelationMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
 {
 	bool first = true;
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			if (!first) writeByte(',');
 			writeWay(memberWay);
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			if (!first) writeByte(',');
 			writePoint(memberNode.xy());
 		}
 		else
 		{
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			if (!first) writeByte(',');
 			writeRelation(store, childRel);
@@ -796,17 +796,17 @@ void MapWriter::writeRelationMembers(FeatureStore* store, RelationRef relation, 
 
 bool MapWriter::writeFeature(PyFeature* obj)
 {
-	FeatureRef feature = obj->feature;
+	FeaturePtr feature = obj->feature;
 	if (feature.isWay())
 	{
-		WayRef way(feature);
+		WayPtr way(feature);
 		if (way.isPlaceholder()) return false;
 		writeWay(way);
 		bounds_.expandToIncludeSimple(way.bounds());
 	}
 	else if (feature.isNode())
 	{
-		NodeRef node(feature);
+		NodePtr node(feature);
 		if (node.isPlaceholder()) return false;
 		writePoint(node.xy());
 		bounds_.expandToInclude(node.xy());
@@ -814,7 +814,7 @@ bool MapWriter::writeFeature(PyFeature* obj)
 	else
 	{
 		assert(feature.isRelation());
-		RelationRef relation(feature);
+		RelationPtr relation(feature);
 		if (relation.isPlaceholder()) return false;
 		writeRelation(obj->store, relation);
 		bounds_.expandToIncludeSimple(relation.bounds());

@@ -5,7 +5,7 @@
 #include "feature/FastMemberIterator.h"
 #include "geom/Mercator.h"
 
-double Length::ofWay(WayRef way)
+double Length::ofWay(WayPtr way)
 {
     double d = 0;
     WayCoordinateIterator iter(way);
@@ -23,28 +23,28 @@ double Length::ofWay(WayRef way)
 // TODO: Define in spec: what's the "length" of an Area-Relation?
 // Circumference without holes? Right now, we simply add up all the ways
 
-double Length::ofRelation(FeatureStore* store, RelationRef relation)
+double Length::ofRelation(FeatureStore* store, RelationPtr relation)
 {
 	RecursionGuard guard(relation);
 	return ofRelation(store, relation, guard);
 }
 
-double Length::ofRelation(FeatureStore *store, RelationRef rel, RecursionGuard &guard)
+double Length::ofRelation(FeatureStore *store, RelationPtr rel, RecursionGuard &guard)
 {
 	double totalLength = 0;
 	FastMemberIterator iter(store, rel);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			totalLength += ofWay(WayRef(member));		// This is placeholder-safe
+			totalLength += ofWay(WayPtr(member));		// This is placeholder-safe
 		}
 		else if (memberType == 2)
 		{
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (guard.checkAndAdd(childRel))
 			{
 				totalLength += ofRelation(store, childRel, guard);		// This is placeholder-safe

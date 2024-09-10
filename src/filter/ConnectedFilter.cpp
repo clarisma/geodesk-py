@@ -4,12 +4,12 @@
 #include "ConnectedFilter.h"
 #include "feature/FastMemberIterator.h"
 
-ConnectedFilter::ConnectedFilter(FeatureStore* store, FeatureRef feature)
+ConnectedFilter::ConnectedFilter(FeatureStore* store, FeaturePtr feature)
 {
 	self_ = feature.idBits();
 	if (feature.isWay())
 	{
-		WayRef way(feature);
+		WayPtr way(feature);
 		if (!way.isPlaceholder())
 		{
 			collectWayPoints(way);
@@ -18,7 +18,7 @@ ConnectedFilter::ConnectedFilter(FeatureStore* store, FeatureRef feature)
 	}
 	else if (feature.isNode())
 	{
-		NodeRef node(feature);
+		NodePtr node(feature);
 		if (!node.isPlaceholder())
 		{
 			Coordinate c = node.xy();
@@ -29,7 +29,7 @@ ConnectedFilter::ConnectedFilter(FeatureStore* store, FeatureRef feature)
 	else
 	{
 		assert(feature.isRelation());
-		RelationRef relation(feature);
+		RelationPtr relation(feature);
 		RecursionGuard guard(relation);
 		collectMemberPoints(store, relation, guard);
 		bounds_ = relation.bounds();
@@ -37,7 +37,7 @@ ConnectedFilter::ConnectedFilter(FeatureStore* store, FeatureRef feature)
 }
 
 
-void ConnectedFilter::collectWayPoints(WayRef way)
+void ConnectedFilter::collectWayPoints(WayPtr way)
 {
 	WayCoordinateIterator iter;
 	iter.start(way, 0);
@@ -50,29 +50,29 @@ void ConnectedFilter::collectWayPoints(WayRef way)
 }
 
 
-void ConnectedFilter::collectMemberPoints(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+void ConnectedFilter::collectMemberPoints(FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
 {
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			collectWayPoints(memberWay);
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			points_.insert(memberNode.xy());
 		}
 		else
 		{
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			collectMemberPoints(store, childRel, guard);
 		}
@@ -80,7 +80,7 @@ void ConnectedFilter::collectMemberPoints(FeatureStore* store, RelationRef relat
 }
 
 
-bool ConnectedFilter::acceptWay(WayRef way) const
+bool ConnectedFilter::acceptWay(WayPtr way) const
 {
 	WayCoordinateIterator iter;
 	iter.start(way, 0);
@@ -93,19 +93,19 @@ bool ConnectedFilter::acceptWay(WayRef way) const
 	return false;
 }
 
-bool ConnectedFilter::acceptNode(NodeRef node) const
+bool ConnectedFilter::acceptNode(NodePtr node) const
 {
 	return points_.find(node.xy()) != points_.end();
 }
 
-bool ConnectedFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
+bool ConnectedFilter::acceptAreaRelation(FeatureStore* store, RelationPtr relation) const
 {
 	RecursionGuard guard(relation);
 	return acceptMembers(store, relation, guard);
 }
 
 
-bool ConnectedFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool ConnectedFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
 	if (feature.idBits() == self_) return false;
 	return acceptFeature(store, feature);

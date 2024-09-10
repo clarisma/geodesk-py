@@ -120,6 +120,7 @@ def test_members(features):
     my_member_count = 0
     for rel in routes:
         my_count += 1
+        # print(f"test_members: Testing {rel}")
         member_count += rel.members.count
         for member in rel:
             my_member_count += 1

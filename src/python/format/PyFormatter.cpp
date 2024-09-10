@@ -294,7 +294,7 @@ PyObject* PyFormatter::wkt(PyObject* obj)
 }
 
 void PyFormatter::writeIdViaCallable(FeatureWriter* writer,
-	FeatureStore* store, FeatureRef feature, /* PyObject */ void* closure)
+	FeatureStore* store, FeaturePtr feature, /* PyObject */ void* closure)
 {
 	PyObject* callable = (PyObject*)closure;
 	// TODO: We need to re-create the Feature based on FeatureStore and FeatureRef

@@ -28,7 +28,14 @@ void BlobStore::verifyHeader() const
 
 void BlobStore::createStore()
 {
-	// TODO
+    Header* header = getRoot();
+    header->magic = MAGIC;
+    header->versionHigh = 2;
+    header->versionLow = 0;
+    header->creationTimestamp = DateTime::now();
+    header->pageSize = pageSizeShift_;
+    header->totalPageCount = 1;
+    header->metadataSize = 4096;        // TODO
 }
 
 
@@ -216,8 +223,8 @@ BlobStore::PageNum BlobStore::Transaction::alloc(uint32_t payloadSize)
                         Blob* nextBlock = getBlobBlock(freeBlob + freePages);
                         nextBlock->precedingFreeBlobPages = freePages - requiredPages;
 
-
-                        // TODO: freeBlock.putInt(0, payloadSize);
+                        freeBlock->isFree = false;
+                        freeBlock->payloadSize = payloadSize;
                         // debugCheckRootFT();
                         return freeBlob;
                     }
@@ -268,19 +275,18 @@ BlobStore::PageNum BlobStore::Transaction::alloc(uint32_t payloadSize)
     return totalPages;
 }
 
-/**
- * Removes a free blob from its freetable. If this blob is the last 
- * free blob in a given size range, removes the leaf freetable from 
- * the trunk freetable. If this free blob contains the leaf freetable, 
- * and this freetable is still needed, it is the responsibility of 
- * the caller to copy it to another free blob in the same size range.
- *
- * This method does not affect the precedingFreeBlobPages field of the 
- * successor blob; it is the responsibility of the caller to clear 
- * the flag, if necessary.
- *
- * @param freeBlock
- */
+/// Removes a free blob from its freetable. If this blob is the last 
+/// free blob in a given size range, removes the leaf freetable from 
+/// the trunk freetable. If this free blob contains the leaf freetable, 
+/// and this freetable is still needed, it is the responsibility of 
+/// the caller to copy it to another free blob in the same size range.
+///
+/// This method does not affect the precedingFreeBlobPages field of the 
+/// successor blob; it is the responsibility of the caller to clear 
+/// the flag, if necessary.
+///
+/// @param freeBlock The block representing the free blob.
+///
 void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 {
     PageNum prevBlob = freeBlock->prevFreeBlob;
@@ -366,17 +372,16 @@ void BlobStore::Transaction::removeFreeBlob(Blob* freeBlock)
 }
 
 
-/**
- * Adds a blob to the freetable, and sets its size, header flags and trailer.
- *
- * This method does not affect the precedingFreeBlobPages field of the 
- * successor blob; it is the responsibility of the caller to set this, 
- * if necessary.
- *
- * @param firstPage the first page of the blob
- * @param pages     the number of pages of this blob
- * @param precedingFreePages
- */
+/// Adds a blob to the freetable, and sets its size, header flags, and trailer.
+///
+/// This method does not affect the precedingFreeBlobPages field of the 
+/// successor blob; it is the responsibility of the caller to set this, 
+/// if necessary.
+///
+/// @param firstPage the first page of the blob
+/// @param pages     the number of pages of this blob
+/// @param precedingFreePages the number of preceding free pages
+///
 void BlobStore::Transaction::addFreeBlob(PageNum firstPage, uint32_t pages, uint32_t precedingFreePages)
 {
     Blob* block = getBlobBlock(firstPage);
@@ -579,15 +584,15 @@ void BlobStore::Transaction::free(PageNum firstPage)
     freedBlobs_.insert({ firstPage, pages });
 }
 
-/**
- * Copies a blob's free table to another free blob. The original blob's 
- * free table and the free-range bits must be valid, all other data is 
- * allowed to have been modified at this point.
- *
- * @param page        the first page of the original blob
- * @param sizeInPages the blob's size in pages
- * @return the page of the blob to which the free table has been assigned, or 0 if the table has not been relocated.
- */
+/// Copies a blob's free table to another free blob. The original blob's 
+/// free table and the free-range bits must be valid, all other data is 
+/// allowed to have been modified at this point.
+///
+/// @param page        the first page of the original blob
+/// @param sizeInPages the blob's size in pages
+/// @return the page of the blob to which the free table has been assigned, 
+///         or 0 if the table has not been relocated.
+///
 BlobStore::PageNum BlobStore::Transaction::relocateFreeTable(PageNum page, int sizeInPages)
 {
     Blob* block = getBlobBlock(page);
@@ -633,6 +638,29 @@ BlobStore::PageNum BlobStore::Transaction::relocateFreeTable(PageNum page, int s
 }
 
 
+BlobStore::PageNum BlobStore::Transaction::addBlob(const ByteSpan data)
+{
+    PageNum firstPage = alloc(data.size());
+    Blob* blob = getBlobBlock(firstPage);
+    size_t firstPayloadSize = TransactionBlock::SIZE - 8;
+    if (data.size() <= firstPayloadSize)
+    {
+        // All the data fits into the first block
+        memcpy(blob->payload, data.data(), data.size());
+    }
+    else
+    {
+        // We only journal the first block (because it may contain freelist
+        // data that we would otherwise overwrite in an unsafe way), but the
+        // rest of the payload we write directly into the memory-mapped file
+        memcpy(blob->payload, data.data(),firstPayloadSize);
+        byte* unjournaledPayload = store()->translatePage(firstPage) + TransactionBlock::SIZE;
+        memcpy(unjournaledPayload, data.data() + firstPayloadSize, data.size() - firstPayloadSize);
+    }
+    return firstPage;
+}
+
+
 void BlobStore::Transaction::commit()
 {
     Store::Transaction::commit();
@@ -642,8 +670,16 @@ void BlobStore::Transaction::commit()
         PageNum firstPage = it.first;
         uint32_t pages = it.second;
 
+        uint64_t ofs = store()->offsetOf(firstPage);
+        uint64_t size = store()->offsetOf(pages);
+
+        ofs += TransactionBlock::SIZE;
+        size -= TransactionBlock::SIZE;
+        store()->deallocate(ofs, size);
+
         // TODO: punch hole (but respect filesystem block sizes)
         // Do not deallocate the first 4KB block, as it contains
+        // metadata
     }
 }
 

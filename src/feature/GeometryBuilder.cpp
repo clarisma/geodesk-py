@@ -6,7 +6,7 @@
 #include "feature/polygon/Polygonizer.h"
 #include "feature/polygon/Ring.h"
 
-GEOSGeometry* GeometryBuilder::buildWayGeometry(const FeatureRef way, GEOSContextHandle_t geosContext)
+GEOSGeometry* GeometryBuilder::buildWayGeometry(const FeaturePtr way, GEOSContextHandle_t geosContext)
 {
 	WayCoordinateIterator iter;
 	int areaFlag = way.flags() & FeatureFlags::AREA;
@@ -30,7 +30,7 @@ GEOSGeometry* GeometryBuilder::buildWayGeometry(const FeatureRef way, GEOSContex
 }
 
 // TODO: consolidate with buildPointGeometry
-GEOSGeometry* GeometryBuilder::buildNodeGeometry(const NodeRef node, GEOSContextHandle_t geosContext)
+GEOSGeometry* GeometryBuilder::buildNodeGeometry(const NodePtr node, GEOSContextHandle_t geosContext)
 {
 	GEOSCoordSequence* coordSeq = GEOSCoordSeq_create_r(geosContext, 1, 2);  // 1 point, 2D (X and Y)
 	GEOSCoordSeq_setXY_r(geosContext, coordSeq, 0, node.x(), node.y());
@@ -58,7 +58,7 @@ GEOSGeometry* GeometryBuilder::buildBoxGeometry(const Box& box, GEOSContextHandl
 }
 
 
-GEOSGeometry* GeometryBuilder::buildAreaRelationGeometry(FeatureStore* store, const RelationRef relation, GEOSContextHandle_t geosContext)
+GEOSGeometry* GeometryBuilder::buildAreaRelationGeometry(FeatureStore* store, RelationPtr relation, GEOSContextHandle_t geosContext)
 {
 	Polygonizer polygonizer;
 	polygonizer.createRings(store, relation);
@@ -67,7 +67,7 @@ GEOSGeometry* GeometryBuilder::buildAreaRelationGeometry(FeatureStore* store, co
 }
 
 
-GEOSGeometry* GeometryBuilder::buildRelationGeometry(FeatureStore* store, const RelationRef relation, GEOSContextHandle_t geosContext)
+GEOSGeometry* GeometryBuilder::buildRelationGeometry(FeatureStore* store, RelationPtr relation, GEOSContextHandle_t geosContext)
 {
 	if (relation.isArea())
 	{
@@ -79,7 +79,7 @@ GEOSGeometry* GeometryBuilder::buildRelationGeometry(FeatureStore* store, const 
 
 
 RelationGeometryBuilder::RelationGeometryBuilder(FeatureStore* store, 
-	const RelationRef relation, GEOSContextHandle_t geosContext) :
+	RelationPtr relation, GEOSContextHandle_t geosContext) :
 	store_(store),
 	context_(geosContext),
 	guard_(relation)
@@ -88,31 +88,31 @@ RelationGeometryBuilder::RelationGeometryBuilder(FeatureStore* store,
 }
 
 
-void RelationGeometryBuilder::gatherMembers(const RelationRef relation)
+void RelationGeometryBuilder::gatherMembers(RelationPtr relation)
 {
 	FastMemberIterator iter(store_, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		GEOSGeometry* g;
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			g = GeometryBuilder::buildWayGeometry(memberWay, context_);
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			g = GeometryBuilder::buildNodeGeometry(memberNode, context_);
 		}
 		else
 		{
 			assert(memberType == 2);
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard_.checkAndAdd(childRel)) continue;
 			if (childRel.isArea())
 			{
@@ -140,17 +140,17 @@ GEOSGeometry* RelationGeometryBuilder::build()
 }
 
 
-GEOSGeometry* GeometryBuilder::buildFeatureGeometry(FeatureStore* store, const FeatureRef feature, GEOSContextHandle_t geosContext)
+GEOSGeometry* GeometryBuilder::buildFeatureGeometry(FeatureStore* store, FeaturePtr feature, GEOSContextHandle_t geosContext)
 {
 	int typeCode = feature.typeCode();
 	if (typeCode == 1)
 	{
-		return buildWayGeometry(WayRef(feature), geosContext);
+		return buildWayGeometry(WayPtr(feature), geosContext);
 	}
 	if (typeCode == 0)
 	{
-		return buildNodeGeometry(NodeRef(feature), geosContext);
+		return buildNodeGeometry(NodePtr(feature), geosContext);
 	}
 	assert(feature.isRelation());
-	return buildRelationGeometry(store, RelationRef(feature), geosContext);
+	return buildRelationGeometry(store, RelationPtr(feature), geosContext);
 }

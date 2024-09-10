@@ -24,7 +24,7 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 	if (arg->ob_type == &PyFeature::TYPE)
 	{
 		PyFeature* featureObj = (PyFeature*)arg;
-		FeatureRef feature = featureObj->feature;
+		FeaturePtr feature = featureObj->feature;
 		FeatureTypes acceptedTypes = feature.isRelationMember() ?
 			FeatureTypes::RELATIONS : 0;
 		acceptedTypes |= 

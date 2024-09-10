@@ -227,14 +227,11 @@ protected:
 };
 
 
-namespace std 
+template<>
+struct std::hash<Tile>
 {
-	template<>
-	struct hash<Tile> 
+	size_t operator()(const Tile& tile) const noexcept
 	{
-		size_t operator()(const Tile& tile) const 
-		{
-			return std::hash<uint32_t>()(tile); 
-		}
-	};
-}
+		return std::hash<uint32_t>()(tile);
+	}
+};

@@ -18,7 +18,7 @@ MCIndexBuilder::MCIndexBuilder() :
 }
 
 
-void MCIndexBuilder::segmentizeWay(WayRef way)
+void MCIndexBuilder::segmentizeWay(WayPtr way)
 {
 	WaySlicer slicer(way);
 	do
@@ -37,16 +37,16 @@ void MCIndexBuilder::segmentizeWay(WayRef way)
 	while (slicer.hasMore());
 }
 
-void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel)
+void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationPtr rel)
 {
 	FastMemberIterator iter(store, rel);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		if (member.isWay())
 		{
-			WayRef way(member);
+			WayPtr way(member);
 			if(!way.isPlaceholder()) segmentizeWay(way);
 		}
 	}
@@ -65,23 +65,23 @@ void MCIndexBuilder::segmentizeAreaRelation(FeatureStore* store, RelationRef rel
 }
 
 
-void MCIndexBuilder::segmentizeMembers(FeatureStore* store, RelationRef rel, RecursionGuard& guard)
+void MCIndexBuilder::segmentizeMembers(FeatureStore* store, RelationPtr rel, RecursionGuard& guard)
 {
 	FastMemberIterator iter(store, rel);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			segmentizeWay(memberWay);
 		}
 		else if(memberType == 2)
 		{
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			segmentizeMembers(store, childRel, guard);
 		}

@@ -4,11 +4,9 @@
 #include "PyFeature.h"
 #include "feature/GeometryBuilder.h"
 #include "feature/polygon/Polygonizer.h"
-#include "feature/polygon/Ring.h"
 #include "geom/Area.h"
 #include "geom/Centroid.h"
 #include "geom/Length.h"
-#include "geom/Mercator.h"
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyCoordinate.h"
@@ -16,16 +14,9 @@
 #include "python/util/util.h"
 
 
-/*
-PyObject* PyRelation::iter(PyFeature* self)
-{
-    return PyMemberIterator::create(self);
-}
-*/
-
 PyObject* PyFeature::Relation::area(PyFeature* self)
 {
-    RelationRef relation(self->feature);
+    RelationPtr relation(self->feature);
     if (!relation.isArea()) return PyLong_FromLong(0);
         // TODO: for non-area realtions, should we return the 
         // total area of members that are areas?
@@ -35,24 +26,24 @@ PyObject* PyFeature::Relation::area(PyFeature* self)
 
 PyObject* PyFeature::Relation::centroid(PyFeature* self)
 {
-    return PyCoordinate::create(Centroid::ofRelation(self->store, RelationRef(self->feature)));
+    return PyCoordinate::create(Centroid::ofRelation(self->store, RelationPtr(self->feature)));
 }
 
 PyObject* PyFeature::Relation::is_placeholder(PyFeature* self)
 {
-    return Python::boolValue(RelationRef(self->feature).isPlaceholder());
+    return Python::boolValue(RelationPtr(self->feature).isPlaceholder());
 }
 
 
 PyObject* PyFeature::Relation::length(PyFeature* self)
 {
-    return PyFloat_FromDouble(Length::ofRelation(self->store, RelationRef(self->feature)));
+    return PyFloat_FromDouble(Length::ofRelation(self->store, RelationPtr(self->feature)));
 }
 
 
 PyObject* PyFeature::Relation::members(PyFeature* self)
 {
-    pointer pBody = self->feature.bodyptr();
+    DataPtr pBody = self->feature.bodyptr();
     if (pBody.getInt() == 0)
     {
         // return (PyObject*)Environment::get().getEmptyFeatures();
@@ -68,7 +59,7 @@ PyObject* PyFeature::Relation::shape(PyFeature* self)
     GEOSContextHandle_t geosContext = env.getGeosContext();
     if (!geosContext) return NULL;
 
-    RelationRef rel(self->feature);
+    RelationPtr rel(self->feature);
     /*
     if (rel.isArea())
     {

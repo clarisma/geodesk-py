@@ -33,7 +33,7 @@ Polygonizer::Segment* Polygonizer::Segment::createFragment(int start, int end, A
     Segment* fragment = arena.allocWithExplicitSize<Segment>(
         Segment::sizeWithVertexCount(fragmentVertexCount));
     fragment->next = nullptr;
-    fragment->way = WayRef(nullptr);
+    fragment->way = WayPtr(FeaturePtr(nullptr));
     fragment->status = Segment::SEGMENT_UNASSIGNED;
     fragment->backward = false;
     fragment->vertexCount = fragmentVertexCount;

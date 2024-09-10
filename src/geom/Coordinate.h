@@ -37,18 +37,14 @@ public:
 
 // Make Coordinate hashable
 
-namespace std 
+template<>
+struct std::hash<Coordinate>
 {
-	template<>
-	struct hash<Coordinate> 
+	size_t operator()(const Coordinate& c) const
 	{
-		size_t operator()(const Coordinate& c) const 
-		{
-			return hash<int>()(c.x) ^ (hash<int>()(c.y) << 1);
-			// Shift y's hash to ensure better distribution
-		}
-	};
-}
-
+		return hash<int>()(c.x) ^ (hash<int>()(c.y) << 1);
+		// Shift y's hash to ensure better distribution
+	}
+};
 
 static_assert(sizeof(Coordinate) == 8, "Compiler is padding Coordinate structure");

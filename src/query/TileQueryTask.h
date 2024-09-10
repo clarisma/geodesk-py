@@ -7,7 +7,7 @@
 #include "feature/types.h"
 #include "filter/Filter.h"
 #include "match/Matcher.h"
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
 
 class Query;
 
@@ -29,19 +29,19 @@ public:
 
 private:
     void searchNodeIndexes();
-    void searchNodeRoot(pointer ppRoot);
-    void searchNodeBranch(pointer p);
-    void searchNodeLeaf(pointer p);
+    void searchNodeRoot(DataPtr ppRoot);
+    void searchNodeBranch(DataPtr p);
+    void searchNodeLeaf(DataPtr p);
     void searchIndexes(FeatureIndexType indexType);
-    void searchRoot(pointer ppRoot);
-    void searchBranch(pointer p);
-    void searchLeaf(pointer p);
+    void searchRoot(DataPtr ppRoot);
+    void searchBranch(DataPtr p);
+    void searchLeaf(DataPtr p);
     void addResult(uint32_t item);
 
     Query* query_;
     uint32_t tipAndFlags_;
     FastFilterHint fastFilterHint_;     // TODO: initialize
-    pointer pTile_;
+    DataPtr pTile_;
     // MatcherMethod method_;      // TODO: not needed if we use a single method for all types
     QueryResults* results_;
 };

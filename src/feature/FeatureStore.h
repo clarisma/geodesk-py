@@ -38,6 +38,7 @@ public:
     
     void addref()  { ++refcount_;  }
     void release() { if (--refcount_ == 0) delete this;  }
+    size_t refcount() const { return refcount_; }
 
     pointer tileIndex() const 
     { 

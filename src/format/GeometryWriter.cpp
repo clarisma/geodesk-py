@@ -119,7 +119,7 @@ void GeometryWriter::writeGeometryCoordinates(
 
 
 
-void GeometryWriter::writeWayCoordinates(WayRef way, bool group)
+void GeometryWriter::writeWayCoordinates(WayPtr way, bool group)
 {
     WayCoordinateIterator iter(way);
     // TODO: Leaflet doesn't need duplicate end coordinate for polygons

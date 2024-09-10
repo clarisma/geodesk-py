@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyTags.h"
-#include <common/util/log.h>
 #include "feature/FeatureStore.h"
 #include "feature/TagIterator.h"
 #include "format/GeoJsonWriter.h"
@@ -164,7 +163,7 @@ PyObject* PyTagIterator::nextLocal(PyTagIterator* self)
     int32_t rawPointer = static_cast<int32_t>(tag >> 16);
     int32_t flags = rawPointer & 7;
     // local keys are relative to the 4-byte-aligned tagtable address
-    LocalString keyString(origin + ((rawPointer ^ flags) >> 1));
+    geodesk::StringValue keyString(origin + ((rawPointer ^ flags) >> 1));
     int64_t tagVal = (static_cast<int64_t>(self->tags.pointerOffset(
         self->current) - 2) << 32) | ((tag & 0xffff) << 16) | flags;
     self->current -= 6 + (flags & 2);
@@ -173,7 +172,7 @@ PyObject* PyTagIterator::nextLocal(PyTagIterator* self)
     // be `nextLocal` or `done`
     self->func = NEXT[(flags & 4) >> 2];
 
-    PyObject* keyObj = keyString.toStringObject();
+    PyObject* keyObj = Python::toStringObject(keyString);
     return createTag(self, keyObj, tagVal);
 }
 

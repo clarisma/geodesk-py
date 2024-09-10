@@ -13,7 +13,7 @@ public:
 
 	void linewise(bool b) { linewise_ = b; }
 
-	void writeFeature(FeatureStore* store, FeatureRef feature) override;
+	void writeFeature(FeatureStore* store, FeaturePtr feature) override;
 	void writeAnonymousNodeNode(Coordinate point) override;
 	void writeHeader() override;
 	void writeFooter() override;
@@ -22,10 +22,10 @@ public:
 
 protected:
 	// void writeId(FeatureRef feature);
-	void writeNodeGeometry(NodeRef node) override;
-	void writeWayGeometry(WayRef way) override;
-	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation) override;
-	void writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation) override;
+	void writeNodeGeometry(NodePtr node) override;
+	void writeWayGeometry(WayPtr way) override;
+	void writeAreaRelationGeometry(FeatureStore* store, RelationPtr relation) override;
+	void writeCollectionRelationGeometry(FeatureStore* store, RelationPtr relation) override;
 
 	bool linewise_;
 };

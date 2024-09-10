@@ -13,6 +13,7 @@
 #include <common/util/DataPtr.h>
 #include <common/util/Strings.h>
 #include <common/util/TaggedPtr.h>
+#include <python/util/util.h>
 
 // TODO -- WIP
 
@@ -39,7 +40,9 @@ public:
 	}
 
 	uint32_t count() const;
+#ifdef GEODESK_PYTHON
 	TagBits getKeyValue(PyObject* key, const StringTable& strings) const;
+#endif
 	TagBits getKeyValue(const char* key, int len,
 		const StringTable& strings) const;
 	TagBits getGlobalKeyValue(int keyCode) const;
@@ -76,17 +79,17 @@ private:
 	static int32_t narrowNumber(int64_t value);
 	double wideNumber(TagBits value) const;
 
-	static GlobalString globalString(TagBits value, StringTable& strings)
+	static const ShortVarString* globalString(TagBits value, StringTable& strings)
 	{
 		assert((value & 3) == 1);
 		return strings.getGlobalString(static_cast<uint32_t>(value) >> 16);
 	}
 
-	LocalString localString(TagBits value) const
+	const ShortVarString* localString(TagBits value) const
 	{
 		assert((value & 3) == 3);
 		pointer ppValue(taggedPtr_ + (value >> 32));
-		return LocalString(ppValue + ppValue.getUnalignedInt());
+		return reinterpret_cast<const ShortVarString*>(ppValue.asBytePointer() + ppValue.getUnalignedInt());
 	}
 
 	#ifdef GEODESK_PYTHON
@@ -98,7 +101,7 @@ private:
 
 	PyObject* getLocalStringObject(TagBits value) const
 	{
-		return localString(value).toStringObject();
+		return Python::toStringObject(*localString(value));
 	}
 	#endif
 

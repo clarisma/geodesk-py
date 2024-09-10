@@ -7,6 +7,8 @@
 #include <common/text/Format.h>
 #include "types.h"
 
+// internal; needed by GOL
+
 class TexDelta
 {
 public:

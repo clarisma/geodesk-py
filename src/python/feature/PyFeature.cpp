@@ -20,7 +20,7 @@
 // TODO: adding feature IDs to a set is 3x faster than adding the actual feature to a set!
 //  Try storing ID (and type bits) in PyFeature object itself
 
-PyFeature* PyFeature::create(FeatureStore* store, FeatureRef feature, PyObject* role)
+PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* role)
 {
     PyFeature* self = (PyFeature*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -149,8 +149,7 @@ PyObject* PyFeature::bounds(PyFeature* self)
 {
     // TODO: This assumes layout of Box matches feature store bboxes
     // for now, this is true: minX, minY, maxX, maxY
-    const Box* pBox = reinterpret_cast<const Box*>(
-        self->feature.asBytePointer() - 16);
+    const Box* pBox = reinterpret_cast<const Box*>(self->feature.ptr().ptr() - 16);
     return PyBox::create(*pBox);
 }
 
@@ -166,14 +165,14 @@ PyObject* PyFeature::is_area(PyFeature* self)
 
 PyObject* PyFeature::lat(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyCoordinate::niceLatFromY(Math::avg(p.getInt(-12), p.getInt(-4)));
+    DataPtr p = self->feature.ptr();
+    return PyCoordinate::niceLatFromY(Math::avg((p-12).getInt(), (p-4).getInt()));
 }
 
 PyObject* PyFeature::lon(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyCoordinate::niceLonFromX(Math::avg(p.getInt(-16), p.getInt(-8)));
+    DataPtr p = self->feature.ptr();
+    return PyCoordinate::niceLonFromX(Math::avg((p-16).getInt(), (p-8).getInt()));
 }
 
 PyObject* PyFeature::map(PyFeature* self)
@@ -225,27 +224,28 @@ PyObject* PyFeature::str_method(PyFeature* self)
 
 PyObject* PyFeature::tags(PyFeature* self)
 {
-    return PyTags::create(self->store, self->feature.tags());
+    return PyTags::create(self->store, self->feature.tagsOld());
 }
 
 
 PyObject* PyFeature::x(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyLong_FromLong(Math::avg(p.getInt(-16), p.getInt(-8)));
+    DataPtr p = self->feature.ptr();
+    return PyLong_FromLong(Math::avg((p-16).getInt(), (p-8).getInt()));
 }
 
 PyObject* PyFeature::y(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyLong_FromLong(Math::avg(p.getInt(-12), p.getInt(-4)));
+    DataPtr p = self->feature.ptr();
+    return PyLong_FromLong(Math::avg((p-12).getInt(), (p-4).getInt()));
 }
 
 
 PyObject* PyFeature::strTagValue(PyFeature* self, PyObject* args, PyObject* kwargs)
 {
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
-    const TagsRef& tags = self->feature.tags();
+    if(!keyObj) return NULL;
+    const TagsRef& tags = self->feature.tagsOld();
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsString(value, strings);
@@ -255,7 +255,8 @@ PyObject* PyFeature::strTagValue(PyFeature* self, PyObject* args, PyObject* kwar
 PyObject* PyFeature::numTagValue(PyFeature* self, PyObject* args, PyObject* kwargs)
 {
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
-    const TagsRef& tags = self->feature.tags();
+    if(!keyObj) return NULL;
+    const TagsRef& tags = self->feature.tagsOld();
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsNumber(value, strings);
@@ -292,7 +293,7 @@ PyObject* PyFeature::getattr0(PyFeature* self, PyObject* nameObj, const AttrFunc
     {
          return (*table[attr->index])(self);
     }
-    const TagsRef& tags = self->feature.tags();
+    const TagsRef& tags = self->feature.tagsOld();
     return tags.getValue(nameObj, self->store->strings());
 }
 
@@ -335,7 +336,7 @@ PyObject* PyFeature::subscript(PyFeature* self, PyObject* keyObj)
         PyErr_SetString(PyExc_TypeError, "Key must be a string");
         return NULL;
     }
-    const TagsRef& tags = self->feature.tags();
+    const TagsRef& tags = self->feature.tagsOld();
     return tags.getValue(keyObj, self->store->strings());
 }
 

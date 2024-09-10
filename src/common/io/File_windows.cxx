@@ -228,3 +228,20 @@ void File::zeroFill(uint64_t ofs, size_t length)
         IOException::checkAndThrow();
     }
 }
+
+
+bool File::exists(const char* fileName)
+{
+    DWORD attributes = GetFileAttributesA(fileName);
+    if (attributes == INVALID_FILE_ATTRIBUTES)
+    {
+        DWORD error = GetLastError();
+        if (error != ERROR_FILE_NOT_FOUND && error != ERROR_PATH_NOT_FOUND)
+        {
+            // "true" errors
+            IOException::checkAndThrow();
+        }
+        return false;
+    }
+    return true;
+}

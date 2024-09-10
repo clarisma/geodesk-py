@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Tags.h"
+#include <common/util/DataPtr.h>
 
 class TagIterator
 {
@@ -16,6 +17,6 @@ public:
 
 private:
 	TagsRef tags_;
-	pointer p_;
+	DataPtr p_;
 	StringTable& strings_;
 };

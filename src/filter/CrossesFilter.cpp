@@ -10,7 +10,7 @@ int CrossesFilter::acceptTile(Tile tile) const
 	return index_.locateBox(tile.bounds()) == 0 ? 0 : -1;
 }
 
-bool CrossesFilter::acceptWay(WayRef way) const
+bool CrossesFilter::acceptWay(WayPtr way) const
 {
 	// If the way's bounding box does not intersect any MC bboxes,
 	// then it is impossible for its geometry to cross 
@@ -18,19 +18,19 @@ bool CrossesFilter::acceptWay(WayRef way) const
 	return anySegmentsCross(way);
 }
 
-bool CrossesFilter::acceptNode(NodeRef node) const
+bool CrossesFilter::acceptNode(NodePtr node) const
 {
 	return false;
 }
 
-bool CrossesFilter::acceptAreaRelation(FeatureStore* store, RelationRef relation) const
+bool CrossesFilter::acceptAreaRelation(FeatureStore* store, RelationPtr relation) const
 {
 	RecursionGuard guard(relation);
 	return acceptMembers(store, relation, guard);
 }
 
 
-bool CrossesFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool CrossesFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
 	// "crosses" has no turbo-mode; only tiles that interact with segments
 	// are examined, all others are rejected

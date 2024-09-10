@@ -15,36 +15,36 @@
 
 PyObject* PyFeature::Node::bounds(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    int32_t x = p.getInt(-8);
-    int32_t y = p.getInt(-4);
+    DataPtr p = self->feature.ptr();
+    int32_t x = (p-8).getInt();
+    int32_t y = (p-4).getInt();
     return PyBox::create(x, y, x, y);
 }
 
 PyObject* PyFeature::Node::centroid(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    int32_t x = p.getInt(-8);
-    int32_t y = p.getInt(-4);
+    DataPtr p = self->feature.ptr();
+    int32_t x = (p-8).getInt();
+    int32_t y = (p-4).getInt();
     return PyCoordinate::create(x, y);
 }
 
 PyObject* PyFeature::Node::is_placeholder(PyFeature* self)
 {
-    return Python::boolValue(NodeRef(self->feature).isPlaceholder());
+    return Python::boolValue(NodePtr(self->feature).isPlaceholder());
 }
 
 
 PyObject* PyFeature::Node::lat(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyCoordinate::niceLatFromY(p.getInt(-4));
+    DataPtr p = self->feature.ptr();
+    return PyCoordinate::niceLatFromY((p-4).getInt());
 }
 
 PyObject* PyFeature::Node::lon(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyCoordinate::niceLonFromX(p.getInt(-8));
+    DataPtr p = self->feature.ptr();
+    return PyCoordinate::niceLonFromX((p-8).getInt());
 }
 
 PyObject* PyFeature::Node::parents(PyFeature* self)
@@ -67,21 +67,21 @@ PyObject* PyFeature::Node::shape(PyFeature* self)
     Environment& env = Environment::get();
     GEOSContextHandle_t geosContext = env.getGeosContext();
     if (!geosContext) return NULL;
-    GEOSGeometry* geom = GeometryBuilder::buildNodeGeometry(NodeRef(self->feature), geosContext);
+    GEOSGeometry* geom = GeometryBuilder::buildNodeGeometry(NodePtr(self->feature), geosContext);
     return env.buildShapelyGeometry(geom);
 }
 
 
 PyObject* PyFeature::Node::x(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyLong_FromLong(p.getInt(-8));
+    DataPtr p = self->feature.ptr();
+    return PyLong_FromLong((p-8).getInt());
 }
 
 PyObject* PyFeature::Node::y(PyFeature* self)
 {
-    pointer p = self->feature.ptr();
-    return PyLong_FromLong(p.getInt(-4));
+    DataPtr p = self->feature.ptr();
+    return PyLong_FromLong((p-4).getInt());
 }
 
 

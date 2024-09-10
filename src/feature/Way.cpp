@@ -1,19 +1,19 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "Way.h"
+#include "WayPtr.h"
 #include "FeatureStore.h"
 #include "filter/Filter.h"
 #include <common/util/log.h>
 #include <common/util/varint.h>
 
-uint32_t WayRef::nodeCount() const
+uint32_t WayPtr::nodeCount() const
 {
     const uint8_t* p = bodyptr();
     return readVarint32(p);
 }
 
-WayCoordinateIterator::WayCoordinateIterator(WayRef way)
+WayCoordinateIterator::WayCoordinateIterator(WayPtr way)
 {
     start(way, way.flags());
 }
@@ -29,7 +29,7 @@ void WayCoordinateIterator::start(const uint8_t* p, int32_t prevX, int32_t prevY
 	firstY_ = duplicateFirst ? y_ : 0;
 }
 
-void WayCoordinateIterator::start(const FeatureRef way, int flags)
+void WayCoordinateIterator::start(const FeaturePtr way, int flags)
 {
     start(way.bodyptr(), way.minX(), way.minY(), flags & FeatureFlags::AREA);
 }
@@ -65,26 +65,26 @@ FeatureNodeIterator::FeatureNodeIterator(FeatureStore* store)
 }
 
 
-void FeatureNodeIterator::start(pointer pBody, int flags, 
+void FeatureNodeIterator::start(DataPtr pBody, int flags,
     const MatcherHolder* matcher, const Filter* filter) 
 {
     matcher_ = matcher;
     filter_ = filter;
     currentTip_ = FeatureConstants::START_TIP;
-    pForeignTile_ = nullptr;
+    pForeignTile_ = DataPtr();
     p_ = pBody - (flags & FeatureFlags::RELATION_MEMBER);
     currentNode_ = (flags & FeatureFlags::WAYNODE) ? 0 : MemberFlags::LAST;
 }
 
 
-NodeRef FeatureNodeIterator::next()
+NodePtr FeatureNodeIterator::next()
 {
     while ((currentNode_ & MemberFlags::LAST) == 0)
     {
         p_ -= 4;
-        pointer pCurrent = p_;
-        currentNode_ = p_.getUnalignedInt();
-        NodeRef feature(nullptr);
+        DataPtr pCurrent = p_;
+        currentNode_ = p_.getIntUnaligned();
+        NodePtr feature(FeaturePtr(nullptr));
         if (currentNode_ & MemberFlags::FOREIGN)
         {
             if (currentNode_ & MemberFlags::DIFFERENT_TILE)
@@ -102,17 +102,17 @@ NodeRef FeatureNodeIterator::next()
                 currentTip_ += tipDelta;
                 pForeignTile_ = store_->fetchTile(currentTip_);
             }
-            feature = NodeRef(pForeignTile_ + ((currentNode_ & 0xffff'fff0) >> 2));
+            feature = NodePtr(pForeignTile_ + ((currentNode_ & 0xffff'fff0) >> 2));
         }
         else
         {
-            feature = NodeRef(pCurrent + (
+            feature = NodePtr(pCurrent + (
                 static_cast<int32_t>(currentNode_ & 0xffff'fffc) >> 1));
             // TODO: This may be wrong, pCurrent must be 4-byte aligned
             // In Java: pNode = (pCurrent & 0xffff_fffe) + ((node >> 2) << 1);
         }
 
-        if(matcher_->mainMatcher().accept(feature.ptr()))
+        if(matcher_->mainMatcher().accept(feature))
         {
             // LOG("Node matched");
             if (filter_ == nullptr || filter_->accept(store_, feature, FastFilterHint()))
@@ -126,7 +126,7 @@ NodeRef FeatureNodeIterator::next()
             // LOG("Node NOT matched");
         }
     }
-    return NodeRef(nullptr);
+    return NodePtr(FeaturePtr(nullptr));
 }
 
 
@@ -152,7 +152,7 @@ WayNodeIterator::WayNodeIterator(FeatureStore* store, pointer pWay) // TODO: Fil
 */
 
 // TODO: check this method
-bool WayRef::containsPointFast(double cx, double cy)
+bool WayPtr::containsPointFast(double cx, double cy)
 {
     // assert(isArea());    // TODO: don't assert, can use a series of linestrings
     WayCoordinateIterator iter;

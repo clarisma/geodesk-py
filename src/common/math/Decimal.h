@@ -56,6 +56,16 @@ public:
 		return std::string(buf);
 	}
 
+	bool operator==(double val) const noexcept
+	{
+		return static_cast<double>(*this) == val;
+	}
+
+	bool operator!=(double val) const noexcept
+	{
+		return static_cast<double>(*this) != val;
+	}
+
 
 	char* format(char* buf) const noexcept
 	{
@@ -84,6 +94,16 @@ public:
 		}
 		buf[len] = 0;
 		return buf + len;
+	}
+
+	bool operator==(int val) const noexcept
+	{
+		return scale() == 0 && mantissa() == val;
+	}
+
+	bool operator!=(int val) const noexcept
+	{
+		return !(*this==val);
 	}
 
 private:

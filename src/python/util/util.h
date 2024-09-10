@@ -47,6 +47,24 @@ namespace Python
 		return std::string_view(nullptr, 0);
 	}
 
+	// Always pass template args by const ref!
+	template<typename S>
+	inline PyObject* toStringObject(const S& str)
+	{
+		/*
+		std::string_view sv(str.data(), str.size());
+		printf("String: %s\n  Ptr = %p\n",
+			std::string(sv).c_str(),
+			str.data());
+		*/
+		return PyUnicode_FromStringAndSize(str.data(), str.size());
+	}
+
+	inline PyObject* toStringObject(const char* s, size_t len)
+	{
+		return PyUnicode_FromStringAndSize(s, len);
+	}
+
 	inline PyObject* badKeyword(const char* str)
 	{
 		PyErr_Format(PyExc_TypeError, "%s: invalid keyword argument", str);

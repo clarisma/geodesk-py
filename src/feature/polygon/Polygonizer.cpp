@@ -19,7 +19,7 @@ Polygonizer::Polygonizer() :
 
 // TODO: Use a separate path for areas (which be definition don't require assembling)?
 // This way, no need to test for flag
-Polygonizer::Segment* Polygonizer::createSegment(WayRef way, Segment* next)
+Polygonizer::Segment* Polygonizer::createSegment(WayPtr way, Segment* next)
 {
 	WayCoordinateIterator iter(way);
 	int vertexCount = iter.coordinatesRemaining();
@@ -40,14 +40,14 @@ Polygonizer::Segment* Polygonizer::createSegment(WayRef way, Segment* next)
 }
 
 
-void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
+void Polygonizer::createRings(FeatureStore* store, RelationPtr relation)
 {
     Segment* outerSegments = nullptr;
     Segment* innerSegments = nullptr;
     int outerSegmentCount = 0;
     int innerSegmentCount = 0;
 
-    pointer pMembers = relation.bodyptr();
+    DataPtr pMembers = relation.bodyptr();
     // TODO: empty relations?
     // TODO: deal with missing tiles
     // TODO: use FastMemberIterator -- no, need role
@@ -57,7 +57,7 @@ void Polygonizer::createRings(FeatureStore* store, RelationRef relation)
     MemberIterator iter(store, pMembers, FeatureTypes::WAYS, store->borrowAllMatcher(), nullptr);
     for (;;)
     {
-        WayRef way(iter.next());
+        WayPtr way(iter.next());
         if (way.isNull()) break;
         if (way.isPlaceholder()) continue;
 

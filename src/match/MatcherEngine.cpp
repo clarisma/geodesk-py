@@ -3,6 +3,7 @@
 
 #include "MatcherEngine.h"
 #include "OpGraph.h"
+#include "api/StringValue.h"
 #include "feature/Feature.h"
 #include "feature/FeatureStore.h"
 #include <common/math/Math.h>
@@ -43,8 +44,8 @@ int MatcherEngine::scanLocalKeys()
         int32_t key = pTag_.getUnalignedInt();
         pTag_ -= 6 + (key & 2);
         pointer pKey = pTagTableAligned + ((key >> 3) << 2);
-        LocalString keyString(pKey);
-        if (keyString.equals(operand.data(), operand.length()))
+        geodesk::StringValue keyString(pKey);
+        if (keyString == operand)
         {
             tagKey_ = key;
             return 1;
@@ -91,7 +92,7 @@ inline uint32_t MatcherEngine::getFeatureTypeOperand()
     return types;
 }
 
-int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
+int MatcherEngine::accept(const Matcher* matcher, FeaturePtr pFeature)
 {
     MatcherEngine ctx;
     uint32_t codeValue;
@@ -100,7 +101,7 @@ int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
 
     // The matcher's bytecode begins right after the Matcher structure
     ctx.ip_ = pointer(reinterpret_cast<const uint8_t*>(matcher) + sizeof(Matcher));
-    ctx.pTagTable_ = pointer(pFeature + 8).follow();
+    ctx.pTagTable_ = (pFeature.ptr() + 8).follow();
     for (;;)
     {
         int matched;
@@ -123,8 +124,8 @@ int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
 
             case EQ_STR:
             {
-                LocalString str(stringValue);
-                matched = str.equals(ctx.getStringOperand());
+                geodesk::StringValue str(stringValue);
+                matched = (str == ctx.getStringOperand());
             }
             break;
 
@@ -273,7 +274,7 @@ int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
 
             case CODE_TO_STR:
                 stringValue = matcher->store()->strings()
-                    .getGlobalString(codeValue).asBytePointer();
+                    .getGlobalString(codeValue)->rawBytes();
                 // Cannot fail, therefore does not branch
                 continue;
 
@@ -284,7 +285,7 @@ int MatcherEngine::accept(const Matcher* matcher, const uint8_t* pFeature)
             case FEATURE_TYPE:
             {
                 FeatureTypes types(ctx.getFeatureTypeOperand());
-                matched = (int)types.acceptFlags(pointer(pFeature).getInt());
+                matched = (int)types.acceptFlags(pFeature.flags());
             }
             break;
 

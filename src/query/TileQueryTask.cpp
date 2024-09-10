@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "TileQueryTask.h"
-#include "feature/Feature.h"
+#include "feature/FeaturePtr.h"
 #include "feature/types.h"
 #include "Query.h"
 
-QueryResultsHeader QueryResults::EMPTY_HEADER = { EMPTY, nullptr, DEFAULT_BUCKET_SIZE };
+QueryResultsHeader QueryResults::EMPTY_HEADER = { EMPTY, DataPtr(), DEFAULT_BUCKET_SIZE };
 QueryResults* const QueryResults::EMPTY = reinterpret_cast<QueryResults*>(&EMPTY_HEADER);
 
 // TODO: perform type check prior to matcher
@@ -34,7 +34,7 @@ void TileQueryTask::operator()()
 void TileQueryTask::searchNodeIndexes()
 {
 	const MatcherHolder* matcher = query_->matcher();
-	pointer ppRoot = pTile_ + 8;
+	DataPtr ppRoot = pTile_ + 8;
 	int32_t ptr = ppRoot.getInt();
 	if (ptr == 0) return;
 	if ((ptr & 1) == 0)
@@ -44,11 +44,11 @@ void TileQueryTask::searchNodeIndexes()
 		return;
 	}
 	
-	pointer p = ppRoot + (ptr ^ 1);
+	DataPtr p = ppRoot + (ptr ^ 1);
 	for (;;)
 	{
 		int32_t last = p.getInt() & 1;
-		int32_t keys = p.getInt(4);
+		int32_t keys = (p+4).getInt();
 		if (matcher->acceptIndex(FeatureIndexType::NODES, keys))
 		{
 			searchNodeRoot(p);
@@ -58,12 +58,12 @@ void TileQueryTask::searchNodeIndexes()
 	}
 }
 
-void TileQueryTask::searchNodeRoot(pointer ppRoot)
+void TileQueryTask::searchNodeRoot(DataPtr ppRoot)
 {
 	int32_t ptr = ppRoot.getInt();
 	if (ptr)
 	{
-		pointer p = ppRoot + (ptr & 0xffff'fffc);
+		DataPtr p = ppRoot + (ptr & 0xffff'fffc);
 		if (ptr & 2)
 		{
 			searchNodeLeaf(p);
@@ -75,7 +75,7 @@ void TileQueryTask::searchNodeRoot(pointer ppRoot)
 	}
 }
 
-void TileQueryTask::searchNodeBranch(pointer p)
+void TileQueryTask::searchNodeBranch(DataPtr p)
 {
 	// LOG("Searching branch at %016X", p);
 	Box box = query_->bounds();
@@ -85,7 +85,7 @@ void TileQueryTask::searchNodeBranch(pointer p)
 		int32_t last = ptr & 1;
 		if (box.intersects(*reinterpret_cast<const Box*>((const uint8_t *)p + 4)))
 		{
-			pointer pChild = p + (ptr & 0xffff'fffc);
+			DataPtr pChild = p + (ptr & 0xffff'fffc);
 			if (ptr & 2)
 			{
 				searchNodeLeaf(pChild);
@@ -100,7 +100,7 @@ void TileQueryTask::searchNodeBranch(pointer p)
 	}
 }
 
-void TileQueryTask::searchNodeLeaf(pointer p)
+void TileQueryTask::searchNodeLeaf(DataPtr p)
 {
 	// LOG("Searching leaf at %016X", p);
 	Box box = query_->bounds();
@@ -109,20 +109,20 @@ void TileQueryTask::searchNodeLeaf(pointer p)
 
 	for (;;)
 	{
-		int32_t flags = p.getInt(8);
-		if (box.contains(p.getInt(), p.getInt(4)))
+		int32_t flags = (p+8).getInt();
+		if (box.contains(p.getInt(), (p+4).getInt()))
 		{
 			if (acceptedTypes.acceptFlags(flags))
 			{
-				pointer pFeature = p + 8;
+				FeaturePtr pFeature(p + 8);
 				if (matcher.accept(pFeature))
 				{
 					const Filter* filter = query_->filter();
 					if (filter == nullptr || filter->accept(query_->store(),
-						FeatureRef(pFeature), fastFilterHint_))
+						pFeature, fastFilterHint_))
 					{
 						// LOG("Found node/%llu", Feature::id(pFeature));
-						addResult(pFeature - pTile_);	// TODO
+						addResult(pFeature.ptr() - pTile_);	// TODO
 					}
 				}
 			}
@@ -139,7 +139,7 @@ void TileQueryTask::searchNodeLeaf(pointer p)
 void TileQueryTask::searchIndexes(FeatureIndexType indexType)
 {
 	const MatcherHolder* matcher = query_->matcher();
-	pointer ppRoot = pTile_ + 8 + indexType * 4;
+	DataPtr ppRoot = pTile_ + 8 + indexType * 4;
 	int32_t ptr = ppRoot.getInt();
 	if (ptr == 0) return;
 	if ((ptr & 1) == 0)
@@ -149,11 +149,11 @@ void TileQueryTask::searchIndexes(FeatureIndexType indexType)
 		return;
 	}
 
-	pointer p = ppRoot + (ptr ^ 1);
+	DataPtr p = ppRoot + (ptr ^ 1);
 	for (;;)
 	{
 		int32_t last = p.getInt() & 1;
-		int32_t keys = p.getInt(4);
+		int32_t keys = (p+4).getInt();
 		if (matcher->acceptIndex(indexType, keys))
 		{
 			searchRoot(p);
@@ -164,12 +164,12 @@ void TileQueryTask::searchIndexes(FeatureIndexType indexType)
 }
 
 
-void TileQueryTask::searchRoot(pointer ppRoot)
+void TileQueryTask::searchRoot(DataPtr ppRoot)
 {
 	int32_t ptr = ppRoot.getInt();
 	if (ptr)
 	{
-		pointer p = ppRoot + (ptr & 0xffff'fffc);
+		DataPtr p = ppRoot + (ptr & 0xffff'fffc);
 		if (ptr & 2)
 		{
 			searchLeaf(p);
@@ -181,7 +181,7 @@ void TileQueryTask::searchRoot(pointer ppRoot)
 	}
 }
 
-void TileQueryTask::searchBranch(pointer p)
+void TileQueryTask::searchBranch(DataPtr p)
 {
 	Box box = query_->bounds();
 	for (;;)
@@ -190,7 +190,7 @@ void TileQueryTask::searchBranch(pointer p)
 		int32_t last = ptr & 1;
 		if (box.intersects(*reinterpret_cast<const Box*>((const uint8_t*)p + 4)))
 		{
-			pointer pChild = p + (ptr & 0xffff'fffc);
+			DataPtr pChild = p + (ptr & 0xffff'fffc);
 			if (ptr & 2)
 			{
 				searchLeaf(pChild);
@@ -206,7 +206,7 @@ void TileQueryTask::searchBranch(pointer p)
 }
 
 
-void TileQueryTask::searchLeaf(pointer p)
+void TileQueryTask::searchLeaf(DataPtr p)
 {
 	Box box = query_->bounds();
 	FeatureTypes acceptedTypes = query_->types();
@@ -214,7 +214,7 @@ void TileQueryTask::searchLeaf(pointer p)
 
 	for (;;)
 	{
-		int32_t flags = p.getInt(16);
+		int32_t flags = (p+16).getInt();
 		int32_t multiTileFlags = flags & 
 			(FeatureFlags::MULTITILE_NORTH | FeatureFlags::MULTITILE_WEST);
 		for (;;)
@@ -248,24 +248,24 @@ void TileQueryTask::searchLeaf(pointer p)
 				}
 			}
 			if (!(p.getInt() > box.maxX() ||
-				p.getInt(4) > box.maxY() ||
-				p.getInt(8) < box.minX() ||
-				p.getInt(12) < box.minY()))
+				(p+4).getInt() > box.maxY() ||
+				(p+8).getInt() < box.minX() ||
+				(p+12).getInt() < box.minY()))
 			{
 				// TODO: replace this branching code with arithmetic?
 				// Useful? https://stackoverflow.com/a/62852710
 
 				if (acceptedTypes.acceptFlags(flags))
 				{
-					pointer pFeature = p + 16;
+					FeaturePtr pFeature (p + 16);
 					if (matcher.accept(pFeature))
 					{
 						const Filter* filter = query_->filter();
 						if (filter == nullptr || filter->accept(query_->store(), 
-							FeatureRef(pFeature), fastFilterHint_))
+							pFeature, fastFilterHint_))
 						{
 							// LOG("Found %s/%llu", Feature::typeName(pFeature), Feature::id(pFeature));
-							addResult((pFeature - pTile_) | dupeFlag);	// TODO
+							addResult((pFeature.ptr() - pTile_) | dupeFlag);	// TODO
 						}
 					}
 				}

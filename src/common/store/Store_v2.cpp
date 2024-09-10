@@ -4,7 +4,7 @@
 #include "Store_v2.h"
 #include <common/util/BitIterator.h>
 #include <common/util/log.h>
-#include <common/util/pointer.h>
+#include <common/util/DataPtr.h>
 #include <cassert>
 #include <filesystem>
 #include <zlib.h>
@@ -13,7 +13,8 @@ namespace clarisma {
 
 Store::Store() :
     openMode_(0),
-    lockLevel_(LOCK_NONE)
+    lockLevel_(LOCK_NONE),
+    transaction_(nullptr)
 {
 }
 
@@ -73,10 +74,20 @@ void Store::open(const char* filename, int mode)
     // shrink back the file)
     lock((mode & OpenMode::EXCLUSIVE) ? LOCK_EXCLUSIVE : LOCK_READ);
 
-    pointer p(mainMapping());
-
+    DataPtr p(mainMapping());
+        
     // TODO: if mode is not CREATE, throw an exception instead
-    if (p.getUnsignedInt() == 0) createStore();
+    if (p.getUnsignedInt() == 0)
+    {
+        if (mode & File::OpenMode::CREATE)
+        {
+            createStore();
+        }
+        else
+        {
+            throw FileNotFoundException(filename);
+        }
+    }
         
     /*
     File journalFile = getJournalFile();
@@ -196,6 +207,24 @@ void Store::checkJournal()
     journalFile.close();
 }
 
+/**
+ * Checks whether the Journal File is valid.
+ *
+ * This method should be called only when the Journal File is open.
+ * A Journal is considered "invalid" if:
+ *
+ * - Its timestamp does not match the Store's timestamp. This indicates
+ *   that the Journal belonged to a previous store file with the same name.
+ *
+ * - It is missing its trailer, or its checksum is invalid. This may happen
+ *   if a previous process terminated before it could completely write the
+ *   journal. Since journaled changes are only applied to the store once the
+ *   journal has been safely stored, such an incomplete journal can be ignored.
+ *
+ * @return `true` if the journal file is complete and valid.
+ *
+ * @throws IOException if an I/O error occurs.
+ */
 bool Store::isJournalValid(File& file)
 {
     uint64_t journalSize = file.size();
@@ -271,7 +300,7 @@ Store::Transaction::~Transaction()
     }
 }
 
-uint8_t* Store::Transaction::getBlock(uint64_t pos)
+byte* Store::Transaction::getBlock(uint64_t pos)
 {
     if (pos >= preCommitStoreSize_) return store_->translate(pos);
     TransactionBlock* block;
@@ -289,7 +318,7 @@ uint8_t* Store::Transaction::getBlock(uint64_t pos)
 }
 
 
-const uint8_t* Store::Transaction::getConstBlock(uint64_t pos)
+const byte* Store::Transaction::getConstBlock(uint64_t pos)
 {
     TransactionBlock* block;
     auto it = blocks_.find(pos);

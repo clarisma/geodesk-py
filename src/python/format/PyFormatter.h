@@ -4,7 +4,7 @@
 #pragma once
 #include <Python.h>
 #include <structmember.h>
-#include "feature/Feature.h"
+#include "feature/FeaturePtr.h"
 
 class Buffer;
 class FeatureStore;
@@ -73,7 +73,7 @@ public:
 	void write(FeatureWriter* writer);
 	
 	static void writeIdViaCallable(FeatureWriter* writer,
-		FeatureStore* store, FeatureRef feature, /* PyObject */ void* closure);
+		FeatureStore* store, FeaturePtr feature, /* PyObject */ void* closure);
 
 	static void writeGeoJson(PyFormatter* self, Buffer* buf);
 	static void writeWkt(PyFormatter* self, Buffer* buf);

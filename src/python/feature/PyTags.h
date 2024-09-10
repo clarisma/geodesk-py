@@ -4,8 +4,7 @@
 #pragma once
 
 #include <Python.h>
-#include <common/util/pointer.h>
-#include "feature/Feature.h"
+#include "feature/FeaturePtr.h"
 
 class PyTags
 {

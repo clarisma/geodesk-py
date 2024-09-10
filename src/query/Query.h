@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "AbstractQuery.h"
 #include <condition_variable>
 #include <unordered_set>
 #include "QueryResults.h"
@@ -16,7 +17,7 @@ class Filter;
 
 // TODO: Maybe call this a "Cursor"
 
-class Query
+class Query : public AbstractQuery
 {
 public:
     Query(FeatureStore* store, const Box& box, FeatureTypes types, 
@@ -30,7 +31,7 @@ public:
     void offer(QueryResults* results);
     void cancel();
 
-    pointer next();
+    FeaturePtr next();
 
     static const uint32_t REQUIRES_DEDUP = 0x8000'0000;
 
@@ -40,7 +41,7 @@ private:
 
     // static const int MAX_PENDING_TILES = 8;
 
-    FeatureStore* store_;
+    // FeatureStore* store_;  // moved to AbstractQuery
     FeatureTypes types_;
     const MatcherHolder* matcher_;
     const Filter* filter_;

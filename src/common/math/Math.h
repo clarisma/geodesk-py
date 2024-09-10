@@ -26,7 +26,7 @@ inline bool parseDouble(std::string_view s, double* pResult)
 
 /**
  * Returns average of two int32_t values, ensuring that potential
- * overlow is handled correctly.
+ * overflow is handled correctly.
  */
 inline int32_t avg(int32_t a, int32_t b)
 {

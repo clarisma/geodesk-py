@@ -4,7 +4,7 @@
 #include "ContainsPointFilter.h"
 #include "feature/polygon/PointInPolygon.h"
 
-bool ContainsPointFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint /* ignored */) const
+bool ContainsPointFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint /* ignored */) const
 {
 	if (feature.isArea())
 	{
@@ -12,18 +12,18 @@ bool ContainsPointFilter::accept(FeatureStore* store, FeatureRef feature, FastFi
 		{
 			PointInPolygon tester(point_);
 			// point is on boundary or inside (odd number of crossings)
-			return tester.testAgainstWay(WayRef(feature)) || tester.isInside();
+			return tester.testAgainstWay(WayPtr(feature)) || tester.isInside();
 		}
 		else
 		{
 			PointInPolygon tester(point_);
 			// point is on boundary or inside (odd number of crossings)
-			return tester.testAgainstRelation(store, RelationRef(feature)) || tester.isInside();
+			return tester.testAgainstRelation(store, RelationPtr(feature)) || tester.isInside();
 		}
 	}
 	else if (feature.isWay())
 	{
-		WayRef way(feature);
+		WayPtr way(feature);
 		WayCoordinateIterator iter(way);
 		Coordinate start = iter.next();
 		for (;;)
@@ -43,7 +43,7 @@ bool ContainsPointFilter::accept(FeatureStore* store, FeatureRef feature, FastFi
 	else if (feature.isNode())
 	{
 		// A node contains another node only if their coordinates are the same
-		NodeRef node(feature);
+		NodePtr node(feature);
 		return node.xy() == point_;
 	}
 	// TODO: non-area relations

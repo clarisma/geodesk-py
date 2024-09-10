@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "FeatureWriter.h"
+#include <common/util/ShortVarString.h>
 #include "feature/FeatureStore.h"
 #include "feature/FastMemberIterator.h"
 
@@ -13,11 +14,11 @@ void FeatureWriter::writeTagValue(TagsRef tags, TagBits value, StringTable& stri
 		writeByte('\"');
 		if (value & 2)
 		{
-			writeJsonEscapedString(tags.localString(value).toStringView());
+			writeJsonEscapedString(tags.localString(value)->toStringView());
 		}
 		else
 		{
-			writeJsonEscapedString(tags.globalString(value, strings).toStringView());
+			writeJsonEscapedString(tags.globalString(value, strings)->toStringView());
 		}
 		writeByte('\"');
 	}
@@ -38,20 +39,20 @@ void FeatureWriter::writeTagValue(TagsRef tags, TagBits value, StringTable& stri
 }
 
 
-void FeatureWriter::writeFeatureGeometry(FeatureStore* store, FeatureRef feature)
+void FeatureWriter::writeFeatureGeometry(FeatureStore* store, FeaturePtr feature)
 {
 	if (feature.isWay())
 	{
-		writeWayGeometry(WayRef(feature));
+		writeWayGeometry(WayPtr(feature));
 	}
 	else if (feature.isNode())
 	{
-		writeNodeGeometry(NodeRef(feature));
+		writeNodeGeometry(NodePtr(feature));
 	}
 	else
 	{
 		assert(feature.isRelation());
-		RelationRef relation(feature);
+		RelationPtr relation(feature);
 		if (relation.isArea())
 		{
 			writeAreaRelationGeometry(store, relation);
@@ -66,18 +67,18 @@ void FeatureWriter::writeFeatureGeometry(FeatureStore* store, FeatureRef feature
 // TODO: In GOL 2.0, empty geometry collections won't exist
 //  (no placeholders, no empty relations)
 
-uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationRef relation, RecursionGuard& guard)
+uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
 {
 	uint64_t count = 0;
 	FastMemberIterator iter(store, relation);
 	for (;;)
 	{
-		FeatureRef member = iter.next();
+		FeaturePtr member = iter.next();
 		if (member.isNull()) break;
 		int memberType = member.typeCode();
 		if (memberType == 1)
 		{
-			WayRef memberWay(member);
+			WayPtr memberWay(member);
 			if (memberWay.isPlaceholder()) continue;
 			if (count > 0)
 			{
@@ -92,7 +93,7 @@ uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationRef r
 		}
 		else if (memberType == 0)
 		{
-			NodeRef memberNode(member);
+			NodePtr memberNode(member);
 			if (memberNode.isPlaceholder()) continue;
 			if (count > 0)
 			{
@@ -108,7 +109,7 @@ uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationRef r
 		else
 		{
 			assert(memberType == 2);
-			RelationRef childRel(member);
+			RelationPtr childRel(member);
 			if (childRel.isPlaceholder() || !guard.checkAndAdd(childRel)) continue;
 			if (count > 0)
 			{
@@ -139,7 +140,7 @@ uint64_t FeatureWriter::writeMemberGeometries(FeatureStore* store, RelationRef r
 
 
 void FeatureWriter::writeDefaultId(FeatureWriter* writer,
-	FeatureStore* store, FeatureRef feature, void* closure)
+	FeatureStore* store, FeaturePtr feature, void* closure)
 {
 	char quoteChar = writer->quoteChar_;
 	if (quoteChar) writer->writeByte(quoteChar);
@@ -150,7 +151,7 @@ void FeatureWriter::writeDefaultId(FeatureWriter* writer,
 }
 
 
-void FeatureWriter::writeId(FeatureStore* store, FeatureRef feature)
+void FeatureWriter::writeId(FeatureStore* store, FeaturePtr feature)
 {
 	writeIdFunction_(this, store, feature, writeIdClosure_);
 }

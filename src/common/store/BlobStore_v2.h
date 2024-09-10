@@ -5,7 +5,10 @@
 
 #include "Store_v2.h"
 #include <unordered_map>
+#include <common/data/Span.h>
 #include <common/util/pointer.h>
+
+using std::byte;
 
 namespace clarisma {
 
@@ -61,11 +64,18 @@ public:
 		uint32_t payloadSize : 30;
 		unsigned unused : 1;			// TODO: bool causes alignment issues on MSVC?
 		unsigned isFree : 1;
-		PageNum  prevFreeBlob;
-		PageNum  nextFreeBlob;
-		uint32_t leafFreeTableRanges;
-		uint8_t  unused2[44];
-		PageNum  leafFreeTable[512];
+		union
+		{
+			struct
+			{
+				PageNum  prevFreeBlob;
+				PageNum  nextFreeBlob;
+				uint32_t leafFreeTableRanges;
+				uint8_t  unused2[44];
+				PageNum  leafFreeTable[512];
+			};
+			byte payload[1];			// variable length
+		};
 	};
 
 	class Transaction : private Store::Transaction
@@ -79,6 +89,7 @@ public:
 		BlobStore* store() const { return reinterpret_cast<BlobStore*>(store_); }
 		PageNum alloc(uint32_t payloadSize);
 		void free(PageNum firstPage);
+		PageNum addBlob(const ByteSpan data);
 		void commit();
 
 	private:
@@ -105,7 +116,15 @@ public:
 		std::unordered_map<PageNum, uint32_t> freedBlobs_;
 	};
 
-	uint8_t* translatePage(uint32_t page);
+	uint64_t offsetOf(PageNum page)
+	{
+		return static_cast<uint64_t>(page) << pageSizeShift_;
+	}
+
+	byte* translatePage(PageNum page)
+	{
+		return translate(offsetOf(page));
+	}
 
 protected:
 	static const uint32_t MAGIC = 0x7ADA0BB1;
@@ -159,7 +178,7 @@ protected:
 	void verifyHeader() const override;
 	void initialize() override;
 
-	const Header* getRoot() const
+	Header* getRoot() const
 	{
 		return reinterpret_cast<Header*>(mainMapping());
 	}

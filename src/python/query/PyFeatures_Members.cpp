@@ -23,12 +23,12 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
 {
     std::unordered_set<uint32_t> tips;
     FeatureStore* store = self->store;
-    RelationRef relation(self->relatedFeature);
+    RelationPtr relation(self->relatedFeature);
     MemberIterator iter(store, relation.bodyptr(),
         self->acceptedTypes, self->matcher, self->filter);
     for(;;)
     {
-        FeatureRef member = iter.next();
+        FeaturePtr member = iter.next();
         if (member.isNull()) break;
         if (iter.isCurrentForeign()) tips.insert(iter.currentTip());
     }
@@ -81,7 +81,7 @@ SelectionType PyFeatures::Members::SUBTYPE =
 
 PyObject* PyMemberIterator::create(PyFeatures* features)
 {
-    pointer pBody = features->relatedFeature.bodyptr();
+    DataPtr pBody = features->relatedFeature.bodyptr();
     PyMemberIterator* self = (PyMemberIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
@@ -97,7 +97,7 @@ PyObject* PyMemberIterator::create(PyFeatures* features)
 
 PyObject* PyMemberIterator::create(PyFeature* rel)
 {
-    pointer pBody = rel->feature.bodyptr();
+    DataPtr pBody = rel->feature.bodyptr();
     PyMemberIterator* self = (PyMemberIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
@@ -121,7 +121,7 @@ void PyMemberIterator::dealloc(PyMemberIterator* self)
 
 PyObject* PyMemberIterator::next(PyMemberIterator* self)
 {
-    FeatureRef feature = self->iter.next();
+    FeaturePtr feature = self->iter.next();
     if (feature.isNull()) return NULL;
     return PyFeature::create(self->iter.store(), feature, self->iter.borrowCurrentRole());
 }

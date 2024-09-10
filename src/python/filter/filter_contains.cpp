@@ -19,7 +19,7 @@ PyFeatures* filters::contains(PyFeatures* self, PyObject* args, PyObject* kwargs
 		PyFeature* feature = (PyFeature*)arg;
 		if (feature->feature.isNode())
 		{
-			NodeRef node(feature->feature);
+			NodePtr node(feature->feature);
 			filter = new ContainsPointFilter(node.xy());
 		}
 		else

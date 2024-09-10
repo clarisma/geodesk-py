@@ -5,7 +5,7 @@
 #include <common/util/log.h>
 #include "feature/FeatureStore.h"
 #include "feature/FastMemberIterator.h"
-#include "feature/Way.h"
+#include "feature/WayPtr.h"
 #include "feature/polygon/PointInPolygon.h"
 #include "geom/Distance.h"
 
@@ -21,7 +21,7 @@ PointDistanceFilter::PointDistanceFilter(double meters, Coordinate point)
 }
 
 
-bool PointDistanceFilter::segmentsWithinDistance(WayRef way, int areaFlag) const
+bool PointDistanceFilter::segmentsWithinDistance(WayPtr way, int areaFlag) const
 {
     WayCoordinateIterator iter;
     iter.start(way, areaFlag);
@@ -46,7 +46,7 @@ bool PointDistanceFilter::segmentsWithinDistance(WayRef way, int areaFlag) const
 }
 
 
-bool PointDistanceFilter::isWithinDistance(WayRef way) const
+bool PointDistanceFilter::isWithinDistance(WayPtr way) const
 {
     if (way.isArea())
     {
@@ -71,7 +71,7 @@ bool PointDistanceFilter::isWithinDistance(WayRef way) const
 }
 
 
-bool PointDistanceFilter::isAreaWithinDistance(FeatureStore* store, RelationRef relation) const
+bool PointDistanceFilter::isAreaWithinDistance(FeatureStore* store, RelationPtr relation) const
 {
     // measure distance to the ways that define shell and holes, and
     // also perform point in polygon test
@@ -80,10 +80,10 @@ bool PointDistanceFilter::isAreaWithinDistance(FeatureStore* store, RelationRef 
     FastMemberIterator iter(store, relation);
     for (;;)
     {
-        FeatureRef member = iter.next();
+        FeaturePtr member = iter.next();
         if (member.isNull()) break;
         if (!member.isWay()) continue;
-        WayRef memberWay(member);
+        WayPtr memberWay(member);
         if (memberWay.isPlaceholder()) continue;
         int memberFlags = member.flags();
         if (segmentsWithinDistance(memberWay, memberFlags)) return true;
@@ -104,47 +104,47 @@ bool PointDistanceFilter::isAreaWithinDistance(FeatureStore* store, RelationRef 
 }
 
 
-bool PointDistanceFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool PointDistanceFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
     int type = feature.typeCode();
     if (type == FeatureType::WAY)
     {
-        WayRef way(feature);
+        WayPtr way(feature);
         return isWithinDistance(way);
     }
     if (type == FeatureType::NODE)
     {
-        NodeRef node(feature);
+        NodePtr node(feature);
         return Distance::pointsSquared(node.x(), node.y(), 
             point_.x, point_.y) < distanceSquared_;
     }
     assert(type == FeatureType::RELATION);
     if (feature.isArea())
     {
-        return isAreaWithinDistance(store, RelationRef(feature));
+        return isAreaWithinDistance(store, RelationPtr(feature));
     }
-    RelationRef relation(feature);
+    RelationPtr relation(feature);
     RecursionGuard guard(relation);
     return areMembersWithinDistance(store, relation, guard);
 }
 
 
-bool PointDistanceFilter::areMembersWithinDistance(FeatureStore* store, RelationRef relation, RecursionGuard& guard) const
+bool PointDistanceFilter::areMembersWithinDistance(FeatureStore* store, RelationPtr relation, RecursionGuard& guard) const
 {
     FastMemberIterator iter(store, relation);
     for (;;)
     {
-        FeatureRef member = iter.next();
+        FeaturePtr member = iter.next();
         if (member.isNull()) break;
         int typeCode = member.typeCode();
         if (typeCode == 1)
         {
-            WayRef memberWay(member);
+            WayPtr memberWay(member);
             if (!memberWay.isPlaceholder() && isWithinDistance(memberWay)) return true;
         }
         else if (typeCode == 0)
         {
-            NodeRef memberNode(member);
+            NodePtr memberNode(member);
             if (!memberNode.isPlaceholder() && Distance::pointsSquared(
                 memberNode.x(), memberNode.y(), point_.x, point_.y) < distanceSquared_)
             {
@@ -154,7 +154,7 @@ bool PointDistanceFilter::areMembersWithinDistance(FeatureStore* store, Relation
         else
         {
             assert(member.isRelation());
-            RelationRef memberRel(member);
+            RelationPtr memberRel(member);
             if (!memberRel.isPlaceholder() && guard.checkAndAdd(memberRel) &&
                 areMembersWithinDistance(store, memberRel, guard))
             {

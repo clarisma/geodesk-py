@@ -11,10 +11,12 @@
 #include <string_view>
 #include <common/math/Decimal.h>
 #include <common/util/pointer.h>
+#include "FeatureTypes.h"
 #include "TagValue.h"
 #include "Tip.h"
 
-
+// TODO: make enum class
+// TODO: move to public API
 enum FeatureType
 {
     NODE = 0,
@@ -49,64 +51,6 @@ enum FeatureFlags
     MULTITILE_NORTH = 1 << 7
 };
 
-class FeatureTypes
-{
-public:
-    static const uint32_t NODES =     0b00000000'00000101'00000000'00000101;
-    static const uint32_t WAYS =      0b00000000'11110000'00000000'11110000;
-    static const uint32_t RELATIONS = 0b00001111'00000000'00001111'00000000;
-    static const uint32_t AREAS =     0b00001010'10100000'00001010'10100000;
-    static const uint32_t NONAREA_WAYS = WAYS & (~AREAS);
-    static const uint32_t NONAREA_RELATIONS = RELATIONS & (~AREAS);
-    static const uint32_t ALL = NODES | WAYS | RELATIONS;
-    static const uint32_t WAYNODE_FLAGGED = 0b00000000'11110101'00000000'00000000;
-    static const uint32_t RELATION_MEMBERS = 0b00001100'11000100'00001100'11000100;
-
-    constexpr FeatureTypes(uint32_t types) : types_(types) {}
-    FeatureTypes operator|(FeatureTypes other) const 
-    { 
-        return FeatureTypes(types_ | other.types_);
-    }
-
-    FeatureTypes& operator|=(const FeatureTypes& other) 
-    {
-        types_ |= other.types_;
-        return *this;
-    }
-
-    FeatureTypes operator&(FeatureTypes other) const
-    {
-        return FeatureTypes(types_ & other.types_);
-    }
-
-    FeatureTypes operator&(uint32_t other) const
-    {
-        return FeatureTypes(types_ & other);
-    }
-
-    FeatureTypes& operator&=(const FeatureTypes& other)
-    {
-        types_ &= other.types_;
-        return *this;
-    }
-
-    operator uint32_t() const
-    {
-        return types_;
-    }
-
-    inline bool acceptFlags(int flags) const
-    {
-        // unlike Java, it is not a given that shift will only consider the
-        // lowest 5 bits, so we'll apply a mask
-        uint32_t typeFlag = 1 << ((flags >> 1) & 0x1f);
-        return (types_ & typeFlag) != 0;
-    }
-
-private:
-    uint32_t types_;
-};
-
 
 enum MemberFlags
 {
@@ -130,6 +74,7 @@ namespace FeatureConstants
     static const int MAX_COMMON_ROLE = (1 << 15) - 1;
 };
 
+/*
 // TODO: Replace with ShortVarString
 class GlobalString
 {
@@ -177,16 +122,7 @@ public:
     }
     #endif
 
-    // TODO: std::from_chars not supported in GNU 10.2.1
-    /*
-    double toDouble(double defaultValue = 0.0)
-    {
-        const char* p = data();
-        double v = defaultValue;
-        std::from_chars(p, p + length(), v);
-        return v;
-    }
-    */
+
 
     double toDouble(double defaultValue = 0.0)
     {
@@ -211,3 +147,4 @@ private:
 // No! Don't change this, compiled matcher assumes local and global strings
 // have same format. (But could require globals to be 127 char max)
 typedef GlobalString LocalString;
+*/

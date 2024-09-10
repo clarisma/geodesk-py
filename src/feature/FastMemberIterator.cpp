@@ -6,22 +6,22 @@
 #include <common/util/log.h>
 
 
-FastMemberIterator::FastMemberIterator(FeatureStore* store, RelationRef relation) :
+FastMemberIterator::FastMemberIterator(FeatureStore* store, RelationPtr relation) :
     store_(store),
     p_(relation.bodyptr()),
-    currentTip_(FeatureConstants::START_TIP),
-    pForeignTile_(nullptr)
+    currentTip_(FeatureConstants::START_TIP)
+    // pForeignTile_(nullptr)  // null by default
 {
     // check for empty relation
-    currentMember_ = p_.getUnalignedInt() == 0 ? MemberFlags::LAST : 0;
+    currentMember_ = p_.getIntUnaligned() == 0 ? MemberFlags::LAST : 0;
 }
 
-FeatureRef FastMemberIterator::next()
+FeaturePtr FastMemberIterator::next()
 {
-    if (currentMember_ & MemberFlags::LAST) return FeatureRef(nullptr);
+    if (currentMember_ & MemberFlags::LAST) return FeaturePtr(nullptr);
     
-    pointer pCurrent = p_;
-    currentMember_ = p_.getUnalignedInt();
+    DataPtr pCurrent = p_;
+    currentMember_ = p_.getIntUnaligned();
     p_ += 4;
     if (currentMember_ & MemberFlags::FOREIGN)
     {
@@ -49,7 +49,7 @@ FeatureRef FastMemberIterator::next()
             // If 0, means role is a local string (4-bytes instead of 2)
     }
 
-    FeatureRef feature(nullptr);
+    FeaturePtr feature(nullptr);
     if (currentMember_ & MemberFlags::FOREIGN)
     {
         if (!pForeignTile_)
@@ -57,13 +57,12 @@ FeatureRef FastMemberIterator::next()
             // foreign tile not resolved yet
             pForeignTile_ = store_->fetchTile(currentTip_);
         }
-        feature = FeatureRef(pForeignTile_ +
+        feature = FeaturePtr(pForeignTile_ +
             ((currentMember_ & 0xffff'fff0) >> 2));
     }
     else
     {
-        feature = FeatureRef((pCurrent &
-            0xffff'ffff'ffff'fffcULL) +
+        feature = FeaturePtr(pCurrent.andMask(0xffff'ffff'ffff'fffc) +
             ((int32_t)(currentMember_ & 0xffff'fff8) >> 1));
     }
     return feature;

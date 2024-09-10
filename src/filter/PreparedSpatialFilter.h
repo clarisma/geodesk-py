@@ -22,9 +22,9 @@ public:
 protected:
 	static const int MAX_CANDIDATE_MC_LENGTH = 32;
 	
-	bool anyNodesInPolygon(WayRef way) const;
-	bool anySegmentsCross(WayRef way) const;
-	bool wayIntersectsPolygon(WayRef way) const;
+	bool anyNodesInPolygon(WayPtr way) const;
+	bool anySegmentsCross(WayPtr way) const;
+	bool wayIntersectsPolygon(WayPtr way) const;
 
 	MCIndex index_;
 };

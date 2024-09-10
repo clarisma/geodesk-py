@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 #include "geom/Coordinate.h"
 #include <common/alloc/Arena.h>
 #include <geos_c.h>
@@ -27,7 +27,7 @@ public:
      * the inner rings to outer, and without merging inner rings 
      * whose edges touch. (This is sufficient for area calculation)
      */
-    void createRings(FeatureStore* store, RelationRef relation);
+    void createRings(FeatureStore* store, RelationPtr relation);
 
     /**
      * Assigns inner rings to outer, and merges any inner rings whose
@@ -42,7 +42,7 @@ private:
     class RingAssigner;
     class RingMerger;
 
-    Segment* createSegment(WayRef way, Segment* next);
+    Segment* createSegment(WayPtr way, Segment* next);
     Ring* buildRings(int segmentCount, Segment* firstSegment);
 
     static Ring* createRing(int vertexCount, Segment* firstSegment, 

@@ -11,7 +11,7 @@ class ContainsPointFilter : public SpatialFilter
 public:
 	ContainsPointFilter(Coordinate pt) : SpatialFilter(Box(pt)), point_(pt)	{}
 
-	bool accept(FeatureStore* store, const FeatureRef feature, FastFilterHint fast) const override;
+	bool accept(FeatureStore* store, const FeaturePtr feature, FastFilterHint fast) const override;
 
 private:
 	Coordinate point_;

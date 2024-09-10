@@ -6,26 +6,26 @@
 #include "filter/Filter.h"
 
 
-ParentRelationIterator::ParentRelationIterator(FeatureStore* store, pointer pRelTable,
+ParentRelationIterator::ParentRelationIterator(FeatureStore* store, DataPtr pRelTable,
     const MatcherHolder* matcher, const Filter* filter) :
     store_(store),
     matcher_(matcher),
     filter_(filter),
     p_(pRelTable),
     currentTip_(FeatureConstants::START_TIP),
-    pForeignTile_(nullptr),
+    // pForeignTile_(nullptr),  // defaults to nullptr
     currentRel_(0)
 {
 }
 
-RelationRef ParentRelationIterator::next()
+RelationPtr ParentRelationIterator::next()
 {
     while ((currentRel_ & MemberFlags::LAST) == 0)
     {
-        pointer pCurrent = p_;
+        DataPtr pCurrent = p_;
         currentRel_ = p_.getInt();
         p_ += 4;
-        RelationRef rel(nullptr);
+        RelationPtr rel(FeaturePtr(nullptr));
         if (currentRel_ & MemberFlags::FOREIGN)
         {
             if (currentRel_ & MemberFlags::DIFFERENT_TILE)
@@ -43,15 +43,15 @@ RelationRef ParentRelationIterator::next()
                 currentTip_ += tipDelta;
                 pForeignTile_ = store_->fetchTile(currentTip_);
             }
-            rel = RelationRef(pForeignTile_ + ((currentRel_ & 0xffff'fff0) >> 2));
+            rel = RelationPtr(pForeignTile_ + ((currentRel_ & 0xffff'fff0) >> 2));
         }
         else
         {
-            assert((pCurrent.pointerAsULong() & 1) == 0); // Reltable must be 2-byte aligned
-            rel = RelationRef(pCurrent + ((int32_t)(currentRel_ & 0xffff'fffc) >> 1));
+            assert((static_cast<const uintptr_t>(pCurrent) & 1) == 0); // Reltable must be 2-byte aligned
+            rel = RelationPtr(pCurrent + ((int32_t)(currentRel_ & 0xffff'fffc) >> 1));
                 // TODO: shift should not be needed, flaw in Tile Spec 1.0
         }
-        if (matcher_->mainMatcher().accept(rel.ptr()))
+        if (matcher_->mainMatcher().accept(rel))
         {
             if (filter_ == nullptr || filter_->accept(store_, rel, FastFilterHint()))
             {
@@ -59,6 +59,6 @@ RelationRef ParentRelationIterator::next()
             }
         }
     }
-    return RelationRef(nullptr);
+    return RelationPtr(FeaturePtr(nullptr));
 }
 

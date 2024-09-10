@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "feature/Way.h"
+#include "feature/WayPtr.h"
 #include "MonotoneChain.h"
 #include "geom/Coordinate.h"
 
@@ -12,7 +12,7 @@
 class WaySlicer
 {
 public:
-	WaySlicer(WayRef way);
+	WaySlicer(WayPtr way);
 	bool hasMore() const { return hasMore_; }
 	void slice(MonotoneChain* chain, int maxVertexes);
 

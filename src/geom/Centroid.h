@@ -4,15 +4,15 @@
 #pragma once
 
 #include "Coordinate.h"
-#include "feature/Way.h"
-#include "feature/Relation.h"
+#include "feature/WayPtr.h"
+#include "feature/RelationPtr.h"
 
 class Centroid
 {
 public:
-	static Coordinate ofWay(WayRef way);
-	static Coordinate ofRelation(FeatureStore* store, RelationRef relation);
-	static Coordinate ofFeature(FeatureStore* store, FeatureRef feature);
+	static Coordinate ofWay(WayPtr way);
+	static Coordinate ofRelation(FeatureStore* store, RelationPtr relation);
+	static Coordinate ofFeature(FeatureStore* store, FeaturePtr feature);
 
 protected:
 	class Areal
@@ -48,7 +48,7 @@ protected:
 			areaCentroidY_ += ringCentroidY * sign;
 		}
 
-		void addAreaRelation(FeatureStore* store, RelationRef relation);
+		void addAreaRelation(FeatureStore* store, RelationPtr relation);
 		bool isEmpty() const { return areaSum_ == 0; }
 		Coordinate centroid() const
 		{
@@ -68,7 +68,7 @@ protected:
 	public:
 		Lineal() : totalLength_(0), lineCentroidX_(0), lineCentroidY_(0) {}
 
-		void addLineSegments(WayRef way);
+		void addLineSegments(WayPtr way);
 
 		bool isEmpty() const { return totalLength_ == 0; }
 		Coordinate centroid() const
@@ -105,8 +105,8 @@ protected:
 	};
 
 private:
-	void addWay(WayRef way);
-	void addRelation(FeatureStore* store, RelationRef rel, RecursionGuard& guard);
+	void addWay(WayPtr way);
+	void addRelation(FeatureStore* store, RelationPtr rel, RecursionGuard& guard);
 	
 	Areal areal_;
 	Lineal lineal_;

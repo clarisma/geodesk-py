@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "feature/Way.h"
+#include "feature/WayPtr.h"
 #include "feature/polygon/Polygonizer.h"
 #include "Mercator.h"
 
@@ -16,9 +16,9 @@ public:
      * of the given way; assumes that way is an area.
      * (This function is useful for getting the winding order)
      */
-    static double signedMercatorOfWay(const WayRef way);
+    static double signedMercatorOfWay(WayPtr way);
     static double signedMercatorOfRing(const Polygonizer::Ring* ring);
-    static double ofWay(const WayRef way)
+    static double ofWay(WayPtr way)
 	{
         int32_t avgY = (static_cast<int64_t>(way.minY()) + way.maxY()) / 2;
         double scale = Mercator::metersPerUnitAtY(avgY);
@@ -33,7 +33,7 @@ public:
      * Returns the area (in square meters) of the given relation.
      * Assumes that the relation is an area.
      */
-    static double ofRelation(FeatureStore* store, const RelationRef relation);
+    static double ofRelation(FeatureStore* store, RelationPtr relation);
 
 	template<typename Iter>
 	static double signedMercatorOfAbstractRing(Iter& iter)

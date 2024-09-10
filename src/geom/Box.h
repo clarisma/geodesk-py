@@ -13,6 +13,11 @@
 #include "Coordinate.h"
 #include <geos/geom/Envelope.h>
 
+/// @brief An axis-aligned bounding box. A Box represents minimum and
+/// maximum X and Y coordinates in a Mercator-projected plane. It can
+/// straddle the Antimeridian (in which case minX is *larger* than maxX).
+/// A Box can also be empty (in which case minY is *larger* than maxY).
+///
 class Box
 {
 public:
@@ -59,9 +64,8 @@ public:
 		return Box(pt.x - d, trimmedSubtract(pt.y, d), pt.x + d, trimmedAdd(pt.y, d));
 	}
 
-	/**
-	 * A Box is "simple" if it is non-empty and doesn't straddle the Antimeridian.
-	 */
+	/// @brief A Box is *simple* if it is non-empty and does not straddle the Antimeridian.
+	///
 	bool isSimple() const
 	{
 		return m_maxX >= m_minX && m_maxY >= m_minY;

@@ -8,18 +8,18 @@
 class ConnectedFilter : public SpatialFilter
 {
 public:
-	ConnectedFilter(FeatureStore* store, FeatureRef feature);
+	ConnectedFilter(FeatureStore* store, FeaturePtr feature);
 
-	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+	bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
 
 protected:
-	bool acceptWay(WayRef way) const override;
-	bool acceptNode(NodeRef node) const override;
-	bool acceptAreaRelation(FeatureStore* store, RelationRef relation) const override;
+	bool acceptWay(WayPtr way) const override;
+	bool acceptNode(NodePtr node) const override;
+	bool acceptAreaRelation(FeatureStore* store, RelationPtr relation) const override;
 
 private:
-	void collectWayPoints(WayRef way);
-	void collectMemberPoints(FeatureStore* store, RelationRef relation, RecursionGuard& guard);
+	void collectWayPoints(WayPtr way);
+	void collectMemberPoints(FeatureStore* store, RelationPtr relation, RecursionGuard& guard);
 
 	uint64_t self_;
 	std::unordered_set<Coordinate> points_;

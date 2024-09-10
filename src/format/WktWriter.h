@@ -10,14 +10,14 @@ class WktWriter : public FeatureWriter
 public:
 	WktWriter(Buffer* buf); 
 
-	void writeFeature(FeatureStore* store, FeatureRef feature) override;
+	void writeFeature(FeatureStore* store, FeaturePtr feature) override;
 	void writeAnonymousNodeNode(Coordinate point) override;
 	void writeHeader() override;
 	void writeFooter() override;
 
 protected:
-	void writeNodeGeometry(NodeRef node) override;
-	void writeWayGeometry(WayRef way) override;
-	void writeAreaRelationGeometry(FeatureStore* store, RelationRef relation) override;
-	void writeCollectionRelationGeometry(FeatureStore* store, RelationRef relation) override;
+	void writeNodeGeometry(NodePtr node) override;
+	void writeWayGeometry(WayPtr way) override;
+	void writeAreaRelationGeometry(FeatureStore* store, RelationPtr relation) override;
+	void writeCollectionRelationGeometry(FeatureStore* store, RelationPtr relation) override;
 };

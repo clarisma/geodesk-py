@@ -24,9 +24,9 @@ public:
      * of the given way; assumes that way is an area.
      * (This function is useful for getting the winding order)
      */
-    static double signedOfWay(const WayRef way);
+    static double signedOfWay(WayPtr way);
     static double signedOfRing(const Polygonizer::Ring* ring);
-    static double ofWay(const WayRef way)
+    static double ofWay(const WayPtr way)
 	{
         return std::abs(signedOfWay(way));
 	}
@@ -39,7 +39,7 @@ public:
      * Returns the area (in square meters) of the given relation.
      * Assumes that the relation is an area.
      */
-    static double ofRelation(FeatureStore* store, const RelationRef relation);
+    static double ofRelation(FeatureStore* store, RelationPtr relation);
 
     static ProjectedCoordinate project(Coordinate c)
     {

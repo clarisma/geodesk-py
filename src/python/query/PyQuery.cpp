@@ -112,8 +112,8 @@ PyObject* PyQuery::iter(PyQuery* self)
 PyObject* PyQuery::next(PyQuery* self)
 {
     // LOG("PyQuery::next()");
-    pointer pFeature = self->query.next();
-    if (pFeature)
+    FeaturePtr pFeature = self->query.next();
+    if (!pFeature.isNull())
     {
         return PyFeature::create(self->query.store(), pFeature, Py_None);
     }

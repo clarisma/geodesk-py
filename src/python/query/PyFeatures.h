@@ -6,7 +6,7 @@
 #include <functional>
 #include <Python.h>
 #include "python/Environment.h"
-#include "feature/Way.h"
+#include "feature/WayPtr.h"
 #include "feature/MemberIterator.h"
 #include "feature/ParentRelationIterator.h"
 #include "geom/Box.h"
@@ -70,7 +70,7 @@ public:
         Box bounds;                 // If used, USES_BOUNDS flag must be set 
                                     // If it contains a value other than Box::ofWorld(),
                                     // ACTIVE_BOUNDS must be set
-        FeatureRef relatedFeature;  // If used, USES_BOUNDS flag must be clear 
+        FeaturePtr relatedFeature;  // If used, USES_BOUNDS flag must be clear
     };
 
     static PyTypeObject TYPE;
@@ -87,9 +87,9 @@ public:
      * MEMBERS, NODES, FEATURE_NODES, PARENTS, PARENT_WAYS, PARENT_RELATIONS
      */
     static PyFeatures* create(SelectionType* selectionType, FeatureStore* store,
-        FeatureRef relatedFeature, FeatureTypes acceptedTypes);
+        FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
     static PyFeatures* createRelated(PyFeatures* base, SelectionType* selectionType, 
-        FeatureRef relatedFeature, FeatureTypes acceptedTypes);
+        FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
     static PyFeatures* createEmpty(FeatureStore* store, const MatcherHolder* matcher);
 
     /**
@@ -226,7 +226,7 @@ class PyFeatures::WayNodes : public PyFeatures
 {
 public:
     static SelectionType SUBTYPE;
-    PyFeatures* createRelated(PyFeatures* base, WayRef way);
+    PyFeatures* createRelated(PyFeatures* base, WayPtr way);
     static PyObject* iterFeatures(PyFeatures*);
     static PyObject* countFeatures(PyFeatures*);
     static int       isEmpty(PyFeatures*);
@@ -257,7 +257,7 @@ public:
     PyObject* target;
     WayCoordinateIterator coordsIter;
     FeatureNodeIterator featureIter;
-    NodeRef nextNode;
+    NodePtr nextNode;
     bool featureNodesOnly;      
         // TODO: We could move this flag into WayCoordinateIterator in
         // order to make the field layout more compact (but it has
@@ -293,7 +293,7 @@ public:
 
     static PyTypeObject TYPE;
 
-    static PyObject* create(PyFeatures* features, pointer pRelTable);
+    static PyObject* create(PyFeatures* features, DataPtr pRelTable);
     static void dealloc(PyParentRelationIterator* self);
     static PyObject* next(PyParentRelationIterator* self);
 };
@@ -305,16 +305,16 @@ public:
     // We don't need to set acceptedTypes because this Filter
     // will never be combined with others; it is only used for
     // finding ways that contain a specific node
-    FeatureNodeFilter(NodeRef node, const Filter* filter) :
+    FeatureNodeFilter(NodePtr node, const Filter* filter) :
         node_(node),
         secondaryFilter_(filter)
     {
     }
 
-    bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
 
 private:
-    NodeRef node_;
+    NodePtr node_;
     const Filter* secondaryFilter_;
 };
 
@@ -331,7 +331,7 @@ public:
     {
     }
 
-    bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override;
+    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
 
 private:
     Coordinate coord_;
@@ -372,7 +372,7 @@ public:
     ~PyNodeParentIterator() = delete;
 
     static PyObject* create(PyFeatures* features, Coordinate wayNodeXY);
-    static PyObject* create(PyFeatures* features, NodeRef node, int startWith);
+    static PyObject* create(PyFeatures* features, NodePtr node, int startWith);
     static void dealloc(PyNodeParentIterator* self);
     static PyObject* next(PyNodeParentIterator* self);
 };

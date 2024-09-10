@@ -67,7 +67,7 @@ ComboFilter::~ComboFilter()
 }
 
 
-bool ComboFilter::accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const
+bool ComboFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
 {
     for (auto it = filters_.begin(); it != filters_.end(); ++it)
     {

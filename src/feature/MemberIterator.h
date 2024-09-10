@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "Feature.h"
+#include <common/util/ShortVarString.h>
+#include "FeaturePtr.h"
 #include "FeatureStore.h"
 
 // TODO: need to bump the refcount of `store` to ensure that store does not 
@@ -22,7 +23,7 @@
 class MemberIterator
 {
 public:
-	MemberIterator(FeatureStore* store, pointer pMembers,
+	MemberIterator(FeatureStore* store, DataPtr pMembers,
 		FeatureTypes types, const MatcherHolder* matcher, const Filter* filter);
 
 	~MemberIterator()
@@ -34,7 +35,7 @@ public:
 
 	FeatureStore* store() const { return store_; }
 
-	FeatureRef next();
+	FeaturePtr next();
 	bool isCurrentForeign() const 
 	{
 		return currentMember_ & MemberFlags::FOREIGN; 
@@ -45,12 +46,9 @@ public:
 	{
 		if (currentRoleCode_ >= 0)
 		{
-			return store_->strings().getGlobalString(currentRoleCode_).toStringView();
+			return store_->strings().getGlobalString(currentRoleCode_)->toStringView();
 		}
-		else
-		{
-			return currentRoleStr_.toStringView();
-		}
+		return currentRoleStr_->toStringView();
 	}
 
 	#ifdef GEODESK_PYTHON
@@ -65,10 +63,32 @@ public:
 			if (currentRoleCode_ >= 0)
 			{
 				currentRoleObject_ = store_->strings().getStringObject(currentRoleCode_);
+				assert(currentRoleObject_);
 			}
 			else
 			{
-				currentRoleObject_ = currentRoleStr_.toStringObject();
+				assert(currentRoleStr_);
+				currentRoleObject_ = Python::toStringObject(*currentRoleStr_);
+
+				//currentRoleObject_ = Python::toStringObject(
+				//	currentRoleStr_->data(), currentRoleStr_->length());
+
+				// TODO: It is possible that string creation fails if the
+				//  UTF-8 encoding is bad; a GOL should never allow
+				//  invalid UTF-8 data to be stored
+				/*
+				if(!currentRoleObject_)
+				{
+					printf("Bad string: %s\n  Ptr = %p\n\n",
+						currentRoleStr_->toString().c_str(),
+						currentRoleStr_->data());
+					currentRoleObject_ = store_->strings().getStringObject(0);
+					PyErr_Print();
+					PyErr_Clear();
+					// TODO: for debug only !!!!
+				}
+				*/
+				assert(currentRoleObject_);
 			}
 			assert(currentRoleObject_);
 		}
@@ -82,14 +102,14 @@ private:
 	const MatcherHolder* matcher_;
 	const Filter* filter_;
 	int currentRoleCode_;
-	LocalString currentRoleStr_;
+	const ShortVarString* currentRoleStr_;
 	#ifdef GEODESK_PYTHON
 	PyObject* currentRoleObject_;
 	#endif
 	Tip currentTip_;
 	int32_t currentMember_;
 	const Matcher* currentMatcher_;
-	pointer p_;
-	pointer pForeignTile_;
+	DataPtr p_;
+	DataPtr pForeignTile_;
 };
 

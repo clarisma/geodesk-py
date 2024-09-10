@@ -9,7 +9,7 @@
 
 Query::Query(FeatureStore* store, const Box& box, FeatureTypes types,
     const MatcherHolder* matcher, const Filter* filter) :
-    store_(store),
+    AbstractQuery(store),
     types_(types),
     matcher_(matcher),
     filter_(filter),
@@ -149,7 +149,7 @@ void Query::requestTiles()
     
 }
 
-pointer Query::next()
+FeaturePtr Query::next()
 {
     for (;;)
     {
@@ -186,16 +186,16 @@ pointer Query::next()
             }
         }
         uint32_t item = currentResults_->items[currentPos_++];
-        pointer pTile = currentResults_->pTile;
+        DataPtr pTile = currentResults_->pTile;
         if (item & REQUIRES_DEDUP)
         {
-            pointer pFeature = pTile + (item & ~REQUIRES_DEDUP);
-            uint64_t idBits = pFeature.getUnsignedLong() & 0xffff'ffff'ffff'ff18LL;
+            FeaturePtr pFeature (pTile + (item & ~REQUIRES_DEDUP));
+            uint64_t idBits = pFeature.idBits();  // getUnsignedLong() & 0xffff'ffff'ffff'ff18LL;
             if (potentialDupes_.count(idBits)) continue;
             potentialDupes_.insert(idBits);
             return pFeature;
         }
-        return pTile + item;
+        return FeaturePtr(pTile + item);
     }
 }
 

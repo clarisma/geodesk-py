@@ -50,7 +50,7 @@ public:
 	};
 
 	template <typename QT>
-	using SearchFunction = bool (*)(const Node* node, QT* closure);
+	using SearchFunction = bool (*)(const Node* node, QT closure);
 
 	RTree() : root_(nullptr) {}		
 	~RTree() { if (root_) delete[] root_; }		// root_ is an array
@@ -76,7 +76,7 @@ public:
 	const Node* root() const { return root_; }
 
 	template <typename QT>
-	bool search(const Box& box, SearchFunction<QT> func, QT* closure) const
+	bool search(const Box& box, SearchFunction<QT> func, QT closure) const
 	{
 		Query<QT> query(box, func, closure);
 		return searchTrunk(query, root_);
@@ -88,7 +88,7 @@ private:
 	class Query
 	{
 	public:
-		Query(const Box& box, SearchFunction<QT> func, QT* closure) :
+		Query(const Box& box, SearchFunction<QT> func, QT closure) :
 			bounds_(box),
 			func_(func),
 			closure_(closure)
@@ -103,7 +103,7 @@ private:
 	// private:
 		Box bounds_;
 		SearchFunction<QT> func_;
-		QT* closure_;
+		QT closure_;
 	};
 
 	template <typename QT>

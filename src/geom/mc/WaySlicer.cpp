@@ -6,7 +6,7 @@
 #include <cassert>
 
 // TODO: ensure proper init order
-WaySlicer::WaySlicer(WayRef way) :
+WaySlicer::WaySlicer(WayPtr way) :
 	iter_(way),
 	first_(iter_.next()),
 	second_(iter_.next()),

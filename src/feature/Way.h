@@ -1,3 +1,4 @@
+/*
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
@@ -67,24 +68,5 @@ private:
 	pointer p_;
 	pointer pForeignTile_;
 };
-
-/*
-// TODO: should not use a Matcher, since any Matcher eliminates
-//  anonymous nodes
-// - No! Anonymous nodes can still be returned if the tag query is negative,
-// such as n[highway!=crossing]; if the tag query requires presence of any tags,
-// it is more efficient to use FeatureNodeIterator
-// - OK. Per spec, queries select only feature nodes.
-class WayNodeIterator
-{
-public:
-	WayNodeIterator(FeatureStore* store, pointer pWay); // TODO: Filter
-
-	NodeRef next();
-
-private:
-	WayCoordinateIterator coords_;
-	FeatureNodeIterator featureNodes_;
-	NodeRef nextFeatureNode_;
-};
 */
+

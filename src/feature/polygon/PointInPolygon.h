@@ -4,8 +4,6 @@
 #pragma once
 
 #include "feature/FastMemberIterator.h"
-#include "feature/Relation.h"
-#include "feature/Way.h"
 #include "geom/LineSegment.h"
 
 
@@ -33,7 +31,7 @@ public:
 	 * 
 	 * @return true if point lies on boundary, else false.
 	 */
-	bool testAgainstWay(const WayRef way)
+	bool testAgainstWay(const WayPtr way)
 	{
 		Box bounds = way.bounds();
 		if (point_.y < bounds.minY() || point_.y > bounds.maxY())
@@ -68,15 +66,15 @@ public:
 		return false;
 	}
 
-	bool testAgainstRelation(FeatureStore* store, const RelationRef relation)
+	bool testAgainstRelation(FeatureStore* store, const RelationPtr relation)
 	{
 		FastMemberIterator iter(store, relation);
 		for (;;)
 		{
-			FeatureRef member = iter.next();
+			FeaturePtr member = iter.next();
 			if (member.isNull()) break;
 			if (!member.isWay()) continue;
-			WayRef way(member);
+			WayPtr way(member);
 			if (way.isPlaceholder()) continue;
 			// TODO: do we need to check for inner/outer role?
 			// Can we establish that area relations must 

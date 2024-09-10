@@ -13,19 +13,19 @@ public:
 	{
 	}
 
-	bool accept(FeatureStore* store, FeatureRef feature, FastFilterHint fast) const override
+	bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
 	{
 		double a;
 		if (feature.isArea())
 		{
 			if (feature.isWay())
 			{
-				a = Area::ofWay(WayRef(feature));
+				a = Area::ofWay(WayPtr(feature));
 			}
 			else
 			{
 				assert(feature.isRelation());
-				a = Area::ofRelation(store, RelationRef(feature));
+				a = Area::ofRelation(store, RelationPtr(feature));
 			}
 		}
 		else

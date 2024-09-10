@@ -8,6 +8,8 @@
 #endif
 #include "types.h"
 
+class ShortVarString;
+
 class StringTable
 {
 public:
@@ -37,7 +39,11 @@ public:
      */
     PyObject* getStringObject(int code);
     #endif
-    GlobalString getGlobalString(int code);
+    const ShortVarString* getGlobalString(int code)
+    {
+        assert(code >= 0 && code < stringCount_);
+        return reinterpret_cast<const ShortVarString*>(stringBase_ + entries_[code].relPointer);
+    }
     bool isValidCode(int code);
     int getCode(const char* str, size_t len) const;
 #ifdef GEODESK_PYTHON
@@ -67,7 +73,7 @@ private:
         uint32_t next;
     };
 
-    int getCode(size_t hash, const char* str, int len) const;
+    int getCode(size_t hash, const char* str, size_t len) const;
 
     uint32_t stringCount_;
     uint32_t lookupMask_;
