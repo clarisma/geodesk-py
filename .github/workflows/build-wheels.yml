@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest]   # skip win for now
         # os: [ubuntu-latest, windows-latest, macOS-latest]
         # os: [ubuntu-latest, windows-latest]
 
@@ -27,9 +27,9 @@ jobs:
         CIBW_BUILD: 'cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*'
         CIBW_PRERELEASE_PYTHONS: 1
         CIBW_SKIP: '*win32 *i686'   # Don't build for 32-bit
-        # CIBW_ARCHS_MACOS: x86_64  # Build only for x86_64 on macOS
-        # Let's try MacOS ARM
-        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15+ for c++17 support
+        CIBW_ARCHS_MACOS: x86_64 arm64
+        # CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15+ for c++17 support
+        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=11.0      # For ARM64, we need 11 or higher
 
     # Upload the built wheels for testing
     - name: Upload wheels
@@ -44,7 +44,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        # os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest]
         python-version: ['3.12']  # Only test on the latest stable Python version
 
     steps:
@@ -64,7 +65,7 @@ jobs:
       # Install the correct wheel for the current platform and Python version
       - name: Install and test the built wheel
         run: |
-          pip install ./wheelhouse/*.whl
+          pip install ${{ github.workspace }}/*.whl
           pip install pytest
           pytest test/test_basic.py  # Run basic tests
 
