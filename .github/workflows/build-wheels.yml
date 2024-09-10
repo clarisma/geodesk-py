@@ -20,17 +20,6 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Set up environment on Windows
-      if: matrix.os == 'windows-latest'
-      env:
-        CXXFLAGS: /D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
-        CFLAGS: /D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
-      run: |
-        # Ensure no conflicts with snprintf on Windows/MSVC
-        # set CXXFLAGS=/D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
-        # set CFLAGS=/D_USE_MSC_VER /DNDEBUG /D_snprintf=snprintf
-        echo "Environment set for Windows"
-
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.20.0
       env:

@@ -52,10 +52,6 @@ set(BUILD_SHARED_LIBS OFF)
 #    add_compile_options(/arch:AVX2)
 #endif()
 
-if (MSVC)
-    add_definitions(-D_snprintf=snprintf)
-endif()
-
 add_subdirectory(third_party/geos)
 add_subdirectory(third_party/zlib)
 add_subdirectory(third_party/catch2)
