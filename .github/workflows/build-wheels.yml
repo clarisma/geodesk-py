@@ -53,7 +53,8 @@ jobs:
         run: |
           pip install --find-links wheelhouse geodesk
           pip install pytest
-          pytest test/test_basic.py
+          cd test
+          pytest test_basic.py
 
   upload_wheels:
     name: Upload Wheels to PyPI
