@@ -47,8 +47,6 @@ project ("geodesk-py")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
 
-add_definitions(-DINCLUDE_NLOHMANN_JSON_HPP_)
-
 # TODO: Make config more flexible
 #if(MSVC)
 #    add_compile_options(/arch:AVX2)
@@ -124,6 +122,7 @@ endif()
 add_library(geodesk MODULE ${SOURCE_FILES})
 target_include_directories(geodesk PRIVATE ${INCLUDES})
 target_link_libraries(geodesk ${LIBRARIES})
+target_compile_definitions(geodesk PRIVATE INCLUDE_NLOHMANN_JSON_HPP_)
 if(BUILD_WHEELS)
 	python_extension_module(geodesk)
 else()
