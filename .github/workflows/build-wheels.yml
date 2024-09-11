@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [windows-latest, ubuntu-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [windows-latest, ubuntu-latest, macOS-latest]
         python-version: ['3.12']
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
           path: wheelhouse
       - name: Install and test the built wheel
         run: |
-          pip install --no-index --find-links wheelhouse geodesk
+          pip install --find-links wheelhouse geodesk
           pip install pytest
           pytest test/test_basic.py
 
