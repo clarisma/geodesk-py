@@ -176,6 +176,17 @@ void File::allocate(uint64_t ofs, size_t length)
 #endif
 }
 
+void File::deallocate(uint64_t ofs, size_t length)
+{
+    // TODO: do nothing for now
+}
+
+
+void File::zeroFill(uint64_t ofs, size_t length)
+{
+    // TODO: do nothing for now
+}
+
 
 bool File::exists(const char* fileName)
 {
