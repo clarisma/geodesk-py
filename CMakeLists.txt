@@ -47,6 +47,8 @@ project ("geodesk-py")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
 
+add_definitions(-DINCLUDE_NLOHMANN_JSON_HPP_)
+
 # TODO: Make config more flexible
 #if(MSVC)
 #    add_compile_options(/arch:AVX2)
