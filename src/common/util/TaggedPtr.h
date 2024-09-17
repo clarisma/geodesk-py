@@ -25,7 +25,7 @@ public:
     {
     }
 
-    // Get the pointer with flags
+    // Get the pointer without flags
     T* ptr() const noexcept
     {
         return reinterpret_cast<T*>(data_ & ~flagMask());
@@ -41,6 +41,12 @@ public:
     operator T* () const noexcept
     {
         return ptr();
+    }
+
+    // Get the pointer, including flags
+    T* rawPtr() const noexcept
+    {
+        return reinterpret_cast<T*>(data_);
     }
 
     uintptr_t raw() const noexcept { return data_; }

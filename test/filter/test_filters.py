@@ -18,23 +18,23 @@ class Stopwatch:
         print(f"{self.task}: {delta} s")
 
 
-def notest_intersects_and_within(features):
+def notest_intersecting_and_within(features):
     s = Stopwatch()
     s.start("Fetch country")
     country = features("a[boundary=administrative][admin_level=2][name:en=Germany]")[0]
     s.stop()
     buildings = features("a[building=yes]")
-    intersects = buildings.intersects(country)
+    intersecting = buildings.intersecting(country)
     within = buildings.within(country)
     s.start("Count buildings that intersect country")
-    print (intersects.count)
+    print (intersecting.count)
     s.stop()
     s.start("Count buildings within country")
     print (within.count)
     s.stop()
-    s.start("Create set (intersects)")
-    # a = { f.id for f in intersects }
-    a = set(intersects)
+    s.start("Create set (intersecting)")
+    # a = { f.id for f in intersecting }
+    a = set(intersecting)
     s.stop()
     print(len(a))
     s.start("Create set (within)")
@@ -50,7 +50,7 @@ def notest_intersects_and_within(features):
     
 def test_nearby_hotels(features):
     state = features("a[boundary=administrative][admin_level=4][name:en=Bavaria]").one
-    bike_routes = features("r[route=bicycle][network=ncn]").intersects(state)
+    bike_routes = features("r[route=bicycle][network=ncn]").intersecting(state)
     hotels = features("na[tourism=hotel,guest_house,hostel]")
     m = Map()
     s = bike_routes.shape

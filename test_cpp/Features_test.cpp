@@ -5,8 +5,8 @@
 #include <memory>
 #include <string_view>
 #include <catch2/catch_test_macros.hpp>
-#include "api/Features.h"
-#include "api/Ways.h"
+#include <geodesk/feature/Features.h>
+#include <geodesk/feature/Ways.h>
 
 using namespace geodesk;
 
@@ -43,3 +43,39 @@ TEST_CASE("Features2")
 		std::cout << usaBuildings.count() << " buildings" << std::endl;
 	}
 }
+
+
+/*
+
+// This does not compile (deliberate error:
+// attempt to assign Way to Node)
+
+TEST_CASE("Type safety of Features")
+{
+	Features world(R"(c:\geodesk\tests\monaco.gol)");
+	Ways ways = world;
+	for(Node n: ways)
+	{
+		std::cout << n.xy() << std::endl;
+	}
+}
+*/
+
+
+static Node asNode(Feature f)
+{
+	return f;
+}
+
+TEST_CASE("Type safety of Features")
+{
+	Features world(R"(c:\geodesk\tests\monaco.gol)");
+	Ways ways = world;
+	for(Feature f: ways)
+	{
+		REQUIRE_THROWS_AS(asNode(f), std::runtime_error);
+	}
+}
+
+
+// TODO: Test if parent relation iterator respect types

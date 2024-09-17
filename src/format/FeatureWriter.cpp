@@ -7,7 +7,7 @@
 #include "feature/FastMemberIterator.h"
 
 // TODO: generalize!
-void FeatureWriter::writeTagValue(TagsRef tags, TagBits value, StringTable& strings)
+void FeatureWriter::writeTagValue(TagTablePtr tags, TagBits value, StringTable& strings)
 {
 	if (value & 1) // string
 	{
@@ -33,7 +33,7 @@ void FeatureWriter::writeTagValue(TagsRef tags, TagBits value, StringTable& stri
 		}
 		else
 		{
-			formatInt(TagsRef::narrowNumber(value));
+			formatInt(TagTablePtr::narrowNumber(value));
 		}
 	}
 }

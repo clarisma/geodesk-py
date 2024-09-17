@@ -224,7 +224,7 @@ PyObject* PyFeature::str_method(PyFeature* self)
 
 PyObject* PyFeature::tags(PyFeature* self)
 {
-    return PyTags::create(self->store, self->feature.tagsOld());
+    return PyTags::create(self->store, self->feature.tags());
 }
 
 
@@ -245,7 +245,7 @@ PyObject* PyFeature::strTagValue(PyFeature* self, PyObject* args, PyObject* kwar
 {
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
     if(!keyObj) return NULL;
-    const TagsRef& tags = self->feature.tagsOld();
+    TagTablePtr tags = self->feature.tags();
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsString(value, strings);
@@ -256,7 +256,7 @@ PyObject* PyFeature::numTagValue(PyFeature* self, PyObject* args, PyObject* kwar
 {
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
     if(!keyObj) return NULL;
-    const TagsRef& tags = self->feature.tagsOld();
+    TagTablePtr tags = self->feature.tags();
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsNumber(value, strings);
@@ -293,7 +293,7 @@ PyObject* PyFeature::getattr0(PyFeature* self, PyObject* nameObj, const AttrFunc
     {
          return (*table[attr->index])(self);
     }
-    const TagsRef& tags = self->feature.tagsOld();
+    TagTablePtr tags = self->feature.tags();
     return tags.getValue(nameObj, self->store->strings());
 }
 
@@ -336,7 +336,7 @@ PyObject* PyFeature::subscript(PyFeature* self, PyObject* keyObj)
         PyErr_SetString(PyExc_TypeError, "Key must be a string");
         return NULL;
     }
-    const TagsRef& tags = self->feature.tagsOld();
+    TagTablePtr tags = self->feature.tags();
     return tags.getValue(keyObj, self->store->strings());
 }
 

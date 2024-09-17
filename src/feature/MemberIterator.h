@@ -4,8 +4,8 @@
 #pragma once
 
 #include <common/util/ShortVarString.h>
-#include "FeaturePtr.h"
-#include "FeatureStore.h"
+#include "feature/FeaturePtr.h"
+#include "feature/FeatureStore.h"
 
 // TODO: need to bump the refcount of `store` to ensure that store does not 
 // get destroyed if the MemberIterator is used as a standalone object?

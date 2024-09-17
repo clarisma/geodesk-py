@@ -2,7 +2,6 @@ name: Build Wheels
 
 on:
   push:
-    # branches: [ main ]
     tags:
       - 'v*'
 
@@ -12,60 +11,50 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        # os: [ubuntu-latest, windows-latest]
-
+        os: [windows-latest, ubuntu-latest, macOS-latest]
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v2.20.0
-      env:
-        CIBW_BUILD: 'cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*'
-        CIBW_PRERELEASE_PYTHONS: 1
-        CIBW_SKIP: '*win32 *i686'   # Don't build for 32-bit
-        # CIBW_ARCHS_MACOS: x86_64  # Build only for x86_64 on macOS
-        # Let's try MacOS ARM
-        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.15   # force MacOS version 10.15+ for c++17 support
-
-    # Upload the built wheels for testing
-    - name: Upload wheels
-      uses: actions/upload-artifact@v3
-      with:
-        name: wheels
-        path: ./wheelhouse/*.whl
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.20.0
+        env:
+          CIBW_BUILD: 'cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*'
+          CIBW_PRERELEASE_PYTHONS: 1
+          CIBW_SKIP: '*win32 *i686'   # Don't build for 32-bit
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=11.0
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./wheelhouse/*.whl
 
   test_wheels:
     name: Test wheels on Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    needs: build_wheels  # This ensures tests run only after wheels are built
+    needs: build_wheels
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python-version: ['3.12']  # Only test on the latest stable Python version
-
+        os: [windows-latest, ubuntu-latest, macOS-latest]
+        python-version: ['3.12']
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}  # Set up the Python version
-
-      # Download the built wheels to test
+          python-version: ${{ matrix.python-version }}
       - name: Download wheels
         uses: actions/download-artifact@v3
         with:
           name: wheels
-
-      # Install the correct wheel for the current platform and Python version
+          path: wheelhouse
       - name: Install and test the built wheel
         run: |
-          pip install ./wheelhouse/*.whl
+          pip install --find-links wheelhouse geodesk
           pip install pytest
-          pytest test/test_basic.py  # Run basic tests
+          cd test
+          pytest test_basic.py
 
   upload_wheels:
     name: Upload Wheels to PyPI
@@ -73,21 +62,16 @@ jobs:
     runs-on: ubuntu-latest  # Only one upload job is needed, any OS is fine
     steps:
       - uses: actions/checkout@v4
-
-      # Download the wheels for uploading
       - name: Download built wheels
         uses: actions/download-artifact@v3
         with:
           name: wheels
-
+          path: wheelhouse
       - name: Set up Python for twine
-        if: runner.os == 'macOS'   # Only needed on MacOS
         uses: actions/setup-python@v2
         with:
           python-version: '3.11'
-
       - name: Publish to PyPI
         run: |
           python -m pip install twine
           twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
-

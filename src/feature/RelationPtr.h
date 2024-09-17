@@ -4,7 +4,7 @@
 #pragma once
 
 #include <unordered_set>
-#include "FeaturePtr.h"
+#include "feature/FeaturePtr.h"
 
 class RelationPtr : public FeaturePtr
 {

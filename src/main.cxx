@@ -11,7 +11,6 @@ static_assert(sizeof(void*) == 8, "Only 64-bit architectures are supported");
 #include <iostream>
 #include <chrono>
 // #include "io/OsmPbfReader.h"
-#include <common/util/files.h>
 #include <filesystem>
 
 /*

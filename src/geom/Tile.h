@@ -5,7 +5,7 @@
 
 #include <limits>
 #include <common/text/Format.h>
-#include "Box.h"
+#include "geom/Box.h"
 
 class BufferWriter;
 typedef int32_t ZoomLevel;

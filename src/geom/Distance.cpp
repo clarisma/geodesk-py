@@ -1,7 +1,7 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "Distance.h"
+#include "geom/Distance.h"
 
 double Distance::pointSegmentSquared(double x1, double y1, double x2, double y2,
     double px, double py)

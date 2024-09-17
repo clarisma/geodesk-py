@@ -1,10 +1,10 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "MemberCollection.h"
-#include "FastMemberIterator.h"
-#include "NodePtr.h"
-#include "WayPtr.h"
+#include "feature/MemberCollection.h"
+#include "feature/FastMemberIterator.h"
+#include "feature/NodePtr.h"
+#include "feature/WayPtr.h"
 
 MemberCollection::MemberCollection(FeatureStore* store, RelationPtr relation) :
 	types_(0)

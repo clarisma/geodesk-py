@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Centroid.h"
-#include <cstring>
 #include "feature/FeatureStore.h"
-#include "feature/polygon/Polygonizer.h"
-#include "feature/polygon/RingCoordinateIterator.h"
+#include "geom/polygon/Polygonizer.h"
+#include "geom/polygon/RingCoordinateIterator.h"
 
 
 

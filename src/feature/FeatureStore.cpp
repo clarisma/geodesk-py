@@ -4,7 +4,6 @@
 #include "FeatureStore.h"
 
 #include <filesystem>
-// #include <unicodeobject.h>
 #include <common/util/log.h>
 #include <common/util/PbfDecoder.h>
 #ifdef GEODESK_PYTHON
@@ -16,7 +15,7 @@
 // TODO: std::thread::hardware_concurrency() can return 0, so use
 // a default value in that case (e.g. 4 threads)
 
-std::unordered_map<std::string, FeatureStore*> FeatureStore::openStores_;
+// std::unordered_map<std::string, FeatureStore*> FeatureStore::openStores_;
 
 FeatureStore::FeatureStore()
   : refcount_(1),
@@ -44,24 +43,33 @@ FeatureStore* FeatureStore::openSingle(std::string_view relativeFileName)
 	}
 	std::string fileName = path.string();
 
-	FeatureStore* store;
-	auto it = openStores_.find(fileName);
-	if (it != openStores_.end()) 
-	{
-		store = it->second;
-		store->addref();
-		return store;
-	}
-	store = new FeatureStore();
+	// The try-block must enclose the lock of the openStores mutex
+	// If creation of the new store fails, the FeatureStore object
+	// is destroyed. But the FeatureStore destructor automatically
+	// removes the store from the list of open stores (which requires
+	// the mutex)
+
+	FeatureStore* store = nullptr;
 	try
 	{
+		std::lock_guard lock(getOpenStoresMutex());
+		auto openStores = getOpenStores();
+
+		auto it = openStores.find(fileName);
+		if (it != openStores.end())
+		{
+			store = it->second;
+			store->addref();
+			return store;
+		}
+		store = new FeatureStore();
 		store->open(fileName.data());
-		openStores_[fileName] = store;
+		openStores[fileName] = store;
 		return store;
 	}
 	catch (...)
 	{
-		delete store;
+		if(store) delete store;
 		throw;
 	}
 }
@@ -81,7 +89,10 @@ FeatureStore::~FeatureStore()
 	Py_XDECREF(emptyFeatures_);
 	#endif
 	LOG("Destroyed FeatureStore.");
-	openStores_.erase(fileName());
+
+	std::lock_guard lock(getOpenStoresMutex());
+	auto openStores = getOpenStores();
+	openStores.erase(fileName());
 }
 
 // TODO: Return TilePtr
@@ -140,7 +151,7 @@ PyObject* FeatureStore::getEmptyTags()
 {
 	if (!emptyTags_)
 	{
-		emptyTags_ = PyTags::create(this, TagsRef::empty());
+		emptyTags_ = PyTags::create(this, TagTablePtr::empty());
 		if (!emptyTags_) return NULL;
 	}
 	return Python::newRef(emptyTags_);
@@ -160,3 +171,14 @@ PyFeatures* FeatureStore::getEmptyFeatures()
 #endif
 
 
+std::unordered_map<std::string, FeatureStore*>& FeatureStore::getOpenStores()
+{
+	static std::unordered_map<std::string, FeatureStore*> openStores;
+	return openStores;
+}
+
+std::mutex& FeatureStore::getOpenStoresMutex()
+{
+	static std::mutex openStoresMutex;
+	return openStoresMutex;
+}

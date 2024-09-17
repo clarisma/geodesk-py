@@ -53,7 +53,7 @@ protected:
 	void writeId(FeatureStore* store, FeaturePtr feature);
 	static void writeDefaultId(FeatureWriter* writer,
 		FeatureStore* store, FeaturePtr feature, void* closure);
-	void writeTagValue(TagsRef tags, TagBits value, StringTable& strings);
+	void writeTagValue(TagTablePtr tags, TagBits value, StringTable& strings);
 
 	WriteIdFunction writeIdFunction_;
 	void* writeIdClosure_;

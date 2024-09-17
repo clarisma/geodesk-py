@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PointDistanceFilter.h"
-#include <common/util/log.h>
 #include "feature/FeatureStore.h"
 #include "feature/FastMemberIterator.h"
 #include "feature/WayPtr.h"
-#include "feature/polygon/PointInPolygon.h"
+#include "geom/polygon/PointInPolygon.h"
 #include "geom/Distance.h"
 
 // TODO: Conditionally accelerate if distance is far enough that

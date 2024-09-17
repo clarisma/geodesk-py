@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Filter.h"
-#include "api/Feature.h"
+#include <geodesk/feature/Feature.h>
 
 template <typename Predicate>
 class PredicateFilter : public Filter
 {
 public:
-	PredicateFilter(Predicate predicate) :
+	explicit PredicateFilter(Predicate predicate) :
 		predicate_(predicate)
 	{
 	}

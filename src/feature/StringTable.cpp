@@ -1,9 +1,9 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "StringTable.h"
+#include "feature/StringTable.h"
 
-#include <api/StringValue.h>
+#include <geodesk/feature/StringValue.h>
 #include <common/util/Bits.h>
 #include <common/util/PbfDecoder.h>
 #include <common/util/Strings.h>

@@ -10,13 +10,19 @@
 #include <cstring>
 #include <limits>
 #include <utility>
-#include "Coordinate.h"
+#include "geom/Coordinate.h"
 #include <geos/geom/Envelope.h>
 
 /// @brief An axis-aligned bounding box. A Box represents minimum and
 /// maximum X and Y coordinates in a Mercator-projected plane. It can
 /// straddle the Antimeridian (in which case minX is *larger* than maxX).
 /// A Box can also be empty (in which case minY is *larger* than maxY).
+///
+/// A Box is considered *simple* if it is non-empty and does not straddle
+/// the Antimeridian (i.e. `maxX >= minX && maxY >= minY`).
+/// Box methods with `Simple` in their name assume that a Box is *simple*,
+/// allowing a more efficient implementation (but return an invalid
+/// result in case the Box is not).
 ///
 class Box
 {
@@ -42,6 +48,8 @@ public:
 	{
 	}
 
+	/// @brief Returns a Box that encompasses the entire world.
+	///
 	static constexpr Box ofWorld()
 	{
 		int constexpr min = std::numeric_limits<int32_t>::min();
@@ -93,8 +101,7 @@ public:
 		return containsSimple(x, y);
 	}
 
-	
-	inline bool containsSimple(int32_t x, int32_t y) const
+	bool containsSimple(int32_t x, int32_t y) const
 	{
 		return (!(x > m_maxX || y > m_maxY || x < m_minX || y < m_minY));
 	}

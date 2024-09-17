@@ -6,10 +6,14 @@
 #ifdef GEODESK_PYTHON
 #include <Python.h>
 #endif
-#include "types.h"
+#include "feature/types.h"
 
 class ShortVarString;
 
+/// The Global string Table of a GOL.
+///
+/// @ingroup lowlevel
+///
 class StringTable
 {
 public:

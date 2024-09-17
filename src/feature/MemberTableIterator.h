@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "FeaturePtr.h"
-#include "Tex.h"
-#include "types.h"
+#include "feature/FeaturePtr.h"
+#include "feature/Tex.h"
+#include "feature/types.h"
 
 
 class MemberTableIterator

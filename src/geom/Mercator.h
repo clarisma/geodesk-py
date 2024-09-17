@@ -4,9 +4,8 @@
 #pragma once
 
 #include <cmath>
-#include <common/util/log.h>
 #include <common/math/Math.h>
-#include "Coordinate.h"
+#include "geom/Coordinate.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

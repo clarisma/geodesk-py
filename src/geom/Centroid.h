@@ -3,10 +3,14 @@
 
 #pragma once
 
-#include "Coordinate.h"
+#include "geom/Coordinate.h"
 #include "feature/WayPtr.h"
 #include "feature/RelationPtr.h"
 
+/// Classes and functions for calculating a feature's centroid
+///
+/// @ingroup lowlevel
+///
 class Centroid
 {
 public:

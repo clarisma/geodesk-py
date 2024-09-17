@@ -3,7 +3,7 @@
 
 #include "PyFeature.h"
 
-#include "feature/GeometryBuilder.h"
+#include "geom/GeometryBuilder.h"
 #include "geom/Mercator.h"
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"

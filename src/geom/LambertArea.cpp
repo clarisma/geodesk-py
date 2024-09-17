@@ -1,8 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "LambertArea.h"
-#include "feature/polygon/RingCoordinateIterator.h"
+#include "geom/LambertArea.h"
+#include "geom/polygon/RingCoordinateIterator.h"
 
 
 double LambertArea::signedOfWay(const WayPtr way)

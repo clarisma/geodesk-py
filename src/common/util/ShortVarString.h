@@ -64,6 +64,11 @@ public:
         return (len & 0x80) ? ((static_cast<uint32_t>(bytes_[1]) << 7) | (len & 0x7f)) : len;
     }
 
+    bool isEmpty() const noexcept
+    {
+        return bytes_[0] == 0;
+    }
+
     // To conform with other string classes -- don't confuse with totalSize(), which includes
     // the length byte(s), whereas size() is the actual string length only
     size_t size() const noexcept

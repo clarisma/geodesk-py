@@ -17,7 +17,7 @@ public:
     static const uint32_t DEFAULT = 0b1010101010101;
     using Iterator = BitIterator<uint32_t>;
 
-    inline int count() const noexcept
+    int count() const noexcept
     {
         return Bits::bitCount(levels_);
     }

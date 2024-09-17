@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "feature/WayCoordinateIterator.h"
 #include "feature/WayPtr.h"
 #include "MonotoneChain.h"
 #include "geom/Coordinate.h"

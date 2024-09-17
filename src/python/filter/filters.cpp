@@ -3,6 +3,7 @@
 
 #include "filters.h"
 #include "filter/Filter.h"
+#include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
@@ -12,70 +13,70 @@
 PyFeatures* filters::ancestors_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"ancestors_of will be available in Version 0.2.0");
+		"ancestors_of has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::contained_by(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"contained_by will be available in Version 0.2.0");
+		"contained_by has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::descendants_of(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"descendants_of will be available in Version 0.2.0");
+		"descendants_of has not been implemented yet");
 	return NULL;
 }
 
-PyFeatures* filters::disjoint(PyFeatures* self, PyObject* args, PyObject* kwargs)
+PyFeatures* filters::disjoint_from(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"disjoint will be available in Version 0.2.0");
+		"disjoint_from has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::max_meters_from(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"max_meters_from will be available in Version 0.2.0");
+		"max_meters_from has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::nearest_to(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"nearest_to will be available in Version 0.2.0");
+		"nearest_to has not been implemented yet");
 	return NULL;
 }
 
-PyFeatures* filters::overlaps(PyFeatures* self, PyObject* args, PyObject* kwargs)
+PyFeatures* filters::overlapping(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"overlaps will be available in Version 0.2.0");
+		"overlapping has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::pythonFilter(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"filter will be available in Version 0.2.0");
+		"filter has not been implemented yet");
 	return NULL;
 }
 
-PyFeatures* filters::touches(PyFeatures* self, PyObject* args, PyObject* kwargs)
+PyFeatures* filters::touching(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"touches will be available in Version 0.2.0");
+		"touching has not been implemented yet");
 	return NULL;
 }
 
 PyFeatures* filters::with_role(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
 	PyErr_SetString(PyExc_NotImplementedError,
-		"with_role will be available in Version 0.2.0");
+		"with_role has not been implemented yet");
 	return NULL;
 }
 

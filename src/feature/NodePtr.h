@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "FeaturePtr.h"
+#include "feature/FeaturePtr.h"
 
 class NodePtr : public FeaturePtr
 {

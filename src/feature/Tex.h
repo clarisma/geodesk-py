@@ -9,6 +9,10 @@
 
 // internal; needed by GOL
 
+/// A TEX Delta.
+///
+/// @ingroup lowlevel
+///
 class TexDelta
 {
 public:
@@ -41,6 +45,10 @@ private:
     int32_t delta_;
 };
 
+/// A Tile Export Number.
+///
+/// @ingroup lowlevel
+///
 class Tex
 {
 public:

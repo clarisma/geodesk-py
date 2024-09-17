@@ -12,7 +12,7 @@ def notest_geojson(features):
     city = features("a[boundary=administrative][admin_level=6][name:en=Munich]").one
     features("n[amenity=post_box]").within(city).geojson.save(
         "c:\\geodesk\\tests\\postboxes")
-    routes = features("r[route=bicycle]").intersects(city).geojson.save(
+    routes = features("r[route=bicycle]").intersecting(city).geojson.save(
         "c:\\geodesk\\tests\\routes")
     
 def notest_wkt(features):
@@ -34,7 +34,7 @@ def check_wkt_format(formatter, feature_shape):
         s1 = to_mercator(shapely.wkt.loads(str(formatter)))
         assert s1.equals(feature_shape)
     except shapely.errors.GEOSException as ex: 
-        print(f"GEOSException for {feature}: {ex}")
+        print(f"GEOSException: {ex}")
         formatter.save("c:\\geodesk\\debug\\bad-shape")
         assert False
         

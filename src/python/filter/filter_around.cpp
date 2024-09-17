@@ -5,6 +5,7 @@
 #include "filter/PointDistanceFilter.h"
 #include "geom/Centroid.h"
 #include "geom/LengthUnit.h"
+#include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/util/util.h"

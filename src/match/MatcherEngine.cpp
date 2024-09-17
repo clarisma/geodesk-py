@@ -3,7 +3,7 @@
 
 #include "MatcherEngine.h"
 #include "OpGraph.h"
-#include "api/StringValue.h"
+#include <geodesk//feature/StringValue.h>
 #include "feature/FeatureStore.h"
 #include <common/math/Math.h>
 
@@ -255,13 +255,13 @@ int MatcherEngine::accept(const Matcher* matcher, FeaturePtr pFeature)
                 if (type == 0)      // narrow number
                 {
                     pointer pVal = ctx.pTag_ - (int)ctx.valueOfs_;
-                    doubleValue = ((int32_t)pVal.getUnsignedShort()) + TagsRef::MIN_NUMBER;
+                    doubleValue = ((int32_t)pVal.getUnsignedShort()) + TagValues::MIN_NUMBER;
                     matched = 1;
                 }
                 else if (type == 2) // wide number
                 {
                     pointer pVal = ctx.pTag_ - (int)ctx.valueOfs_;
-                    doubleValue = TagValue::doubleFromWideNumber(pVal.getUnsignedInt());
+                    doubleValue = TagValues::doubleFromWideNumber(pVal.getUnsignedInt());
                     matched = 1;
                 }
                 else
