@@ -241,6 +241,8 @@ def helper_check_results(results, file_path):
 
 
 def test_concur(features):
+    # Always use monaco.gol for this test
+    world = Features("data/monaco")
     functions = [ (name,obj) for name,obj in inspect.getmembers(sys.modules[__name__])
         if inspect.isfunction(obj)
             and not name.startswith('test_')
@@ -248,7 +250,7 @@ def test_concur(features):
 
     results = []
     for name, func in functions:
-        res = func(features)
+        res = func(world)
         print (f"{name}: {res}")
         results.append((name, res))
 
