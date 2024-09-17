@@ -188,7 +188,7 @@ PyObject* TagTablePtr::valueAsNumber(TagBits value, StringTable& strings) const
 uint32_t TagTablePtr::count() const
 {
 	int count = 0;
-	uint_fast16_t tag;
+	uint32_t tag;
 	DataPtr pTable = ptr();
         // TODO: change, can just check tag (no need to incur cost of unaligned read)
 	if (pTable.getUnsignedIntUnaligned() != TagValues::EMPTY_TABLE_MARKER)
