@@ -4,8 +4,8 @@
 #include "GeoJsonWriter.h"
 #include "geodesk.h"
 #include "feature/FeatureStore.h"
-#include "feature/polygon/Polygonizer.h"
-#include "feature/polygon/Ring.h"
+#include "geom/polygon/Polygonizer.h"
+#include "geom/polygon/Ring.h"
 
 void GeoJsonWriter::writeTags(TagIterator& iter)
 {
@@ -216,7 +216,7 @@ void GeoJsonWriter::writeCollectionRelationGeometry(FeatureStore* store, Relatio
 
 void GeoJsonWriter::writeFeature(FeatureStore* store, FeaturePtr feature)
 {
-	TagIterator tagIter(feature.tagsOld(), store->strings());
+	TagIterator tagIter(feature.tags(), store->strings());
 	if (pretty_)
 	{
 		if (!firstFeature_) writeConstString(",\n");

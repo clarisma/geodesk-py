@@ -11,12 +11,12 @@ class PyTags
 public:
     PyObject_HEAD
     FeatureStore* store;
-    TagsRef tags;
+    TagTablePtr tags;
 
     static PyTypeObject TYPE;
     static PyMappingMethods MAPPING_METHODS;
 
-    static PyObject* create(FeatureStore* store, TagsRef tags);
+    static PyObject* create(FeatureStore* store, TagTablePtr tags);
     static void dealloc(PyTags* self);
     static Py_ssize_t len(PyTags* self);
     static PyObject* str(PyTags* self);
@@ -32,13 +32,13 @@ public:
 
     PyObject_HEAD
     FeatureStore* store;
-    TagsRef tags;
-    pointer current;
+    TagTablePtr tags;
+    DataPtr current;
     NextTagFunc func;
 
     static PyTypeObject TYPE;
 
-    static PyObject* create(FeatureStore* store, TagsRef tags);
+    static PyObject* create(FeatureStore* store, TagTablePtr tags);
 
 private:
     static void dealloc(PyTagIterator* self);

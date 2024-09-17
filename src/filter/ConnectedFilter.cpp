@@ -3,6 +3,7 @@
 
 #include "ConnectedFilter.h"
 #include "feature/FastMemberIterator.h"
+#include "feature/WayCoordinateIterator.h"
 
 ConnectedFilter::ConnectedFilter(FeatureStore* store, FeaturePtr feature)
 {

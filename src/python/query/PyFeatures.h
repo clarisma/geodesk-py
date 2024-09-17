@@ -5,7 +5,8 @@
 
 #include <functional>
 #include <Python.h>
-#include "python/Environment.h"
+#include "feature/FeatureNodeIterator.h"
+#include "feature/WayCoordinateIterator.h"
 #include "feature/WayPtr.h"
 #include "feature/MemberIterator.h"
 #include "feature/ParentRelationIterator.h"

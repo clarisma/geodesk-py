@@ -1,9 +1,10 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "Matcher.h"
+#include "match/Matcher.h"
 #include <cstddef>   // for offsetof
 #include <regex>
+#include <common/util/pointer.h>
 
 const Matcher* MatcherHolder::defaultRoleMethod(const RoleMatcher* matcher, FeaturePtr)
 {

@@ -5,6 +5,7 @@
 #include <regex>
 #include <string_view>
 #include <common/alloc/Arena.h>
+#include "feature/FeatureTypes.h"
 #include "feature/types.h"
 
 enum OpcodeTraits

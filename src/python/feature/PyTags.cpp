@@ -6,7 +6,7 @@
 #include "feature/TagIterator.h"
 #include "format/GeoJsonWriter.h"
 
-PyObject* PyTags::create(FeatureStore* store, TagsRef tags)
+PyObject* PyTags::create(FeatureStore* store, TagTablePtr tags)
 {
     PyTags* self = (PyTags*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)
@@ -128,7 +128,7 @@ PyObject* PyTagIterator::nextGlobal(PyTagIterator* self)
         &PyTagIterator::firstLocal
     };
 
-    uint32_t tag = self->current.getUnalignedUnsignedInt();
+    uint32_t tag = self->current.getUnsignedIntUnaligned();
     int64_t tagVal = (static_cast<int64_t>(self->tags.pointerOffset(
         self->current) + 2) << 32) | tag;
     self->current += 4 + (tag & 2);
@@ -158,8 +158,8 @@ PyObject* PyTagIterator::nextLocal(PyTagIterator* self)
         &PyTagIterator::done
     };
 
-    pointer origin = self->tags.alignedBasePtr();
-    int64_t tag = self->current.getUnalignedLong();
+    DataPtr origin = self->tags.alignedBasePtr();
+    TagBits tag = self->current.getLongUnaligned();
     int32_t rawPointer = static_cast<int32_t>(tag >> 16);
     int32_t flags = rawPointer & 7;
     // local keys are relative to the 4-byte-aligned tagtable address
@@ -186,7 +186,7 @@ PyObject* PyTagIterator::next(PyTagIterator* self)
     return self->func(self);
 }
 
-PyObject* PyTagIterator::create(FeatureStore* store, TagsRef tags)
+PyObject* PyTagIterator::create(FeatureStore* store, TagTablePtr tags)
 {
     PyTagIterator* self = (PyTagIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)
@@ -194,9 +194,9 @@ PyObject* PyTagIterator::create(FeatureStore* store, TagsRef tags)
         store->addref();
         self->store = store;
         self->tags = tags;
-        pointer p = tags.ptr();
+        DataPtr p = tags.ptr();
         self->current = p;
-        if (p.getUnsignedInt() != TagsRef::EMPTY_TABLE_MARKER)
+        if (p.getUnsignedInt() != TagValues::EMPTY_TABLE_MARKER)
         {
             self->func = &nextGlobal;
         }

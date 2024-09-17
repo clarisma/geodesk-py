@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
-#include "feature/GeometryBuilder.h"
+#include "geom/GeometryBuilder.h"
 #include "geom/Area.h"
 #include "geom/Centroid.h"
 #include "geom/Length.h"

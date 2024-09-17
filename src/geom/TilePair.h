@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include <common/util/Bits.h>
-#include "Tile.h"
+#include "geom/Tile.h"
 
 class TilePair : public Tile
 {

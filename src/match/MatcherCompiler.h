@@ -15,15 +15,13 @@ struct Selector;
 class MatcherCompiler
 {
 public:
-	MatcherCompiler(FeatureStore* store) :
+	explicit MatcherCompiler(FeatureStore* store) :
 		store_(store)
 	{
-		// TODO :fix this dependency, store not initialized yet
+		// TODO: fix this dependency, store not initialized yet
 	}
 
 	const MatcherHolder* getMatcher(const char* query);
-
-	// void emit(OpGraph* graph, uint8_t* pResources, uint16_t* pCode);
 
 private:
 	const MatcherHolder* compileMatcher(OpGraph& graph, Selector* firstSel, uint32_t indexBits);

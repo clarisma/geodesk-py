@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
-#include "feature/GeometryBuilder.h"
 #include "filter/ComboFilter.h"
 #include "filter/IntersectsFilter.h"
 #include "match/MatcherDecoder.h"
 #include "geom/Area.h"
+#include "geom/GeometryBuilder.h"
 #include "geom/Length.h"
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
@@ -292,6 +292,7 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         if (arg == (PyObject*)Py_None) return self->getEmpty();
 
         PyErr_Format(PyExc_TypeError, "%s is not a valid argument", type->tp_name);
+        return NULL;
     }
     else if (argCount == 0)
     {

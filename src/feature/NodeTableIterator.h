@@ -4,9 +4,9 @@
 #pragma once
 
 #include <common/util/DataPtr.h>
-#include "NodePtr.h"
-#include "Tex.h"
-#include "types.h"
+#include "feature/NodePtr.h"
+#include "feature/Tex.h"
+#include "feature/types.h"
 
 
 class NodeTableIterator

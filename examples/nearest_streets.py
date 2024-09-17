@@ -1,5 +1,5 @@
-from geodesk import Features, Box;
-from shapely import *;
+from geodesk import Features, Box, from_mercator
+from shapely import *
 
 coords = [
     (13.3898033, 52.5174377),

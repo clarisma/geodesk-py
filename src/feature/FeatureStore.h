@@ -3,12 +3,11 @@
 
 #pragma once
 
-#include <algorithm>
 #include <unordered_map>
 #include <common/store/BlobStore.h>
 #include <common/util/ThreadPool.h>
 
-#include "StringTable.h"
+#include "feature/StringTable.h"
 #include "match/Matcher.h"
 #include "match/MatcherCompiler.h"
 #include "query/TileQueryTask.h"
@@ -90,6 +89,11 @@ private:
     static const uint32_t INDEX_SCHEMA_PTR_OFS = 56;
 
     void readIndexSchema();
+
+    void readTileSchema();
+
+    static std::unordered_map<std::string, FeatureStore*>& getOpenStores();
+    static std::mutex& getOpenStoresMutex();
     
     size_t refcount_;
     StringTable strings_;
@@ -107,7 +111,5 @@ private:
     #endif
     ThreadPool<TileQueryTask> executor_;
     uint32_t zoomLevels_;
-
-    static std::unordered_map<std::string, FeatureStore*> openStores_;
 };
 

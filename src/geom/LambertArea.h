@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include "feature/Way.h"
-#include "feature/polygon/Polygonizer.h"
+#include "geom/polygon/Polygonizer.h"
 #include "project/Lambert.h"
 #include "project/Sinusoidal.h"
-#include "Mercator.h"
+#include "geom/Mercator.h"
 
 class LambertArea
 {

@@ -5,8 +5,9 @@
 #include <cstdint>
 #include <regex>
 #include <string_view>
+#include <common/util/pointer.h>
 #include <common/util/ShortVarString.h>
-#include "Matcher.h"
+#include "match/Matcher.h"
 
 
 class MatcherEngine

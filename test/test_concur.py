@@ -200,6 +200,12 @@ def id_hash(world):
         hash ^= f.id
     return hash
 
+def geojson_len(world):
+    total_len = 0
+    for f in world:
+        total_len += len(str(f.geojson))
+    return total_len
+
 def helper_read_key_value_file(file_path):
     result = {}
     with open(file_path, 'r') as file:
@@ -234,7 +240,7 @@ def helper_check_results(results, file_path):
 
 
 
-def test_concur(world):
+def test_concur(features):
     functions = [ (name,obj) for name,obj in inspect.getmembers(sys.modules[__name__])
         if inspect.isfunction(obj)
             and not name.startswith('test_')
@@ -242,13 +248,15 @@ def test_concur(world):
 
     results = []
     for name, func in functions:
-        res = func(world)
+        res = func(features)
         print (f"{name}: {res}")
         results.append((name, res))
 
-    #with open("c:\\geodesk\\tests\\monaco-good.txt", "w") as file:
-    #    for name,res in results:
-    #        file.write(f"{name}={res}\n")
+    """
+    with open("c:\\geodesk\\tests\\monaco-current.txt", "w") as file:
+        for name,res in results:
+            file.write(f"{name}={res}\n")
+    """
 
     assert helper_check_results(results, "data/monaco-good.txt")
 

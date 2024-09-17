@@ -5,56 +5,16 @@
 
 #include <common/util/DataPtr.h>
 #include <common/util/log.h>
+#include "feature/FeatureHeader.h"
+#include "feature/FeatureTypes.h"
 #include "TagTablePtr.h"
-#include "Tags.h"			// TODO: deprecated
 #include "geom/Box.h"
-#include "geom/Coordinate.h"
 
 class FeatureStore;
 class Matcher;
 class MatcherHolder;
 class Filter;
 class StringTable;
-
-
-class FeatureHeader
-{
-public:
-	FeatureHeader(uint64_t bits) : bits_(bits) {}
-
-	// TODO: This will change in 2.0
-	static FeatureHeader forTypeAndId(int type, uint64_t id)
-	{
-		uint64_t hi = (((id >> 32) << 8) | (type << 3));
-		uint64_t lo = id << 32;
-		return FeatureHeader(hi | lo);
-	}
-
-	uint64_t bits() const noexcept { return bits_; }
-
-	// TODO: This will change in 2.0
-	uint64_t id() const noexcept
-	{
-		uint32_t hi = static_cast< uint32_t>(bits_) >> 8;
-		uint32_t lo = static_cast<uint32_t>(bits_ >> 32);
-		return (static_cast<uint64_t>(hi) << 32) | lo;
-	}
-
-	// TODO: This will change in 2.0
-	int flags() const noexcept 
-	{ 
-		return static_cast<int>(bits_);
-	}
-
-	int typeCode() const
-	{
-		return static_cast<int>(bits_ >> 3) & 3;
-	}
-
-private:
-	uint64_t bits_;
-};
-
 
 
 class FeaturePtr
@@ -65,14 +25,6 @@ public:
 	FeaturePtr(const FeaturePtr& other) : p_(other.p_) {}
 
 	operator DataPtr () const noexcept { return p_; }
-
-	/*
-	FeaturePtr& operator=(const FeaturePtr& other) noexcept
-	{
-		p_ = other.p_;
-		return *this;
-	}
-	*/
 
 	uint64_t id() const noexcept
 	{
@@ -98,15 +50,15 @@ public:
 		return Box((p_-16).getInt(), (p_-12).getInt(), (p_-8).getInt(), (p_-4).getInt());
 	}
 
-	bool isNull() const	{ return !p_; }
-	int  flags() const 	{ return p_.getInt();	}
-	bool isArea() const	{ return p_.getUnsignedInt() & FeatureFlags::AREA; }
-	bool isNode() const	{ return typeCode() == FeatureType::NODE; }
-	bool isWay() const	{ return typeCode() == FeatureType::WAY; }
-	bool isRelation() const	{ return typeCode() == FeatureType::RELATION; }
-	bool isRelationMember() const { return flags() & FeatureFlags::RELATION_MEMBER; }
-	bool isType(FeatureTypes types) { return types.acceptFlags(flags()); }
-	bool intersects(const Box& bounds)
+	bool isNull() const noexcept { return !p_; }
+	int  flags() const noexcept	{ return p_.getInt();	}
+	bool isArea() const	noexcept { return p_.getUnsignedInt() & FeatureFlags::AREA; }
+	bool isNode() const	noexcept { return typeCode() == FeatureType::NODE; }
+	bool isWay() const noexcept { return typeCode() == FeatureType::WAY; }
+	bool isRelation() const	noexcept { return typeCode() == FeatureType::RELATION; }
+	bool isRelationMember() const noexcept { return flags() & FeatureFlags::RELATION_MEMBER; }
+	bool isType(FeatureTypes types) const noexcept { return types.acceptFlags(flags()); }
+	bool intersects(const Box& bounds) const noexcept
 	{
 		assert(!isNode());
 		return (!((p_-16).getInt() > bounds.maxX() ||
@@ -115,20 +67,13 @@ public:
 			(p_-4).getInt() < bounds.minY()));
 	}
 
-	TagTablePtr tags() const
+	TagTablePtr tags() const noexcept
 	{
 		return TagTablePtr::readFrom(p_ + 8);
 	}
 
-	// TODO: deprecated
-	TagsRef tagsOld() const
-	{
-		pointer ppTags(p_ + 8);
-		return TagsRef(ppTags);
-	}
-
-	DataPtr ptr() const { return p_; }
-	DataPtr bodyptr() const { return (p_ + 12).follow(); }
+	DataPtr ptr() const noexcept { return p_; }
+	DataPtr bodyptr() const noexcept { return (p_ + 12).follow(); }
 
 	/**
 	 * Obtains a pointer to the feature's relation table.
@@ -148,19 +93,13 @@ public:
 
 	int32_t relationTableHandleFast(const uint8_t* base) const
 	{
-		LOG("Getting relations of %s", toString().c_str());
-		LOG("  feature ptr = %p", p_);
-		LOG("     base ptr = %p", base);
 		assert(isRelationMember());
 		// For nodes, the body pointer points to the reltable
 		// For ways and relations, the reltable pointer sits right
 		// before the body anchor
-		LOG("body ptr = %p", bodyptr().ptr());
-		DataPtr ppRelTable = isNode() ? (p_ + 12) : (bodyptr() - 4);
-		LOG("ppRelTable = %p", ppRelTable.ptr());
-		LOG("relative pointer = %d", ppRelTable.getIntUnaligned());
-		LOG("feature handle = %d", (int)(p_ - base));
-		return (ppRelTable - base) + ppRelTable.getIntUnaligned();
+        DataPtr ppRelTable = isNode() ? (p_ + 12) : (bodyptr() - 4);
+		return static_cast<int32_t>((ppRelTable - base) +
+			ppRelTable.getIntUnaligned());
 	}
 
 	/**

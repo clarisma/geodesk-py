@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "RelationPtr.h"
+#include "feature/RelationPtr.h"
 
 class FastMemberIterator
 {

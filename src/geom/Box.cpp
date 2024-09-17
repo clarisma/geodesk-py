@@ -1,7 +1,7 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "Box.h"
+#include "geom/Box.h"
 #include <common/text/Format.h>
 
 void Box::format(char* buf) const

@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "WithinFilter.h"
-#include "feature/polygon/PointInPolygon.h"
 #include "feature/FastMemberIterator.h"
 #include "geom/Mercator.h"
+#include "geom/polygon/PointInPolygon.h"
 #include <common/util/log.h>
+#include <geom/Centroid.h>
 
 // TODO: anySegmentsCross
 // Need to distinguish between "crossing" and "colinear"
@@ -30,14 +31,29 @@ bool WithinPolygonFilter::acceptWay(WayPtr way) const
 	// TODO: accept if location >= 0 for area within area
 	// A within B is always true if A == B
 
-	return locateWayNodes(way) > (way.isArea() ? -1 : 0);
+	loc = locateWayNodes(way);
+	if(loc < 0) return false;
+	if(loc > 0) return true;
+
+	// loc==0: all vertexes are on the boundary
+
+	if(!way.isArea()) return false;
+
 	// A linestring is not considered "within" if it lies entirely
 	// on the boundary; it must have at least one node that lies on the
 	// interior, hence we only accept 1 ("inside")
+
 	// For ways that represent an area, we just ensure that none
 	// of the way's geometry lies outside (> -1); we need to accept
 	// 0 (on boundary) because two polygons which are geometrically equal 
 	// are considered to be within each other
+	// Exception (see https://github.com/clarisma/geodesk-py/issues/57):
+	// If all vertexes of an area-way lie on the boundary of the test
+	// area, we need to also check if the centroid of the candidate
+	// area lies within the test area.
+
+	Coordinate centroid = Centroid::ofWay(way);
+	return index_.locatePoint(centroid) > 0;
 }
 
 bool WithinPolygonFilter::acceptNode(NodePtr node) const

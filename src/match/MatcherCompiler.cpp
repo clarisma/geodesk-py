@@ -1,13 +1,13 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "MatcherCompiler.h"
-#include "Matcher.h"
-#include "MatcherDecoder.h"
-#include "MatcherEngine.h"
-#include "MatcherEmitter.h"
-#include "MatcherParser.h"
-#include "MatcherValidator.h"
+#include "match/MatcherCompiler.h"
+#include "match/Matcher.h"
+#include "match/MatcherDecoder.h"
+#include "match/MatcherEngine.h"
+#include "match/MatcherEmitter.h"
+#include "match/MatcherParser.h"
+#include "match/MatcherValidator.h"
 #include <common/util/BufferWriter.h>
 #include <common/util/log.h>
 

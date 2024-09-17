@@ -8,6 +8,10 @@
 
 // internal; needed by GOL
 
+/// A TIP Delta.
+///
+/// @ingroup lowlevel
+///
 class TipDelta
 {
 public:
@@ -26,6 +30,10 @@ private:
     int32_t delta_;
 };
 
+/// A Tile Index Position.
+///
+/// @ingroup lowlevel
+///
 class Tip
 {
 public:

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PreparedSpatialFilter.h"
+#include "feature/WayCoordinateIterator.h"
 #include "geom/mc/WaySlicer.h"
 
 bool PreparedSpatialFilter::anyNodesInPolygon(WayPtr way) const

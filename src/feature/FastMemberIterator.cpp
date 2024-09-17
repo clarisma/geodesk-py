@@ -1,9 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "FastMemberIterator.h"
-#include "FeatureStore.h"
-#include <common/util/log.h>
+#include "feature/FastMemberIterator.h"
+#include "feature/FeatureStore.h"
 
 
 FastMemberIterator::FastMemberIterator(FeatureStore* store, RelationPtr relation) :

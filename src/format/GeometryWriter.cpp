@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "GeometryWriter.h"
-#include "feature/polygon/Polygonizer.h"
-#include "feature/polygon/Ring.h"
-#include "feature/polygon/RingCoordinateIterator.h"
+#include "geom/polygon/Polygonizer.h"
+#include "geom/polygon/Ring.h"
+#include "geom/polygon/RingCoordinateIterator.h"
 #include "geom/Mercator.h"
 #include "geom/geos/GeosCoordinateIterator.h"
 

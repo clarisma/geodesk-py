@@ -4,9 +4,9 @@
 #pragma once
 
 #include <common/util/DataPtr.h>
-#include "RelationPtr.h"
-#include "Tex.h"
-#include "types.h"
+#include "feature/RelationPtr.h"
+#include "feature/Tex.h"
+#include "feature/types.h"
 
 class RelationTablePtr
 {

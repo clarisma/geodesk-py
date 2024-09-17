@@ -4,7 +4,7 @@
 #pragma once
 
 #include <vector>
-#include "RelationPtr.h"
+#include "feature/RelationPtr.h"
 
 class MemberCollection : public std::vector<FeaturePtr>
 {

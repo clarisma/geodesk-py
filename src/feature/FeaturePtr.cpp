@@ -1,11 +1,7 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "FeaturePtr.h"
-#include "FeatureStore.h"
-#include "types.h"
-#include <common/util/StringBuilder.h>
-
+#include "feature/FeaturePtr.h"
 
 const char* FeaturePtr::typeName() const
 {

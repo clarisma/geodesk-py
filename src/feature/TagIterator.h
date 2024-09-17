@@ -3,20 +3,19 @@
 
 #pragma once
 
-#include "Tags.h"
-#include <common/util/DataPtr.h>
+#include "feature/TagTablePtr.h"
 
 class TagIterator
 {
 public:
-	TagIterator(TagsRef tags, StringTable& strings);
+	TagIterator(TagTablePtr tags, StringTable& strings);
 
 	bool next(std::string_view& key, TagBits& value);
-	const TagsRef& tags() const { return tags_; }
+	TagTablePtr tags() const { return tags_; }
 	StringTable& strings() { return strings_; }
 
 private:
-	TagsRef tags_;
+	TagTablePtr tags_;
 	DataPtr p_;
 	StringTable& strings_;
 };

@@ -8,7 +8,7 @@
 #include "python/geom/PyCoordinate.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
-#include "feature/GeometryBuilder.h"
+#include "geom/GeometryBuilder.h"
 #include "geom/Mercator.h"
 
 PyObject* PyAnonymousNode::create(FeatureStore* store, int32_t x, int32_t y)

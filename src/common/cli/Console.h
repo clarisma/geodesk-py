@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
+#include <atomic>
 #include <chrono>
+#include <cstdarg>
 #include <cstdint>
 #include <mutex>
 #include <string_view>

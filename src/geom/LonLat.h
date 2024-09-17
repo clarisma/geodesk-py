@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Mercator.h"
+#include "geom/Mercator.h"
 #include <common/text/Format.h>
 
 class LonLat

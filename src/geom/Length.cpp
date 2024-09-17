@@ -1,8 +1,9 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
-#include "Length.h"
+#include "geom/Length.h"
 #include "feature/FastMemberIterator.h"
+#include "feature/WayCoordinateIterator.h"
 #include "geom/Mercator.h"
 
 double Length::ofWay(WayPtr way)

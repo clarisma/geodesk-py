@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "IntersectsFilter.h"
-#include "feature/polygon/PointInPolygon.h"
+#include "geom/polygon/PointInPolygon.h"
 
 static bool chainContainedByAreaWay(const RTree<const MonotoneChain>::Node* node, WayPtr way)
 {

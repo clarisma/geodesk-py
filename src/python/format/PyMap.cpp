@@ -12,13 +12,11 @@
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/feature/PyFeature.h"
-#include "feature/polygon/Polygonizer.h"
+#include "geom/polygon/Polygonizer.h"
 #include "feature/FastMemberIterator.h"
-#include "geom/Mercator.h"
 #include <common/io/File.h>
 #include <common/util/BufferWriter.h>
 #include <common/util/BitIterator.h>
-#include <common/util/log.h>
 #include "python/util/util.h"
 #include "python/Environment.h"
 #include <geos/geom/Geometry.h>

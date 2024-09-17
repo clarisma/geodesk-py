@@ -3,7 +3,7 @@ from geodesk import *
 key = "highway"
 min_occurrence = 20
 
-world = geodesk.Features('c:\\geodesk\\tests\\de3.gol')
+world = Features('c:\\geodesk\\tests\\de3.gol')
 counts = {}
 for feature in world(f"[{key}]"):
     value = feature.str(key)

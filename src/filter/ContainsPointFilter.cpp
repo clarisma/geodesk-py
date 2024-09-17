@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "ContainsPointFilter.h"
-#include "feature/polygon/PointInPolygon.h"
+#include "geom/polygon/PointInPolygon.h"
 
 bool ContainsPointFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint /* ignored */) const
 {

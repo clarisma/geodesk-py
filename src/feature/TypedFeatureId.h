@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "types.h"
+#include "feature/types.h"
 #include <common/text/Format.h>
 
 class TypedFeatureId

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "Area.h"
-#include "feature/polygon/RingCoordinateIterator.h"
+#include "geom/polygon/RingCoordinateIterator.h"
 
 /*
 // see http://en.wikipedia.org/wiki/Shoelace_formula
@@ -50,7 +50,7 @@ double Area::signedMercatorOfRing(const Polygonizer::Ring* ring)
 double Area::ofRelation(FeatureStore* store, const RelationPtr relation)
 {
     assert(relation.isArea());
-    int32_t avgY = (static_cast<int64_t>(relation.minY()) + relation.maxY()) / 2;
+    int32_t avgY = Math::avg(relation.minY(), relation.maxY());
     double scale = Mercator::metersPerUnitAtY(avgY);
     scale *= scale;     // squared for square meters
     double totalArea = 0;
@@ -60,13 +60,13 @@ double Area::ofRelation(FeatureStore* store, const RelationPtr relation)
     const Polygonizer::Ring* ring = polygonizer.outerRings();
     while (ring)
     {
-        totalArea += Area::mercatorOfRing(ring) * scale;
+        totalArea += mercatorOfRing(ring) * scale;
         ring = ring->next();
     }
     ring = polygonizer.innerRings();
     while (ring)
     {
-        totalArea -= Area::mercatorOfRing(ring) * scale;
+        totalArea -= mercatorOfRing(ring) * scale;
         ring = ring->next();
     }
 

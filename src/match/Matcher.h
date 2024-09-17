@@ -39,7 +39,8 @@ class Matcher
 public:
     Matcher(MatcherMethod func, FeatureStore* store) : function_(func), store_(store) {}
 
-    inline bool accept(FeaturePtr feature) const
+    // TODO: Can this throw?
+    bool accept(FeaturePtr feature) const
     {
         return function_(this, feature);
     }

@@ -4,10 +4,12 @@
 #pragma once
 
 #include "feature/WayPtr.h"
-#include "feature/polygon/Polygonizer.h"
+#include "geom/polygon/Polygonizer.h"
 #include "Mercator.h"
 
-// TODO: units are squared-mercator-units, not square meters
+/// Functions for calculating the area of features.
+///
+/// @ingroup lowlevel
 class Area
 {
 public:
@@ -20,7 +22,7 @@ public:
     static double signedMercatorOfRing(const Polygonizer::Ring* ring);
     static double ofWay(WayPtr way)
 	{
-        int32_t avgY = (static_cast<int64_t>(way.minY()) + way.maxY()) / 2;
+        int32_t avgY = Math::avg(way.minY(), way.maxY());
         double scale = Mercator::metersPerUnitAtY(avgY);
 		return std::abs(signedMercatorOfWay(way)) * scale * scale;
 	}

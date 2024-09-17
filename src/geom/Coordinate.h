@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <string>
+#include <functional>	// for std::hash
 
 class Coordinate
 {

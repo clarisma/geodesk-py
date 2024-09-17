@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "feature/Way.h"
 #include "SpatialFilter.h"
 #include "geom/mc/MCIndex.h"
 
