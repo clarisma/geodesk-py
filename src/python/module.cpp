@@ -14,11 +14,10 @@
 // #include "python/geom/PyRTree.h"
 #include "python/query/PyFeatures.h"
 #include "python/query/PyQuery.h"
-#include "python/query/PyQueryFinalizer.h"
 #include "python/query/PyTile.h"
 #include "python/util/PyBinder.h"
 #include "python/util/PyFastMethod.h"
-#include <common/util/log.h>
+#include <clarisma/util/log.h>
 
 static PyMethodDef GEODESK_METHODS[] = 
 {
@@ -94,7 +93,6 @@ extern "C" PyMODINIT_FUNC PyInit_geodesk()
     // if (createPublicType(module, "RTree", &PyRTree::TYPE) < 0) return nullptr;
 
     if (createPrivateType(module, &PyQuery::TYPE) < 0) return nullptr;
-    if (createPrivateType(module, &PyQueryFinalizer::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyTags::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyTagIterator::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyMemberIterator::TYPE) < 0) return nullptr;

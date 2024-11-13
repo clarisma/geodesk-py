@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
+#include <geodesk/geom/GeometryBuilder.h>
+#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
-#include "geom/GeometryBuilder.h"
-#include "geom/Mercator.h"
+
 
 PyObject* PyAnonymousNode::create(FeatureStore* store, int32_t x, int32_t y)
 {

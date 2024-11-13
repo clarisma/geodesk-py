@@ -14,6 +14,7 @@ parent_relations_of_count=4433
 parent_ways_count=2029
 parent_ways_of_count=2029
 parents_of_count=6462
+relation_member_role_len=78193
 street_crossing_count=920
 street_crossing_in_count=920
 street_crossing_iter_count=920

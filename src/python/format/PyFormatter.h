@@ -4,11 +4,17 @@
 #pragma once
 #include <Python.h>
 #include <structmember.h>
-#include "feature/FeaturePtr.h"
+#include <geodesk/feature/FeaturePtr.h>
 
+namespace clarisma {
 class Buffer;
+}
+
+using namespace geodesk;
+namespace geodesk {
 class FeatureStore;
 class FeatureWriter;
+}
 
 class PyFormatter : public PyObject
 {
@@ -43,7 +49,7 @@ public:
 	bool sortTags;
 	
 
-	typedef void (*WriteFunc)(PyFormatter*, Buffer*);
+	typedef void (*WriteFunc)(PyFormatter*, clarisma::Buffer*);
 
 	PyObject* target;
 	WriteFunc writeFunc;
@@ -75,7 +81,7 @@ public:
 	static void writeIdViaCallable(FeatureWriter* writer,
 		FeatureStore* store, FeaturePtr feature, /* PyObject */ void* closure);
 
-	static void writeGeoJson(PyFormatter* self, Buffer* buf);
-	static void writeWkt(PyFormatter* self, Buffer* buf);
+	static void writeGeoJson(PyFormatter* self, clarisma::Buffer* buf);
+	static void writeWkt(PyFormatter* self, clarisma::Buffer* buf);
 };
 

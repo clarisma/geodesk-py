@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "query/Query.h"
+#include <geodesk/query/Query.h>
 
 
 // TODO: 
@@ -17,6 +17,7 @@
 // once the last deferred PyQuery is deallocated, FeatureStore may also be deallocated,
 // which in turn would free the PQC itself. Decrease refcount at end of run
 
+using namespace geodesk;
 class PyFeatures;
 
 class PyQuery : public PyObject

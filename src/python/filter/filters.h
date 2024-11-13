@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #pragma once
-#include "filter/PreparedFilterFactory.h"
+#include <geodesk/filter/PreparedFilterFactory.h>
 #include "python/query/PyFeatures.h"
 
 namespace filters

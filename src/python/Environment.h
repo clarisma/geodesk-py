@@ -3,14 +3,13 @@
 
 #pragma once
 
-#include <cstdint>
 #include <geos_c.h>
 #include <Python.h>
-#include "match/Matcher.h"
+#include <geodesk/match/Matcher.h>
 #include "python/util/util.h"
 
+using namespace geodesk;
 class PyFeatures;
-class PyQueryFinalizer;
 
 typedef PyObject* (*ShapelyCreateGeometryFunc)(GEOSGeometry* ptr, GEOSContextHandle_t ctx);
 typedef char (*ShapelyGetGEOSGeometryFunc)(PyObject* obj, GEOSGeometry** out);
@@ -70,7 +69,7 @@ public:
 		return shapelyApiFunctions_;
 	}
 
-	inline void** getShapelyFunctions()
+	void** getShapelyFunctions()
 	{
 		if (!shapelyApiFunctions_) initShapelyFunctions();
 		return shapelyApiFunctions_;
@@ -107,8 +106,6 @@ public:
 	static void clearAndLogException();
 
 	// PyFeatures* getEmptyFeatures();
-	PyQueryFinalizer* getQueryFinalizer();
-	PyQueryFinalizer* peekQueryFinalizer() { return queryFinalizer_; }
 	PyObject* raiseQueryException(const char* format, ...);
 
 private:
@@ -118,9 +115,8 @@ private:
 	PyObject* shapelyModule_;
 	void** shapelyApiFunctions_;
 	// PyFeatures* emptyFeatures_;
-	PyQueryFinalizer* queryFinalizer_;
 	PyObject* queryException_;		// not owned, don't refcount
-	MatcherHolder allMatcher_;
+	// MatcherHolder allMatcher_;
 	// TODO: Decide where to keep this: here of in FeatureStore
 	// (should not be tied to FeatureStore)
 	PyObject* stringConstants_[STRING_CONSTANT_COUNT];

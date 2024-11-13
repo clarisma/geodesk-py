@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "filter/ContainsPointFilter.h"
+#include <geodesk/filter/ContainsPointFilter.h>
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/util/util.h"

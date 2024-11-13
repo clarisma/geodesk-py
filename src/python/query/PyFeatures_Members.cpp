@@ -3,8 +3,8 @@
 
 #include "PyFeatures.h"
 #include <unordered_set>
+#include <geodesk/query/TileIndexWalker.h>
 #include "python/feature/PyFeature.h"
-#include "query/TileIndexWalker.h"
 #include "PyTile.h"
 
 

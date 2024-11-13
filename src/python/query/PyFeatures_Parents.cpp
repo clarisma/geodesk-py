@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
-#include "filter/Filter.h"
+#include <geodesk/filter/Filter.h>
 #include "python/feature/PyFeature.h"
 #include "python/query/PyQuery.h"
 
@@ -85,7 +85,7 @@ PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
         // for anonymous nodes, we use bounds (a single-pixel bbox
         // that describes the nodes location) rather than relatedFeature
         // (because they don't exist as a feature)
-        // We only iterate their ways, becuase by definition they
+        // We only iterate their ways, because by definition they
         // can never be relation members
         return PyNodeParentIterator::create(features, features->bounds.bottomLeft());
     }
@@ -165,49 +165,6 @@ PyTypeObject PyParentRelationIterator::TYPE =
     .tp_iter = PyObject_SelfIter,
     .tp_iternext = (iternextfunc)next,
 };
-
-
-
-bool FeatureNodeFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
-{
-    // TODO: Ignore missing tiles; by definition, we cannot find the
-    // candidate node in a missing tile
-    // LOG("Checking %s...", feature.toString().c_str());
-    assert(feature.isWay());
-    WayPtr way(feature);
-    FeatureNodeIterator iter(store);
-    iter.start(way.bodyptr(), way.flags(), store->borrowAllMatcher(), nullptr);
-    for (;;)
-    {
-        NodePtr node = iter.next();
-        if (node.isNull()) return false;
-        if (node.ptr() == node_.ptr()) break;
-            // Important: Check exact pointers, not conceptual equality
-    }
-    return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
-}
-
-
-bool WayNodeFilter::accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const
-{
-    assert(feature.isWay());
-    WayPtr way(feature);
-    // LOG("Checking way/%llu", way.id());
-    WayCoordinateIterator iter;
-    iter.start(way, 0);
-    for (;;)
-    {
-        Coordinate c = iter.next();
-        if (c.isNull())
-        {
-            // LOG("  Not accepted.");
-            return false;
-        }
-        if (c == coord_) break;
-    }
-    // LOG("  Accepted (prior to secondary filter)!");
-    return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
-}
 
 
 PyObject* PyNodeParentIterator::create(PyFeatures* features, Coordinate wayNodeXY)

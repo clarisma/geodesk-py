@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
-#include "geom/GeometryBuilder.h"
-#include "geom/Area.h"
-#include "geom/Centroid.h"
-#include "geom/Length.h"
-#include "geom/Mercator.h"
+#include <geodesk/geom/Area.h>
+#include <geodesk/geom/Centroid.h>
+#include <geodesk/geom/GeometryBuilder.h>
+#include <geodesk/geom/Length.h>
+#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyCoordinate.h"

@@ -37,6 +37,7 @@
 /out/
 /_skbuild/
 /dist/
+/lib/
 /third_party/
 .idea/
 cmake-build-*/

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "filter/Filter.h"
+#include <geodesk/filter/Filter.h>
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyBox.h"

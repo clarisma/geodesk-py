@@ -4,7 +4,9 @@
 #pragma once
 
 #include <Python.h>
-#include "geom/Box.h"
+#include <geodesk/geom/Box.h>
+
+using namespace geodesk;
 
 class PyBox : public PyObject
 {

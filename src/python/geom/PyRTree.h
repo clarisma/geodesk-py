@@ -5,7 +5,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include <vector>
-#include "geom/Box.h"
+#include <geodesk/geom/Box.h>
 #include "geom/rtree/RTree.h"
 
 class PyBox;

@@ -14,7 +14,7 @@ def test_rtree(features):
     # restaurants = features("na[amenity=restaurant][cuisine=sushi,japanese]")
     # buildings = features("a[building]")
     soccer = features("a[leisure=pitch][sport=soccer]")
-    print(f'Intersects Bavaria     : {soccer.intersects(bavaria).count}')
+    print(f'Intersects Bavaria     : {soccer.intersecting(bavaria).count}')
     # print(f'Intersects Bavaria bbox: {restaurants(bavaria.bounds).count}')
     # print(f'Intersects Bavaria     : {restaurants.intersects(bavaria).count}')
     # print(f'Intersects Bavaria bbox: {restaurants(bavaria.bounds).count}')

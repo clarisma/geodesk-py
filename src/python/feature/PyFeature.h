@@ -4,10 +4,10 @@
 #pragma once
 
 #include <Python.h>
-#include "feature/WayPtr.h"
-#include "feature/FeatureStore.h"
-#include "feature/MemberIterator.h"
+#include <geodesk/feature/FeatureStore.h>
+#include <geodesk/feature/MemberIterator.h>
 
+using namespace geodesk;
 class PyFeature;
 class PyFeatures;
 

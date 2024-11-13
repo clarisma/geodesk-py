@@ -4,7 +4,9 @@
 #pragma once
 
 #include <Python.h>
-#include "feature/FeaturePtr.h"
+#include <geodesk/feature/FeaturePtr.h>
+
+using namespace geodesk;
 
 class PyTags
 {

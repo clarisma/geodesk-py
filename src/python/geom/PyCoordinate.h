@@ -5,9 +5,10 @@
 
 #include <cstdint>
 #include <Python.h>
-#include "geom/Coordinate.h"
-#include "geom/Mercator.h"
+#include <geodesk/geom/Coordinate.h>
+#include <geodesk/geom/Mercator.h>
 
+using namespace geodesk;
 
 class PyCoordinate : public PyObject
 {

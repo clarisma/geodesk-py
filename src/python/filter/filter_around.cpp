@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "filter/PointDistanceFilter.h"
-#include "geom/Centroid.h"
-#include "geom/LengthUnit.h"
+#include <geodesk/filter/PointDistanceFilter.h>
+#include <geodesk/geom/Centroid.h>
+#include <geodesk/geom/LengthUnit.h>
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"

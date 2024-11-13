@@ -7,10 +7,10 @@
 #include "python/util/util.h"
 #include "python/util/PyFastMethod.h"
 #include "PyCoordinate.h"
-#include "geom/Coordinate.h"
-#include "geom/LengthUnit.h"
-#include "geom/Mercator.h"
-#include <common/util/log.h>
+#include <geodesk/geom/Coordinate.h>
+#include <geodesk/geom/LengthUnit.h>
+#include <geodesk/geom/Mercator.h>
+#include <clarisma/util/log.h>
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Envelope.h>
 

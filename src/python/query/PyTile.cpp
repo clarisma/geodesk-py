@@ -43,7 +43,7 @@ PyObject* PyTile::getattro(PyTile* self, PyObject* nameObj)
 
 Py_hash_t PyTile::hash(PyTile* self)
 {
-	return static_cast<Py_hash_t>(self->tile); 
+	return static_cast<uint32_t>(self->tile);
 }
 
 /*
@@ -142,7 +142,7 @@ PyObject* PyTile::size(PyTile* self)
 {
 	// pointer tileIndex(self->store->tileIndex());
 	// TODO: Don't fetch tile, return 0 if tile is missing
-	pointer pTile = self->store->fetchTile(self->tip);
+	DataPtr pTile = self->store->fetchTile(self->tip);
 	// TODO: stale/missing tiles
 	// TODO: Blob header will change in 2.0
 	return PyLong_FromLong(pTile.getUnsignedInt() & 0x3fff'ffff);

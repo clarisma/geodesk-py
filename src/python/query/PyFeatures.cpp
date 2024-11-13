@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
-#include "filter/ComboFilter.h"
-#include "filter/IntersectsFilter.h"
-#include "match/MatcherDecoder.h"
-#include "geom/Area.h"
-#include "geom/GeometryBuilder.h"
-#include "geom/Length.h"
+#include <geodesk/filter/ComboFilter.h>
+#include <geodesk/filter/IntersectsFilter.h>
+// #include "match/MatcherDecoder.h"       // TODO: remove (only needed for explain)
+#include <geodesk/geom/Area.h>
+#include <geodesk/geom/GeometryBuilder.h>
+#include <geodesk/geom/Length.h>
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/format/PyFormatter.h"
@@ -17,10 +17,12 @@
 #include "python/util/PyFastMethod.h"
 #include "PyQuery.h"
 #include "PyTile.h"
-#include <common/util/Parser.h>
+#include <clarisma/util/Parser.h>
 
 #include "PyFeatures_attr.cxx"
 #include "PyFeatures_lookup.cxx"
+
+using namespace clarisma;
 
 // TODO: Looks like an empty view is not properly refcounted; if a PyFeatures
 // object that holds an empty view survives all other refs to the FeatureStore,
@@ -281,6 +283,7 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
             if (Environment::get().getGeosGeometry(arg, &geom))
             {
                 GEOSContextHandle_t context = Environment::get().getGeosContext();
+                // TODO: Use Filters::intersect(geom)
                 IntersectsFilterFactory filterFactory;
                 // TODO: check if factory throws or returns null?
                 return self->withFilter(filterFactory.forGeometry(context, geom));
@@ -1065,6 +1068,7 @@ PyObject* PyFeatures::update(PyFeatures* self, PyObject* args, PyObject* kwargs)
 
 PyObject* PyFeatures::explain(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
+    /*
     Py_ssize_t argCount = PyTuple_Size(args);
     if (argCount == 1)
     {
@@ -1091,6 +1095,7 @@ PyObject* PyFeatures::explain(PyFeatures* self, PyObject* args, PyObject* kwargs
             return str;
         }
     }
+    */
     PyErr_SetString(PyExc_TypeError, "Expected query");
     return NULL;
 }

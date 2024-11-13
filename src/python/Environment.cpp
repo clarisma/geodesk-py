@@ -3,16 +3,14 @@
 
 #include "Environment.h"
 #include <geos_c.h>
-#include "python/query/PyQueryFinalizer.h"
 #include "python/query/PyFeatures.h"
-#include <common/util/log.h>
+#include <clarisma/util/log.h>
 
 Environment::Environment() :
     geosContext_(nullptr),
     shapelyModule_(nullptr),
     shapelyApiFunctions_(nullptr),
     // emptyFeatures_(nullptr),
-    queryFinalizer_(nullptr),
     queryException_(nullptr)
 {
     memset(stringConstants_, 0, sizeof(stringConstants_));
@@ -44,7 +42,6 @@ Environment::~Environment()
     Py_XDECREF(shapelyModule_);
     if (geosContext_) GEOS_finish_r(geosContext_);
     // Py_XDECREF(emptyFeatures_);
-    Py_XDECREF(queryFinalizer_);
     // don't dispose of queryException_, it is tracked by the module itself
 }
 
@@ -61,16 +58,6 @@ PyFeatures* Environment::getEmptyFeatures()
 }
 */
 
-PyQueryFinalizer* Environment::getQueryFinalizer()
-{
-    if (!queryFinalizer_)
-    {
-        queryFinalizer_ = PyQueryFinalizer::create();
-        if (!queryFinalizer_) return NULL;
-    }
-    Py_INCREF(queryFinalizer_);
-    return queryFinalizer_;
-}
 
 void Environment::clearAndLogException()
 {

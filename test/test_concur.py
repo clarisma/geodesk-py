@@ -103,6 +103,13 @@ def parent_ways_count(world):
         count += child.parents.ways.count
     return count
 
+def relation_member_role_len(world):
+    total_len = 0
+    for parent in world.relations:
+        for child in parent.members:
+            total_len += len(child.role)
+    return total_len
+
 def nonsense_parent_count(world):
     count = 0
     for child in world:

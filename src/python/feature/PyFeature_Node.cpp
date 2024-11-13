@@ -3,8 +3,8 @@
 
 #include "PyFeature.h"
 
-#include "geom/GeometryBuilder.h"
-#include "geom/Mercator.h"
+#include <geodesk/geom/GeometryBuilder.h>
+#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyBox.h"

@@ -5,11 +5,11 @@
 #include <geos_c.h>
 #include "python/Environment.h"
 #include "PyCoordinate.h"
-#include "geom/LengthUnit.h"
-#include "geom/Mercator.h"
-#include "geom/geos/MercatorCoordinateFilter.h"
+#include <geodesk/geom/LengthUnit.h>
+#include <geodesk/geom/Mercator.h>
+#include <geodesk/geom/geos/MercatorCoordinateFilter.h>
 #include "python/util/util.h"
-#include <string.h>
+#include <cstring>
 
 // For now, we return a copies of transformed shapes, to conform
 // to what the Shapely library does

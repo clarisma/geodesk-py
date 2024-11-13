@@ -3,12 +3,12 @@
 
 #pragma once
 #include <Python.h>
-#include "format/GeometryWriter.h"
-#include "geom/Box.h"
-#include "geom/Coordinate.h"
-#include <common/alloc/Arena.h>
+#include <geodesk/format/GeometryWriter.h>
+#include <geodesk/geom/Box.h>
+#include <geodesk/geom/Coordinate.h>
+#include <clarisma/alloc/Arena.h>
 
-
+using namespace geodesk;
 class PyBinder;
 class PyFeature;
 
@@ -123,7 +123,7 @@ private:
 	int addObject(PyObject* obj, PyObject* kwargs);
 	void releaseItems();
 
-	Arena arena_;
+	clarisma::Arena arena_;
 	Element* firstItem_;
 	Element** pNextItem_;
 
@@ -134,7 +134,7 @@ private:
 class MapWriter : public GeometryWriter
 {
 public:
-	MapWriter(Buffer* buf, PyMap& map) :
+	MapWriter(clarisma::Buffer* buf, PyMap& map) :
 		GeometryWriter(buf),
 		map_(map),
 		binder_(nullptr)

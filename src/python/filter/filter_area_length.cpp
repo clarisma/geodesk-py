@@ -3,9 +3,9 @@
 
 #include "filters.h"
 #include <limits>
-#include "filter/AreaFilter.h"
-#include "filter/LengthFilter.h"
-#include "geom/LengthUnit.h"
+#include <geodesk/filter/AreaFilter.h>
+#include <geodesk/filter/LengthFilter.h>
+#include <geodesk/geom/LengthUnit.h>
 
 
 double getUnit(PyObject* args, PyObject* kwargs, bool squared)

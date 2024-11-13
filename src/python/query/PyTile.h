@@ -3,8 +3,11 @@
 
 #pragma once
 #include <Python.h>
-#include "feature/FeatureStore.h"
-#include "feature/Tip.h"
+#include <geodesk/feature/FeatureStore.h>
+#include <geodesk/feature/Tip.h>
+#include <geodesk/geom/Tile.h>
+
+using namespace geodesk;
 
 class PyTile : public PyObject
 {

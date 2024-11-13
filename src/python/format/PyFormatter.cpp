@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFormatter.h"
-#include <common/util/Buffer.h>
-#include "format/FeatureWriter.h"
-#include "format/GeoJsonWriter.h"
-#include "format/WktWriter.h"
+#include <clarisma/util/Buffer.h>
+#include <geodesk/format/FeatureWriter.h>
+#include <geodesk/format/GeoJsonWriter.h>
+#include <geodesk/format/WktWriter.h>
 #include "python/feature/PyFeature.h"
 #include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
@@ -13,6 +13,7 @@
 #include "PyFormatter_attr.cxx"
 #include "PyFormatter_lookup.cxx"
 
+using namespace clarisma;
 
 PyFormatter* PyFormatter::create(PyObject* obj, WriteFunc func, const char* ext)
 {

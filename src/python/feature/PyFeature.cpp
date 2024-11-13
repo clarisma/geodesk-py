@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
-#include <common/math/Math.h>
-#include <common/util/log.h>
+#include <clarisma/math/Math.h>
+#include <clarisma/util/log.h>
+#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"
@@ -12,10 +13,11 @@
 #include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
 #include "PyTags.h"
-#include "geom/Mercator.h"
+
 
 #include "PyFeature_lookup.cxx"
 
+using namespace clarisma;
 
 // TODO: adding feature IDs to a set is 3x faster than adding the actual feature to a set!
 //  Try storing ID (and type bits) in PyFeature object itself

@@ -5,11 +5,9 @@
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "PyFeatures.h"
-#include "PyQueryFinalizer.h"
 
 PyQuery* PyQuery::create(PyFeatures* features)
 {
-    LOG("PyQuery::create(PyFeatures*)");
     PyQuery* self = (PyQuery*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)
     {
@@ -43,70 +41,19 @@ PyQuery* PyQuery::create(PyFeatures* features,
 }
 
 
-
 void PyQuery::dealloc(PyQuery* self)
 {
-    // TODO
-     
-    // LOG("Deallocating PyQuery...");
-
-    // Check if query is still running, and if so, attempt to cancel it
-    // (but don't await its completion)
-    // If the query is still running, we enqueue it in the QueryFinalizer
-    // The QueryFinalizer runs whenever garbage collection occurs, or when
-    // a FeatureStore is about to be deallocated
-    // When we enqueue a PyQuery for finalization, we drop its reference
-    // to PyFeatures (so it no longer indirectly references the FeatureStore),
-    // but we add references to its Matcher and Filter (to ensure they are 
-    // still available to the running query). If the store's refcount drops
-    // to zero, it will ask the QueryFinalizer to await completion of all
-    // queries on this store before closing the store file and deallocating itself
-
-    // TODO: temporaily disabled deallocation until we implement the above
-
-    assert(Py_REFCNT(self) == 0);
-
-    if (false /* TODO: tryCancel() */)
-    {
-        Py_XDECREF(self->target);       // target may have been set to null
-                                        // during finalization
-        self->query.~Query();           // call destructor explicitly
-        Py_TYPE(self)->tp_free(self);
-    }
-    else
-    {
-        // We need to save any currently pending exception
-        // Creating the finalizer (or even just enqueing the query) may cause 
-        // other exceptions to be raised
-
-        PyObject* errorType, * errorValue, * traceback;
-        PyErr_Fetch(&errorType, &errorValue, &traceback);
-        PyErr_Clear();
-
-        PyQueryFinalizer* finalizer = Environment::get().getQueryFinalizer();
-        if (!finalizer)
-        {
-            Environment::clearAndLogException();
-            // Something went seriously wrong and we can't do anything,
-            // so we'll just let the PyQuery leak
-        }
-        else
-        {
-            Py_INCREF(self); // resurrect this object
-            assert(Py_REFCNT(self) == 1);
-            finalizer->track(self);
-        }
-
-        // Restore the previous exception (if any)
-        PyErr_Restore(errorType, errorValue, traceback);
-    }
+    // TODO: cancel pending query
+    Py_DECREF(self->target);
+    // ~Query() will block until all pending tile shave been processed
+    self->query.~Query();           // call destructor explicitly
+    Py_TYPE(self)->tp_free(self);
 }
-
 
 PyObject* PyQuery::iter(PyQuery* self)
 {
     Py_INCREF(self);
-    return reinterpret_cast<PyObject*>(self);
+    return self;
 }
 
 PyObject* PyQuery::next(PyQuery* self)

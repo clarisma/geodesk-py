@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "filters.h"
-#include "filter/IntersectsFilter.h"
+#include <geodesk/filter/IntersectsFilter.h>
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
 

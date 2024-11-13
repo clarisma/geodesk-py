@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
-#include <common/util/log.h>
+#include <clarisma/util/log.h>
 #include "python/feature/PyFeature.h"
 
 PyFeatures* PyFeatures::WayNodes::createRelated(PyFeatures* base, WayPtr way)

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyTags.h"
-#include "feature/FeatureStore.h"
-#include "feature/TagIterator.h"
-#include "format/GeoJsonWriter.h"
+#include <geodesk/feature/FeatureStore.h>
+#include <geodesk/feature/TagIterator.h>
+#include <geodesk/format/GeoJsonWriter.h>
+
+using namespace clarisma;
 
 PyObject* PyTags::create(FeatureStore* store, TagTablePtr tags)
 {

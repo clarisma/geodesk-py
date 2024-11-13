@@ -12,16 +12,18 @@
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/feature/PyFeature.h"
-#include "geom/polygon/Polygonizer.h"
-#include "feature/FastMemberIterator.h"
-#include <common/io/File.h>
-#include <common/util/BufferWriter.h>
-#include <common/util/BitIterator.h>
+#include <geodesk/geom/polygon/Polygonizer.h>
+#include <geodesk/feature/FastMemberIterator.h>
+#include <clarisma/io/File.h>
+#include <clarisma/util/BufferWriter.h>
+#include <clarisma/util/BitIterator.h>
 #include "python/util/util.h"
 #include "python/Environment.h"
 #include <geos/geom/Geometry.h>
 
 #include "PyMap_attr.cxx"
+
+using namespace clarisma;
 
 // TODO: Map should only write to file if modified
 

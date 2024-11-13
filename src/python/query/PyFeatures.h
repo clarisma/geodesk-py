@@ -5,16 +5,21 @@
 
 #include <functional>
 #include <Python.h>
-#include "feature/FeatureNodeIterator.h"
-#include "feature/WayCoordinateIterator.h"
-#include "feature/WayPtr.h"
-#include "feature/MemberIterator.h"
-#include "feature/ParentRelationIterator.h"
-#include "geom/Box.h"
+#include <geodesk/feature/FeatureNodeIterator.h>
+#include <geodesk/feature/WayCoordinateIterator.h>
+#include <geodesk/feature/WayPtr.h>
+#include <geodesk/feature/MemberIterator.h>
+#include <geodesk/feature/ParentRelationIterator.h>
+#include <geodesk/filter/FeatureNodeFilter.h>
+#include <geodesk/filter/WayNodeFilter.h>
+#include <geodesk/geom/Box.h>
 
+using namespace geodesk;
+namespace geodesk {
 class FeatureStore;
 class Filter;
 class Matcher;
+}
 class PyAnonymousNode;
 class PyFeature;
 class PyFeatures;
@@ -297,46 +302,6 @@ public:
     static PyObject* create(PyFeatures* features, DataPtr pRelTable);
     static void dealloc(PyParentRelationIterator* self);
     static PyObject* next(PyParentRelationIterator* self);
-};
-
-
-class FeatureNodeFilter : public Filter
-{
-public:
-    // We don't need to set acceptedTypes because this Filter
-    // will never be combined with others; it is only used for
-    // finding ways that contain a specific node
-    FeatureNodeFilter(NodePtr node, const Filter* filter) :
-        node_(node),
-        secondaryFilter_(filter)
-    {
-    }
-
-    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
-
-private:
-    NodePtr node_;
-    const Filter* secondaryFilter_;
-};
-
-
-class WayNodeFilter : public Filter
-{
-public:
-    // We don't need to set acceptedTypes because this Filter
-    // will never be combined with others; it is only used for
-    // finding ways that contain a specific node
-    WayNodeFilter(Coordinate coord, const Filter* filter) :
-        coord_(coord),
-        secondaryFilter_(filter)
-    {
-    }
-
-    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override;
-
-private:
-    Coordinate coord_;
-    const Filter* secondaryFilter_;
 };
 
 

@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeature.h"
-#include "geom/GeometryBuilder.h"
-#include "geom/polygon/Polygonizer.h"
-#include "geom/Area.h"
-#include "geom/Centroid.h"
-#include "geom/Length.h"
+#include <geodesk/geom/GeometryBuilder.h>
+#include <geodesk/geom/polygon/Polygonizer.h>
+#include <geodesk/geom/Area.h>
+#include <geodesk/geom/Centroid.h>
+#include <geodesk/geom/Length.h>
 #include "python/Environment.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyCoordinate.h"
@@ -44,7 +44,7 @@ PyObject* PyFeature::Relation::length(PyFeature* self)
 PyObject* PyFeature::Relation::members(PyFeature* self)
 {
     DataPtr pBody = self->feature.bodyptr();
-    if (pBody.getInt() == 0)
+    if (pBody.getInt() == 0)        // TODO: unaligned!!!
     {
         // return (PyObject*)Environment::get().getEmptyFeatures();
         return self->store->getEmptyFeatures();
