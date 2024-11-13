@@ -43,6 +43,8 @@ else()
 	message(FATAL_ERROR "GEOS or GEOS C API target not found.")
 endif()
 
+message(STATUS "GeoDesk: CIBW_PYTHON_INCLUDE = ${CIBW_PYTHON_INCLUDE}")
+message(STATUS "GeoDesk: CIBW_PYTHON_LIBRARIES = ${CIBW_PYTHON_LIBRARIES}")
 
 #if(BUILD_WHEELS)
 #	find_package(PythonExtensions REQUIRED)
