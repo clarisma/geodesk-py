@@ -43,18 +43,6 @@ else()
 	message(FATAL_ERROR "GEOS or GEOS C API target not found.")
 endif()
 
-set(GEODESK_PYTHON ON CACHE INTERNAL "Enable GeoDesk Python support")
-if(BUILD_WHEELS)
-	set(GEODESK_PYTHON_WHEELS ON CACHE INTERNAL "Enable Support for Python Wheels")
-endif()
-
-# Set the option to enable GEOS support for libgeodesk
-set(GEODESK_WITH_GEOS ON CACHE INTERNAL "Enable GEOS support in libgeodesk")
-set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CACHE INTERNAL "")
-set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
-# Include the libgeodesk subdirectory
-add_subdirectory(lib/libgeodesk)
-
 
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)
@@ -71,6 +59,23 @@ else()
 		message(FATAL_ERROR "Python not found!")
 	endif()
 endif()
+
+# Pass Python variables to submodules
+set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIRS} CACHE INTERNAL "Python include directories")
+set(Python_LIBRARIES ${Python_LIBRARIES} CACHE INTERNAL "Python libraries")
+
+
+set(GEODESK_PYTHON ON CACHE INTERNAL "Enable GeoDesk Python support")
+if(BUILD_WHEELS)
+	set(GEODESK_PYTHON_WHEELS ON CACHE INTERNAL "Enable Support for Python Wheels")
+endif()
+
+# Set the option to enable GEOS support for libgeodesk
+set(GEODESK_WITH_GEOS ON CACHE INTERNAL "Enable GEOS support in libgeodesk")
+set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CACHE INTERNAL "")
+set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
+# Include the libgeodesk subdirectory
+add_subdirectory(lib/libgeodesk)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 include_directories(src lib/libgeodesk/include ${GEOS_INCLUDE_PATHS})
