@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
  
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Building GeoDesk for Python")
 
 # Unbloat executable via section garbage collection
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_C_COMPILER_ID MATCHES "Clang")
