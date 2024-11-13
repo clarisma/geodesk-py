@@ -122,7 +122,7 @@ private:
 	PyObject* stringConstants_[STRING_CONSTANT_COUNT];
 	static const char* STRING_CONSTANTS[STRING_CONSTANT_COUNT];
 
-	friend PyObject* PyInit_geodesk();
+	friend PyObject* PyInit__geodesk();
 };
 
 // Don't format string because tuple unpacking relies on exception being raised
