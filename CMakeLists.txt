@@ -44,9 +44,9 @@ else()
 endif()
 
 
-if(BUILD_WHEELS)
-	find_package(PythonExtensions REQUIRED)
-else()
+#if(BUILD_WHEELS)
+#	find_package(PythonExtensions REQUIRED)
+#else()
 	 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 	 include_directories(${Python_INCLUDE_DIRS})
 
@@ -58,7 +58,7 @@ else()
 	else()
 		message(FATAL_ERROR "Python not found!")
 	endif()
-endif()
+#endif()
 
 # Pass Python variables to submodules
 set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIRS} CACHE INTERNAL "Python include directories")
