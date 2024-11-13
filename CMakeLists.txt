@@ -46,9 +46,9 @@ endif()
 message(STATUS "GeoDesk: CIBW_PYTHON_INCLUDE = ${CIBW_PYTHON_INCLUDE}")
 message(STATUS "GeoDesk: CIBW_PYTHON_LIBRARIES = ${CIBW_PYTHON_LIBRARIES}")
 
-#if(BUILD_WHEELS)
-#	find_package(PythonExtensions REQUIRED)
-#else()
+if(BUILD_WHEELS)
+	find_package(PythonExtensions REQUIRED)
+else()
 	 find_package(Python REQUIRED COMPONENTS Development.Module)
 	 include_directories(${Python_INCLUDE_DIRS})
 
@@ -60,7 +60,7 @@ message(STATUS "GeoDesk: CIBW_PYTHON_LIBRARIES = ${CIBW_PYTHON_LIBRARIES}")
 	else()
 		message(FATAL_ERROR "Python not found!")
 	endif()
-#endif()
+endif()
 
 # Pass Python variables to submodules
 set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIRS} CACHE INTERNAL "Python include directories")
