@@ -78,6 +78,7 @@ set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CA
 set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
 # Include the libgeodesk subdirectory
 add_subdirectory(lib/libgeodesk)
+target_include_directories(geodesk PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 include_directories(src lib/libgeodesk/include ${GEOS_INCLUDE_PATHS})
