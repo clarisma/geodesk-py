@@ -73,7 +73,7 @@ int createPublicType(PyObject* module, const char* name, PyTypeObject* type)
 volatile uint32_t performance_blackhole;
 #endif 
 
-extern "C" PyMODINIT_FUNC PyInit_geodesk()
+extern "C" PyMODINIT_FUNC PyInit__geodesk()
 {
 #ifdef GEODESK_TEST_PERFORMANCE
     printf("\n=== Test build, not for release ===\n");

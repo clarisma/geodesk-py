@@ -1,1 +1,1 @@
-from .geodesk import *
+from ._geodesk import *

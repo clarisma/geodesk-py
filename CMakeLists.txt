@@ -101,31 +101,31 @@ if(NOT BUILD_WHEELS)
 	target_compile_definitions(geodesk-py-test PRIVATE _WIN32_WINNT=0x0601)
 endif()
 
-add_library(geodesk_py MODULE ${SOURCE_FILES})
-set_target_properties(geodesk_py PROPERTIES OUTPUT_NAME "geodesk")
+add_library(_geodesk MODULE ${SOURCE_FILES})
+# set_target_properties(geodesk_py PROPERTIES OUTPUT_NAME "geodesk")
 # target_include_directories(geodesk PRIVATE ${INCLUDES})
-target_link_libraries(geodesk_py ${LIBRARIES})
-target_compile_definitions(geodesk_py PRIVATE GEODESK_WITH_GEOS)
-target_compile_definitions(geodesk_py PRIVATE INCLUDE_NLOHMANN_JSON_HPP_)
+target_link_libraries(_geodesk ${LIBRARIES})
+target_compile_definitions(_geodesk PRIVATE GEODESK_WITH_GEOS)
+target_compile_definitions(_geodesk PRIVATE INCLUDE_NLOHMANN_JSON_HPP_)
 if(BUILD_WHEELS)
-	python_extension_module(geodesk_py)
+	python_extension_module(_geodesk)
 else()
-	set_target_properties(geodesk_py PROPERTIES PREFIX "") # to remove 'lib' prefix on Unix systems
+	set_target_properties(_geodesk PROPERTIES PREFIX "") # to remove 'lib' prefix on Unix systems
 	if(WIN32)
-		set_target_properties(geodesk_py PROPERTIES SUFFIX ".pyd")
+		set_target_properties(_geodesk PROPERTIES SUFFIX ".pyd")
 	endif()
 endif()
 
 # message(STATUS "C++ Compiler Flags, Release build: ${CMAKE_CXX_FLAGS_RELEASE}")
   
-target_compile_definitions(geodesk_py PRIVATE GEODESK_PYTHON)
+target_compile_definitions(_geodesk PRIVATE GEODESK_PYTHON)
 # TODO: Add tests and install targets if needed.
 
 if(BUILD_WHEELS)
-	install(TARGETS geodesk_py
-		LIBRARY DESTINATION geodesk)
+	install(TARGETS _geodesk
+		LIBRARY DESTINATION _geodesk)
 else()
-	install(TARGETS geodesk_py
+	install(TARGETS _geodesk
 			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
 			RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()

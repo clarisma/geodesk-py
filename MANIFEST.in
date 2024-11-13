@@ -1,5 +1,5 @@
-include geodesk.pyd
-include geodesk.so
+include _geodesk.pyd
+include _geodesk.so
 exclude *.lib
 exclude *.a
 prune include

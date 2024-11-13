@@ -4,4 +4,4 @@
 #pragma once
 #include <Python.h>
 
-extern "C" PyMODINIT_FUNC PyInit_geodesk();
+extern "C" PyMODINIT_FUNC PyInit__geodesk();
