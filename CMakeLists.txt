@@ -47,7 +47,7 @@ endif()
 #if(BUILD_WHEELS)
 #	find_package(PythonExtensions REQUIRED)
 #else()
-	 find_package(Python REQUIRED COMPONENTS Interpreter Development)
+	 find_package(Python REQUIRED COMPONENTS Development)
 	 include_directories(${Python_INCLUDE_DIRS})
 
 	if (Python_FOUND)
