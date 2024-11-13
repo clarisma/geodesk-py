@@ -23,7 +23,7 @@ Also available [for Java](http://www.github.com/clarisma/geodesk).
 
 ### Requirements
 
-- Python 3.7 or above
+- Python 3.9 or above
 - Java 16 or above (for the GOL Tool)
  
 ### Download
