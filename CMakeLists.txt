@@ -49,7 +49,7 @@ message(STATUS "GeoDesk: CIBW_PYTHON_LIBRARIES = ${CIBW_PYTHON_LIBRARIES}")
 #if(BUILD_WHEELS)
 #	find_package(PythonExtensions REQUIRED)
 #else()
-	 find_package(Python REQUIRED COMPONENTS Development)
+	 find_package(Python REQUIRED COMPONENTS Development.Module)
 	 include_directories(${Python_INCLUDE_DIRS})
 
 	if (Python_FOUND)
