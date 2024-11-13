@@ -17,6 +17,10 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           submodules: 'recursive'
+      - name: Force update submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --force
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.20.0
         env:
