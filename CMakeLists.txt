@@ -44,6 +44,10 @@ else()
 endif()
 
 set(GEODESK_PYTHON ON CACHE INTERNAL "Enable GeoDesk Python support")
+if(BUILD_WHEELS)
+	set(GEODESK_PYTHON_WHEELS ON CACHE INTERNAL "Enable Support for Python Wheels")
+endif()
+
 # Set the option to enable GEOS support for libgeodesk
 set(GEODESK_WITH_GEOS ON CACHE INTERNAL "Enable GEOS support in libgeodesk")
 set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CACHE INTERNAL "")
