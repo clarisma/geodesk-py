@@ -123,7 +123,7 @@ target_compile_definitions(_geodesk PRIVATE GEODESK_PYTHON)
 
 if(BUILD_WHEELS)
 	install(TARGETS _geodesk
-		LIBRARY DESTINATION .)
+		LIBRARY DESTINATION geodesk)
 else()
 	install(TARGETS _geodesk
 			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
