@@ -96,4 +96,5 @@ number_of_entrances = building.nodes("[entrance]").count
 ## Related Repositories
 
 - [geodesk](http://www.github.com/clarisma/geodesk) &mdash; GeoDesk for Java
+- [libgeodesk](https://github.com/clarisma/libgeodesk) &mdash; GeoDesk for C++
 - [gol-tool](http://www.github.com/clarisma/gol-tool) &mdash; command-line utility for building, maintaining and querying GOL files
