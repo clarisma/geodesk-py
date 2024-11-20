@@ -1,7 +1,7 @@
 <img src="https://docs.geodesk.com/img/github-header.png">
 
 GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
-Also available [for Java](http://www.github.com/clarisma/geodesk).
+Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](http://www.github.com/clarisma/geodesk).
 
 ## Why GeoDesk?
 
