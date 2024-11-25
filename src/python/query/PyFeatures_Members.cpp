@@ -45,7 +45,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
 
         TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), relation.bounds(), self->filter);
             // TODO: could calculate tighter bounds based on accepted members
-        while (tiw.next())
+        do
         {
             Tip tip = Tip(tiw.currentTip());
             if (tips.find(tip) == tips.end()) continue;
@@ -62,6 +62,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
             Py_DECREF(list);
             return NULL;
         }
+        while (tiw.next());
     }
     return list;
 }

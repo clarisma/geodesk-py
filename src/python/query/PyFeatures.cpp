@@ -201,7 +201,7 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
     {
         FeatureStore* store = self->store;
         TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds, self->filter);
-        while (tiw.next())
+        do
         {
             PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
             if (tile)
@@ -216,6 +216,7 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
             Py_DECREF(list);
             return NULL;
         }
+        while (tiw.next());
     }
     return list;
 }
