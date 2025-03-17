@@ -5,11 +5,11 @@ ROOT_PATH = 'c:\\dev\\geodesk-py'
 SOURCE_PATHS = [ ROOT_PATH + '\\src', ROOT_PATH + '\\test' ]
 
 # The text block that you want to add at the beginning of each file
-CPP_PREFIX_TEXT = """// Copyright (c) 2024 Clarisma / GeoDesk contributors
+CPP_PREFIX_TEXT = """// Copyright (c) 2025 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 \n"""
 
-PY_PREFIX_TEXT = """# Copyright (c) 2024 Clarisma / GeoDesk contributors
+PY_PREFIX_TEXT = """# Copyright (c) 2025 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 \n"""
 
