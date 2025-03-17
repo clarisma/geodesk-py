@@ -20,7 +20,7 @@ We'll use this to study the impact of the proposed foreign-feature export tables
 """
 
 def notest_area_performance():
-    world = Features('c:\\geodesk\\tests\\world.gol')
+    world = Features('c:\\geodesk\\tests\\w.gol')
     for _ in range(1,10):
         start_time = time.perf_counter()
         for country_name, lat, lon in countries:
