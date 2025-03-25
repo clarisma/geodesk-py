@@ -33,7 +33,7 @@ def notest_area_performance():
         print(f"Retrieved {len(countries)} country borders in {elapsed_time:.3f} seconds")
 
 def test_area_tiles():
-    world = Features('c:\\geodesk\\tests\\world.gol')
+    world = Features('c:\\geodesk\\tests\\w.gol')
     tiles = set();
     member_count = 0
     for country_name, lat, lon in countries:
