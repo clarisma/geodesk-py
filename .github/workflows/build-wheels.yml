@@ -35,6 +35,7 @@ jobs:
         with:
           name: wheels
           path: ./wheelhouse/*.whl
+          overwrite: true
 
   test_wheels:
     name: Test wheels on Python ${{ matrix.python-version }} on ${{ matrix.os }}
