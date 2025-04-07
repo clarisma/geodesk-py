@@ -77,6 +77,12 @@ jobs:
           path: wheelhouse
       - name: List downloaded wheels
         run: ls -l wheelhouse
+      - name: Flatten wheels directory
+        run: |
+          # Move all .whl files from subdirectories to the wheelhouse folder
+          find wheelhouse -type f -name "*.whl" -exec mv {} wheelhouse/ \;
+          # Optionally, list the flattened directory for verification
+          ls -l wheelhouse
       - name: Set up Python for twine
         uses: actions/setup-python@v2
         with:
