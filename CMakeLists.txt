@@ -33,7 +33,7 @@ include(FetchContent)
 
 # Fetch GEOS 3.11.3
 FetchContent_Declare(geos
-    URL https://download.osgeo.org/geos/geos-3.11.3.tar.bz2
+    URL https://download.osgeo.org/geos/geos-3.13.1.tar.bz2
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(geos)
 

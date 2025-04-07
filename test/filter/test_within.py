@@ -1,6 +1,7 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
+from shapely import *
 from geodesk import *
 
 def test_within(features):
@@ -37,6 +38,19 @@ def notest_area_within_itself(features):
     for a in areas:
         # print(f"Checking {a}...")
         assert a in features.within(a)
-    
+
+
+def test_within_polygon(features):
+    coords = [
+        (11.5760065725, 48.1248103897),
+        (11.5553563344, 48.1343158898),
+        (11.5703099587, 48.1446341373),
+        (11.5763117367, 48.1383212436),
+        (11.5866877313, 48.1423262866),
+        (11.5946223132, 48.1307175892),
+        (11.5760065725, 48.1248103897)  # Close the polygon
+    ]
+    polygon = Polygon(to_mercator(coords))
+    Map().add(features("n[amenity]")(polygon)).show()
 
 
