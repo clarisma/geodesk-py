@@ -4,7 +4,7 @@
 from geodesk import *
 
 def test_world_tiles():
-    world = Features("c:\\geodesk\\tests\\w3.gol")
+    world = Features("c:\\geodesk\\tests\\w.gol")
     # country = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
     # country = world("a[boundary=administrative][admin_level=4][name:en=Bavaria]").one
     # country = world("a[boundary=administrative][admin_level=2][name='United States']").one
@@ -22,7 +22,7 @@ def test_world_tiles():
     print (f"Tile set size: {total_size / 1024 / 1024} MB")    
     
 def test_member_tiles():
-    world = Features("c:\\geodesk\\tests\\w3.gol")
+    world = Features("c:\\geodesk\\tests\\w.gol")
     country = world("a[boundary=administrative][admin_level=2][name:en=Germany]").one
     # country = world("a[boundary=administrative][admin_level=2][name='United States']").one
     m = Map()

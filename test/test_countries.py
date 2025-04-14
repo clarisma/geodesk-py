@@ -5,7 +5,7 @@ import geodesk
 
 
 def test_countries():
-    world = geodesk.Features('c:\\geodesk\\tests\\w3.gol')
+    world = geodesk.Features('c:\\geodesk\\tests\\w.gol')
     countries = world("a[boundary=administrative][admin_level=2][name]")
     for country in countries:
         name = country.name

@@ -19,7 +19,7 @@ setup(
     # install_requires=[  # If you have Python dependencies
     #     "somepythonpackage>=1.0",
     # ],
-    install_requires=['shapely>=2.0.3'],
+    # install_requires=['shapely>=2.1,<2.2'], # already defined in pyproject.toml
     # include_package_data=True,
     # exclude_package_data={ "": ["*h.", "*.a", "*.lib"]},
     cmake_process_manifest_hook = \

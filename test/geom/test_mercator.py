@@ -109,5 +109,10 @@ def notest_convert_shape_performance(features):
     shape = f.shape
     for i in range(0,10000):
         from_mercator(shape)
-    
+
+def test_issue_64():
+    # ls = LineString([(-1317617399, 515817921), (-1313128810, 520306510)])
+    # ls2 = from_mercator(ls)
+    mp = MultiPoint([(-1317617399, 515817921), (-1313128810, 520306510)])
+    mp2 = from_mercator(mp)
     

@@ -31,10 +31,11 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=11.0
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
+          overwrite: true
 
   test_wheels:
     name: Test wheels on Python ${{ matrix.python-version }} on ${{ matrix.os }}
@@ -51,9 +52,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Download wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: wheels
+          # Download only the wheels artifact for the current OS
+          name: wheels-${{ matrix.os }}
           path: wheelhouse
       - name: Install and test the built wheel
         run: |
@@ -69,10 +71,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download built wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: wheels
+          # Omitting the name parameter downloads all artifacts from previous jobs
           path: wheelhouse
+      - name: List downloaded wheels
+        run: ls -l wheelhouse
+      - name: Flatten wheels directory
+        run: |
+          # Move all .whl files from subdirectories to the wheelhouse folder
+          find wheelhouse -type f -name "*.whl" -exec mv {} wheelhouse/ \;
+          # Optionally, list the flattened directory for verification
+          ls -l wheelhouse
       - name: Set up Python for twine
         uses: actions/setup-python@v2
         with:
