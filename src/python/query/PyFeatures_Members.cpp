@@ -30,7 +30,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
     {
         FeaturePtr member = iter.next();
         if (member.isNull()) break;
-        if (iter.isCurrentForeign()) tips.insert(iter.currentTip());
+        if (iter.isForeign()) tips.insert(iter.tip());
     }
 
     PyObject* list = PyList_New(0);

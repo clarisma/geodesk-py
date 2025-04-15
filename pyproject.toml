@@ -8,14 +8,14 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 # build = "cp*-manylinux_x86_64 cp*-musllinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 
 [project]
-name = "geodesk"
+name = "geodesk2"
 description = "Fast and storage-efficient spatial database engine for OpenStreetMap features"
-version = "1.1.0"
+version = "2.0.0"
 license = { text = "LGPL-3.0-only" }
 readme = "README.md"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",

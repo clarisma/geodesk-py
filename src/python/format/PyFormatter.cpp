@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFormatter.h"
+
+#include <clarisma/io/FilePath.h>
 #include <clarisma/util/Buffer.h>
 #include <geodesk/format/FeatureWriter.h>
 #include <geodesk/format/GeoJsonWriter.h>
@@ -214,7 +216,7 @@ PyObject* PyFormatter::save(PyFormatter* self, PyObject* args, PyObject* kwargs)
 	const char* fileName = PyUnicode_AsUTF8(arg);
 	if (!fileName) return NULL;
 	std::string s;
-	if (File::extension(fileName)[0] == 0)
+	if (FilePath::extension(fileName)[0] == 0)
 	{
 		s = std::string(fileName) + self->fileExtension;
 		fileName = s.c_str();

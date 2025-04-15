@@ -3,6 +3,8 @@
 GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
 Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](http://www.github.com/clarisma/geodesk).
 
+*This is a pre-release of the upcoming Version 2.0*
+
 ## Why GeoDesk?
 
 - **Small storage footprint** &mdash; GeoDesk's GOL files are only 20% to 50% larger than the original OSM data in PBF format &mdash; that's less than a tenth of the storage consumed by a traditional SQL-based database.

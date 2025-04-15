@@ -15,6 +15,7 @@
 #include <geodesk/geom/polygon/Polygonizer.h>
 #include <geodesk/feature/FastMemberIterator.h>
 #include <clarisma/io/File.h>
+#include <clarisma/io/FilePath.h>
 #include <clarisma/util/BufferWriter.h>
 #include <clarisma/util/BitIterator.h>
 #include "python/util/util.h"
@@ -175,7 +176,7 @@ int PyMap::getFilenameFromArgs(PyObject* args)
 		PyObject* arg = PyTuple_GET_ITEM(args, 0);
 		const char* strFilename = PyUnicode_AsUTF8(arg);
 		if (strFilename == NULL) return -1;
-		const char* ext = File::extension(strFilename);
+		const char* ext = FilePath::extension(strFilename);
 		if (*ext == 0)
 		{
 			arg = PyUnicode_FromFormat("%s.html", strFilename);

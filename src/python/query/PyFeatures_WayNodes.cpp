@@ -59,7 +59,7 @@ SelectionType PyFeatures::WayNodes::SUBTYPE =
 
 PyObject* PyWayNodeIterator::create(PyFeatures* features)
 {
-    FeaturePtr way = features->relatedFeature;
+    WayPtr way(features->relatedFeature);
     int flags = way.flags();
     DataPtr pBody = way.bodyptr();
     PyWayNodeIterator* self = (PyWayNodeIterator*)TYPE.tp_alloc(&TYPE, 0);
@@ -67,16 +67,7 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
     {
         self->featureNodesOnly = features->flags & SelectionFlags::USES_MATCHER;
         self->target = Python::newRef(features);
-        new(&self->featureIter)FeatureNodeIterator(features->store);
-        if (flags & FeatureFlags::WAYNODE)
-        {
-            self->featureIter.start(pBody, flags, features->matcher, features->filter);
-            self->nextNode = self->featureIter.next();
-        }
-        else
-        {
-            self->nextNode = NodePtr(FeaturePtr(nullptr));
-        }
+        new(&self->featureIter)FeatureNodeIterator(features->store, way);
         self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;
@@ -86,7 +77,7 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
 // May not need it if we stop treating features as iterable
 PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
 {
-    FeaturePtr way = wayObj->feature;
+    WayPtr way(wayObj->feature);
     // LOG("Iterating way/%ld", way.id());
     int flags = way.flags();
     DataPtr pBody = way.bodyptr();
@@ -95,16 +86,7 @@ PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
     {
         self->target = Python::newRef(wayObj);
         self->featureNodesOnly = false;
-        new(&self->featureIter)FeatureNodeIterator(wayObj->store);
-        if (flags & FeatureFlags::WAYNODE)
-        {
-            self->featureIter.start(pBody, flags, wayObj->store->borrowAllMatcher(), nullptr);
-            self->nextNode = self->featureIter.next();
-        }
-        else
-        {
-            self->nextNode = NodePtr(FeaturePtr(nullptr));
-        }
+        new(&self->featureIter)FeatureNodeIterator(wayObj->store, way);
         self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;

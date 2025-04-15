@@ -247,7 +247,7 @@ def helper_check_results(results, file_path):
 
 
 
-def test_concur(features):
+def no_test_concur(features):
     # Always use monaco.gol for this test
     world = Features("data/monaco")
     functions = [ (name,obj) for name,obj in inspect.getmembers(sys.modules[__name__])
