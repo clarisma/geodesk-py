@@ -44,7 +44,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macOS-latest]
+        os: [windows-latest, ubuntu-latest]
+        # os: [windows-latest, ubuntu-latest, macOS-latest]
+        # suppress MacOS for now due to lack of proper C++20 support
         python-version: ['3.12']
     steps:
       - uses: actions/checkout@v4
