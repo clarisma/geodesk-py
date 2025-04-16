@@ -15,7 +15,7 @@ license = { text = "LGPL-3.0-only" }
 readme = "README.md"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
