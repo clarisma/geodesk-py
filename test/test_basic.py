@@ -1,4 +1,4 @@
-import geodesk
+import geodesk2
 import test_concur
 
 def test_basic():

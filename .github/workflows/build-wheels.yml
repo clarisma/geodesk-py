@@ -62,7 +62,7 @@ jobs:
           path: wheelhouse
       - name: Install and test the built wheel
         run: |
-          pip install --find-links wheelhouse geodesk
+          pip install --find-links wheelhouse geodesk2
           pip install pytest
           cd test
           pytest test_basic.py
