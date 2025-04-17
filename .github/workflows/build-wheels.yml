@@ -93,4 +93,4 @@ jobs:
       - name: Publish to PyPI
         run: |
           python -m pip install twine
-          twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
+          twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN_GLOBAL }} wheelhouse/*.whl
