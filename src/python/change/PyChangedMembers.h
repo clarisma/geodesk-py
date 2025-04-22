@@ -17,9 +17,11 @@ public:
 	bool dirty;
 
 	static PyTypeObject TYPE;
+	/*
 	static PyMethodDef METHODS[];
 	static PyMemberDef MEMBERS[];
 	static PyGetSetDef GETSET[];
+	*/
 	static PySequenceMethods SEQUENCE_METHODS;
 	static PyMappingMethods MAPPING_METHODS;
 

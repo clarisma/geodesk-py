@@ -90,7 +90,9 @@ PyTypeObject PyChangedMembers::TYPE =
 	.tp_richcompare = (richcmpfunc)richcompare,
 	.tp_iter = (getiterfunc)iter,
 	.tp_iternext = (iternextfunc)next,
+	/*
 	.tp_methods = METHODS,
 	.tp_members = MEMBERS,
 	.tp_getset = GETSET,
+	*/
 };

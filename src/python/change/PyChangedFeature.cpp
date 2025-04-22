@@ -55,10 +55,12 @@ PyChangedFeature* PyChangedFeature::create(PyFeature* feature)
 		switch (self->type)
 		{
 		case NODE:
+		{
 			NodePtr node(feature->feature);
 			self->x = node.x();
 			self->y = node.y();
 			break;
+		}
 		case WAY:
 			self->nodes = nullptr;	// lazy
 			break;

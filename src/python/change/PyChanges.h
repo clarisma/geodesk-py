@@ -41,15 +41,18 @@ private:
 class PyChanges : public PyObject
 {
 public:
+	using FeaturesByCoordinate = clarisma::HashMap<Coordinate, PyChangedFeature*>;
+	using FeaturesByTypedId = clarisma::HashMap<TypedFeatureId, PyChangedFeature*>;
+
 	PyObject_HEAD
-	clarisma::HashMap<Coordinate,PyChangedFeature*> explicitAnonNodes;
-	clarisma::HashMap<Coordinate,PyChangedFeature*> implicitAnonNodes;
-	clarisma::HashMap<TypedFeatureId,PyChangedFeature*> features;
+	FeaturesByCoordinate explicitAnonNodes;
+	FeaturesByCoordinate implicitAnonNodes;
+	FeaturesByTypedId features;
 	PyObject* tags;           // dictionary of changeset tags
 	ChangesWeakRef* weakRef;
 
 	static PyTypeObject TYPE;
-	static PyMethodDef PyChanges::METHODS[];
+	static PyMethodDef METHODS[];
 	static PyMappingMethods MAPPING_METHODS;
 
 	static PyChanges* createNew(PyTypeObject* type, PyObject* args, PyObject* kwds);

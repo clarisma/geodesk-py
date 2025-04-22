@@ -14,9 +14,9 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 	if (self)
 	{
 		// TODO: may throw (make RAII?)
-		new(self->explicitAnonNodes)clarisma::HashMap();
-		new(self->implicitAnonNodes)clarisma::HashMap();
-		new(self->features)clarisma::HashMap();
+		new(&self->explicitAnonNodes)FeaturesByCoordinate();
+		new(&self->implicitAnonNodes)FeaturesByCoordinate();
+		new(&self->features)FeaturesByTypedId();
 		self->tags = nullptr;
 		self->weakRef = new ChangesWeakRef(self);
 			// TODO: handle OOM
@@ -26,9 +26,9 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->explicitAnonNodes.~clarisma::HashMap();
-	self->implicitAnonNodes.~clarisma::HashMap();
-	self->features.~clarisma::HashMap();
+	self->explicitAnonNodes.~FeaturesByCoordinate();
+	self->implicitAnonNodes.~FeaturesByCoordinate();
+	self->features.~FeaturesByTypedId();
 	Py_XDECREF(self->tags);
 	self->weakRef->clear();
 	self->weakRef->release();
@@ -101,6 +101,36 @@ PyChangedFeature* PyChanges::modify(PyFeature* feature)
 	if (!changed) return nullptr;
 	features[typedId] = changed;
 	return Python::newRef(changed);
+}
+
+PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
+{
+	// Dummy implementation
+	Py_RETURN_NONE;
+}
+
+PyObject* PyChanges::modifyFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
+{
+	// Dummy implementation
+	Py_RETURN_NONE;
+}
+
+PyObject* PyChanges::deleteFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
+{
+	// Dummy implementation
+	Py_RETURN_NONE;
+}
+
+PyObject* PyChanges::validate(PyChanges* self, PyObject* args, PyObject* kwargs)
+{
+	// Dummy implementation
+	Py_RETURN_TRUE;
+}
+
+PyObject* PyChanges::save(PyChanges* self, PyObject* args, PyObject* kwargs)
+{
+	// Dummy implementation
+	Py_RETURN_NONE;
 }
 
 PyMappingMethods PyChanges::MAPPING_METHODS =

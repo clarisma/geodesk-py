@@ -88,6 +88,7 @@ set(LIBRARIES
 	${Python_LIBRARIES}
 	geos_c
 	geos
+	gtl
 )
 
 if(NOT BUILD_WHEELS)
