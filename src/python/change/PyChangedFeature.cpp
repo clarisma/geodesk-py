@@ -141,7 +141,7 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 		Py_RETURN_NONE;
 	case TAGS:
 		if (self->loadTags(true) < 0) return nullptr;
-		Python::newRef(self->tags);
+		return Python::newRef(self->tags);
 	case X:
 		if (type == NODE) return PyLong_FromLong(self->x);
 		Py_RETURN_NONE;

@@ -133,8 +133,26 @@ PyObject* PyChanges::save(PyChanges* self, PyObject* args, PyObject* kwargs)
 	Py_RETURN_NONE;
 }
 
+PyObject* PyChanges::getitem(PyChanges* self, PyObject* key)
+{
+	if (Py_TYPE(key) == &PyFeature::TYPE)
+	{
+		return self->modify((PyFeature*)key);
+	}
+	if (Py_TYPE(key) == &PyAnonymousNode::TYPE)
+	{
+		return self->modify((PyAnonymousNode*)key);
+	}
+	PyErr_SetString(PyExc_TypeError, "Expected Feature or AnonymousNode");
+	return nullptr;
+}
+
+
 PyMappingMethods PyChanges::MAPPING_METHODS =
 {
+	nullptr,         // mp_length (optional)
+	(binaryfunc)getitem,         // mp_subscript
+	nullptr       // mp_ass_subscript
 };
 
 PyMethodDef PyChanges::METHODS[] =

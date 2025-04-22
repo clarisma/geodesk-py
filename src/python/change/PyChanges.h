@@ -58,6 +58,7 @@ public:
 	static PyChanges* createNew(PyTypeObject* type, PyObject* args, PyObject* kwds);
 	static void dealloc(PyChanges* self);
 	static PyObject* getattro(PyChanges* self, PyObject *attr);
+	static PyObject* getitem(PyChanges* self, PyObject* key);
 	// static PyObject* richcompare(PyChanges* self, PyObject* other, int op);
 
 	static PyObject* createFeature(PyChanges* self, PyObject* args, PyObject* kwargs);

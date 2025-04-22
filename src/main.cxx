@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
     Py_SetPath(L"C:\\Python\\python311.zip;C:\\Python\\DLLs;C:\\Python\\Lib;C:\\Python;C:\\Python\\Lib\\site-packages");
 #endif
-    if(PyImport_AppendInittab("geodesk", &PyInit__geodesk) < 0)
+    if(PyImport_AppendInittab("geodesk2", &PyInit__geodesk) < 0)
     {
         std::cout << "PyImport_AppendInittab failed.\n";
     }
