@@ -35,7 +35,7 @@
 #include "PyChangedFeature.h"
 
 #line 6 "PyChangedFeature_attr.txt"
-static struct Attribute { const char *name; PyChangedFeature::Attr index; };
+struct Attribute { const char *name; PyChangedFeature::Attr index; };
 
 #define TOTAL_KEYWORDS 21
 #define MIN_WORD_LENGTH 1
@@ -49,7 +49,7 @@ class PyChangedFeature_AttrHash
 private:
   static inline unsigned int hash (const char *str, size_t len);
 public:
-  static static struct Attribute *lookup (const char *str, size_t len);
+  static struct Attribute *lookup (const char *str, size_t len);
 };
 
 inline unsigned int
@@ -97,10 +97,10 @@ PyChangedFeature_AttrHash::hash (const char *str, size_t len)
   return hval + asso_values[static_cast<unsigned char>(str[len - 1])];
 }
 
-static struct Attribute *
+struct Attribute *
 PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
 {
-  static static struct Attribute wordlist[] =
+  static struct Attribute wordlist[] =
     {
       {""},
 #line 16 "PyChangedFeature_attr.txt"
@@ -111,7 +111,7 @@ PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
 #line 14 "PyChangedFeature_attr.txt"
       {"tags", PyChangedFeature::Attr::TAGS},
 #line 28 "PyChangedFeature_attr.txt"
-      {"split", PyChangedFeature::Attr::SPLIT},
+      {"split", PyChangedFeature::Attr::SPLIT_METHOD},
 #line 24 "PyChangedFeature_attr.txt"
       {"is_way", PyChangedFeature::Attr::IS_WAY},
       {""},
@@ -121,9 +121,9 @@ PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
 #line 11 "PyChangedFeature_attr.txt"
       {"nodes", PyChangedFeature::Attr::NODES},
 #line 25 "PyChangedFeature_attr.txt"
-      {"modify", PyChangedFeature::Attr::MODIFY},
+      {"modify", PyChangedFeature::Attr::MODIFY_METHOD},
 #line 18 "PyChangedFeature_attr.txt"
-      {"connect", PyChangedFeature::Attr::CONNECT},
+      {"connect", PyChangedFeature::Attr::CONNECT_METHOD},
 #line 9 "PyChangedFeature_attr.txt"
       {"lon", PyChangedFeature::Attr::LON},
       {""},
@@ -141,7 +141,7 @@ PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
 #line 15 "PyChangedFeature_attr.txt"
       {"x", PyChangedFeature::Attr::X},
 #line 17 "PyChangedFeature_attr.txt"
-      {"combine", PyChangedFeature::Attr::COMBINE},
+      {"combine", PyChangedFeature::Attr::COMBINE_METHOD},
       {""}, {""}, {""}, {""},
 #line 10 "PyChangedFeature_attr.txt"
       {"members", PyChangedFeature::Attr::MEMBERS},
@@ -153,7 +153,7 @@ PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
       {"id", PyChangedFeature::Attr::ID},
       {""}, {""}, {""},
 #line 19 "PyChangedFeature_attr.txt"
-      {"delete", PyChangedFeature::Attr::DELETE}
+      {"delete", PyChangedFeature::Attr::DELETE_METHOD}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

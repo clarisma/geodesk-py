@@ -4,6 +4,9 @@
 #include "module.h"
 #include <iostream>
 #include "python/Environment.h"
+#include "python/change/PyChangedFeature.h"
+#include "python/change/PyChangedMembers.h"
+#include "python/change/PyChanges.h"
 #include "python/feature/PyFeature.h"
 #include "python/feature/PyTags.h"
 #include "python/format/PyFormatter.h"
@@ -90,6 +93,7 @@ extern "C" PyMODINIT_FUNC PyInit__geodesk()
     if (createPublicType(module, "Feature", &PyFeature::TYPE) < 0) return nullptr;
     if (createPublicType(module, "Features", &PyFeatures::TYPE) < 0) return nullptr;
     if (createPublicType(module, "Map", &PyMap::TYPE) < 0) return nullptr;
+    if (createPublicType(module, "Changes", &PyChanges::TYPE) < 0) return nullptr;
     // if (createPublicType(module, "RTree", &PyRTree::TYPE) < 0) return nullptr;
 
     if (createPrivateType(module, &PyQuery::TYPE) < 0) return nullptr;
@@ -104,6 +108,8 @@ extern "C" PyMODINIT_FUNC PyInit__geodesk()
     if (createPrivateType(module, &PyBinder::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFormatter::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyTile::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyChangedFeature::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyChangedMembers::TYPE) < 0) return nullptr;
     // if (createPrivateType(module, &PyRTreeQuery::TYPE) < 0) return nullptr;
 
     Python::createDirMethod(&PyFeatures::TYPE, (PyCFunctionWithKeywords)&PyFeatures::dir);

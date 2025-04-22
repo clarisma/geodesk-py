@@ -61,18 +61,18 @@ public:
 		Y,
 
 		// Read-only from this point:
-		COMBINE,
-		CONNECT,
-		DELETE,
+		COMBINE_METHOD,
+		CONNECT_METHOD,
+		DELETE_METHOD,
 		ID,
 		IS_DELETED,
 		IS_NODE,
 		IS_RELATION,
 		IS_WAY,
-		MODIFY,
+		MODIFY_METHOD,
 		ORIGINAL,
 		OSM_TYPE,
-		SPLIT,
+		SPLIT_METHOD,
 	};
 
 	static constexpr Attr LAST_MUTABLE_ATTR = Y;

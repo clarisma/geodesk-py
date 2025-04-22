@@ -5,8 +5,10 @@
 
 #include <geodesk/feature/NodePtr.h>
 #include <geodesk/feature/TagIterator.h>
-
 #include "python/feature/PyFeature.h"
+#include "python/geom/PyCoordinate.h"
+#include "PyChangedMembers.h"
+#include "PyChangedFeature_lookup.cxx"
 
 PyChangedFeature* PyChangedFeature::create(Coordinate xy)
 {
@@ -97,10 +99,90 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 	}
 }
 
-PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *attr)
+PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 {
-	// TODO
-	Py_RETURN_NONE;
+	Py_ssize_t len;
+    const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
+	if (!name) return NULL;
+
+	if (self->type == MEMBER)
+	{
+		if (std::string_view(name, len) == "role")
+		{
+			if (self->role) Python::newRef(self->role);
+			Py_RETURN_NONE;
+		}
+		self = self->member;
+	}
+	Attribute* attr = PyChangedFeature_AttrHash::lookup(name, len);
+	if (!attr)
+	{
+		return getitem(self, nameObj);
+	}
+	int type = self->type;
+	switch (attr->index)
+	{
+	case LAT:
+		if (type == NODE) return PyCoordinate::niceLatFromY(self->y);
+		Py_RETURN_NONE;
+	case LON:
+		if (type == NODE) return PyCoordinate::niceLonFromX(self->x);
+		Py_RETURN_NONE;
+	case MEMBERS:
+		if (type == RELATION) return Python::newRef(self->members);
+		Py_RETURN_NONE;
+	case NODES:
+		if (type == WAY) return Python::newRef(self->members);
+		Py_RETURN_NONE;
+	case ROLE:
+		Py_RETURN_NONE;
+	case SHAPE:
+		// TODO
+		Py_RETURN_NONE;
+	case TAGS:
+		if (self->loadTags(true) < 0) return nullptr;
+		Python::newRef(self->tags);
+	case X:
+		if (type == NODE) return PyLong_FromLong(self->x);
+		Py_RETURN_NONE;
+	case Y:
+		if (type == NODE) return PyLong_FromLong(self->y);
+		Py_RETURN_NONE;
+	case COMBINE_METHOD:
+		// TODO: handle COMBINE
+		Py_RETURN_NONE;
+	case CONNECT_METHOD:
+		// TODO: handle CONNECT
+		Py_RETURN_NONE;
+	case DELETE_METHOD:
+		// TODO: handle DELETE
+		Py_RETURN_NONE;
+	case ID:
+		return PyLong_FromLong(self->id);
+	case IS_DELETED:
+		return PyBool_FromLong(self->isDeleted);
+	case IS_NODE:
+		return PyBool_FromLong(type == NODE);
+	case IS_RELATION:
+		return PyBool_FromLong(type == RELATION);
+	case IS_WAY:
+		return PyBool_FromLong(type == WAY);
+	case MODIFY_METHOD:
+		// TODO: handle MODIFY
+		Py_RETURN_NONE;
+	case ORIGINAL:
+		if (self->original) return Python::newRef(self->original);
+		Py_RETURN_NONE;
+	case OSM_TYPE:
+		// TODO
+		Py_RETURN_NONE;
+	case SPLIT_METHOD:
+		// TODO: handle SPLIT
+		Py_RETURN_NONE;
+	default:
+		assert(false);
+		break;
+	}
 }
 
 
