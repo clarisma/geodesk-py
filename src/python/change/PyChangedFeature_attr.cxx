@@ -1,0 +1,25 @@
+static const int ATTR_COUNT = 21;
+static const char* ATTR_NAMES[] =
+{
+    "lat",
+    "lon",
+    "members",
+    "nodes",
+    "role",
+    "shape",
+    "tags",
+    "x",
+    "y",
+    "combine",
+    "connect",
+    "delete",
+    "id",
+    "is_deleted",
+    "is_node",
+    "is_relation",
+    "is_way",
+    "modify",
+    "original",
+    "osm_type",
+    "split",
+};
