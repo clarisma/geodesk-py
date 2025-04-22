@@ -56,27 +56,14 @@ PyObject* PyChangedMembers::str(PyChangedMembers* self)
 	Py_RETURN_NONE;
 }
 
+/*
 PyMethodDef PyChangedMembers::METHODS[] =
 {
 	{"save", (PyCFunction)save, METH_VARARGS, "Saves the file" },
 	{ NULL, NULL, 0, NULL },
 };
+*/
 
-PyMemberDef PyChangedMembers::MEMBERS[] =
-{
-	{"first", T_OBJECT_EX, offsetof(PyChangedMembers, first), 0, "first name"},
-	{ NULL, 0, 0, 0, NULL },
-};
-
-PyGetSetDef PyChangedMembers::GETSET[] =
-{
-	{ "value", (getter)get_value, (setter)set_value, "Description of value", NULL },
-	{ NULL, NULL, NULL, NULL, NULL },
-};
-
-PyNumberMethods PyChangedMembers::NUMBER_METHODS =
-{
-};
 
 PySequenceMethods PyChangedMembers::SEQUENCE_METHODS =
 {
@@ -92,7 +79,6 @@ PyTypeObject PyChangedMembers::TYPE =
 	.tp_basicsize = sizeof(PyChangedMembers),
 	.tp_dealloc = (destructor)dealloc,
 	.tp_repr = (reprfunc)repr,
-	.tp_as_number = &NUMBER_METHODS,
 	.tp_as_sequence = &SEQUENCE_METHODS,
 	.tp_as_mapping = &MAPPING_METHODS,
 	.tp_hash = (hashfunc)hash,

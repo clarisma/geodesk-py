@@ -10,6 +10,8 @@
 using namespace geodesk;
 class PyChangedFeature;
 class PyChanges;
+class PyAnonymousNode;
+class PyFeature;
 
 class ChangesWeakRef
 {
@@ -40,11 +42,10 @@ class PyChanges : public PyObject
 {
 public:
 	PyObject_HEAD
-	clarisma::HashMap<Coordinate,PyChangedFeature*> anonNodes;
+	clarisma::HashMap<Coordinate,PyChangedFeature*> explicitAnonNodes;
+	clarisma::HashMap<Coordinate,PyChangedFeature*> implicitAnonNodes;
 	clarisma::HashMap<TypedFeatureId,PyChangedFeature*> features;
 	PyObject* tags;           // dictionary of changeset tags
-		// TODO: split anonNodes into implicit and explicit?
-		//  implicit are merged
 	ChangesWeakRef* weakRef;
 
 	static PyTypeObject TYPE;
@@ -63,4 +64,8 @@ public:
 	static PyObject* save(PyChanges* self, PyObject* args, PyObject* kwargs);
 
 	static PyObject* str(PyChanges* self);
+
+	PyChangedFeature* createNode(Coordinate xy);
+	PyChangedFeature* modify(PyAnonymousNode* node);
+	PyChangedFeature* modify(PyFeature* feature);
 };

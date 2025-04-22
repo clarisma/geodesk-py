@@ -2,15 +2,20 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyChanges.h"
+#include "PyChangedFeature.h"
 
 #include <clarisma/data/HashMap.h>
+#include "python/feature/PyFeature.h"
+#include "python/util/util.h"
 
 PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyChanges* self = (PyChanges*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		new(self->anonNodes)clarisma::HashMap();
+		// TODO: may throw (make RAII?)
+		new(self->explicitAnonNodes)clarisma::HashMap();
+		new(self->implicitAnonNodes)clarisma::HashMap();
 		new(self->features)clarisma::HashMap();
 		self->tags = nullptr;
 		self->weakRef = new ChangesWeakRef(self);
@@ -21,7 +26,8 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->anonNodes.~clarisma::HashMap();
+	self->explicitAnonNodes.~clarisma::HashMap();
+	self->implicitAnonNodes.~clarisma::HashMap();
 	self->features.~clarisma::HashMap();
 	Py_XDECREF(self->tags);
 	self->weakRef->clear();
@@ -53,6 +59,48 @@ PyObject* PyChanges::str(PyChanges* self)
 {
 	// TODO
 	Py_RETURN_NONE;
+}
+
+PyChangedFeature* PyChanges::createNode(Coordinate xy)
+{
+	auto it = implicitAnonNodes.find(xy);
+	if (it != implicitAnonNodes.end())
+	{
+		assert(it->second->isExplicit);
+		return Python::newRef(it->second);
+	}
+	PyChangedFeature* changed = PyChangedFeature::create(xy);
+	if (!changed) return nullptr;
+	implicitAnonNodes[xy] = changed;
+	return Python::newRef(changed);
+}
+
+PyChangedFeature* PyChanges::modify(PyAnonymousNode* node)
+{
+	Coordinate xy(node->x_, node->y_);
+	auto it = explicitAnonNodes.find(xy);
+	if (it != explicitAnonNodes.end())
+	{
+		return Python::newRef(it->second);
+	}
+	PyChangedFeature* changed = PyChangedFeature::create(node);
+	if (!changed) return nullptr;
+	explicitAnonNodes[xy] = changed;
+	return Python::newRef(changed);
+}
+
+PyChangedFeature* PyChanges::modify(PyFeature* feature)
+{
+	TypedFeatureId typedId = feature->feature.typedId();
+	auto it = features.find(typedId);
+	if (it != features.end())
+	{
+		return Python::newRef(it->second);
+	}
+	PyChangedFeature* changed = PyChangedFeature::create(feature);
+	if (!changed) return nullptr;
+	features[typedId] = changed;
+	return Python::newRef(changed);
 }
 
 PyMappingMethods PyChanges::MAPPING_METHODS =

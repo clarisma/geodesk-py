@@ -122,7 +122,7 @@ class PyAnonymousNode : public PyObject
 {
 public:
     FeatureStore* store;
-    int32_t x_;
+    int32_t x_;             // TODO: change to x/y (no underscore)
     int32_t y_;
 
     static PyTypeObject TYPE;
