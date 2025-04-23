@@ -91,9 +91,4 @@ public:
 		weakRef->addref();
 		return weakRef;
 	}
-
-	static bool isTagValue(PyObject* obj);
-
-private:
-	static bool isAtomicTagValue(PyObject* obj);
 };

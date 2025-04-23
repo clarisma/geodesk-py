@@ -222,31 +222,3 @@ PyTypeObject PyChanges::TYPE =
 	// .tp_richcompare = (richcmpfunc)richcompare,
 };
 
-bool PyChanges::isAtomicTagValue(PyObject* obj)
-{
-	return PyUnicode_Check(obj) || PyLong_Check(obj) ||
-		PyFloat_Check(obj) || PyBool_Check(obj);
-}
-
-bool PyChanges::isTagValue(PyObject* obj)
-{
-	if (isAtomicTagValue(obj)) return true;
-	if (!PyList_Check(obj) && !PyTuple_Check(obj))
-	{
-		Py_ssize_t size = PySequence_Size(obj);
-		for (Py_ssize_t i = 0; i < size; ++i)
-		{
-			PyObject* item = PySequence_GetItem(obj, i);
-			if (!item)
-			{
-				PyErr_Clear();  // Ignore sequence access error
-				return false;
-			}
-			bool valid = isAtomicTagValue(item);
-			Py_DECREF(item);
-			if (!valid)	return false;
-		}
-		return true;
-	}
-	return false;
-}

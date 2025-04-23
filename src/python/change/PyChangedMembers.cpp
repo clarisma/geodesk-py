@@ -89,6 +89,28 @@ PyObject* PyChangedMembers::getattro(PyChangedMembers* self, PyObject *attr)
 	return PyObject_GetAttr(self->list, attr);
 }
 
+PyObject* PyChangedMembers::getitem(PyChangedMembers* self, PyObject* key)
+{
+	return PyObject_GetItem(self->list, key);
+}
+
+int PyChangedMembers::setitem(PyChangedMembers* self, PyObject* key, PyObject* value)
+{
+	// TODO
+	/*
+	if (value == nullptr)
+	{
+		// Handle deletion: del obj[key]
+		return PyObject_DelItem(self->items_, key);
+	}
+	else
+	{
+		// Handle assignment: obj[key] = value
+		return PyObject_SetItem(self->items_, key, value);
+	}
+	*/
+	return 0;
+}
 
 PyObject* PyChangedMembers::iter(PyChangedMembers* self)
 {
@@ -125,6 +147,9 @@ PySequenceMethods PyChangedMembers::SEQUENCE_METHODS =
 
 PyMappingMethods PyChangedMembers::MAPPING_METHODS =
 {
+	nullptr,					 // mp_length (optional)
+	(binaryfunc)getitem,         // mp_subscript
+	(objobjargproc)setitem       // mp_ass_subscript
 };
 
 PyTypeObject PyChangedMembers::TYPE =

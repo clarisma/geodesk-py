@@ -7,7 +7,6 @@
 #include <clarisma/util/DynamicStackBuffer.h>
 #include <geodesk/feature/FeatureUtils.h>
 #include <geodesk/feature/NodePtr.h>
-#include <geodesk/feature/TagIterator.h>
 #include <python/geom/PyMercator.h>
 
 #include "python/feature/PyFeature.h"
@@ -18,12 +17,18 @@
 #include "PyChangedFeature_attr.cxx"
 #include "PyChangedFeature_lookup.cxx"
 
-PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Coordinate xy)
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Type type)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
+	if (self) self->init(changes, type, 0);
+	return self;
+}
+
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Coordinate xy)
+{
+	PyChangedFeature* self = create(changes, NODE);
 	if (self)
 	{
-		self->init(changes, NODE, 0);
 		self->original = nullptr;
 		self->tags = nullptr;
 		self->x = xy.x;
@@ -76,6 +81,20 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyFeature* featur
 	return self;
 }
 
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyObject* args, PyObject* kwargs)
+{
+	PyChangedFeature* self = create(changes, UNASSIGNED);
+	if (self)
+	{
+		if (!self->modify(args, kwargs))
+		{
+			Py_DECREF(self);
+			return nullptr;
+		}
+	}
+	return self;
+}
+
 void PyChangedFeature::init(PyChanges* changes_, Type type_, int64_t id_)
 {
 	changes = changes_->newRef();
@@ -85,6 +104,7 @@ void PyChangedFeature::init(PyChanges* changes_, Type type_, int64_t id_)
 	isDeleted = false;
 	maybeHasNewParents = false;
 }
+
 
 void PyChangedFeature::dealloc(PyChangedFeature* self)
 {
@@ -307,7 +327,7 @@ int PyChangedFeature::setattro(PyChangedFeature* self, PyObject* nameObj, PyObje
 	{
 		return setitem(self, nameObj, value);
 	}
-	return self->setProperty(attr->index, value);
+	return self->setProperty(attr->index, value) < 0 ? -1 : 0;
 }
 
 bool PyChangedFeature::setMembers(PyObject* value)
@@ -330,8 +350,13 @@ bool PyChangedFeature::setShape(PyObject* value)
 
 bool PyChangedFeature::setTags(PyObject* value)
 {
-	// TODO
-	return false;
+	if (!Python::checkType(value, &PyDict_Type)) return false;
+	if(tags)
+	{
+		Py_DECREF(tags);
+		tags = nullptr;
+	}
+	return setOrRemoveTags(value);
 }
 
 PyObject* PyChangedFeature::repr(PyChangedFeature* self)
@@ -354,6 +379,10 @@ PyObject* PyChangedFeature::str(PyChangedFeature* self)
 	return repr(self);
 }
 
+/// @brief Creates a dict from the tags of the given feature.
+///
+/// @return The key-value dict, or NULL if unable to allocate
+///
 PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 {
 	PyObject* dict = PyDict_New();
@@ -394,7 +423,12 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 	return dict;
 }
 
-
+/// @brief Ensures the tags (as a Python dict) are loaded.
+/// @param create If `true`, creates an empty dict if tags is NULL
+/// @return 0 if tags remains NULL (new feature or anon node, and
+///			create was et to false)
+///			1 if tags is now a valid Python dict
+///			-1 if dict could not be created
 int PyChangedFeature::loadTags(bool create)
 {
 	assert(type != MEMBER);
@@ -411,6 +445,75 @@ int PyChangedFeature::loadTags(bool create)
 		tags = createTags(feature->store, feature->feature);
 	}
 	return tags ? 1 : -1;
+}
+
+bool PyChangedFeature::isAtomicTagValue(PyObject* obj)
+{
+	return PyUnicode_Check(obj) || PyLong_Check(obj) ||
+		PyFloat_Check(obj) || PyBool_Check(obj);
+}
+
+bool PyChangedFeature::isTagValue(PyObject* obj)
+{
+	if (isAtomicTagValue(obj)) return true;
+	if (!PyList_Check(obj) && !PyTuple_Check(obj))
+	{
+		Py_ssize_t size = PySequence_Size(obj);
+		for (Py_ssize_t i = 0; i < size; ++i)
+		{
+			PyObject* item = PySequence_GetItem(obj, i);
+			if (!item)
+			{
+				PyErr_Clear();  // Ignore sequence access error
+				return false;
+			}
+			bool valid = isAtomicTagValue(item);
+			Py_DECREF(item);
+			if (!valid)	return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool PyChangedFeature::setOrRemoveTag(PyObject* key, PyObject* value)
+{
+	assert(type != MEMBER);
+	if (loadTags(true) < 0) return false;
+	if (value == Py_None ||
+		(PyUnicode_Check(value) && PyUnicode_GetLength(value) == 0))
+	{
+		if (PyDict_DelItem(tags, key) < 0)
+		{
+			if (!PyErr_ExceptionMatches(PyExc_KeyError))  // true error
+			{
+				return false;
+			}
+			PyErr_Clear(); // ignore missing keys
+		}
+		return true;
+	}
+	if (!isTagValue(value))
+	{
+		PyErr_SetString(PyExc_TypeError,
+			"Tag value must be string, number, bool or list");
+		return false;
+	}
+	return PyDict_SetItem(tags, key, value) == 0;
+}
+
+bool PyChangedFeature::setOrRemoveTags(PyObject* dict)
+{
+	assert(PyDict_Check(dict));
+	PyObject* key;
+	PyObject* value;
+	Py_ssize_t pos = 0;
+
+	while (PyDict_Next(dict, &pos, &key, &value))
+	{
+		if (!setOrRemoveTag(key, value)) return false;
+	}
+	return true;
 }
 
 PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
@@ -529,6 +632,16 @@ bool PyChangedFeature::setGeometryCollection(GEOSContextHandle_t context, GEOSGe
 {
 	// TODO
 	return true;
+}
+
+bool PyChangedFeature::modify(PyObject* args, PyObject* kwargs)
+{
+	PyObject* list = nullptr;
+	PyObject* key = nullptr;
+	int seenArgs = 0;
+	Coordinate xy;
+
+	return true;	// TODO
 }
 
 

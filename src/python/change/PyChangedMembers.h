@@ -30,6 +30,8 @@ public:
 	static PyChangedMembers* create(PyChanges* changes, PyFeature* parent);
 	static void dealloc(PyChangedMembers* self);
 	static PyObject* getattro(PyChangedMembers* self, PyObject *attr);
+	static PyObject* getitem(PyChangedMembers* self, PyObject* key);
+	static int setitem(PyChangedMembers* self, PyObject* key, PyObject* value);
 	static PyObject* iter(PyChangedMembers* self);
 	static PyObject* repr(PyChangedMembers* self);
 	static PyObject* richcompare(PyChangedMembers* self, PyObject* other, int op);
