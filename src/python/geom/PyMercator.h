@@ -3,7 +3,9 @@
 
 #pragma once
 #include <Python.h>
+#include <geodesk/geom/Coordinate.h>
 
+using namespace geodesk;
 class PyCoordinate;
 
 class PyMercator
@@ -25,5 +27,6 @@ public:
 
 	static bool setXFromLon(int32_t* x, PyObject* value);
 	static bool setYFromLat(int32_t* y, PyObject* value);
+	static Coordinate getAgnosticCoordinate(double xOrLon, double yOrLon);
 };
 

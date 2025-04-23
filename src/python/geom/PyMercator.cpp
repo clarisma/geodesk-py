@@ -450,3 +450,13 @@ bool PyMercator::setYFromLat(int32_t* y, PyObject* obj)
 	*y = Mercator::yFromLat(lat);
 	return true;
 }
+
+Coordinate PyMercator::getAgnosticCoordinate(double xOrLon, double yOrLon)
+{
+	if (xOrLon > 180 || xOrLon < -180 || yOrLon > 90 || yOrLon < -90)
+	{
+		return Coordinate(xOrLon, yOrLon);
+	}
+	return Coordinate::ofLonLat(xOrLon, yOrLon);
+}
+

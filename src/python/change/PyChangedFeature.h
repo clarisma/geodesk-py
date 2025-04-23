@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <geodesk/feature/FeaturePtr.h>
 #include <geodesk/geom/Coordinate.h>
+#include "python/Environment.h"
 
 using namespace geodesk;
 namespace clarisma { class Buffer; }
@@ -99,6 +100,7 @@ public:
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattro(PyChangedFeature* self, PyObject *attr);
 	static PyObject* getitem(PyChangedFeature* self, PyObject* key);
+	static int setattro(PyChangedFeature* self, PyObject* name, PyObject* value);
 	static int setitem(PyChangedFeature* self, PyObject* key, PyObject* value);
 	static PyObject* repr(PyChangedFeature* self);
 	// static PyObject* richcompare(PyChangedFeature* self, PyObject* other, int op);
@@ -120,5 +122,13 @@ private:
 	bool setMembers(PyObject* value);
 	bool setNodes(PyObject* value);
 	bool setTags(PyObject* value);
+
 	bool setShape(PyObject* value);
+	bool setShape(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool setPoint(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool setLineString(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool setPolygon(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool setMultiPolygon(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool setGeometryCollection(GEOSContextHandle_t context, GEOSGeometry* geom);
+	bool applyShape(GEOSContextHandle_t context, GEOSGeometry* geom, Type only);
 };

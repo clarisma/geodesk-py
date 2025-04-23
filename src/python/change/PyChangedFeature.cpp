@@ -255,7 +255,8 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 		if (!applyAttr(attr, WAY)) return -1;
 		return setNodes(value) ? GROUP_SHAPE : -1;
 	case ROLE:
-		return 0;	// no-op, not handled here
+		PyErr_SetString(PyExc_RuntimeError, "Add feature to a relation before assigning a role");
+		return -1;
 	case SHAPE:
 		return setShape(value) ? GROUP_SHAPE : -1;
 	case TAGS:
@@ -281,6 +282,32 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 			"Attribute '%s' is read-only", ATTR_NAMES[attr]);
 		return -1;
 	}
+}
+
+int PyChangedFeature::setattro(PyChangedFeature* self, PyObject* nameObj, PyObject* value)
+{
+	Py_ssize_t len;
+	const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
+	if (!name) return NULL;
+
+	if (self->type == MEMBER)
+	{
+		if (std::string_view(name, len) == "role")
+		{
+			if (!Python::checkType(value, &PyUnicode_Type)) return -1;
+			Py_INCREF(value);
+			Py_XDECREF(self->role);
+			self->role = value;
+			return 0;
+		}
+		self = self->member;
+	}
+	Attribute* attr = PyChangedFeature_AttrHash::lookup(name, len);
+	if (!attr)
+	{
+		return setitem(self, nameObj, value);
+	}
+	return self->setProperty(attr->index, value);
 }
 
 bool PyChangedFeature::setMembers(PyObject* value)
@@ -438,6 +465,73 @@ void PyChangedFeature::format(clarisma::Buffer& buf)
 	// TODO: new, anonymous
 }
 
+bool PyChangedFeature::setShape(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	switch (GEOSGeomTypeId_r(context, geom))
+	{
+	case GEOS_POINT:
+		return setPoint(context, geom);
+	case GEOS_LINESTRING:
+	case GEOS_LINEARRING:
+		return setLineString(context, geom);
+	case GEOS_POLYGON:
+		return setPolygon(context, geom);
+	case GEOS_MULTIPOLYGON:
+		return setMultiPolygon(context, geom);
+	case GEOS_GEOMETRYCOLLECTION:
+		return setGeometryCollection(context, geom);
+	default:
+		PyErr_SetString(PyExc_ValueError, "Unsupported geometry type");
+		return false;
+	}
+}
+
+bool PyChangedFeature::setPoint(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	if (type != NODE)
+	{
+		if (type != UNASSIGNED)
+		{
+			PyErr_SetString(PyExc_ValueError, "Point can only be set for node");
+			return false;
+		}
+		type = NODE;
+	}
+	const GEOSCoordSequence* coords = GEOSGeom_getCoordSeq_r(context, geom);
+	double xOrLon = 0;
+	double yOrLat = 0;
+	GEOSCoordSeq_getXY_r(context, coords, 0, &xOrLon, &yOrLat);
+	Coordinate xy = PyMercator::getAgnosticCoordinate(xOrLon,yOrLat);
+	x = xy.x;
+	y = xy.y;
+	return true;
+}
+
+bool PyChangedFeature::setLineString(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	// TODO
+	return true;
+}
+
+bool PyChangedFeature::setPolygon(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	// TODO
+	return true;
+}
+
+bool PyChangedFeature::setMultiPolygon(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	// TODO
+	return true;
+}
+
+bool PyChangedFeature::setGeometryCollection(GEOSContextHandle_t context, GEOSGeometry* geom)
+{
+	// TODO
+	return true;
+}
+
+
 PyMappingMethods PyChangedFeature::MAPPING_METHODS =
 {
 	nullptr,         // mp_length (optional)
@@ -454,6 +548,7 @@ PyTypeObject PyChangedFeature::TYPE =
 	.tp_as_mapping = &MAPPING_METHODS,
 	.tp_str = (reprfunc)str,
 	.tp_getattro = (getattrofunc)getattro,
+	.tp_setattro = (setattrofunc)setattro,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "ChangedFeature objects",
 	// .tp_richcompare = (richcmpfunc)richcompare,
