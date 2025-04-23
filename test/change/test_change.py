@@ -4,3 +4,7 @@ def test_change(features):
     f = features("w[highway]").first
     changes = Changes()
     print(changes[f].tags)
+    nodes = changes[f].nodes
+    print(nodes)
+    nodes.append("banana")
+    print(nodes)

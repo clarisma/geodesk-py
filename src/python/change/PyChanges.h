@@ -53,11 +53,13 @@ class PyChanges : public PyObject
 public:
 	using FeaturesByCoordinate = clarisma::HashMap<Coordinate, PyChangedFeature*>;
 	using FeaturesByTypedId = clarisma::HashMap<TypedFeatureId, PyChangedFeature*>;
+	using FeaturesVector = std::vector<PyChangedFeature*>;
 
 	PyObject_HEAD
 	FeaturesByCoordinate newAnonNodes;
 	FeaturesByCoordinate existingAnonNodes;
-	FeaturesByTypedId features;
+	FeaturesVector newFeatures;
+	FeaturesByTypedId existingFeatures;
 	PyObject* tags;           // dictionary of changeset tags
 	ChangesWeakRef* weakRef;
 
@@ -89,4 +91,9 @@ public:
 		weakRef->addref();
 		return weakRef;
 	}
+
+	static bool isTagValue(PyObject* obj);
+
+private:
+	static bool isAtomicTagValue(PyObject* obj);
 };

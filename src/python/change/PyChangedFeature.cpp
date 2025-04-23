@@ -3,13 +3,20 @@
 
 #include "PyChangedFeature.h"
 
+#include <clarisma/util/Buffer.h>
+#include <clarisma/util/DynamicStackBuffer.h>
+#include <geodesk/feature/FeatureUtils.h>
 #include <geodesk/feature/NodePtr.h>
 #include <geodesk/feature/TagIterator.h>
+#include <python/geom/PyMercator.h>
+
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "PyChangedMembers.h"
-#include "PyChangedFeature_lookup.cxx"
 #include "PyChanges.h"
+
+#include "PyChangedFeature_attr.cxx"
+#include "PyChangedFeature_lookup.cxx"
 
 PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Coordinate xy)
 {
@@ -209,11 +216,102 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 	}
 }
 
+void PyChangedFeature::wrongAttrForType(int attr, Type only)
+{
+	PyErr_Format(PyExc_TypeError,
+		"Attribute '%s' cannot be set for %s (only applies to %s)",
+		ATTR_NAMES[attr], typeName(static_cast<FeatureType>(type)),
+		typeName(static_cast<FeatureType>(only)));
+}
+
+bool PyChangedFeature::applyAttr(int attr, Type only)
+{
+	if (type != only)
+	{
+		if (type != UNASSIGNED)
+		{
+			wrongAttrForType(attr, only);
+			return false;
+		}
+		type = only;
+	}
+	return true;
+}
+
+int PyChangedFeature::setProperty(int attr, PyObject* value)
+{
+	switch (attr)
+	{
+	case LAT:
+		if (!applyAttr(attr, NODE)) return -1;
+		return PyMercator::setYFromLat(&y, value) ? GROUP_Y : -1;
+	case LON:
+		if (!applyAttr(attr, NODE)) return -1;
+		return PyMercator::setXFromLon(&x, value) ? GROUP_X : -1;
+	case MEMBERS:
+		if (!applyAttr(attr, RELATION)) return -1;
+		return setMembers(value) ? GROUP_SHAPE : -1;
+	case NODES:
+		if (!applyAttr(attr, WAY)) return -1;
+		return setNodes(value) ? GROUP_SHAPE : -1;
+	case ROLE:
+		return 0;	// no-op, not handled here
+	case SHAPE:
+		return setShape(value) ? GROUP_SHAPE : -1;
+	case TAGS:
+		return setTags(value) ? GROUP_TAGS_ALL : -1;
+	case X:
+	{
+		if (!applyAttr(attr, NODE)) return -1;
+		double v = PyFloat_AsDouble(value);
+		if (v == -1.0 && PyErr_Occurred()) return -1;
+		x = (int32_t)round(v);
+		return GROUP_X;
+	}
+	case Y:
+	{
+		if (!applyAttr(attr, NODE)) return -1;
+		double v = PyFloat_AsDouble(value);
+		if (v == -1.0 && PyErr_Occurred()) return -1;
+		y = (int32_t)round(v);
+		return GROUP_Y;
+	}
+	default:
+		PyErr_Format(PyExc_AttributeError,
+			"Attribute '%s' is read-only", ATTR_NAMES[attr]);
+		return -1;
+	}
+}
+
+bool PyChangedFeature::setMembers(PyObject* value)
+{
+	// TODO
+	return false;
+}
+
+bool PyChangedFeature::setNodes(PyObject* value)
+{
+	// TODO
+	return false;
+}
+
+bool PyChangedFeature::setShape(PyObject* value)
+{
+	// TODO
+	return false;
+}
+
+bool PyChangedFeature::setTags(PyObject* value)
+{
+	// TODO
+	return false;
+}
 
 PyObject* PyChangedFeature::repr(PyChangedFeature* self)
 {
-	// TODO
-	Py_RETURN_NONE;
+	clarisma::DynamicStackBuffer<1024> buf;
+	self->format(buf);
+	return PyUnicode_FromStringAndSize(buf.data(), buf.length());
 }
 
 /*
@@ -226,8 +324,7 @@ PyObject* PyChangedFeature::richcompare(PyChangedFeature* self, PyObject* other,
 
 PyObject* PyChangedFeature::str(PyChangedFeature* self)
 {
-	// TODO
-	Py_RETURN_NONE;
+	return repr(self);
 }
 
 PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
@@ -328,6 +425,18 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 	return PyObject_SetItem(self->tags, key, value);
 }
 
+void PyChangedFeature::format(clarisma::Buffer& buf)
+{
+	if (type == MEMBER)	[[unlikely]]
+	{
+		member->format(buf);
+		buf << " as ";
+		buf << Python::getStringView(role);
+		return;
+	}
+	buf << typeName(static_cast<FeatureType>(type)) << '/' << id;
+	// TODO: new, anonymous
+}
 
 PyMappingMethods PyChangedFeature::MAPPING_METHODS =
 {

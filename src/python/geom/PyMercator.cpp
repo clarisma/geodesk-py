@@ -396,3 +396,57 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 }
 
 
+bool PyMercator::setXFromLon(int32_t* x, PyObject* obj)
+{
+	double lon;
+	if (PyFloat_Check(obj))
+	{
+		lon = PyFloat_AS_DOUBLE(obj);
+	}
+	else
+	{
+		lon = PyFloat_AsDouble(obj);
+		if (lon == -1.0 && PyErr_Occurred()) return false;
+	}
+	if(lon < -180 || lon > 180)
+	{
+		PyErr_SetString(PyExc_ValueError, "lon must be in range -180 to 180");
+		return false;
+	}
+	*x = Mercator::xFromLon(lon);
+	return true;
+}
+
+bool PyMercator::setYFromLat(int32_t* y, PyObject* obj)
+{
+	double lat;
+	if (PyFloat_Check(obj))
+	{
+		lat = PyFloat_AS_DOUBLE(obj);
+	}
+	else
+	{
+		lat = PyFloat_AsDouble(obj);
+		if (lat == -1.0 && PyErr_Occurred()) return false;
+	}
+	if (lat < Mercator::MIN_LAT)
+	{
+		if (lat < -90)
+		{
+			PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
+			return false;
+		}
+		lat = Mercator::MIN_LAT;	// TODO: could set y directly
+	}
+	else if (lat > Mercator::MAX_LAT)
+	{
+		if (lat > 90)
+		{
+			PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
+			return false;
+		}
+		lat = Mercator::MAX_LAT;	// TODO: could set y directly
+	}
+	*y = Mercator::yFromLat(lat);
+	return true;
+}

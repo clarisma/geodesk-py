@@ -7,6 +7,7 @@
 #include <geodesk/geom/Coordinate.h>
 
 using namespace geodesk;
+namespace clarisma { class Buffer; }
 class ChangesWeakRef;
 class PyChanges;
 class PyChangedMembers;
@@ -48,8 +49,7 @@ public:
 		};
 	};
 
-	enum Type { NODE,WAY,RELATION,MEMBER };
-		// TODO: add UNASSIGNED
+	enum Type { NODE,WAY,RELATION,MEMBER,UNASSIGNED };
 
 	enum Attr
 	{
@@ -78,6 +78,15 @@ public:
 		SPLIT_METHOD,
 	};
 
+	enum AttrGroup
+	{
+		GROUP_X = 1 << 0,			// lon, x, lonlat, xy
+		GROUP_Y = 1 << 1,			// lat, y, lonlat, xy
+		GROUP_SHAPE = 1 << 2,		// shape, nodes, members
+		GROUP_TAGS_ALL = 1 << 3,	// tags
+		GROUP_TAGS_INDIVIDUAL = 1 << 4,	// individual tags
+	};
+
 	static constexpr Attr LAST_MUTABLE_ATTR = Y;
 
 	static PyTypeObject TYPE;
@@ -98,9 +107,18 @@ public:
 	static PyObject* modify(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
+	void format(clarisma::Buffer& buf);
+
 private:
 	void init(PyChanges* changes_, Type type_, int64_t id_);
 	void createOrModify(PyObject* args, PyObject* kwargs, bool create);
 	static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
 	int loadTags(bool create);
+	int setProperty(int attr, PyObject* value);
+	void wrongAttrForType(int attr, Type only);
+	bool applyAttr(int attr, Type only);
+	bool setMembers(PyObject* value);
+	bool setNodes(PyObject* value);
+	bool setTags(PyObject* value);
+	bool setShape(PyObject* value);
 };

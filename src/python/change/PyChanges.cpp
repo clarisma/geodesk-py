@@ -16,7 +16,8 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 		// TODO: may throw (make RAII?)
 		new(&self->newAnonNodes)FeaturesByCoordinate();
 		new(&self->existingAnonNodes)FeaturesByCoordinate();
-		new(&self->features)FeaturesByTypedId();
+		new(&self->newFeatures)FeaturesVector();
+		new(&self->existingFeatures)FeaturesByTypedId();
 		self->tags = nullptr;
 		self->weakRef = new ChangesWeakRef(self);
 			// TODO: handle OOM
@@ -28,7 +29,8 @@ void PyChanges::dealloc(PyChanges* self)
 {
 	self->newAnonNodes.~FeaturesByCoordinate();
 	self->existingAnonNodes.~FeaturesByCoordinate();
-	self->features.~FeaturesByTypedId();
+	self->newFeatures.~FeaturesVector();
+	self->existingFeatures.~FeaturesByTypedId();
 	Py_XDECREF(self->tags);
 	self->weakRef->clear();
 	self->weakRef->release();
@@ -105,14 +107,14 @@ PyChangedFeature* PyChanges::modify(PyAnonymousNode* node)
 PyChangedFeature* PyChanges::modify(PyFeature* feature)
 {
 	TypedFeatureId typedId = feature->feature.typedId();
-	auto it = features.find(typedId);
-	if (it != features.end())
+	auto it = existingFeatures.find(typedId);
+	if (it != existingFeatures.end())
 	{
 		return Python::newRef(it->second);
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, feature);
 	if (!changed) return nullptr;
-	features[typedId] = changed;
+	existingFeatures[typedId] = changed;
 	return Python::newRef(changed);
 }
 
@@ -219,3 +221,32 @@ PyTypeObject PyChanges::TYPE =
 	.tp_new = (newfunc)createNew,
 	// .tp_richcompare = (richcmpfunc)richcompare,
 };
+
+bool PyChanges::isAtomicTagValue(PyObject* obj)
+{
+	return PyUnicode_Check(obj) || PyLong_Check(obj) ||
+		PyFloat_Check(obj) || PyBool_Check(obj);
+}
+
+bool PyChanges::isTagValue(PyObject* obj)
+{
+	if (isAtomicTagValue(obj)) return true;
+	if (!PyList_Check(obj) && !PyTuple_Check(obj))
+	{
+		Py_ssize_t size = PySequence_Size(obj);
+		for (Py_ssize_t i = 0; i < size; ++i)
+		{
+			PyObject* item = PySequence_GetItem(obj, i);
+			if (!item)
+			{
+				PyErr_Clear();  // Ignore sequence access error
+				return false;
+			}
+			bool valid = isAtomicTagValue(item);
+			Py_DECREF(item);
+			if (!valid)	return false;
+		}
+		return true;
+	}
+	return false;
+}

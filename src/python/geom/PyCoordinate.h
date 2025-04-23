@@ -101,6 +101,7 @@ public:
         bool success;
     };
 
+    // TODO: Change to PyMercator::setXFromLon
     static ConversionResult xFromLon(PyObject* obj);
     static ConversionResult yFromLat(PyObject* obj);
 
