@@ -9,15 +9,14 @@
 #include "python/geom/PyCoordinate.h"
 #include "PyChangedMembers.h"
 #include "PyChangedFeature_lookup.cxx"
+#include "PyChanges.h"
 
-PyChangedFeature* PyChangedFeature::create(Coordinate xy)
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Coordinate xy)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		self->id = 0;
-		self->version = 0;
-		self->type = NODE;
+		self->init(changes, NODE, 0);
 		self->original = nullptr;
 		self->tags = nullptr;
 		self->x = xy.x;
@@ -26,16 +25,13 @@ PyChangedFeature* PyChangedFeature::create(Coordinate xy)
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::create(PyAnonymousNode* node)
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyAnonymousNode* node)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		self->id = 0;			// TODO: in v2, anon nodes can have id
-		self->version = 0;
-		self->type = NODE;
-		self->isExplicit = true;
-		self->original = node;
+		self->init(changes, NODE, 0);	// TODO: in v2, anon nodes can have id
+		self->original = Python::newRef(node);
 		self->tags = nullptr;
 		self->x = node->x_;
 		self->y = node->y_;
@@ -43,16 +39,13 @@ PyChangedFeature* PyChangedFeature::create(PyAnonymousNode* node)
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::create(PyFeature* feature)
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyFeature* feature)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		self->id = 0;			// TODO: in v2, anon nodes can have id
-		self->version = 0;
-		self->type = feature->feature.typeCode();
-		self->isExplicit = true;
-		self->original = feature;
+		self->init(changes, static_cast<Type>(feature->feature.typeCode()), feature->feature.id());
+		self->original = Python::newRef(feature);
 		self->tags = nullptr;	// tags are lazy
 		switch (self->type)
 		{
@@ -76,6 +69,15 @@ PyChangedFeature* PyChangedFeature::create(PyFeature* feature)
 	return self;
 }
 
+void PyChangedFeature::init(PyChanges* changes_, Type type_, int64_t id_)
+{
+	changes = changes_->newRef();
+	id = id_;
+	version = 0;
+	type = type_;
+	isDeleted = false;
+	maybeHasNewParents = false;
+}
 
 void PyChangedFeature::dealloc(PyChangedFeature* self)
 {
@@ -129,10 +131,32 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 		if (type == NODE) return PyCoordinate::niceLonFromX(self->x);
 		Py_RETURN_NONE;
 	case MEMBERS:
-		if (type == RELATION) return Python::newRef(self->members);
+		if (type == RELATION)
+		{
+			// TODO: ensure members are loaded
+			return Python::newRef(self->members);
+		}
 		Py_RETURN_NONE;
 	case NODES:
-		if (type == WAY) return Python::newRef(self->members);
+		if (type == WAY)
+		{
+			if (!self->nodes)
+			{
+				PyChanges* changes = self->changes->getOrRaise();
+				if (!changes) return nullptr;
+				if (self->original)
+				{
+					self->nodes = PyChangedMembers::create(changes,
+						(PyFeature*)self->original);
+				}
+				else
+				{
+					self->nodes = PyChangedMembers::create(changes, false);
+				}
+				if (!self->nodes) return nullptr;
+			}
+			return Python::newRef(self->nodes);
+		}
 		Py_RETURN_NONE;
 	case ROLE:
 		Py_RETURN_NONE;
@@ -269,7 +293,7 @@ PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
 {
 	if (self->type == MEMBER)	[[unlikely]]
 	{
-		return getitem(self->member, key);	// delegate to member
+		self = self->member;	// delegate to member
 	}
 	int res = self->loadTags(false);
 	if (res <= 0)
@@ -289,7 +313,7 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 {
 	if (self->type == MEMBER)	[[unlikely]]
 	{
-		return setitem(self->member, key, value);	// delegate to member
+		self = self->member;	// delegate to member
 	}
 	int res = self->loadTags(true);
 	if (res < 0) return -1;

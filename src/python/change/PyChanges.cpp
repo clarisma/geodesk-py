@@ -14,8 +14,8 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 	if (self)
 	{
 		// TODO: may throw (make RAII?)
-		new(&self->explicitAnonNodes)FeaturesByCoordinate();
-		new(&self->implicitAnonNodes)FeaturesByCoordinate();
+		new(&self->newAnonNodes)FeaturesByCoordinate();
+		new(&self->existingAnonNodes)FeaturesByCoordinate();
 		new(&self->features)FeaturesByTypedId();
 		self->tags = nullptr;
 		self->weakRef = new ChangesWeakRef(self);
@@ -26,8 +26,8 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->explicitAnonNodes.~FeaturesByCoordinate();
-	self->implicitAnonNodes.~FeaturesByCoordinate();
+	self->newAnonNodes.~FeaturesByCoordinate();
+	self->existingAnonNodes.~FeaturesByCoordinate();
 	self->features.~FeaturesByTypedId();
 	Py_XDECREF(self->tags);
 	self->weakRef->clear();
@@ -63,29 +63,42 @@ PyObject* PyChanges::str(PyChanges* self)
 
 PyChangedFeature* PyChanges::createNode(Coordinate xy)
 {
-	auto it = implicitAnonNodes.find(xy);
-	if (it != implicitAnonNodes.end())
+	auto it = newAnonNodes.find(xy);
+	if (it != newAnonNodes.end())
 	{
-		assert(it->second->isExplicit);
 		return Python::newRef(it->second);
 	}
-	PyChangedFeature* changed = PyChangedFeature::create(xy);
+	PyChangedFeature* changed = PyChangedFeature::create(this, xy);
 	if (!changed) return nullptr;
-	implicitAnonNodes[xy] = changed;
+	newAnonNodes[xy] = changed;
+	return Python::newRef(changed);
+}
+
+PyChangedFeature* PyChanges::modify(FeatureStore* store, uint64_t id, Coordinate xy)
+{
+	auto it = existingAnonNodes.find(xy);
+	if (it != existingAnonNodes.end())
+	{
+		return Python::newRef(it->second);
+	}
+	PyChangedFeature* changed = PyChangedFeature::create(this,
+		PyAnonymousNode::create(store, xy.x, xy.y));		// TODO: node ID
+	if (!changed) return nullptr;
+	existingAnonNodes[xy] = changed;
 	return Python::newRef(changed);
 }
 
 PyChangedFeature* PyChanges::modify(PyAnonymousNode* node)
 {
 	Coordinate xy(node->x_, node->y_);
-	auto it = explicitAnonNodes.find(xy);
-	if (it != explicitAnonNodes.end())
+	auto it = existingAnonNodes.find(xy);
+	if (it != existingAnonNodes.end())
 	{
 		return Python::newRef(it->second);
 	}
-	PyChangedFeature* changed = PyChangedFeature::create(node);
+	PyChangedFeature* changed = PyChangedFeature::create(this, node);
 	if (!changed) return nullptr;
-	explicitAnonNodes[xy] = changed;
+	existingAnonNodes[xy] = changed;
 	return Python::newRef(changed);
 }
 
@@ -97,7 +110,7 @@ PyChangedFeature* PyChanges::modify(PyFeature* feature)
 	{
 		return Python::newRef(it->second);
 	}
-	PyChangedFeature* changed = PyChangedFeature::create(feature);
+	PyChangedFeature* changed = PyChangedFeature::create(this, feature);
 	if (!changed) return nullptr;
 	features[typedId] = changed;
 	return Python::newRef(changed);

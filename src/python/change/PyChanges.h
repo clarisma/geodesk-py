@@ -12,6 +12,9 @@ class PyChangedFeature;
 class PyChanges;
 class PyAnonymousNode;
 class PyFeature;
+namespace geodesk {
+class FeatureStore;
+}
 
 class ChangesWeakRef
 {
@@ -22,6 +25,13 @@ public:
 
 	void clear() { changes_ = nullptr; }
 	PyChanges* get() const { return changes_; }
+	PyChanges* getOrRaise() const
+	{
+		if (changes_) [[likely]] return changes_;
+		PyErr_SetString(PyExc_RuntimeError,
+			"The associated Changes object has been deleted");
+		return nullptr;
+	}
 
 	// TODO: Make threadsafe for multithreaded Python
 	void addref() const { ++refcount_; }
@@ -45,8 +55,8 @@ public:
 	using FeaturesByTypedId = clarisma::HashMap<TypedFeatureId, PyChangedFeature*>;
 
 	PyObject_HEAD
-	FeaturesByCoordinate explicitAnonNodes;
-	FeaturesByCoordinate implicitAnonNodes;
+	FeaturesByCoordinate newAnonNodes;
+	FeaturesByCoordinate existingAnonNodes;
 	FeaturesByTypedId features;
 	PyObject* tags;           // dictionary of changeset tags
 	ChangesWeakRef* weakRef;
@@ -70,6 +80,13 @@ public:
 	static PyObject* str(PyChanges* self);
 
 	PyChangedFeature* createNode(Coordinate xy);
-	PyChangedFeature* modify(PyAnonymousNode* node);
+	PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
 	PyChangedFeature* modify(PyFeature* feature);
+	PyChangedFeature* modify(PyAnonymousNode* feature);
+
+	ChangesWeakRef* newRef() const
+	{
+		weakRef->addref();
+		return weakRef;
+	}
 };

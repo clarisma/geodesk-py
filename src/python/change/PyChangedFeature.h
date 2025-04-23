@@ -7,6 +7,8 @@
 #include <geodesk/geom/Coordinate.h>
 
 using namespace geodesk;
+class ChangesWeakRef;
+class PyChanges;
 class PyChangedMembers;
 class PyAnonymousNode;
 class PyFeature;
@@ -15,11 +17,11 @@ class PyChangedFeature : public PyObject
 {
 public:
 	PyObject_HEAD
+	ChangesWeakRef* changes;
     int64_t id;
 	uint32_t version;           // retrieved from Overpass
 	uint8_t type;               // node,way,relation,member
 	unsigned isDeleted : 1;
-	unsigned isExplicit : 1;		 // false if a node created via coordinate, else true
 	unsigned maybeHasNewParents : 1; // true if feature has been added to a way/relation
 									 // (even if later removed)
 	union
@@ -47,6 +49,7 @@ public:
 	};
 
 	enum Type { NODE,WAY,RELATION,MEMBER };
+		// TODO: add UNASSIGNED
 
 	enum Attr
 	{
@@ -80,10 +83,10 @@ public:
 	static PyTypeObject TYPE;
 	static PyMappingMethods MAPPING_METHODS;
 
-	static PyChangedFeature* create(Coordinate xy);
-	static PyChangedFeature* create(PyAnonymousNode* node);
-	static PyChangedFeature* create(PyFeature* feature);
-	static PyChangedFeature* create(PyObject* args, PyObject* kwargs);
+	static PyChangedFeature* create(PyChanges* changes, Coordinate xy);
+	static PyChangedFeature* create(PyChanges* changes, PyAnonymousNode* node);
+	static PyChangedFeature* create(PyChanges* changes, PyFeature* feature);
+	// static PyChangedFeature* create(PyObject* args, PyObject* kwargs);
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattro(PyChangedFeature* self, PyObject *attr);
 	static PyObject* getitem(PyChangedFeature* self, PyObject* key);
@@ -96,6 +99,7 @@ public:
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
 private:
+	void init(PyChanges* changes_, Type type_, int64_t id_);
 	void createOrModify(PyObject* args, PyObject* kwargs, bool create);
 	static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
 	int loadTags(bool create);

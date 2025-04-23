@@ -3,18 +3,18 @@
 
 #pragma once
 #include <Python.h>
-#include <structmember.h>
+#include <clarisma/util/TaggedPtr.h>
 
 class ChangesWeakRef;
+class PyChanges;
+class PyFeature;
 
 class PyChangedMembers : public PyObject
 {
 public:
 	PyObject_HEAD
+	clarisma::TaggedPtr<ChangesWeakRef,1> changes;		// flag is true for relation
 	PyObject* list;
-	ChangesWeakRef* changes;
-	bool containsMembers;       // false for ways, true for relations
-	bool dirty;
 
 	static PyTypeObject TYPE;
 	/*
@@ -25,14 +25,15 @@ public:
 	static PySequenceMethods SEQUENCE_METHODS;
 	static PyMappingMethods MAPPING_METHODS;
 
-	static PyObject* create();
-	static PyObject* call(PyChangedMembers* self, PyObject* args, PyObject* kwargs);
+	static PyChangedMembers* create(PyChanges* changes, bool forRelation);
+	static PyChangedMembers* create(PyChanges* changes, PyObject* list, bool forRelation);
+	static PyChangedMembers* create(PyChanges* changes, PyFeature* parent);
 	static void dealloc(PyChangedMembers* self);
 	static PyObject* getattro(PyChangedMembers* self, PyObject *attr);
-	static Py_hash_t hash(PyChangedMembers* self);
 	static PyObject* iter(PyChangedMembers* self);
-	static PyObject* next(PyChangedMembers* self);
 	static PyObject* repr(PyChangedMembers* self);
 	static PyObject* richcompare(PyChangedMembers* self, PyObject* other, int op);
 	static PyObject* str(PyChangedMembers* self);
+
+	bool containsRelationMembers() const { return changes.flags(); }
 };
