@@ -6,6 +6,7 @@
 #include <clarisma/data/HashMap.h>
 #include <geodesk/feature/TypedFeatureId.h>
 #include <geodesk/geom/Coordinate.h>
+#include <geodesk/geom/FixedLonLat.h>
 
 using namespace geodesk;
 class PyChangedFeature;
@@ -52,16 +53,19 @@ class PyChanges : public PyObject
 {
 public:
 	using FeaturesByCoordinate = clarisma::HashMap<Coordinate, PyChangedFeature*>;
+	using FeaturesByLonLat = clarisma::HashMap<FixedLonLat, PyChangedFeature*>;
 	using FeaturesByTypedId = clarisma::HashMap<TypedFeatureId, PyChangedFeature*>;
 	using FeaturesVector = std::vector<PyChangedFeature*>;
 
 	PyObject_HEAD
-	FeaturesByCoordinate newAnonNodes;
+	FeaturesByLonLat newAnonNodes;
 	FeaturesByCoordinate existingAnonNodes;
 	FeaturesVector newFeatures;
 	FeaturesByTypedId existingFeatures;
 	PyObject* tags;           // dictionary of changeset tags
 	ChangesWeakRef* weakRef;
+	PyObject* outerString;
+	PyObject* innerString;
 
 	static PyTypeObject TYPE;
 	static PyMethodDef METHODS[];
@@ -81,7 +85,8 @@ public:
 
 	static PyObject* str(PyChanges* self);
 
-	PyChangedFeature* createNode(Coordinate xy);
+	PyChangedFeature* createNode(FixedLonLat lonLat);
+	PyChangedFeature* createWay(PyObject* nodeList);
 	PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
 	PyChangedFeature* modify(PyFeature* feature);
 	PyChangedFeature* modify(PyAnonymousNode* feature);

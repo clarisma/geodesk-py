@@ -5,6 +5,8 @@
 #include "PyChangedFeature.h"
 
 #include <clarisma/data/HashMap.h>
+
+#include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
 
@@ -14,7 +16,7 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 	if (self)
 	{
 		// TODO: may throw (make RAII?)
-		new(&self->newAnonNodes)FeaturesByCoordinate();
+		new(&self->newAnonNodes)FeaturesByLonLat();
 		new(&self->existingAnonNodes)FeaturesByCoordinate();
 		new(&self->newFeatures)FeaturesVector();
 		new(&self->existingFeatures)FeaturesByTypedId();
@@ -27,7 +29,7 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->newAnonNodes.~FeaturesByCoordinate();
+	self->newAnonNodes.~FeaturesByLonLat();
 	self->existingAnonNodes.~FeaturesByCoordinate();
 	self->newFeatures.~FeaturesVector();
 	self->existingFeatures.~FeaturesByTypedId();
@@ -63,17 +65,32 @@ PyObject* PyChanges::str(PyChanges* self)
 	Py_RETURN_NONE;
 }
 
-PyChangedFeature* PyChanges::createNode(Coordinate xy)
+PyChangedFeature* PyChanges::createNode(FixedLonLat lonLat)
 {
-	auto it = newAnonNodes.find(xy);
+	auto it = newAnonNodes.find(lonLat);
 	if (it != newAnonNodes.end())
 	{
 		return Python::newRef(it->second);
 	}
-	PyChangedFeature* changed = PyChangedFeature::create(this, xy);
+	PyChangedFeature* changed = PyChangedFeature::create(this, lonLat);
 	if (!changed) return nullptr;
-	newAnonNodes[xy] = changed;
+	newAnonNodes[lonLat] = changed;
 	return Python::newRef(changed);
+}
+
+PyChangedFeature* PyChanges::createWay(PyObject* nodeList)	// steals ref
+{
+	PyChangedMembers* nodes = PyChangedMembers::create(this, nodeList, false);
+		// steals ref to nodeList even if it fails
+	if (!nodes) return nullptr;
+	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
+	if (!way)
+	{
+		Py_DECREF(nodes);
+		return nullptr;
+	}
+	way->nodes = nodes;
+	return way;
 }
 
 PyChangedFeature* PyChanges::modify(FeatureStore* store, uint64_t id, Coordinate xy)

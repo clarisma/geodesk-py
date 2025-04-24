@@ -131,13 +131,6 @@ private:
 	static bool isAtomicTagValue(PyObject* obj);
 
 	bool setShape(PyObject* value);
-	bool setShape(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool setPoint(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool setLineString(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool setPolygon(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool setMultiPolygon(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool setGeometryCollection(GEOSContextHandle_t context, GEOSGeometry* geom);
-	bool applyShape(GEOSContextHandle_t context, GEOSGeometry* geom, Type only);
 
 	class Builder
 	{

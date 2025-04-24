@@ -89,7 +89,7 @@ PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObj
 	PyChangedFeature* self = create(changes, MEMBER);
 	if (self)
 	{
-		self->member = member;
+		self->member = Python::newRef(member);
 		self->role = Python::newRef(role);
 	}
 	return self;
@@ -446,13 +446,19 @@ bool PyChangedFeature::Builder::pushNode()
 		if (!list_) return false;
 	}
 	PyChangedFeature* node = changes_->createNode(
-		PyMercator::getAgnosticCoordinate(xOrLon_, yOrLat_));
+		PyMercator::getAgnosticLonLat(xOrLon_, yOrLat_));
 
 	if (!node) return false;
 	if (isMemberList_)
 	{
-		node = createMember(node,
+		PyChangedFeature* member = createMember(node,
 			Environment::get().getString(Environment::Strings::BLANK));
+		if (!member)
+		{
+			Py_DECREF(node);
+			return false;
+		}
+		node = member;
 	}
 	if (PyList_Append(list_, node) < 0)
 	{
@@ -465,15 +471,16 @@ bool PyChangedFeature::Builder::pushNode()
 
 /// @brief Attempts to turn the given value into a ChangedFeature
 /// Accepts ChangedFeature (in which case it simply returns a new ref),
-/// Feature/AnonymousNode, Coordinate, Shapely geometry, or a tuple
-/// from which it attempts to create a feature
+/// Feature/AnonymousNode, or a tuple from which it attempts
+/// to create a feature
 ///
 /// @returns	1 if a feature ws successfully created
 ///				0 if value is not suitable for a feature
 ///				-1 if an error occurred (exception is set)
+///
 int PyChangedFeature::Builder::tryCreateFeature(PyObject* value, PyChangedFeature** feature)
 {
-	PyTypeObject* type = Py_TYPE(value);
+	PyTypeObject* type = value->ob_type;
 	if (type == &PyChangedFeature::TYPE)
 	{
 		*feature = Python::newRef((PyChangedFeature*)value);
@@ -489,14 +496,19 @@ int PyChangedFeature::Builder::tryCreateFeature(PyObject* value, PyChangedFeatur
 		*feature = create(changes_, (PyAnonymousNode*)value);
 		return *feature ? 1 : -1;
 	}
+	/*
 	if (type == &PyCoordinate::TYPE)
 	{
 		PyCoordinate* coord = (PyCoordinate*)value;
 		*feature = changes_->createNode(Coordinate(coord->x, coord->y));
 		return *feature ? 1 : -1;
 	}
-
-	// TODO: Shapely geometry
+	*/
+	if (PyTuple_Check(value))
+	{
+		*feature = create(changes_, value, nullptr);
+		return *feature ? 1 : -1;
+	}
 	return 0;
 }
 
