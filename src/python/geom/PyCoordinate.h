@@ -105,6 +105,9 @@ public:
     static ConversionResult xFromLon(PyObject* obj);
     static ConversionResult yFromLat(PyObject* obj);
 
+    static bool setLon100nd(int32_t* pLon, PyObject* obj);
+    static bool setLat100nd(int32_t* pLat, PyObject* obj);
+
     /**
      * Creates a Coordinate from a sequence of coordinate values.
      * The following conditions must be met, or this fucntion will result

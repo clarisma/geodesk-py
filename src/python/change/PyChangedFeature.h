@@ -4,7 +4,7 @@
 #pragma once
 #include <Python.h>
 #include <geodesk/feature/FeaturePtr.h>
-#include <geodesk/geom/Coordinate.h>
+#include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
 
 using namespace geodesk;
@@ -36,8 +36,8 @@ public:
 			{
 				struct				// if node
 				{
-					int32_t x;
-					int32_t y;
+					int32_t lon;
+					int32_t lat;
 				};
 				PyChangedMembers* nodes;	// if way
 				PyChangedMembers* members;	// if relation
@@ -94,10 +94,11 @@ public:
 	static PyMappingMethods MAPPING_METHODS;
 
 	static PyChangedFeature* create(PyChanges* changes, Type type);
-	static PyChangedFeature* create(PyChanges* changes, Coordinate xy);
+	static PyChangedFeature* create(PyChanges* changes, FixedLonLat lonLat);
 	static PyChangedFeature* create(PyChanges* changes, PyAnonymousNode* node);
 	static PyChangedFeature* create(PyChanges* changes, PyFeature* feature);
 	static PyChangedFeature* create(PyChanges* changes, PyObject* args, PyObject* kwargs);
+	static PyChangedFeature* createMember(PyChangedFeature* member, PyObject* role);
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattro(PyChangedFeature* self, PyObject *attr);
 	static int setattro(PyChangedFeature* self, PyObject* name, PyObject* value);
@@ -107,7 +108,7 @@ public:
 	// static PyObject* richcompare(PyChangedFeature* self, PyObject* other, int op);
 	static PyObject* str(PyChangedFeature* self);
 
-	static bool modify(PyObject* args, PyObject* kwargs);
+	bool modify(PyObject* args, PyObject* kwargs);
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
 	void format(clarisma::Buffer& buf);
@@ -137,4 +138,30 @@ private:
 	bool setMultiPolygon(GEOSContextHandle_t context, GEOSGeometry* geom);
 	bool setGeometryCollection(GEOSContextHandle_t context, GEOSGeometry* geom);
 	bool applyShape(GEOSContextHandle_t context, GEOSGeometry* geom, Type only);
+
+	class Builder
+	{
+	public:
+		Builder();
+		~Builder()
+		{
+			Py_XDECREF(list_);
+			// only the list is owned, all others are borrowed
+		}
+		bool build(PyChangedFeature* feature, PyObject* args, PyObject* kwargs);
+
+	private:
+		bool pushNode();
+		int tryCreateFeature(PyObject* value, PyChangedFeature** feature);
+
+		PyChanges* changes_ = nullptr;
+		PyChangedFeature* feature_ = nullptr;
+		PyObject* list_ = nullptr;		// This is owned by Builder
+		PyObject* key_ = nullptr;
+		double xOrLon_ = 0;
+		double yOrLat_ = 0;
+		int seenArgs_ = 0;
+		int coordValueCount_ = 0;		// 0, 1 (read x), 2 (read x/y)
+		bool isMemberList_ = false;
+	};
 };

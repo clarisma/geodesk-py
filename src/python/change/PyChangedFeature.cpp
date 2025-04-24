@@ -24,15 +24,15 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Type type)
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::create(PyChanges* changes, Coordinate xy)
+PyChangedFeature* PyChangedFeature::create(PyChanges* changes, FixedLonLat lonLat)
 {
 	PyChangedFeature* self = create(changes, NODE);
 	if (self)
 	{
 		self->original = nullptr;
 		self->tags = nullptr;
-		self->x = xy.x;
-		self->y = xy.y;
+		self->lon = lonLat.lon();
+		self->lat = lonLat.lat();
 	}
 	return self;
 }
@@ -45,8 +45,8 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyAnonymousNode* 
 		self->init(changes, NODE, 0);	// TODO: in v2, anon nodes can have id
 		self->original = Python::newRef(node);
 		self->tags = nullptr;
-		self->x = node->x_;
-		self->y = node->y_;
+		self->lon = Mercator::lon100ndFromX(node->x_);
+		self->lat = Mercator::lat100ndFromY(node->y_);
 	}
 	return self;
 }
@@ -64,8 +64,8 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyFeature* featur
 		case NODE:
 		{
 			NodePtr node(feature->feature);
-			self->x = node.x();
-			self->y = node.y();
+			self->lon = Mercator::lon100ndFromX(node.x());
+			self->lat = Mercator::lat100ndFromY(node.y());
 			break;
 		}
 		case WAY:
@@ -80,6 +80,21 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyFeature* featur
 	}
 	return self;
 }
+
+PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObject* role)
+{
+	assert(member->type != MEMBER);
+	PyChanges* changes = member->changes->getOrRaise();
+	if (!changes) return nullptr;
+	PyChangedFeature* self = create(changes, MEMBER);
+	if (self)
+	{
+		self->member = member;
+		self->role = Python::newRef(role);
+	}
+	return self;
+}
+
 
 PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyObject* args, PyObject* kwargs)
 {
@@ -152,10 +167,10 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 	switch (attr->index)
 	{
 	case LAT:
-		if (type == NODE) return PyCoordinate::niceLatFromY(self->y);
+		if (type == NODE) return PyFloat_FromDouble(self->lat / 1e7);
 		Py_RETURN_NONE;
 	case LON:
-		if (type == NODE) return PyCoordinate::niceLonFromX(self->x);
+		if (type == NODE) return PyFloat_FromDouble(self->lon / 1e7);
 		Py_RETURN_NONE;
 	case MEMBERS:
 		if (type == RELATION)
@@ -194,10 +209,16 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 		if (self->loadTags(true) < 0) return nullptr;
 		return Python::newRef(self->tags);
 	case X:
-		if (type == NODE) return PyLong_FromLong(self->x);
+		if (type == NODE)
+		{
+			return PyLong_FromLong(Mercator::xFromLon100nd(self->lon));
+		}
 		Py_RETURN_NONE;
 	case Y:
-		if (type == NODE) return PyLong_FromLong(self->y);
+		if (type == NODE)
+		{
+			return PyLong_FromLong(Mercator::yFromLat100nd(self->lat));
+		}
 		Py_RETURN_NONE;
 	case COMBINE_METHOD:
 		// TODO: handle COMBINE
@@ -264,10 +285,10 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 	{
 	case LAT:
 		if (!applyAttr(attr, NODE)) return -1;
-		return PyMercator::setYFromLat(&y, value) ? GROUP_Y : -1;
+		return PyCoordinate::setLat100nd(&lat, value) ? GROUP_Y : -1;
 	case LON:
 		if (!applyAttr(attr, NODE)) return -1;
-		return PyMercator::setXFromLon(&x, value) ? GROUP_X : -1;
+		return PyCoordinate::setLon100nd(&lon, value) ? GROUP_X : -1;
 	case MEMBERS:
 		if (!applyAttr(attr, RELATION)) return -1;
 		return setMembers(value) ? GROUP_SHAPE : -1;
@@ -286,7 +307,7 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 		if (!applyAttr(attr, NODE)) return -1;
 		double v = PyFloat_AsDouble(value);
 		if (v == -1.0 && PyErr_Occurred()) return -1;
-		x = (int32_t)round(v);
+		lon = Mercator::lon100ndFromX(v);
 		return GROUP_X;
 	}
 	case Y:
@@ -294,7 +315,7 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 		if (!applyAttr(attr, NODE)) return -1;
 		double v = PyFloat_AsDouble(value);
 		if (v == -1.0 && PyErr_Occurred()) return -1;
-		y = (int32_t)round(v);
+		lat = Mercator::lat100ndFromY(v);
 		return GROUP_Y;
 	}
 	default:
@@ -342,22 +363,7 @@ bool PyChangedFeature::setNodes(PyObject* value)
 	return false;
 }
 
-bool PyChangedFeature::setShape(PyObject* value)
-{
-	// TODO
-	return false;
-}
 
-bool PyChangedFeature::setTags(PyObject* value)
-{
-	if (!Python::checkType(value, &PyDict_Type)) return false;
-	if(tags)
-	{
-		Py_DECREF(tags);
-		tags = nullptr;
-	}
-	return setOrRemoveTags(value);
-}
 
 PyObject* PyChangedFeature::repr(PyChangedFeature* self)
 {
@@ -377,143 +383,6 @@ PyObject* PyChangedFeature::richcompare(PyChangedFeature* self, PyObject* other,
 PyObject* PyChangedFeature::str(PyChangedFeature* self)
 {
 	return repr(self);
-}
-
-/// @brief Creates a dict from the tags of the given feature.
-///
-/// @return The key-value dict, or NULL if unable to allocate
-///
-PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
-{
-	PyObject* dict = PyDict_New();
-	if (!dict) return nullptr;
-
-	TagIterator iter(feature.tags(), store->strings());
-	for (;;)
-	{
-		auto [keyStr, tagBits] = iter.next();
-		if (keyStr == nullptr) break;
-
-		PyObject* key = Python::toStringObject(keyStr->data(), keyStr->length());
-		if (!key)
-		{
-			Py_DECREF(dict);
-			return nullptr;
-		}
-
-		PyObject* value = iter.tags().valueAsObject(tagBits, store->strings());
-		if (!value)
-		{
-			Py_DECREF(key);
-			Py_DECREF(dict);
-			return nullptr;
-		}
-
-		if (PyDict_SetItem(dict, key, value) < 0)
-		{
-			Py_DECREF(key);
-			Py_DECREF(value);
-			Py_DECREF(dict);
-			return nullptr;
-		}
-
-		Py_DECREF(key);
-		Py_DECREF(value);
-	}
-	return dict;
-}
-
-/// @brief Ensures the tags (as a Python dict) are loaded.
-/// @param create If `true`, creates an empty dict if tags is NULL
-/// @return 0 if tags remains NULL (new feature or anon node, and
-///			create was et to false)
-///			1 if tags is now a valid Python dict
-///			-1 if dict could not be created
-int PyChangedFeature::loadTags(bool create)
-{
-	assert(type != MEMBER);
-	if (tags) return 1;
-	if (!original || Py_TYPE(original) == &PyAnonymousNode::TYPE)
-	{
-		if (!create) return 0;
-		tags = PyDict_New();
-	}
-	else
-	{
-		assert(Py_TYPE(original) == &PyFeature::TYPE);
-		PyFeature* feature = (PyFeature*)original;
-		tags = createTags(feature->store, feature->feature);
-	}
-	return tags ? 1 : -1;
-}
-
-bool PyChangedFeature::isAtomicTagValue(PyObject* obj)
-{
-	return PyUnicode_Check(obj) || PyLong_Check(obj) ||
-		PyFloat_Check(obj) || PyBool_Check(obj);
-}
-
-bool PyChangedFeature::isTagValue(PyObject* obj)
-{
-	if (isAtomicTagValue(obj)) return true;
-	if (!PyList_Check(obj) && !PyTuple_Check(obj))
-	{
-		Py_ssize_t size = PySequence_Size(obj);
-		for (Py_ssize_t i = 0; i < size; ++i)
-		{
-			PyObject* item = PySequence_GetItem(obj, i);
-			if (!item)
-			{
-				PyErr_Clear();  // Ignore sequence access error
-				return false;
-			}
-			bool valid = isAtomicTagValue(item);
-			Py_DECREF(item);
-			if (!valid)	return false;
-		}
-		return true;
-	}
-	return false;
-}
-
-bool PyChangedFeature::setOrRemoveTag(PyObject* key, PyObject* value)
-{
-	assert(type != MEMBER);
-	if (loadTags(true) < 0) return false;
-	if (value == Py_None ||
-		(PyUnicode_Check(value) && PyUnicode_GetLength(value) == 0))
-	{
-		if (PyDict_DelItem(tags, key) < 0)
-		{
-			if (!PyErr_ExceptionMatches(PyExc_KeyError))  // true error
-			{
-				return false;
-			}
-			PyErr_Clear(); // ignore missing keys
-		}
-		return true;
-	}
-	if (!isTagValue(value))
-	{
-		PyErr_SetString(PyExc_TypeError,
-			"Tag value must be string, number, bool or list");
-		return false;
-	}
-	return PyDict_SetItem(tags, key, value) == 0;
-}
-
-bool PyChangedFeature::setOrRemoveTags(PyObject* dict)
-{
-	assert(PyDict_Check(dict));
-	PyObject* key;
-	PyObject* value;
-	Py_ssize_t pos = 0;
-
-	while (PyDict_Next(dict, &pos, &key, &value))
-	{
-		if (!setOrRemoveTag(key, value)) return false;
-	}
-	return true;
 }
 
 PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
@@ -568,79 +437,153 @@ void PyChangedFeature::format(clarisma::Buffer& buf)
 	// TODO: new, anonymous
 }
 
-bool PyChangedFeature::setShape(GEOSContextHandle_t context, GEOSGeometry* geom)
+
+bool PyChangedFeature::Builder::pushNode()
 {
-	switch (GEOSGeomTypeId_r(context, geom))
+	if (!list_)
 	{
-	case GEOS_POINT:
-		return setPoint(context, geom);
-	case GEOS_LINESTRING:
-	case GEOS_LINEARRING:
-		return setLineString(context, geom);
-	case GEOS_POLYGON:
-		return setPolygon(context, geom);
-	case GEOS_MULTIPOLYGON:
-		return setMultiPolygon(context, geom);
-	case GEOS_GEOMETRYCOLLECTION:
-		return setGeometryCollection(context, geom);
-	default:
-		PyErr_SetString(PyExc_ValueError, "Unsupported geometry type");
+		list_ = PyList_New(0);
+		if (!list_) return false;
+	}
+	PyChangedFeature* node = changes_->createNode(
+		PyMercator::getAgnosticCoordinate(xOrLon_, yOrLat_));
+
+	if (!node) return false;
+	if (isMemberList_)
+	{
+		node = createMember(node,
+			Environment::get().getString(Environment::Strings::BLANK));
+	}
+	if (PyList_Append(list_, node) < 0)
+	{
+		Py_DECREF(node);
 		return false;
 	}
+	Py_DECREF(node);
+	return true;
 }
 
-bool PyChangedFeature::setPoint(GEOSContextHandle_t context, GEOSGeometry* geom)
+/// @brief Attempts to turn the given value into a ChangedFeature
+/// Accepts ChangedFeature (in which case it simply returns a new ref),
+/// Feature/AnonymousNode, Coordinate, Shapely geometry, or a tuple
+/// from which it attempts to create a feature
+///
+/// @returns	1 if a feature ws successfully created
+///				0 if value is not suitable for a feature
+///				-1 if an error occurred (exception is set)
+int PyChangedFeature::Builder::tryCreateFeature(PyObject* value, PyChangedFeature** feature)
 {
-	if (type != NODE)
+	PyTypeObject* type = Py_TYPE(value);
+	if (type == &PyChangedFeature::TYPE)
 	{
-		if (type != UNASSIGNED)
+		*feature = Python::newRef((PyChangedFeature*)value);
+		return 1;
+	}
+	if (type == &PyFeature::TYPE)
+	{
+		*feature = create(changes_, (PyFeature*)value);
+		return *feature ? 1 : -1;
+	}
+	if (type == &PyAnonymousNode::TYPE)
+	{
+		*feature = create(changes_, (PyAnonymousNode*)value);
+		return *feature ? 1 : -1;
+	}
+	if (type == &PyCoordinate::TYPE)
+	{
+		PyCoordinate* coord = (PyCoordinate*)value;
+		*feature = changes_->createNode(Coordinate(coord->x, coord->y));
+		return *feature ? 1 : -1;
+	}
+
+	// TODO: Shapely geometry
+	return 0;
+}
+
+bool PyChangedFeature::Builder::build(
+	PyChangedFeature* feature, PyObject* args, PyObject* kwargs)
+{
+	feature_ = feature;
+	changes_ = feature->changes->getOrRaise();
+	if (!changes_) return false;
+
+	assert(PyTuple_Check(args));
+	Py_ssize_t argCount = PyTuple_Size(args);
+	for (Py_ssize_t i=0; i<argCount; i++)
+	{
+		PyObject* arg = PyTuple_GetItem(args, i); // borrowed ref
+		if (PyFloat_Check(arg) || PyLong_Check(arg))
 		{
-			PyErr_SetString(PyExc_ValueError, "Point can only be set for node");
+			if (coordValueCount_ == 2)
+			{
+				// We've staged a full coordinate
+				// -> create a node and append to list
+				pushNode();
+				coordValueCount_ = 0;
+			}
+			double val = PyFloat_AsDouble(arg);
+			if (coordValueCount_ == 0)
+			{
+				xOrLon_ = val;
+			}
+			else
+			{
+				assert(coordValueCount_ == 1);
+				yOrLat_ = val;
+			}
+			coordValueCount_++;
+			continue;
+		}
+		if (PyUnicode_Check(arg))		// String (key of tag)
+		{
+			// handle string
+			continue;
+		}
+		PyChangedFeature* child;
+		int res = tryCreateFeature(arg, &child);
+		if (res < 0) return false;
+		if (res == 1)
+		{
+
+		}
+		if (PyTuple_Check(arg))		// coord pair, member or feature
+		{
+			// handle tuple
+			continue;
+		}
+		else if (Py_TYPE(arg) == &PyCoordinate::TYPE)
+		{
+			// handle PyCoordinate*
+			auto* coord = reinterpret_cast<PyCoordinate*>(arg);
+			// use coord->x_, coord->y_, etc.
+		}
+
+		// --- List
+		else if (PyList_Check(arg))
+		{
+			// handle list
+		}
+
+		// --- Dict
+		else if (PyDict_Check(arg))
+		{
+			// handle dict
+		}
+
+		// --- Shapely geometry object
+		else if (PyObject_HasAttrString(arg, "geom_type"))  // quick way to test
+		{
+			// handle Shapely geometry
+		}
+
+		else
+		{
+			PyErr_Format(PyExc_TypeError,
+						 "Unexpected argument type: %.200s",
+						 Py_TYPE(arg)->tp_name);
 			return false;
 		}
-		type = NODE;
 	}
-	const GEOSCoordSequence* coords = GEOSGeom_getCoordSeq_r(context, geom);
-	double xOrLon = 0;
-	double yOrLat = 0;
-	GEOSCoordSeq_getXY_r(context, coords, 0, &xOrLon, &yOrLat);
-	Coordinate xy = PyMercator::getAgnosticCoordinate(xOrLon,yOrLat);
-	x = xy.x;
-	y = xy.y;
-	return true;
-}
-
-bool PyChangedFeature::setLineString(GEOSContextHandle_t context, GEOSGeometry* geom)
-{
-	// TODO
-	return true;
-}
-
-bool PyChangedFeature::setPolygon(GEOSContextHandle_t context, GEOSGeometry* geom)
-{
-	// TODO
-	return true;
-}
-
-bool PyChangedFeature::setMultiPolygon(GEOSContextHandle_t context, GEOSGeometry* geom)
-{
-	// TODO
-	return true;
-}
-
-bool PyChangedFeature::setGeometryCollection(GEOSContextHandle_t context, GEOSGeometry* geom)
-{
-	// TODO
-	return true;
-}
-
-bool PyChangedFeature::modify(PyObject* args, PyObject* kwargs)
-{
-	PyObject* list = nullptr;
-	PyObject* key = nullptr;
-	int seenArgs = 0;
-	Coordinate xy;
-
 	return true;	// TODO
 }
 

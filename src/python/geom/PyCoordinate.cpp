@@ -449,3 +449,46 @@ PyObject* PyCoordinate::create(PyObject* args, bool latFirst)
     // This will check if argument count is 0 and raise exception
     return createMultiFromFastSequence(args, latFirst);
 }
+
+
+bool PyCoordinate::setLon100nd(int32_t* pLon, PyObject* obj)
+{
+    double lon;
+    if (PyFloat_Check(obj))
+    {
+        lon = PyFloat_AS_DOUBLE(obj);
+    }
+    else
+    {
+        lon = PyFloat_AsDouble(obj);
+        if (lon == -1.0 && PyErr_Occurred()) return false;
+    }
+    if(lon < -180 || lon > 180)
+    {
+        PyErr_SetString(PyExc_ValueError, "lon must be in range -180 to 180");
+        return false;
+    }
+    *pLon = lon;
+    return true;
+}
+
+bool PyCoordinate::setLat100nd(int32_t* pLat, PyObject* obj)
+{
+    double lat;
+    if (PyFloat_Check(obj))
+    {
+        lat = PyFloat_AS_DOUBLE(obj);
+    }
+    else
+    {
+        lat = PyFloat_AsDouble(obj);
+        if (lat == -1.0 && PyErr_Occurred()) return false;
+    }
+    if(lat < -90 || lat > 90)
+    {
+        PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
+        return false;
+    }
+    *pLat = lat;
+    return true;
+}

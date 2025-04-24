@@ -451,12 +451,20 @@ bool PyMercator::setYFromLat(int32_t* y, PyObject* obj)
 	return true;
 }
 
-Coordinate PyMercator::getAgnosticCoordinate(double xOrLon, double yOrLon)
+Coordinate PyMercator::getAgnosticCoordinate(double xOrLon, double yOrLat)
 {
-	if (xOrLon > 180 || xOrLon < -180 || yOrLon > 90 || yOrLon < -90)
+	if (xOrLon > 180 || xOrLon < -180 || yOrLat > 90 || yOrLat < -90)
 	{
-		return Coordinate(xOrLon, yOrLon);
+		return Coordinate(xOrLon, yOrLat);
 	}
-	return Coordinate::ofLonLat(xOrLon, yOrLon);
+	return Coordinate::ofLonLat(xOrLon, yOrLat);
 }
 
+FixedLonLat PyMercator::getAgnosticLonLat(double xOrLon, double yOrLat)
+{
+	if (xOrLon > 180 || xOrLon < -180 || yOrLat > 90 || yOrLat < -90)
+	{
+		return FixedLonLat(Mercator::lonFromX(xOrLon), Mercator::latFromY(yOrLat));
+	}
+	return FixedLonLat(xOrLon, yOrLat);
+}
