@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Clarisma / GeoDesk contributors
+# Copyright (c) 2025 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
 def check_node(features, id):
@@ -22,13 +22,13 @@ def test_query_by_id(monaco):
     check_relation(monaco, 2214022)
     assert monaco.node(222) is None
 
-def notest_query_speed(monaco):
+def test_query_speed(monaco):
     count = 0
     for id in range(1,10000):
         if monaco.node(id) is not None:
             count += 1
 
-def test_query_speed_manual(monaco):
+def notest_query_speed_manual(monaco):
     count = 0
     nodes = monaco.nodes
     for id in range(1,100000):
