@@ -1,4 +1,4 @@
-static const int ATTR_COUNT = 49;
+static const int ATTR_COUNT = 52;
 static const char* ATTR_NAMES[] =
 {
     "area",
@@ -44,10 +44,13 @@ static const char* ATTR_NAMES[] =
     "members_of",
     "min_length",
     "nearest_to",
+    "node",
     "nodes_of",
     "overlapping",
     "parents_of",
+    "relation",
     "touching",
+    "way",
     "with_role",
     "within",
 };

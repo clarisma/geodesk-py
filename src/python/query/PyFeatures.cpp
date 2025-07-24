@@ -1100,3 +1100,85 @@ PyObject* PyFeatures::explain(PyFeatures* self, PyObject* args, PyObject* kwargs
     PyErr_SetString(PyExc_TypeError, "Expected query");
     return NULL;
 }
+
+// Lookup by ID
+
+PyObject* PyFeatures::node(PyFeatures* self, PyObject* args, PyObject* kwargs)
+{
+    return self->findById(FeatureType::NODE, args, kwargs);
+}
+
+PyObject* PyFeatures::way(PyFeatures* self, PyObject* args, PyObject* kwargs)
+{
+    return self->findById(FeatureType::WAY, args, kwargs);
+}
+
+PyObject* PyFeatures::relation(PyFeatures* self, PyObject* args, PyObject* kwargs)
+{
+    return self->findById(FeatureType::RELATION, args, kwargs);
+}
+
+class FeatureIdFilter : public Filter
+{
+public:
+    // We don't need to set acceptedTypes because this Filter
+    // will never be combined with others; it is only used for
+    // finding ways that contain a specific node
+    FeatureIdFilter(TypedFeatureId typedId, const Filter* filter) :
+        typedId_(typedId),
+        secondaryFilter_(filter)
+    {
+    }
+
+    const Filter* secondaryFilter() const { return secondaryFilter_; }
+
+    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
+    {
+        if (feature.typedId() != static_cast<uint64_t>(typedId_)) return false;
+        return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
+    }
+
+private:
+    TypedFeatureId typedId_;
+    const Filter* secondaryFilter_;
+};
+
+PyObject* PyFeatures::findById(FeatureType type, PyObject* args, PyObject* kwargs) const
+{
+    PyObject* arg = Python::checkSingleArg(args, kwargs, "id");
+    if (!arg) return NULL;
+    uint64_t id = PyLong_AsUnsignedLongLong(arg);
+    if (id == static_cast<unsigned long long>(-1) && PyErr_Occurred())
+    {
+        return NULL;
+    }
+
+    static FeatureTypes TYPES[] =
+    {
+        FeatureTypes::NODES,
+        FeatureTypes::WAYS,
+        FeatureTypes::RELATIONS
+    };
+
+    FeatureTypes types = TYPES[static_cast<int>(type)] & acceptedTypes;
+    if (types == 0)
+    {
+        Py_RETURN_NONE;
+    }
+
+    TypedFeatureId typedId = TypedFeatureId::ofTypeAndId(type, id);
+    if (selectionType == &World::SUBTYPE)
+    {
+        FeatureIdFilter idFilter(typedId, filter);
+        Query query(store, bounds, types, matcher, &idFilter);
+        FeaturePtr feature = query.next();
+        if (feature.isNull())
+        {
+            Py_RETURN_NONE;
+        }
+        return PyFeature::create(store, feature, Py_None);
+    }
+    // TODO: Other views (iterate over PyQuery)
+
+    Py_RETURN_NONE;
+}

@@ -10,6 +10,7 @@
 #include <geodesk/feature/WayPtr.h>
 #include <geodesk/feature/MemberIterator.h>
 #include <geodesk/feature/ParentRelationIterator.h>
+#include <geodesk/feature/TypedFeatureId.h>
 #include <geodesk/filter/FeatureNodeFilter.h>
 #include <geodesk/filter/WayNodeFilter.h>
 #include <geodesk/geom/Box.h>
@@ -185,6 +186,13 @@ public:
     static PyObject* explain(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* load(PyFeatures* self, PyObject* args, PyObject* kwargs);
     static PyObject* update(PyFeatures* self, PyObject* args, PyObject* kwargs);
+
+    // Lookup by ID
+
+    static PyObject* node(PyFeatures* self, PyObject* args, PyObject* kwargs);
+    static PyObject* way(PyFeatures* self, PyObject* args, PyObject* kwargs);
+    static PyObject* relation(PyFeatures* self, PyObject* args, PyObject* kwargs);
+    PyObject* findById(FeatureType type, PyObject* args, PyObject* kwargs) const;
 
     int forEach(FeatureFunction func);
     PyObject* getFirst(bool mustHaveOne, bool mayHaveMore);
