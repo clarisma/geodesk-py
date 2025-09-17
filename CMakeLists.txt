@@ -19,6 +19,7 @@ project ("geodesk-py")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+set(GEODESK_LIBERO ON)
 
 # TODO: Make config more flexible
 #if(MSVC)

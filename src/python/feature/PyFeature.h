@@ -78,7 +78,6 @@ class PyFeature::Node : public PyFeature
 public:
     static PyObject* bounds(PyFeature* self);
     static PyObject* centroid(PyFeature* self);
-    static PyObject* is_placeholder(PyFeature* self);
     static PyObject* lat(PyFeature* self);
     static PyObject* lon(PyFeature* self);
     static PyObject* parents(PyFeature* self);
@@ -95,7 +94,6 @@ class PyFeature::Way : public PyFeature
 public:
     static PyObject* area(PyFeature* self);
     static PyObject* centroid(PyFeature* self);
-    static PyObject* is_placeholder(PyFeature* self);
     static PyObject* length(PyFeature* self);
     static PyObject* nodes(PyFeature* self);
     static PyObject* shape(PyFeature* self);
@@ -108,7 +106,6 @@ class PyFeature::Relation : public PyFeature
 public:
     static PyObject* area(PyFeature* self);
     static PyObject* centroid(PyFeature* self);
-    static PyObject* is_placeholder(PyFeature* self);
     static PyObject* length(PyFeature* self);
     static PyObject* members(PyFeature* self);
     static PyObject* shape(PyFeature* self);
