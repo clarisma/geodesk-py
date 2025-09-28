@@ -235,7 +235,7 @@ def helper_check_results(results, file_path):
             passed = False
             continue
         good_res = good[name]
-        if good[name] != good_res:
+        if res != good_res:
             print(f"{name} should be {good_res} instead of {res}")
             passed = False
     for name in good.keys():
