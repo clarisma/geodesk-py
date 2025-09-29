@@ -1,4 +1,4 @@
-from geodesk2 import *
+from geodesk import *
 
 """
 def test_debug():

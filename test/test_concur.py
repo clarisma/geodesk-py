@@ -3,7 +3,7 @@
 
 import inspect
 import sys
-from geodesk2 import *
+from geodesk import *
 
 def italian_restaurant_count(world):
     return world("na[amenity=restaurant][cuisine=italian]").count
