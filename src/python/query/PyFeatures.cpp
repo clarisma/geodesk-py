@@ -1134,7 +1134,7 @@ public:
 
     bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
     {
-        if (feature.typedId() != static_cast<uint64_t>(typedId_)) return false;
+        if (feature.typedId() != typedId_) return false;
         return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
     }
 

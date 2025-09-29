@@ -67,7 +67,9 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
     {
         self->featureNodesOnly = features->flags & SelectionFlags::USES_MATCHER;
         self->target = Python::newRef(features);
-        new(&self->featureIter)FeatureNodeIterator(features->store, way);
+        new(&self->featureIter)FeatureNodeIterator(features->store, way,
+            features->matcher, features->filter);
+        self->nextNode = self->featureIter.next();
         self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;
@@ -87,6 +89,7 @@ PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
         self->target = Python::newRef(wayObj);
         self->featureNodesOnly = false;
         new(&self->featureIter)FeatureNodeIterator(wayObj->store, way);
+        self->nextNode = self->featureIter.next();
         self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;
