@@ -3,7 +3,7 @@
 
 import inspect
 import sys
-from geodesk import *
+from geodesk2 import *
 
 def italian_restaurant_count(world):
     return world("na[amenity=restaurant][cuisine=italian]").count
@@ -169,7 +169,10 @@ def tags_int_sum(world):
     for f in world:
         for k,v, in f.tags:
             sum += int(f.num(k))
-    return sum & 0x7FFFFFFFFFFFFFFF  # must be int64
+            sum &= (1 << 64) - 1    # keep only 64 bits
+            if sum & (1 << 63):     # interpret sign
+                sum = sum - (1 << 64)
+    return sum                      # must be int64
 
 def xy_hash(world):
     hash = 0
@@ -235,7 +238,7 @@ def helper_check_results(results, file_path):
             passed = False
             continue
         good_res = good[name]
-        if good[name] != good_res:
+        if res != good_res:
             print(f"{name} should be {good_res} instead of {res}")
             passed = False
     for name in good.keys():

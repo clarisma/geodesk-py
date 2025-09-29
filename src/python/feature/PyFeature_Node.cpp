@@ -29,12 +29,6 @@ PyObject* PyFeature::Node::centroid(PyFeature* self)
     return PyCoordinate::create(x, y);
 }
 
-PyObject* PyFeature::Node::is_placeholder(PyFeature* self)
-{
-    return Python::boolValue(NodePtr(self->feature).isPlaceholder());
-}
-
-
 PyObject* PyFeature::Node::lat(PyFeature* self)
 {
     DataPtr p = self->feature.ptr();
@@ -94,7 +88,7 @@ AttrFunctionPtr const PyFeature::Node::FEATURE_METHODS[] =
     id,                 // id
     return_false,       // is_area
     return_true,        // is_node
-    is_placeholder,     // is_placeholder
+    return_false,       // is_placeholder
     return_false,       // is_relation
     return_false,       // is_way
     lat,                // lat

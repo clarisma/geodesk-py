@@ -30,7 +30,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
     {
         FeaturePtr member = iter.next();
         if (member.isNull()) break;
-        if (iter.isCurrentForeign()) tips.insert(iter.currentTip());
+        if (iter.isForeign()) tips.insert(iter.tip());
     }
 
     PyObject* list = PyList_New(0);
@@ -45,7 +45,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
 
         TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), relation.bounds(), self->filter);
             // TODO: could calculate tighter bounds based on accepted members
-        while (tiw.next())
+        do
         {
             Tip tip = Tip(tiw.currentTip());
             if (tips.find(tip) == tips.end()) continue;
@@ -62,6 +62,7 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
             Py_DECREF(list);
             return NULL;
         }
+        while (tiw.next());
     }
     return list;
 }

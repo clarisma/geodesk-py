@@ -19,6 +19,7 @@ project ("geodesk-py")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+set(GEODESK_LIBERO ON)
 
 # TODO: Make config more flexible
 #if(MSVC)
@@ -49,7 +50,7 @@ message(STATUS "GeoDesk: CIBW_PYTHON_LIBRARIES = ${CIBW_PYTHON_LIBRARIES}")
 if(BUILD_WHEELS)
 	find_package(PythonExtensions REQUIRED)
 else()
-	 find_package(Python REQUIRED COMPONENTS Development.Module)
+	 find_package(Python REQUIRED COMPONENTS Development.Module Development.Embed)
 	 include_directories(${Python_INCLUDE_DIRS})
 
 	if (Python_FOUND)
@@ -95,7 +96,7 @@ if(NOT BUILD_WHEELS)
 	# message(STATUS "INCLUDES = ${INCLUDES}")
 	add_executable (geodesk-py-test "src/main.cxx" ${SOURCE_FILES})
 	# target_include_directories(geodesk-py PRIVATE ${INCLUDES})
-	target_link_libraries(geodesk-py-test PRIVATE ${LIBRARIES})
+	target_link_libraries(geodesk-py-test PRIVATE ${LIBRARIES} Python::Python)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_WITH_GEOS)
 	target_compile_definitions(geodesk-py-test PRIVATE _WIN32_WINNT=0x0601)
@@ -123,7 +124,7 @@ target_compile_definitions(_geodesk PRIVATE GEODESK_PYTHON)
 
 if(BUILD_WHEELS)
 	install(TARGETS _geodesk
-		LIBRARY DESTINATION geodesk)
+		LIBRARY DESTINATION geodesk2)
 else()
 	install(TARGETS _geodesk
 			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}

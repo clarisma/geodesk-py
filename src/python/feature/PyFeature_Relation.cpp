@@ -29,11 +29,6 @@ PyObject* PyFeature::Relation::centroid(PyFeature* self)
     return PyCoordinate::create(Centroid::ofRelation(self->store, RelationPtr(self->feature)));
 }
 
-PyObject* PyFeature::Relation::is_placeholder(PyFeature* self)
-{
-    return Python::boolValue(RelationPtr(self->feature).isPlaceholder());
-}
-
 
 PyObject* PyFeature::Relation::length(PyFeature* self)
 {
@@ -84,7 +79,7 @@ AttrFunctionPtr const PyFeature::Relation::FEATURE_METHODS[] =
     id,                 // id
     is_area,            // is_area
     return_false,       // is_node
-    is_placeholder,     // is_placeholder
+    return_false,       // is_placeholder
     return_true,        // is_relation
     return_false,       // is_way
     lat,                // lat

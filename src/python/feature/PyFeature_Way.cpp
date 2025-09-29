@@ -33,11 +33,6 @@ PyObject* PyFeature::Way::centroid(PyFeature* self)
     return PyCoordinate::create(Centroid::ofWay(WayPtr(self->feature)));
 }
 
-PyObject* PyFeature::Way::is_placeholder(PyFeature* self)
-{
-    return Python::boolValue(WayPtr(self->feature).isPlaceholder());
-}
-
 PyObject* PyFeature::Way::length(PyFeature* self)
 {
     return PyFloat_FromDouble(Length::ofWay(WayPtr(self->feature)));
@@ -68,7 +63,7 @@ AttrFunctionPtr const PyFeature::Way::FEATURE_METHODS[] =
     id,                 // id
     is_area,            // is_area
     return_false,       // is_node
-    is_placeholder,     // is_placeholder
+    return_false,       // is_placeholder
     return_false,       // is_relation
     return_true,        // is_way
     lat,                // lat

@@ -201,7 +201,7 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
     {
         FeatureStore* store = self->store;
         TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds, self->filter);
-        while (tiw.next())
+        do
         {
             PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
             if (tile)
@@ -216,6 +216,7 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
             Py_DECREF(list);
             return NULL;
         }
+        while (tiw.next());
     }
     return list;
 }
@@ -1133,7 +1134,7 @@ public:
 
     bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
     {
-        if (feature.typedId() != static_cast<uint64_t>(typedId_)) return false;
+        if (feature.typedId() != typedId_) return false;
         return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);
     }
 

@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         # os: [windows-latest, ubuntu-latest]
+        # suppress MacOS for now due to lack of proper C++20 support
         os: [windows-latest, ubuntu-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +60,7 @@ jobs:
           path: wheelhouse
       - name: Install and test the built wheel
         run: |
-          pip install --find-links wheelhouse geodesk
+          pip install --find-links wheelhouse geodesk2
           pip install pytest
           cd test
           pytest test_basic.py
@@ -90,4 +91,4 @@ jobs:
       - name: Publish to PyPI
         run: |
           python -m pip install twine
-          twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN }} wheelhouse/*.whl
+          twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN_GLOBAL }} wheelhouse/*.whl

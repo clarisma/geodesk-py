@@ -3,6 +3,13 @@
 GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
 Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](http://www.github.com/clarisma/geodesk).
 
+> This is an **interim release** used for testing.
+>
+> For production use, install the [geodesk](https://pypi.org/project/geodesk) instead: 
+> 
+> `pip install geodesk`
+> 
+
 ## Why GeoDesk?
 
 - **Small storage footprint** &mdash; GeoDesk's GOL files are only 20% to 50% larger than the original OSM data in PBF format &mdash; that's less than a tenth of the storage consumed by a traditional SQL-based database.
@@ -24,7 +31,7 @@ Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](
 ### Requirements
 
 - Python 3.9 or above
-- Java 16 or above (for the GOL Tool)
+- [GOL Tool 2.0](https://github.com/clarisma/geodesk-gol)
  
 ### Download
 
@@ -34,8 +41,7 @@ pip install geodesk
 
 ### Create a GOL
 
-Create a Geographic Object Library based on any `.osm.pbf` file, using the 
-[GOL Tool](https://www.geodesk.com/download) (Requires Java 16+).
+Create a Geographic Object Library based on any `.osm.pbf` file, using the [GOL Tool](https://www.geodesk.com/download).
 
 For example:
 
@@ -97,4 +103,4 @@ number_of_entrances = building.nodes("[entrance]").count
 
 - [geodesk](http://www.github.com/clarisma/geodesk) &mdash; GeoDesk for Java
 - [libgeodesk](https://github.com/clarisma/libgeodesk) &mdash; GeoDesk for C++
-- [gol-tool](http://www.github.com/clarisma/gol-tool) &mdash; command-line utility for building, maintaining and querying GOL files
+- [geodesk-gol](http://www.github.com/clarisma/geodesk-gol) &mdash; command-line utility for building, maintaining and querying GOL files
