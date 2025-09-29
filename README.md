@@ -3,12 +3,11 @@
 GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
 Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](http://www.github.com/clarisma/geodesk).
 
-> [!IMPORTANT]
-> This is a **preview release** of GeoDesk for Python 2.0.
+> This is an **interim release** used for testing.
 >
-> To use it, you will need to build GOLs with [GOL Tool 2.0](https://github.com/clarisma/geodesk-gol).
->
-> To read GOLs built with [GOL Tool 1.x](https://github.com/clarisma/gol-tool), use [Version 1.3.0](https://github.com/clarisma/geodesk-py/releases/tag/1.3.0) of this toolkit (`pip install geodesk`)
+> For production use, install the [geodesk](https://pypi.org/project/geodesk) instead: 
+> 
+> `pip install geodesk`
 > 
 
 ## Why GeoDesk?

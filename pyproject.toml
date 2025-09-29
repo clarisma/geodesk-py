@@ -10,7 +10,7 @@ build = "cp*-manylinux_x86_64 cp*-win_amd64 cp*-macosx_x86_64"
 [project]
 name = "geodesk2"
 description = "Fast and storage-efficient spatial database engine for OpenStreetMap features"
-version = "2.0.3"
+version = "2.0.4"
 license = { text = "LGPL-3.0-only" }
 readme = "README.md"
 keywords = ["gis", "openstreetmap", "geospatial", "database" ]
