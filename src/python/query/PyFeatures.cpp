@@ -963,7 +963,7 @@ PyObject* PyFeatures::shape(PyFeatures* self)
     {
         for (GEOSGeometry* geom : geoms) 
         {
-            GEOSGeom_destroy(geom);
+            GEOSGeom_destroy_r(geosContext, geom);
         }
         return NULL;
     }
