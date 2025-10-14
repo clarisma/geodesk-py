@@ -100,8 +100,8 @@ public:
 	static PyChangedFeature* create(PyChanges* changes, PyObject* args, PyObject* kwargs);
 	static PyChangedFeature* createMember(PyChangedFeature* member, PyObject* role);
 	static void dealloc(PyChangedFeature* self);
-	static PyObject* getattro(PyChangedFeature* self, PyObject *attr);
-	static int setattro(PyChangedFeature* self, PyObject* name, PyObject* value);
+	static PyObject* getattr(PyChangedFeature* self, PyObject *attr);
+	static int setattr(PyChangedFeature* self, PyObject* nameObj, PyObject* value);
 	static PyObject* getitem(PyChangedFeature* self, PyObject* key);
 	static int setitem(PyChangedFeature* self, PyObject* key, PyObject* value);
 	static PyObject* repr(PyChangedFeature* self);

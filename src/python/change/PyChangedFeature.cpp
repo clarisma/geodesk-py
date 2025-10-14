@@ -143,7 +143,7 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 	}
 }
 
-PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
+PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 {
 	Py_ssize_t len;
     const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
@@ -253,7 +253,7 @@ PyObject* PyChangedFeature::getattro(PyChangedFeature* self, PyObject *nameObj)
 		Py_RETURN_NONE;
 	default:
 		assert(false);
-		break;
+		Py_RETURN_NONE;
 	}
 }
 
@@ -325,7 +325,7 @@ int PyChangedFeature::setProperty(int attr, PyObject* value)
 	}
 }
 
-int PyChangedFeature::setattro(PyChangedFeature* self, PyObject* nameObj, PyObject* value)
+int PyChangedFeature::setattr(PyChangedFeature* self, PyObject* nameObj, PyObject* value)
 {
 	Py_ssize_t len;
 	const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
@@ -423,6 +423,7 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 	}
 	return PyObject_SetItem(self->tags, key, value);
 }
+
 
 void PyChangedFeature::format(clarisma::Buffer& buf)
 {
@@ -587,7 +588,6 @@ bool PyChangedFeature::Builder::build(
 		{
 			// handle Shapely geometry
 		}
-
 		else
 		{
 			PyErr_Format(PyExc_TypeError,
@@ -599,6 +599,18 @@ bool PyChangedFeature::Builder::build(
 	return true;	// TODO
 }
 
+
+bool PyChangedFeature::modify(PyObject* args, PyObject* kwargs)
+{
+	// TODO
+	return false;
+}
+
+bool PyChangedFeature::setShape(PyObject* value)
+{
+	// TODO
+	return false;
+}
 
 PyMappingMethods PyChangedFeature::MAPPING_METHODS =
 {
@@ -615,8 +627,8 @@ PyTypeObject PyChangedFeature::TYPE =
 	.tp_repr = (reprfunc)repr,
 	.tp_as_mapping = &MAPPING_METHODS,
 	.tp_str = (reprfunc)str,
-	.tp_getattro = (getattrofunc)getattro,
-	.tp_setattro = (setattrofunc)setattro,
+	.tp_getattro = (getattrofunc)getattr,
+	.tp_setattro = (setattrofunc)setattr,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "ChangedFeature objects",
 	// .tp_richcompare = (richcmpfunc)richcompare,

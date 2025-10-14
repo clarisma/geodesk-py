@@ -218,13 +218,13 @@ bool ShapeFeatureBuilder::fromMultiPolygon(const GEOSGeometry* multiPolygon)
     return true;
 }
 
-bool ShapeFeatureBuilder::fromGeometryCollection(GEOSGeometry* geom)
+bool ShapeFeatureBuilder::fromGeometryCollection(const GEOSGeometry* geom)
 {
     return true;
 }
 
 
-
+/*
 bool PyChangedFeature::setLineString(GEOSContextHandle_t context, GEOSGeometry* geom)
 {
     // TODO
@@ -237,5 +237,4 @@ bool PyChangedFeature::setPolygon(GEOSContextHandle_t context, GEOSGeometry* geo
     return true;
 }
 
-bool fromMultiPolygon(GEOSGeometry* geom);
-bool fromGeometryCollection(GEOSGeometry* geom);
+*/
