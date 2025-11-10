@@ -86,6 +86,7 @@ std::string_view Python::stringAsStringView(PyObject* strObj)
     if (!data) 
     {
         throw std::runtime_error("Failed to get UTF-8 data from string");
+        // TODO: Don't throw, use Python exception
     }
     return std::string_view(data, size);
 }

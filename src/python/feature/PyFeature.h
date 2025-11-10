@@ -114,7 +114,7 @@ public:
 };
 
 // Even though PyAnonymousNode inherits from PyFeature,
-// the strucutre is different (TODO: check if this creates problems)
+// the structure is different (TODO: check if this creates problems)
 class PyAnonymousNode : public PyObject
 {
 public:

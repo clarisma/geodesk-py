@@ -5,10 +5,17 @@
 %}
 struct Attribute { const char *name; PyChangedFeature::Attr index; };
 %%
+id, PyChangedFeature::Attr::ID
+is_deleted, PyChangedFeature::Attr::IS_DELETED
+is_node, PyChangedFeature::Attr::IS_NODE
+is_relation, PyChangedFeature::Attr::IS_RELATION
+is_way, PyChangedFeature::Attr::IS_WAY
 lat, PyChangedFeature::Attr::LAT
 lon, PyChangedFeature::Attr::LON
 members, PyChangedFeature::Attr::MEMBERS
 nodes, PyChangedFeature::Attr::NODES
+original, PyChangedFeature::Attr::ORIGINAL
+osm_type, PyChangedFeature::Attr::OSM_TYPE
 role, PyChangedFeature::Attr::ROLE
 shape, PyChangedFeature::Attr::SHAPE
 tags, PyChangedFeature::Attr::TAGS
@@ -17,12 +24,5 @@ y, PyChangedFeature::Attr::Y
 combine, PyChangedFeature::Attr::COMBINE_METHOD
 connect, PyChangedFeature::Attr::CONNECT_METHOD
 delete, PyChangedFeature::Attr::DELETE_METHOD
-id, PyChangedFeature::Attr::ID
-is_deleted, PyChangedFeature::Attr::IS_DELETED
-is_node, PyChangedFeature::Attr::IS_NODE
-is_relation, PyChangedFeature::Attr::IS_RELATION
-is_way, PyChangedFeature::Attr::IS_WAY
 modify, PyChangedFeature::Attr::MODIFY_METHOD
-original, PyChangedFeature::Attr::ORIGINAL
-osm_type, PyChangedFeature::Attr::OSM_TYPE
 split, PyChangedFeature::Attr::SPLIT_METHOD

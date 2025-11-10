@@ -66,12 +66,13 @@ class Feature:
     wkt: 'Formatter'
     x: int
     y: int
+    def __getitem__(self, key: str) -> Union[str,int,float]: ...
 
 class Features:
     def __init__(self, filename: str) -> None: ...
     area: float
     count: int
-    first: 'Feature' | None
+    first: Optional['Feature']
     geojson: 'Formatter'
     geojsonl: 'Formatter'
     indexed_keys: List[str]
@@ -200,3 +201,28 @@ def latlon(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinat
 
 @overload
 def latlon(*coords: float) -> List['Coordinate']: ...
+
+class ChangedFeature:
+    id: int
+    is_area: bool
+    is_node: bool
+    is_relation: bool
+    is_way: bool
+    lat: float
+    lon: float
+    map: 'Map'
+    members: 'ChangedMembers'
+    nodes: 'ChangedMembers'
+    original: Optional['Feature']
+    osm_type: str
+    role: str
+    shape: Geometry
+    tags: dict
+    x: int
+    y: int
+    def __getitem__(self, key: str) -> Union[str,int,float]: ...
+    def __setitem__(self, key: str, value: Union[str,int,float,bool,Sequence[Union[str,int,float,bool]]]) -> None: ...
+
+class Changes:
+    def __init__(self) -> None: ...
+    def __getitem__(self, key: Union['Feature','ChangedFeature']) -> 'ChangedFeature': ...
