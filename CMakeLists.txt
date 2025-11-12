@@ -91,7 +91,7 @@ else()
 endif()
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
-include_directories(src lib/libgeodesk/include ${GEOS_INCLUDE_PATHS})
+include_directories(${GEOS_INCLUDE_PATHS})
 
 set(LIBRARIES
 	geodesk
@@ -104,7 +104,7 @@ if(NOT BUILD_WHEELS)
 	# Create test harness
 	# message(STATUS "INCLUDES = ${INCLUDES}")
 	add_executable (geodesk-py-test "src/main.cxx" ${SOURCE_FILES})
-	# target_include_directories(geodesk-py PRIVATE ${INCLUDES})
+	target_include_directories(geodesk-py-test PRIVATE "src")
 	target_link_libraries(geodesk-py-test PRIVATE ${LIBRARIES} Python::Python)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_WITH_GEOS)
