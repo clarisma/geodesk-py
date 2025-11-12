@@ -14,3 +14,7 @@ def features():
 @pytest.fixture(scope="session")
 def monaco():
     yield Features("data/monaco")
+
+@pytest.fixture(scope="session")
+def monaco_updatable():
+    yield Features("d:\\geodesk\\tests\\mcu")

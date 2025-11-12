@@ -67,10 +67,10 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
     {
         self->featureNodesOnly = features->flags & SelectionFlags::USES_MATCHER;
         self->target = Python::newRef(features);
+        new(&self->nodeCursor)WayNodeCursor(way, features->store->hasWaynodeIds());
         new(&self->featureIter)FeatureNodeIterator(features->store, way,
             features->matcher, features->filter);
         self->nextNode = self->featureIter.next();
-        self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;
 }
@@ -80,6 +80,7 @@ PyObject* PyWayNodeIterator::create(PyFeatures* features)
 PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
 {
     WayPtr way(wayObj->feature);
+    bool wayNodeIds = wayObj->store->hasWaynodeIds();
     // LOG("Iterating way/%ld", way.id());
     int flags = way.flags();
     DataPtr pBody = way.bodyptr();
@@ -88,9 +89,9 @@ PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
     {
         self->target = Python::newRef(wayObj);
         self->featureNodesOnly = false;
+        new(&self->nodeCursor)WayNodeCursor(way, wayNodeIds);
         new(&self->featureIter)FeatureNodeIterator(wayObj->store, way);
         self->nextNode = self->featureIter.next();
-        self->coordsIter.start(pBody, way.minX(), way.minY(), flags & FeatureFlags::AREA);
     }
     return (PyObject*)self;
 }
@@ -112,8 +113,10 @@ PyObject* PyWayNodeIterator::next(PyWayNodeIterator* self)
         self->nextNode = self->featureIter.next();
         return PyFeature::create(self->featureIter.store(), nextNode, Py_None);
     }
-    Coordinate c = self->coordsIter.next();
+    Coordinate c = self->nodeCursor.xy();
     if (c.isNull()) return NULL;
+    uint64_t nodeId = self->nodeCursor.id();
+    (void)self->nodeCursor.next();
     NodePtr nextNode = self->nextNode;
     FeatureStore* store = self->featureIter.store();
     if (!nextNode.isNull() && nextNode.xy() == c)
@@ -121,7 +124,7 @@ PyObject* PyWayNodeIterator::next(PyWayNodeIterator* self)
         self->nextNode = self->featureIter.next();
         return PyFeature::create(store, nextNode, Py_None);
     }
-    return PyAnonymousNode::create(store, c.x, c.y);
+    return PyAnonymousNode::create(store, nodeId, c.x, c.y);
 }
 
 PyTypeObject PyWayNodeIterator::TYPE =

@@ -1,4 +1,0 @@
-[submodule "lib/libgeodesk"]
-	path = lib/libgeodesk
-	url = https://github.com/clarisma/libgeodesk.git
-	branch = main

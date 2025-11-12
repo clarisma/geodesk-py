@@ -80,7 +80,7 @@ set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
 
 # Include the libgeodesk subdirectory
 if(GEODESK_SOURCE_DIR)
-	message("GOL: Including GeoDesk locally from ${GEODESK_SOURCE_DIR}")
+	message("geodesk-py: Including libgeodesk locally from ${GEODESK_SOURCE_DIR}")
 	add_subdirectory(${GEODESK_SOURCE_DIR} ${CMAKE_BINARY_DIR}/_libgeodesk)
 else()
 	include(FetchContent)
