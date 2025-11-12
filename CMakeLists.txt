@@ -91,7 +91,7 @@ else()
 endif()
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
-include_directories(${GEOS_INCLUDE_PATHS})
+include_directories(${GEOS_INCLUDE_PATHS} "src")
 
 set(LIBRARIES
 	geodesk
