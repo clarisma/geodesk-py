@@ -77,9 +77,18 @@ endif()
 set(GEODESK_WITH_GEOS ON CACHE INTERNAL "Enable GEOS support in libgeodesk")
 set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CACHE INTERNAL "")
 set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
+
 # Include the libgeodesk subdirectory
-add_subdirectory(lib/libgeodesk)
-target_include_directories(geodesk PUBLIC ${CMAKE_SOURCE_DIR}/src)
+if(GEODESK_SOURCE_DIR)
+	message("GOL: Including GeoDesk locally from ${GEODESK_SOURCE_DIR}")
+	add_subdirectory(${GEODESK_SOURCE_DIR} ${CMAKE_BINARY_DIR}/_libgeodesk)
+else()
+	include(FetchContent)
+	FetchContent_Declare(geodesk GIT_REPOSITORY
+			https://github.com/clarisma/libgeodesk.git
+			GIT_TAG main)
+	FetchContent_MakeAvailable(geodesk)
+endif()
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 include_directories(src lib/libgeodesk/include ${GEOS_INCLUDE_PATHS})

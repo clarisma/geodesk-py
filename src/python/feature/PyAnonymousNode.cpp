@@ -12,7 +12,7 @@
 #include "python/util/PyFastMethod.h"
 
 
-PyObject* PyAnonymousNode::create(FeatureStore* store, int32_t x, int32_t y)
+PyObject* PyAnonymousNode::create(FeatureStore* store, uint64_t id, int32_t x, int32_t y)
 {
     PyAnonymousNode* self = (PyAnonymousNode*)
         PyAnonymousNode::TYPE.tp_alloc(&PyAnonymousNode::TYPE, 0);
@@ -23,6 +23,7 @@ PyObject* PyAnonymousNode::create(FeatureStore* store, int32_t x, int32_t y)
         self->store = store;
         self->x_ = x;
         self->y_ = y;
+        self->id_ = id;
     }
     return (PyObject*)self;
 }
@@ -35,7 +36,16 @@ void PyAnonymousNode::dealloc(PyAnonymousNode* self)
 
 PyObject* PyAnonymousNode::str(PyAnonymousNode* self)
 {
+    if (self->id_)
+    {
+        return PyUnicode_FromFormat("node/%lld", self->id_);
+    }
     return PyUnicode_FromFormat("node@%d,%d", self->x_, self->y_);
+}
+
+PyObject* PyAnonymousNode::id(PyAnonymousNode* self)
+{
+    return PyLong_FromLongLong(self->id_);
 }
 
 PyObject* PyAnonymousNode::bounds(PyAnonymousNode* self)
@@ -186,7 +196,7 @@ AttrFunctionPtr const PyAnonymousNode::FEATURE_METHODS[] =
     (AttrFunctionPtr)bounds,       // bounds
     (AttrFunctionPtr)centroid,     // centroid
     (AttrFunctionPtr)PyFormatter::geojson,          // geojson -- TODO
-    PyFeature::return_zero,        // id
+    PyFeature::id,                 // id
     PyFeature::return_false,       // is_area
     PyFeature::return_true,        // is_node
     PyFeature::return_false,       // is_placeholder
