@@ -77,12 +77,21 @@ endif()
 set(GEODESK_WITH_GEOS ON CACHE INTERNAL "Enable GEOS support in libgeodesk")
 set(GEOS_INCLUDE_PATHS "${geos_SOURCE_DIR}/include" "${geos_BINARY_DIR}/capi" CACHE INTERNAL "")
 set(GEODESK_EXTRA_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src")
+
 # Include the libgeodesk subdirectory
-add_subdirectory(lib/libgeodesk)
-target_include_directories(geodesk PUBLIC ${CMAKE_SOURCE_DIR}/src)
+if(GEODESK_SOURCE_DIR)
+	message("geodesk-py: Including libgeodesk locally from ${GEODESK_SOURCE_DIR}")
+	add_subdirectory(${GEODESK_SOURCE_DIR} ${CMAKE_BINARY_DIR}/_libgeodesk)
+else()
+	include(FetchContent)
+	FetchContent_Declare(geodesk GIT_REPOSITORY
+			https://github.com/clarisma/libgeodesk.git
+			GIT_TAG main)
+	FetchContent_MakeAvailable(geodesk)
+endif()
 
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
-include_directories(src lib/libgeodesk/include ${GEOS_INCLUDE_PATHS})
+include_directories(${GEOS_INCLUDE_PATHS} "src")
 
 set(LIBRARIES
 	geodesk
@@ -96,7 +105,7 @@ if(NOT BUILD_WHEELS)
 	# Create test harness
 	# message(STATUS "INCLUDES = ${INCLUDES}")
 	add_executable (geodesk-py-test "src/main.cxx" ${SOURCE_FILES})
-	# target_include_directories(geodesk-py PRIVATE ${INCLUDES})
+	target_include_directories(geodesk-py-test PRIVATE "src")
 	target_link_libraries(geodesk-py-test PRIVATE ${LIBRARIES} Python::Python)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_PYTHON)
 	target_compile_definitions(geodesk-py-test PRIVATE GEODESK_WITH_GEOS)

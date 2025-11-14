@@ -6,7 +6,7 @@
 #include <functional>
 #include <Python.h>
 #include <geodesk/feature/FeatureNodeIterator.h>
-#include <geodesk/feature/WayCoordinateIterator.h>
+#include <geodesk/feature/WayNodeCursor.h>
 #include <geodesk/feature/WayPtr.h>
 #include <geodesk/feature/MemberIterator.h>
 #include <geodesk/feature/ParentRelationIterator.h>
@@ -269,7 +269,7 @@ class PyWayNodeIterator : public PyObject
 {
 public:
     PyObject* target;
-    WayCoordinateIterator coordsIter;
+    WayNodeCursor nodeCursor;
     FeatureNodeIterator featureIter;
     NodePtr nextNode;
     bool featureNodesOnly;      

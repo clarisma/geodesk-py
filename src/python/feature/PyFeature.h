@@ -121,13 +121,13 @@ public:
     FeatureStore* store;
     int32_t x_;             // TODO: change to x/y (no underscore)
     int32_t y_;
+    uint64_t id_;
 
     static PyTypeObject TYPE;
     static PyMappingMethods MAPPING_METHODS;
     static const AttrFunctionPtr FEATURE_METHODS[];
 
-    // TODO: Need to track ID in v2!
-    static PyAnonymousNode* create(FeatureStore* store, int32_t x, int32_t y);
+    static PyObject* create(FeatureStore* store, uint64_t id, int32_t x, int32_t y);
     static void dealloc(PyAnonymousNode* self);
     static PyObject* getattr(PyAnonymousNode* self, PyObject* name);
     static Py_hash_t hash(PyAnonymousNode* self);
@@ -141,7 +141,7 @@ public:
     static PyObject* zeroValue(PyFeature* self, PyObject* args, PyObject* kwargs);
     static PyObject* blankValue(PyFeature* self, PyObject* args, PyObject* kwargs);
 
-
+    static PyObject* id(PyAnonymousNode* self);
     static PyObject* bounds(PyAnonymousNode* self);
     static PyObject* centroid(PyAnonymousNode* self);
     static PyObject* lat(PyAnonymousNode* self);
