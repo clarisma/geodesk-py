@@ -12,7 +12,7 @@
 #include "python/util/PyFastMethod.h"
 
 
-PyObject* PyAnonymousNode::create(FeatureStore* store, uint64_t id, int32_t x, int32_t y)
+PyAnonymousNode* PyAnonymousNode::create(FeatureStore* store, uint64_t id, int32_t x, int32_t y)
 {
     PyAnonymousNode* self = (PyAnonymousNode*)
         PyAnonymousNode::TYPE.tp_alloc(&PyAnonymousNode::TYPE, 0);

@@ -2,24 +2,22 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyChanges.h"
-#include "PyChangedFeature.h"
-
 #include <clarisma/data/HashMap.h>
-
+#include <clarisma/io/FilePath.h>
+#include "ChangeWriter.h"
+#include "PyChangedFeature.h"
 #include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
+
+using namespace clarisma;
 
 PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyChanges* self = (PyChanges*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		// TODO: may throw (make RAII?)
-		new(&self->newAnonNodes)FeaturesByLonLat();
-		new(&self->existingAnonNodes)FeaturesByCoordinate();
-		new(&self->newFeatures)FeaturesVector();
-		new(&self->existingFeatures)FeaturesByTypedId();
+		new(&self->model_)ChangeModel();
 		self->tags = nullptr;
 		self->weakRef = new ChangesWeakRef(self);
 			// TODO: handle OOM
@@ -29,10 +27,7 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->newAnonNodes.~FeaturesByLonLat();
-	self->existingAnonNodes.~FeaturesByCoordinate();
-	self->newFeatures.~FeaturesVector();
-	self->existingFeatures.~FeaturesByTypedId();
+	self->model_.~ChangeModel();
 	Py_XDECREF(self->tags);
 	self->weakRef->clear();
 	self->weakRef->release();
@@ -67,14 +62,14 @@ PyObject* PyChanges::str(PyChanges* self)
 
 PyChangedFeature* PyChanges::createNode(FixedLonLat lonLat)
 {
-	auto it = newAnonNodes.find(lonLat);
-	if (it != newAnonNodes.end())
+	auto it = model_.createdAnonNodes.find(lonLat);
+	if (it != model_.createdAnonNodes.end())
 	{
-		return Python::newRef(it->second);
+		return Python::newRef(it->second.get());
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, lonLat);
 	if (!changed) return nullptr;
-	newAnonNodes[lonLat] = changed;
+	model_.createdAnonNodes[lonLat] = PyFeatureRef(changed);
 	return Python::newRef(changed);
 }
 
@@ -90,48 +85,50 @@ PyChangedFeature* PyChanges::createWay(PyObject* nodeList)	// steals ref
 		return nullptr;
 	}
 	way->nodes = nodes;
+	// TODO: add to list of new features
 	return way;
 }
 
 PyChangedFeature* PyChanges::modify(FeatureStore* store, uint64_t id, Coordinate xy)
 {
-	auto it = existingAnonNodes.find(xy);
-	if (it != existingAnonNodes.end())
+	auto it = model_.existingAnonNodes.find(xy);
+	if (it != model_.existingAnonNodes.end())
 	{
-		return Python::newRef(it->second);
+		return Python::newRef(it->second.get());
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this,
-		PyAnonymousNode::create(store, xy.x, xy.y));		// TODO: node ID
+		PyAnonymousNode::create(store, id, xy.x, xy.y));
 	if (!changed) return nullptr;
-	existingAnonNodes[xy] = changed;
+	model_.existingAnonNodes[xy] = PyFeatureRef(changed);
 	return Python::newRef(changed);
 }
 
 PyChangedFeature* PyChanges::modify(PyAnonymousNode* node)
 {
 	Coordinate xy(node->x_, node->y_);
-	auto it = existingAnonNodes.find(xy);
-	if (it != existingAnonNodes.end())
+	auto it = model_.existingAnonNodes.find(xy);
+	if (it != model_.existingAnonNodes.end())
 	{
-		return Python::newRef(it->second);
+		return Python::newRef(it->second.get());
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, node);
 	if (!changed) return nullptr;
-	existingAnonNodes[xy] = changed;
+	model_.existingAnonNodes[xy] = PyFeatureRef(changed);
 	return Python::newRef(changed);
 }
 
 PyChangedFeature* PyChanges::modify(PyFeature* feature)
 {
-	TypedFeatureId typedId = feature->feature.typedId();
-	auto it = existingFeatures.find(typedId);
-	if (it != existingFeatures.end())
+	uint64_t id = feature->feature.id();
+	auto& features = model_.existing[feature->feature.typeCode()];
+	auto it = features.find(id);
+	if (it != features.end())
 	{
-		return Python::newRef(it->second);
+		return Python::newRef(it->second.get());
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, feature);
 	if (!changed) return nullptr;
-	existingFeatures[typedId] = changed;
+	features[id] = PyFeatureRef(changed);
 	return Python::newRef(changed);
 }
 
@@ -161,7 +158,12 @@ PyObject* PyChanges::validate(PyChanges* self, PyObject* args, PyObject* kwargs)
 
 PyObject* PyChanges::save(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
-	// Dummy implementation
+	PyObject* fileNameObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
+	if (!fileNameObj) return nullptr;
+	std::string_view fileName = Python::stringAsStringView(fileNameObj);
+	std::string fileNameWithExt = FilePath::withDefaultExtension(fileName, ".osc");
+	ChangeWriter writer(fileNameWithExt.c_str());
+	writer.write(self);
 	Py_RETURN_NONE;
 }
 
@@ -231,7 +233,7 @@ PyTypeObject PyChanges::TYPE =
 	// .tp_repr = (reprfunc)repr,
 	.tp_as_mapping = &MAPPING_METHODS,
 	.tp_str = (reprfunc)str,
-	.tp_getattro = (getattrofunc)getattro,
+	// .tp_getattro = (getattrofunc)getattro,
 	.tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
 	.tp_doc = "Changes objects",
 	.tp_methods = METHODS,

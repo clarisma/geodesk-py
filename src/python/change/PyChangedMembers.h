@@ -12,7 +12,6 @@ class PyFeature;
 class PyChangedMembers : public PyObject
 {
 public:
-	PyObject_HEAD
 	clarisma::TaggedPtr<ChangesWeakRef,1> changes;		// flag is true for relation
 	PyObject* list;
 

@@ -42,7 +42,7 @@ PyChangedFeature* PyChangedFeature::create(PyChanges* changes, PyAnonymousNode* 
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		self->init(changes, NODE, 0);	// TODO: in v2, anon nodes can have id
+		self->init(changes, NODE, node->id_);
 		self->original = Python::newRef(node);
 		self->tags = nullptr;
 		self->lon = Mercator::lon100ndFromX(node->x_);
@@ -116,8 +116,7 @@ void PyChangedFeature::init(PyChanges* changes_, Type type_, int64_t id_)
 	id = id_;
 	version = 0;
 	type = type_;
-	isDeleted = false;
-	maybeHasNewParents = false;
+	flags = Flags();
 }
 
 
@@ -232,7 +231,7 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	case ID:
 		return PyLong_FromLong(self->id);
 	case IS_DELETED:
-		return PyBool_FromLong(self->isDeleted);
+		return PyBool_FromLong(has(self->flags, Flags::DELETED));
 	case IS_NODE:
 		return PyBool_FromLong(type == NODE);
 	case IS_RELATION:

@@ -3,6 +3,7 @@
 
 #pragma once
 #include <Python.h>
+#include <clarisma/util/enum.h>
 #include <geodesk/feature/FeaturePtr.h>
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
@@ -18,14 +19,17 @@ class PyFeature;
 class PyChangedFeature : public PyObject
 {
 public:
-	PyObject_HEAD
+	enum class Flags : uint16_t
+	{
+		DELETED = 1 << 0,
+		NODE_LOCATION_CHANGED = 1 << 1,
+	};
+
 	ChangesWeakRef* changes;
     int64_t id;
 	uint32_t version;           // retrieved from Overpass
 	uint8_t type;               // node,way,relation,member
-	unsigned isDeleted : 1;
-	unsigned maybeHasNewParents : 1; // true if feature has been added to a way/relation
-									 // (even if later removed)
+	Flags flags;
 	union
 	{
 		struct	// if node, way or relation
@@ -158,3 +162,5 @@ private:
 		bool isMemberList_ = false;
 	};
 };
+
+CLARISMA_ENUM_FLAGS(PyChangedFeature::Flags)

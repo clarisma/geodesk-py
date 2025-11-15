@@ -127,7 +127,7 @@ public:
     static PyMappingMethods MAPPING_METHODS;
     static const AttrFunctionPtr FEATURE_METHODS[];
 
-    static PyObject* create(FeatureStore* store, uint64_t id, int32_t x, int32_t y);
+    static PyAnonymousNode* create(FeatureStore* store, uint64_t id, int32_t x, int32_t y);
     static void dealloc(PyAnonymousNode* self);
     static PyObject* getattr(PyAnonymousNode* self, PyObject* name);
     static Py_hash_t hash(PyAnonymousNode* self);

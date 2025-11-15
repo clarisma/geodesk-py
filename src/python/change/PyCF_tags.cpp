@@ -64,7 +64,7 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 /// @brief Ensures the tags (as a Python dict) are loaded.
 /// @param create If `true`, creates an empty dict if tags is NULL
 /// @return 0 if tags remains NULL (new feature or anon node, and
-///			create was et to false)
+///			create was set to false)
 ///			1 if tags is now a valid Python dict
 ///			-1 if dict could not be created
 int PyChangedFeature::loadTags(bool create)

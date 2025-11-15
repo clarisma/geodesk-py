@@ -1,8 +1,7 @@
-from operator import truediv
-
 from geodesk import *
 
-def test_change(features):
+def test_change():
+    features = Features("d:\\geodesk\\tests\\mcu")
     f = features("w[highway]").first
     changes = Changes()
     print(changes[f].tags)
@@ -23,3 +22,4 @@ def test_change(features):
     cf['maxspeed'] = 50
     print(cf.tags)
 
+    changes.save("d:\\geodesk\\tests\\changes")

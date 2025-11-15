@@ -7,6 +7,7 @@
 #include <geodesk/feature/TypedFeatureId.h>
 #include <geodesk/geom/Coordinate.h>
 #include <geodesk/geom/FixedLonLat.h>
+#include "ChangeModel.h"
 
 using namespace geodesk;
 class PyChangedFeature;
@@ -20,7 +21,7 @@ class FeatureStore;
 class ChangesWeakRef
 {
 public:
-	ChangesWeakRef(PyChanges* changes) :
+	explicit ChangesWeakRef(PyChanges* changes) :
 		changes_(changes),
 		refcount_(1) {}
 
@@ -52,16 +53,7 @@ private:
 class PyChanges : public PyObject
 {
 public:
-	using FeaturesByCoordinate = clarisma::HashMap<Coordinate, PyChangedFeature*>;
-	using FeaturesByLonLat = clarisma::HashMap<FixedLonLat, PyChangedFeature*>;
-	using FeaturesByTypedId = clarisma::HashMap<TypedFeatureId, PyChangedFeature*>;
-	using FeaturesVector = std::vector<PyChangedFeature*>;
-
-	PyObject_HEAD
-	FeaturesByLonLat newAnonNodes;
-	FeaturesByCoordinate existingAnonNodes;
-	FeaturesVector newFeatures;
-	FeaturesByTypedId existingFeatures;
+	ChangeModel model_;
 	PyObject* tags;           // dictionary of changeset tags
 	ChangesWeakRef* weakRef;
 	PyObject* outerString;

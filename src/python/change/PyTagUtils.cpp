@@ -11,7 +11,7 @@ static PyObject* getKey(const TagWalker& iter)
 {
 	const int keyCode = iter.keyCode();
 	if (keyCode >= 0) return iter.strings().getStringObject(keyCode);
-	return Python::toStringObject(iter.key());
+	return Python::toStringObject(iter.key()->toStringView());
 }
 
 /// @brief Creates a dict from the tags of the given feature.
@@ -140,7 +140,7 @@ int PyTagUtils::equals(PyObject* dict, TagTablePtr tags, StringTable& strings)
 				// TODO: could fail
 			if (iter.isStringValue())	[[likely]]
 			{
-				if (strValue !=	*iter.stringValueFast())
+				if (strValue !=	iter.stringValueFast()->toStringView())
 				{
 					return 0;
 				}
@@ -162,7 +162,7 @@ int PyTagUtils::equals(PyObject* dict, TagTablePtr tags, StringTable& strings)
 			}
 			double v = PyFloat_AS_DOUBLE(numObj);
 			Py_DECREF(numObj);
-			if (v != iter.numberValueFast()) return 0;
+			if (v != static_cast<double>(iter.numberValueFast())) return 0;
 		}
 		else if (PyBool_Check(value))
 		{
@@ -172,7 +172,7 @@ int PyTagUtils::equals(PyObject* dict, TagTablePtr tags, StringTable& strings)
 	}
 }
 
-
+/*
 void PyTagUtils::write(Buffer& out, PyObject* value)
 {
 	if (PyUnicode_Check(value))
@@ -215,3 +215,4 @@ void PyTagUtils::write(Buffer& out, PyObject* value)
 	}
 
 }
+*/
