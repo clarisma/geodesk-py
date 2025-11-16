@@ -1,6 +1,6 @@
 from geodesk import *
 
-world = Features("c:\\geodesk\\tests\\w")
+world = Features("d:\\geodesk\\tests\\world")
 
 top_key         = "name"
 top_value       = "France"

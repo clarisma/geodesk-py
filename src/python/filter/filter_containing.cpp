@@ -3,9 +3,17 @@
 
 #include "filters.h"
 #include <geodesk/filter/ContainsPointFilter.h>
+#include <geodesk/geom/Centroid.h>
+
+#include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/util/util.h"
+
+PyFeatures* filters::containingPoint(PyFeatures* self, Coordinate xy)
+{
+	return self->withFilter(new ContainsPointFilter(xy));
+}
 
 PyFeatures* filters::containing(PyFeatures* self, PyObject* args, PyObject* kwargs)
 {
@@ -16,29 +24,34 @@ PyFeatures* filters::containing(PyFeatures* self, PyObject* args, PyObject* kwar
 	if (type == &PyFeature::TYPE)			// TODO: unify type system
 	{
 		PyFeature* feature = (PyFeature*)arg;
-		if (feature->feature.isNode())
-		{
-			NodePtr node(feature->feature);
-			filter = new ContainsPointFilter(node.xy());
-		}
-		else
-		{
-			// TODO
-		}
+		return containingPoint(self, Centroid::ofFeature(
+			feature->store, feature->feature));
 	}
-	else if (type == &PyCoordinate::TYPE)
+	if (type == &PyCoordinate::TYPE)
 	{
 		PyCoordinate* coord = (PyCoordinate*)arg;
-		filter = new ContainsPointFilter(Coordinate(coord->x, coord->y));
+		return containingPoint(self, Coordinate(coord->x, coord->y));
 	}
-	else
+	if (type == &PyAnonymousNode::TYPE)
 	{
-		// TODO
+		PyAnonymousNode* node = (PyAnonymousNode*)arg;
+		return containingPoint(self, Coordinate(node->x_, node->y_));
 	}
 
-	if (filter) return self->withFilter(filter);
+	GEOSGeometry* geom;
+	if (Environment::get().getGeosGeometry(arg, &geom))
+	{
+		GEOSContextHandle_t context = Environment::get().getGeosContext();
+		if (!context) return NULL;
+		GEOSGeometry* c = GEOSGetCentroid_r(context, geom);
+		if (!c) return self->getEmpty();
+		double x;
+		double y;
+		GEOSGeomGetX_r(context, c, &x);
+		GEOSGeomGetY_r(context, c, &y);
+		return containingPoint(self, Coordinate(x, y));
+	}
 
-	PyErr_SetString(PyExc_NotImplementedError,
-		"contains will be available in Version 0.2.0");
+	PyErr_Format(PyExc_TypeError, "Expected geometric object instead of %s", type->tp_name);
 	return NULL;
 }

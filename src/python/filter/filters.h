@@ -12,6 +12,7 @@ namespace filters
 	extern PyFeatures* around(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* connected_to(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* containing(PyFeatures* self, PyObject* args, PyObject* kwargs);
+	extern PyFeatures* containingPoint(PyFeatures* self, Coordinate xy);
 	extern PyFeatures* contained_by(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* crossing(PyFeatures* self, PyObject* args, PyObject* kwargs);
 	extern PyFeatures* descendants_of(PyFeatures* self, PyObject* args, PyObject* kwargs);
