@@ -19,3 +19,15 @@ def test_containing_point(features):
     
     names2 = name_set(areas.containing(city.centroid))
     assert names1 == names2
+
+def test_containing(features):
+    streets = features("w[highway=primary][name]")
+    admin_areas = features("a[boundary=administrative][name]")
+    count = 0
+    for street in streets:
+        print(f"{street.name} is in:")
+        for area in admin_areas.containing(street.nodes.first):
+            print(f"- {area.name} ({area.admin_level})")
+        count += 1
+        if count == 10:
+            break
