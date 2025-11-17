@@ -5,6 +5,7 @@
 #include "PyChangedFeature.h"
 #include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
+#include "python/geom/PyMercator.h"
 #include "python/util/util.h"
 
 using namespace clarisma;
@@ -60,6 +61,16 @@ PyChangedFeature* Changeset::createNode(FixedLonLat lonLat)
 		addCreated(node);
 	}
 	return node;
+}
+
+PyChangedFeature* Changeset::createNode(PyObject* first, PyObject* second)
+{
+	FixedLonLat lonLat;
+	if (!PyMercator::getAgnosticLonLat(&lonLat, first, second))
+	{
+		return nullptr;
+	}
+	return createNode(lonLat);
 }
 
 PyChangedFeature* Changeset::createWay(PyObject* nodeList)	// steals ref

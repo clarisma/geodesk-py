@@ -468,7 +468,7 @@ bool PyCoordinate::setLon100nd(int32_t* pLon, PyObject* obj)
         PyErr_SetString(PyExc_ValueError, "lon must be in range -180 to 180");
         return false;
     }
-    *pLon = lon;
+    *pLon = static_cast<int32_t>(round(lon * 1e7));
     return true;
 }
 
@@ -489,6 +489,6 @@ bool PyCoordinate::setLat100nd(int32_t* pLat, PyObject* obj)
         PyErr_SetString(PyExc_ValueError, "lat must be in range -90 to 90");
         return false;
     }
-    *pLat = lat;
+    *pLat = static_cast<int32_t>(round(lat * 1e7));
     return true;
 }

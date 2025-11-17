@@ -114,6 +114,8 @@ PyChangedFeature* PyChangedFeature::createRelation(Changeset* changes, PyChanged
 
 PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObject* role)
 {
+	// TODO: upgrade "None" to empty string ???
+
 	assert(member->type_ != MEMBER);
 	PyChangedFeature* self = create(member->changes_, MEMBER);
 	if (self)
@@ -170,6 +172,7 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 			Py_XDECREF(self->members_);
 		}
 	}
+	self->changes_->release();
 }
 
 PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)

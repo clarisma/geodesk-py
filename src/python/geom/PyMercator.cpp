@@ -468,3 +468,13 @@ FixedLonLat PyMercator::getAgnosticLonLat(double xOrLon, double yOrLat)
 	}
 	return FixedLonLat(xOrLon, yOrLat);
 }
+
+bool PyMercator::getAgnosticLonLat(FixedLonLat* lonLat, PyObject* first, PyObject* second)
+{
+	double xOrLon = PyFloat_AsDouble(first);
+	if (xOrLon == -1.0 && PyErr_Occurred()) return false;
+	double yOrLat = PyFloat_AsDouble(second);
+	if (yOrLat == -1.0 && PyErr_Occurred()) return false;
+	*lonLat = getAgnosticLonLat(xOrLon, yOrLat);
+	return true;
+}

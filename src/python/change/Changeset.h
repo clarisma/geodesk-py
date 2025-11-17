@@ -28,6 +28,7 @@ public:
     void clear();
 
     PyChangedFeature* createNode(FixedLonLat lonLat);
+    PyChangedFeature* createNode(PyObject* first, PyObject* second);
     PyChangedFeature* createWay(PyObject* nodeList);
     PyChangedFeature* createRelation(PyObject* memberList);
     PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);

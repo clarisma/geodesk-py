@@ -65,14 +65,30 @@ PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kw
 		PyChangedFeature::Parameters::NODES |
 		PyChangedFeature::Parameters::MEMBERS);
 	if (!params.parse(args, 0, kwargs)) return nullptr;
-
-	Py_RETURN_NONE;
+	return params.create();
 }
 
 PyObject* PyChanges::modifyFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
-	// Dummy implementation
-	Py_RETURN_NONE;
+	assert(PyTuple_Check(args));
+	Py_ssize_t argCount = PyTuple_Size(args);
+	if (argCount == 0)
+	{
+		PyErr_SetString(PyExc_TypeError,
+			"Expected Feature or AnonymousNode");
+		return nullptr;
+	}
+	PyChangedFeature* changed =
+		(PyChangedFeature*)getitem(self, PyTuple_GET_ITEM(args, 0));
+	if (!changed) return nullptr;
+
+	PyChangedFeature::Parameters params(self->changes_,
+		PyChangedFeature::Parameters::COORDINATE |
+		PyChangedFeature::Parameters::NODES |
+		PyChangedFeature::Parameters::MEMBERS);
+	if (!params.parse(args, 1, kwargs)) return nullptr;
+	params.modify(changed);
+	return changed;
 }
 
 PyObject* PyChanges::deleteFeature(PyChanges* self, PyObject* args, PyObject* kwargs)

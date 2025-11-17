@@ -7,6 +7,8 @@
 #include <python/query/PyFeatures.h>
 #include "PyChangedFeature.h"
 #include "Changeset.h"
+#include "python/geom/PyCoordinate.h"
+#include "python/geom/PyMercator.h"
 
 // steals ref to list
 PyChangedMembers* PyChangedMembers::create(Changeset* changes, PyObject* list, bool forRelation)
@@ -76,6 +78,103 @@ PyChangedMembers* PyChangedMembers::create(Changeset* changes, PyFeature* parent
 	return create(changes, list, forRelation);
 }
 
+
+bool PyChangedMembers::tryAcceptMember(PyChangedFeature** changed, Changeset* changes, PyObject* obj)
+{
+	if (Py_TYPE(obj) == &PyChangedFeature::TYPE)
+	{
+		PyChangedFeature* feature = (PyChangedFeature*)obj;
+		if (feature->type() == PyChangedFeature::MEMBER)
+		{
+			feature = feature->member();
+		}
+		*changed = feature;
+		return true;
+	}
+	if (Py_TYPE(obj) == &PyFeature::TYPE)
+	{
+		*changed = changes->modify((PyFeature*)obj);
+		return true;
+	}
+	if (Py_TYPE(obj) == &PyAnonymousNode::TYPE)
+	{
+		*changed = changes->modify((PyAnonymousNode*)obj);
+		return true;
+	}
+	if (Py_TYPE(obj) == &PyCoordinate::TYPE)
+	{
+		*changed = changes->createNode(((PyCoordinate*)obj)->coordinate());
+		return true;
+	}
+	return false;
+}
+
+PyChangedFeature* PyChangedMembers::acceptMember(Changeset* changes, PyObject* obj)
+{
+	PyChangedFeature* changed;
+	if (tryAcceptMember(&changed, changes, obj)) return changed;
+
+	PyObject *seq = PySequence_Fast(obj,
+		"Expected feature, coordinate or member tuple");
+	if (!seq) return nullptr;
+	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
+	if (n != 2)
+	{
+		Py_DECREF(seq);
+		PyErr_SetString(PyExc_TypeError, "Expected (feature,role) or coordinate");
+		return nullptr;
+	}
+	PyObject* first = PySequence_Fast_GET_ITEM(seq, 0);
+	PyObject* second = PySequence_Fast_GET_ITEM(seq, 1);
+	Py_DECREF(seq); // TODO: safe ???
+	if (PyUnicode_Check(second))
+	{
+		// TODO: also allow (role,feature) ?
+		if (!tryAcceptMember(&changed, changes, first)) return nullptr;
+		return PyChangedFeature::createMember(changed, second);
+	}
+	return changes->createNode(first, second);
+}
+
+
+PyChangedMembers* PyChangedMembers::fromSequence(Changeset* changes, PyObject* seq, bool forRelation)
+{
+	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
+	PyObject **items = PySequence_Fast_ITEMS(seq);
+	PyObject* list = PyList_New(n);
+
+	for (int i=0; i<n; i++)
+	{
+		PyChangedFeature* changed = acceptMember(changes, items[i]);
+		if (!changed)
+		{
+			Py_DECREF(list);
+			return nullptr;
+		}
+		if (!forRelation)
+		{
+			if (changed->type() != PyChangedFeature::NODE)
+			{
+				forRelation = true;
+				// Upgrade any preceding nodes to member
+				for (int i2=0; i2<i; i2++)
+				{
+					PyChangedFeature* prev = (PyChangedFeature*)
+						PyList_GET_ITEM(list, i2);
+					assert(prev->type() == PyChangedFeature::NODE);
+					PyList_SET_ITEM(list, i2,
+						PyChangedFeature::createMember(changed, Py_None));
+				}
+			}
+		}
+		if (forRelation && changed->type() != PyChangedFeature::MEMBER)
+		{
+			changed = PyChangedFeature::createMember(changed, Py_None);
+		}
+		PyList_SET_ITEM(list, i, changed);
+	}
+	return create(changes, list, forRelation);
+}
 
 void PyChangedMembers::dealloc(PyChangedMembers* self)
 {

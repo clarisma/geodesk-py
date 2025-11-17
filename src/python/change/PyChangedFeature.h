@@ -8,11 +8,12 @@
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
 #include "python/util/PythonRef.h"
+#include "python/change/PyChangedMembers.h"
 
 using namespace geodesk;
 namespace clarisma { class Buffer; }
 class Changeset;
-class PyChangedMembers;
+// class PyChangedMembers;
 class PyAnonymousNode;
 class PyFeature;
 
@@ -147,14 +148,18 @@ public:
 	{
 	public:
 		Parameters(Changeset* changes, int accept) :
-			changes_(changes), accept_(accept) {}
+			changes_(changes), accept_(accept)
+		{
+			assert(changes);
+		}
 
 		~Parameters()
 		{
 			Py_XDECREF(members_);
 		}
 		bool parse(PyObject* args, int start, PyObject* kwargs);
-		PyChangedFeature* create();
+		PyChangedFeature* create() const;
+		bool modify(PyChangedFeature* feature) const;
 
 		enum
 		{
@@ -174,24 +179,33 @@ public:
 
 		struct Tag
 		{
-			PyObjectRef key;
-			PyObjectRef value;
+			PyObject* key;
+			PyObject* value;
 		};
 
+		static const char* shapeTypeName(int shapeType);
+		bool acceptShapeType(int shapeType);
+		bool acceptSequenceArg(PyObject* seq);
+		bool acceptCoordinate(PyObject* first, PyObject* second);
+		bool acceptTagSequence(PyObject* seq);
+		bool acceptMemberSequence(PyObject* seq);
+		PyChangedFeature* acceptMember(PyObject* obj);
+		bool acceptTagDict(PyObject* dict);
 		bool acceptTag(PyObject* key, PyObject* value);
+		bool changeTags(PyChangedFeature* feature) const;
+
+		void errorExpectedTag();
 
 		Changeset* changes_ = nullptr;
 		int accept_ = 0;
 		int received_ = 0;
 		Expect expect_ = Expect::ANYTHING;
-		bool receivedLon_ = false;
-		bool receivedLat_ = false;
 		bool receivedIndividualTags_ = false;
 		bool replaceTags_ = false;
 		FixedLonLat coordinate_;
-		PyChangedMembers* members_ = nullptr;
+		PythonRef<PyChangedMembers> members_;
 		std::vector<Tag> modifiedTags_;
-		std::vector<PyObjectRef> deletedKeys_;
+		std::vector<PyObject*> deletedKeys_;
 		const GEOSGeometry* geom_ = nullptr;
 	};
 

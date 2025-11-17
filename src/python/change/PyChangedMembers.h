@@ -6,6 +6,7 @@
 #include <clarisma/util/TaggedPtr.h>
 
 class Changeset;
+class PyChangedFeature;
 class PyFeature;
 
 class PyChangedMembers : public PyObject
@@ -26,6 +27,7 @@ public:
 	static PyChangedMembers* create(Changeset* changes, bool forRelation);
 	static PyChangedMembers* create(Changeset* changes, PyObject* list, bool forRelation);
 	static PyChangedMembers* create(Changeset* changes, PyFeature* parent);
+	static PyChangedMembers* fromSequence(Changeset* changes, PyObject* seq, bool forRelation);
 	static void dealloc(PyChangedMembers* self);
 	static PyObject* getattro(PyChangedMembers* self, PyObject *attr);
 	static PyObject* getitem(PyChangedMembers* self, PyObject* key);
@@ -36,4 +38,8 @@ public:
 	static PyObject* str(PyChangedMembers* self);
 
 	bool containsRelationMembers() const { return changes.flags(); }
+
+private:
+	static bool tryAcceptMember(PyChangedFeature** changed, Changeset* changes, PyObject* obj);
+	static PyChangedFeature* acceptMember(Changeset* changes, PyObject* obj);
 };

@@ -30,5 +30,6 @@ public:
 	static bool setYFromLat(int32_t* y, PyObject* value);
 	static Coordinate getAgnosticCoordinate(double xOrLon, double yOrLat);
 	static FixedLonLat getAgnosticLonLat(double xOrLon, double yOrLat);
+	static bool getAgnosticLonLat(FixedLonLat* lonLat, PyObject* first, PyObject* second);
 };
 
