@@ -71,7 +71,7 @@ bool PyChangedFeature::Parameters::parse(PyObject* args, int start, PyObject* kw
     	}
 
     	GEOSGeometry* geom;
-    	if (Environment::get().getGeosGeometry(value, &geom))
+    	if (Environment::get().getGeosGeometry(arg, &geom))
     	{
     		// TODO
     	}

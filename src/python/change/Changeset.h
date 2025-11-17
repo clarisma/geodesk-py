@@ -25,18 +25,7 @@ public:
         }
     }
 
-    void clear()
-    {
-        createdAnonNodes_.clear();
-        existingAnonNodes_.clear();
-        created_[0].clear();
-        created_[1].clear();
-        created_[2].clear();
-        existing_[0].clear();
-        existing_[1].clear();
-        existing_[2].clear();
-        live_ = false;
-    }
+    void clear();
 
     PyChangedFeature* createNode(FixedLonLat lonLat);
     PyChangedFeature* createWay(PyObject* nodeList);
@@ -44,6 +33,9 @@ public:
     PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
     PyChangedFeature* modify(PyFeature* feature);
     PyChangedFeature* modify(PyAnonymousNode* feature);
+
+    PyObject* borrowOuter() const { return outerString_.get(); }
+    PyObject* borrowInner() const { return innerString_.get(); }
 
 private:
     void addCreated(PyChangedFeature* f);
@@ -57,4 +49,6 @@ private:
     PyObjectRef tags_;              // dictionary of changeset tags
     PyObjectRef outerString_;
     PyObjectRef innerString_;
+
+    friend class ChangeWriter;
 };

@@ -4,19 +4,19 @@
 #include "ChangeWriter.h"
 #include <clarisma/util/Xml.h>
 #include "python/version.h"
-#include "PyChanges.h"
+#include "Changeset.h"
 #include "PyChangedMembers.h"
 
 using namespace clarisma;
 
-void ChangeWriter::write(PyChanges* changes)
+void ChangeWriter::write(Changeset* changes)
 {
     out_ << "<osmChange version=\"0.6\" generator=\"geodesk-py/" GEODESK_PY_VERSION "\">\n";
 
     out_ << "  <modify>\n";
     for (int i=0; i<3; i++)
     {
-        for (auto& entry : changes->model_.existing[i])
+        for (auto& entry : changes->existing_[i])
         {
             writeFeature(entry.second.get());
         }
@@ -34,15 +34,15 @@ void ChangeWriter::writeFeature(PyChangedFeature* feature)
         { "</node>\n", "</way>\n", "</relation>\n" };
 
     // TODO !!!
-    if (feature->version == 0) feature->version = 1;
+    if (feature->version() == 0) feature->setVersion(1);
 
-    out_ << "    " << PREFIXES[feature->type] << feature->id
-        << "\" version=\"" << feature->version;
-    if (feature->type == PyChangedFeature::Type::NODE)
+    out_ << "    " << PREFIXES[feature->type()] << feature->id()
+        << "\" version=\"" << feature->version();
+    if (feature->type() == PyChangedFeature::Type::NODE)
     {
-        out_ << "\" lon=\"" << (feature->lon / 1e7)
-            << "\" lat=\"" << (feature->lat / 1e7);
-        if (feature->tags == nullptr) [[likely]]
+        out_ << "\" lon=\"" << feature->lon()
+            << "\" lat=\"" << feature->lat();
+        if (!feature->hasTags()) [[likely]]
         {
             out_ << "\"/>\n";
             return;
@@ -52,34 +52,34 @@ void ChangeWriter::writeFeature(PyChangedFeature* feature)
     else
     {
         out_ << "\">\n";
-        PyObject* list = feature->members->list;
+        PyObject* list = feature->members()->list;
         Py_ssize_t size = PyList_GET_SIZE(list);
         for (Py_ssize_t i = 0; i < size; ++i)
         {
             PyChangedFeature* member = (PyChangedFeature*)
                 PyList_GET_ITEM(list, i);
-            if (feature->type == PyChangedFeature::Type::WAY)
+            if (feature->type() == PyChangedFeature::Type::WAY)
             {
-                out_ << "      <nd ref=\"" << member->id << "\"/>\n";
+                out_ << "      <nd ref=\"" << member->id() << "\"/>\n";
             }
             else
             {
-                PyObject* role = member->role;
-                member = member->member;
-                out_ << "      <member type=\"" << typeName(
-                    static_cast<FeatureType>(member->type))
-                    << "\" id=\"" << member->id
+                PyObject* role = member->role();
+                member = member->member();
+                out_ << "      <member type=\""
+                    << typeName(member->featureType())
+                    << "\" id=\"" << member->id()
                     << "\" role=\"" << Python::getStringView(role)
                     << "\"/>\n";
             }
         }
     }
 
-    if (feature->tags) [[likely]]
+    if (feature->tags()) [[likely]]
     {
-        writeTags(feature->tags);
+        writeTags(feature->tags());
     }
-    out_ << "    " << CLOSING[feature->type];
+    out_ << "    " << CLOSING[feature->type()];
 }
 
 

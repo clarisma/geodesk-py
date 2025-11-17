@@ -13,7 +13,7 @@ public:
         out_.open(fileName);
     }
 
-    void write(PyChanges* changes);
+    void write(Changeset* changes);
 
 private:
     void writeFeature(PyChangedFeature* feature);

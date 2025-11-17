@@ -9,10 +9,10 @@
 bool PyChangedFeature::setTags(PyObject* value)
 {
 	if (!Python::checkType(value, &PyDict_Type)) return false;
-	if(tags)
+	if(tags_)
 	{
-		Py_DECREF(tags);
-		tags = nullptr;
+		Py_DECREF(tags_);
+		tags_ = nullptr;
 	}
 	return setOrRemoveTags(value);
 }
@@ -69,20 +69,20 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 ///			-1 if dict could not be created
 int PyChangedFeature::loadTags(bool create)
 {
-	assert(type != MEMBER);
-	if (tags) return 1;
-	if (!original || Py_TYPE(original) == &PyAnonymousNode::TYPE)
+	assert(type_ != MEMBER);
+	if (tags_) return 1;
+	if (!original_ || Py_TYPE(original_) == &PyAnonymousNode::TYPE)
 	{
 		if (!create) return 0;
-		tags = PyDict_New();
+		tags_ = PyDict_New();
 	}
 	else
 	{
-		assert(Py_TYPE(original) == &PyFeature::TYPE);
-		PyFeature* feature = (PyFeature*)original;
-		tags = createTags(feature->store, feature->feature);
+		assert(Py_TYPE(original_) == &PyFeature::TYPE);
+		PyFeature* feature = (PyFeature*)original_;
+		tags_ = createTags(feature->store, feature->feature);
 	}
-	return tags ? 1 : -1;
+	return tags_ ? 1 : -1;
 }
 
 bool PyChangedFeature::isAtomicTagValue(PyObject* obj)
@@ -116,12 +116,12 @@ bool PyChangedFeature::isTagValue(PyObject* obj)
 
 bool PyChangedFeature::setOrRemoveTag(PyObject* key, PyObject* value)
 {
-	assert(type != MEMBER);
+	assert(type_ != MEMBER);
 	if (loadTags(true) < 0) return false;
 	if (value == Py_None ||
 		(PyUnicode_Check(value) && PyUnicode_GetLength(value) == 0))
 	{
-		if (PyDict_DelItem(tags, key) < 0)
+		if (PyDict_DelItem(tags_, key) < 0)
 		{
 			if (!PyErr_ExceptionMatches(PyExc_KeyError))  // true error
 			{
@@ -137,7 +137,7 @@ bool PyChangedFeature::setOrRemoveTag(PyObject* key, PyObject* value)
 			"Tag value must be string, number, bool or list");
 		return false;
 	}
-	return PyDict_SetItem(tags, key, value) == 0;
+	return PyDict_SetItem(tags_, key, value) == 0;
 }
 
 bool PyChangedFeature::setOrRemoveTags(PyObject* dict)

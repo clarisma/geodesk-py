@@ -5,13 +5,13 @@
 
 #include "python/Environment.h"
 
-class PyChanges;
+class Changeset;
 class PyChangedFeature;
 
 class FeatureBuilder
 {
 public:
-    FeatureBuilder(PyChanges* changes, GEOSContextHandle_t context) :
+    FeatureBuilder(Changeset* changes, GEOSContextHandle_t context) :
         changes_(changes), context_(context) {}
 
     PyChangedFeature* fromGeometry(const GEOSGeometry* geom);
@@ -30,6 +30,6 @@ private:
 
     static constexpr unsigned int MAX_WAY_NODES = 2000;
 
-    PyChanges* changes_;
+    Changeset* changes_;
     GEOSContextHandle_t context_;
 };

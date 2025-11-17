@@ -36,5 +36,5 @@ if __name__ == '__main__':
     # pytest.main(["feature/test_waynodes.py::test_waynodes", "-rA", "-s", "--durations=9999"])
     # pytest.main(["feature/test_query_by_id.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_debug.py", "-rA", "-s", "--durations=9999"])
-    # pytest.main(["change/test_change.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["change/test_change.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])

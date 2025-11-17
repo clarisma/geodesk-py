@@ -17,11 +17,24 @@ Changeset::Changeset(PyObject* tags) :
 	innerString_.reset(PyUnicode_FromString("inner"));
 }
 
+void Changeset::clear()
+{
+	createdAnonNodes_.clear();
+	existingAnonNodes_.clear();
+	created_[0].clear();
+	created_[1].clear();
+	created_[2].clear();
+	existing_[0].clear();
+	existing_[1].clear();
+	existing_[2].clear();
+	live_ = false;
+}
+
 void Changeset::addCreated(PyChangedFeature* f)
 {
 	if (live_) [[likely]]
 	{
-		int type = f->type;
+		int type = f->type();
 		created_[type].emplace_back(PyFeatureRef::makeNew(f));
 		f->setId(-created_[type].size());
 	}
@@ -36,10 +49,10 @@ PyChangedFeature* Changeset::createNode(FixedLonLat lonLat)
 		node = it->second.get();
 		if (!node->hasTags() && node->lonLat() == lonLat)
 		{
-			return Python::newRef();
+			return Python::newRef(node);
 		}
 	}
-	node = PyChangedFeature::create(this, lonLat);
+	node = PyChangedFeature::createNode(this, lonLat);
 	if (!node) return nullptr;
 	if (live_)	[[likely]]
 	{
@@ -55,13 +68,7 @@ PyChangedFeature* Changeset::createWay(PyObject* nodeList)	// steals ref
 		// steals ref to nodeList even if it fails
 	if (!nodes) return nullptr;
 	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
-	if (!way)
-	{
-		Py_DECREF(nodes);
-		return nullptr;
-	}
-	way->nodes = nodes;
-	addCreated(way);
+	if (way) addCreated(way);
 	return way;
 }
 
@@ -71,13 +78,7 @@ PyChangedFeature* Changeset::createRelation(PyObject* memberList)
 	// steals ref to nodeList even if it fails
 	if (!members) return nullptr;
 	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
-	if (!rel)
-	{
-		Py_DECREF(members);
-		return nullptr;
-	}
-	rel->members = members;
-	addCreated(rel);
+	if (rel) addCreated(rel);
 	return rel;
 }
 
@@ -88,7 +89,7 @@ PyChangedFeature* Changeset::modify(FeatureStore* store, uint64_t id, Coordinate
 	{
 		return Python::newRef(it->second.get());
 	}
-	PyChangedFeature* node = PyChangedFeature::create(this,
+	PyChangedFeature* node = PyChangedFeature::createNode(this,
 		PyAnonymousNode::create(store, id, xy.x, xy.y));
 	if (!node) return nullptr;
 	if (live_) [[likely]]
@@ -106,7 +107,7 @@ PyChangedFeature* Changeset::modify(PyAnonymousNode* node)
 	{
 		return Python::newRef(it->second.get());
 	}
-	PyChangedFeature* changed = PyChangedFeature::create(this, node);
+	PyChangedFeature* changed = PyChangedFeature::createNode(this, node);
 	if (!changed) return nullptr;
 	if (live_) [[likely]]
 	{
@@ -115,10 +116,11 @@ PyChangedFeature* Changeset::modify(PyAnonymousNode* node)
 	return changed;
 }
 
-PyChangedFeature* PyChanges::modify(PyFeature* feature)
+
+PyChangedFeature* Changeset::modify(PyFeature* feature)
 {
 	uint64_t id = feature->feature.id();
-	auto& features = model_.existing[feature->feature.typeCode()];
+	auto& features = existing_[feature->feature.typeCode()];
 	auto it = features.find(id);
 	if (it != features.end())
 	{
@@ -126,10 +128,14 @@ PyChangedFeature* PyChanges::modify(PyFeature* feature)
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, feature);
 	if (!changed) return nullptr;
-	features[id] = PyFeatureRef(changed);
-	return Python::newRef(changed);
+	if (live_) [[likely]]
+	{
+		features[id] = PyFeatureRef(changed);
+	}
+	return changed;
 }
 
+/*
 PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
 	PyChangedFeature::Parameters params(self,
@@ -142,3 +148,4 @@ PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kw
 	Py_RETURN_NONE;
 }
 
+*/

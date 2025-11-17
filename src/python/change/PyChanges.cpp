@@ -4,6 +4,7 @@
 #include "PyChanges.h"
 #include <clarisma/data/HashMap.h>
 #include <clarisma/io/FilePath.h>
+#include "Changeset.h"
 #include "ChangeWriter.h"
 #include "PyChangedFeature.h"
 #include "PyChangedMembers.h"
@@ -17,20 +18,15 @@ PyChanges* PyChanges::createNew(PyTypeObject* type, PyObject* args, PyObject* kw
 	PyChanges* self = (PyChanges*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
 	{
-		new(&self->model_)ChangeModel();
-		self->tags = nullptr;
-		self->weakRef = new ChangesWeakRef(self);
-			// TODO: handle OOM
+		self->changes_ = new Changeset(nullptr);	// TODO: tags
 	}
 	return self;
 }
 
 void PyChanges::dealloc(PyChanges* self)
 {
-	self->model_.~ChangeModel();
-	Py_XDECREF(self->tags);
-	self->weakRef->clear();
-	self->weakRef->release();
+	self->changes_->clear();
+	self->changes_->release();
 }
 
 PyObject* PyChanges::getattro(PyChanges* self, PyObject *attr)
@@ -60,99 +56,10 @@ PyObject* PyChanges::str(PyChanges* self)
 	Py_RETURN_NONE;
 }
 
-PyChangedFeature* PyChanges::createNode(FixedLonLat lonLat)
-{
-	auto it = model_.createdAnonNodes.find(lonLat);
-	if (it != model_.createdAnonNodes.end())
-	{
-		// TODO: check if node has been moved or tagged,
-		//  in which case we create a new one
-		return Python::newRef(it->second.get());
-	}
-	PyChangedFeature* changed = PyChangedFeature::create(this, lonLat);
-	if (!changed) return nullptr;
-	model_.createdAnonNodes[lonLat] = PyFeatureRef(changed);
-	return Python::newRef(changed);
-}
-
-PyChangedFeature* PyChanges::createWay(PyObject* nodeList)	// steals ref
-{
-	PyChangedMembers* nodes = PyChangedMembers::create(this, nodeList, false);
-		// steals ref to nodeList even if it fails
-	if (!nodes) return nullptr;
-	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
-	if (!way)
-	{
-		Py_DECREF(nodes);
-		return nullptr;
-	}
-	way->nodes = nodes;
-	// TODO: add to list of new features
-	return way;
-}
-
-PyChangedFeature* PyChanges::createRelation(PyObject* memberList)
-{
-	PyChangedMembers* members = PyChangedMembers::create(this, memberList, true);
-	// steals ref to nodeList even if it fails
-	if (!members) return nullptr;
-	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
-	if (!rel)
-	{
-		Py_DECREF(members);
-		return nullptr;
-	}
-	rel->members = members;
-	// TODO: add to list of new features
-	return rel;
-}
-
-PyChangedFeature* PyChanges::modify(FeatureStore* store, uint64_t id, Coordinate xy)
-{
-	auto it = model_.existingAnonNodes.find(xy);
-	if (it != model_.existingAnonNodes.end())
-	{
-		return Python::newRef(it->second.get());
-	}
-	PyChangedFeature* changed = PyChangedFeature::create(this,
-		PyAnonymousNode::create(store, id, xy.x, xy.y));
-	if (!changed) return nullptr;
-	model_.existingAnonNodes[xy] = PyFeatureRef(changed);
-	return Python::newRef(changed);
-}
-
-PyChangedFeature* PyChanges::modify(PyAnonymousNode* node)
-{
-	Coordinate xy(node->x_, node->y_);
-	auto it = model_.existingAnonNodes.find(xy);
-	if (it != model_.existingAnonNodes.end())
-	{
-		return Python::newRef(it->second.get());
-	}
-	PyChangedFeature* changed = PyChangedFeature::create(this, node);
-	if (!changed) return nullptr;
-	model_.existingAnonNodes[xy] = PyFeatureRef(changed);
-	return Python::newRef(changed);
-}
-
-PyChangedFeature* PyChanges::modify(PyFeature* feature)
-{
-	uint64_t id = feature->feature.id();
-	auto& features = model_.existing[feature->feature.typeCode()];
-	auto it = features.find(id);
-	if (it != features.end())
-	{
-		return Python::newRef(it->second.get());
-	}
-	PyChangedFeature* changed = PyChangedFeature::create(this, feature);
-	if (!changed) return nullptr;
-	features[id] = PyFeatureRef(changed);
-	return Python::newRef(changed);
-}
 
 PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
-	PyChangedFeature::Parameters params(self,
+	PyChangedFeature::Parameters params(self->changes_,
 		PyChangedFeature::Parameters::GEOMETRY |
 		PyChangedFeature::Parameters::COORDINATE |
 		PyChangedFeature::Parameters::NODES |
@@ -187,7 +94,7 @@ PyObject* PyChanges::save(PyChanges* self, PyObject* args, PyObject* kwargs)
 	std::string_view fileName = Python::stringAsStringView(fileNameObj);
 	std::string fileNameWithExt = FilePath::withDefaultExtension(fileName, ".osc");
 	ChangeWriter writer(fileNameWithExt.c_str());
-	writer.write(self);
+	writer.write(self->changes_);
 	Py_RETURN_NONE;
 }
 
@@ -195,11 +102,11 @@ PyObject* PyChanges::getitem(PyChanges* self, PyObject* key)
 {
 	if (Py_TYPE(key) == &PyFeature::TYPE)
 	{
-		return self->modify((PyFeature*)key);
+		return self->changes_->modify((PyFeature*)key);
 	}
 	if (Py_TYPE(key) == &PyAnonymousNode::TYPE)
 	{
-		return self->modify((PyAnonymousNode*)key);
+		return self->changes_->modify((PyAnonymousNode*)key);
 	}
 	PyErr_SetString(PyExc_TypeError, "Expected Feature or AnonymousNode");
 	return nullptr;

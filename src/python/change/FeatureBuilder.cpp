@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "FeatureBuilder.h"
+#include "Changeset.h"
 #include "PyChangedFeature.h"
-#include "PyChanges.h"
 #include "python/geom/PyMercator.h"
 
 PyChangedFeature* FeatureBuilder::fromGeometry(const GEOSGeometry* geom)
@@ -23,7 +23,7 @@ PyChangedFeature* FeatureBuilder::fromGeometry(const GEOSGeometry* geom)
         return fromGeometryCollection(geom);
     default:
         PyErr_SetString(PyExc_ValueError, "Unsupported geometry type");
-        return false;
+        return nullptr;
     }
 }
 
@@ -123,14 +123,14 @@ bool FeatureBuilder::createPolygonParts(PyObject* list, const GEOSGeometry* poly
 {
     const GEOSGeometry* outerRing = GEOSGetExteriorRing_r(context_, polygon);
     int holeCount = GEOSGetNumInteriorRings_r(context_, polygon);
-    if (!createLineStringParts(list, outerRing, changes_->outerString))
+    if (!createLineStringParts(list, outerRing, changes_->borrowOuter()))
     {
         return false;
     }
     for (int i = 0; i < holeCount; i++)
     {
         const GEOSGeometry* innerRing = GEOSGetInteriorRingN_r(context_, polygon, i);
-        if (!createLineStringParts(list, innerRing, changes_->innerString))
+        if (!createLineStringParts(list, innerRing, changes_->borrowInner()))
         {
             return false;
         }

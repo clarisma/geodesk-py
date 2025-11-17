@@ -27,7 +27,7 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, Type type)
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::create(Changeset* changes, FixedLonLat lonLat)
+PyChangedFeature* PyChangedFeature::createNode(Changeset* changes, FixedLonLat lonLat)
 {
 	PyChangedFeature* self = create(changes, NODE);
 	if (self)
@@ -40,7 +40,7 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, FixedLonLat lonLa
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyAnonymousNode* node)
+PyChangedFeature* PyChangedFeature::createNode(Changeset* changes, PyAnonymousNode* node)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)
@@ -84,9 +84,37 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyFeature* featur
 	return self;
 }
 
+PyChangedFeature* PyChangedFeature::createWay(Changeset* changes, PyChangedMembers* nodes)
+{
+	PyChangedFeature* self = create(changes, WAY);
+	if (self)	[[likely]]
+	{
+		self->nodes_ = nodes;
+	}
+	else
+	{
+		Py_DECREF(nodes);
+	}
+	return self;
+}
+
+PyChangedFeature* PyChangedFeature::createRelation(Changeset* changes, PyChangedMembers* members)
+{
+	PyChangedFeature* self = create(changes, RELATION);
+	if (self)	[[likely]]
+	{
+		self->members_ = members;
+	}
+	else
+	{
+		Py_DECREF(members);
+	}
+	return self;
+}
+
 PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObject* role)
 {
-	assert(member->type != MEMBER);
+	assert(member->type_ != MEMBER);
 	PyChangedFeature* self = create(member->changes_, MEMBER);
 	if (self)
 	{
@@ -147,7 +175,7 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 {
 	Py_ssize_t len;
-    const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
+	const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
 	if (!name) return NULL;
 
 	if (self->type_ == MEMBER)
@@ -164,56 +192,60 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	{
 		return getitem(self, nameObj);
 	}
-	int type = self->type_;
-	switch (attr->index)
+	return self->getAttribute(attr->index);
+}
+
+PyObject* PyChangedFeature::getAttribute(int attr)
+{
+	switch (attr)
 	{
 	case LAT:
-		if (type == NODE) return PyFloat_FromDouble(self->lat_ / 1e7);
+		if (type_ == NODE) return PyFloat_FromDouble(lat());
 		Py_RETURN_NONE;
 	case LON:
-		if (type == NODE) return PyFloat_FromDouble(self->lon_ / 1e7);
+		if (type_ == NODE) return PyFloat_FromDouble(lon());
 		Py_RETURN_NONE;
 	case MEMBERS:
-		if (type == RELATION)
+		if (type_ == RELATION)
 		{
 			// TODO: ensure members are loaded
-			return Python::newRef(self->members_);
+			return Python::newRef(members_);
 		}
 		Py_RETURN_NONE;
 	case NODES:
-		if (type == WAY)
+		if (type_ == WAY)
 		{
-			if (!self->nodes_)
+			if (!nodes_)
 			{
-				if (self->original_)
+				if (original_)
 				{
-					self->nodes_ = PyChangedMembers::create(changes_,
-						(PyFeature*)self->original_);
+					nodes_ = PyChangedMembers::create(changes_,
+						(PyFeature*)original_);
 				}
 				else
 				{
-					self->nodes_ = PyChangedMembers::create(changes_, false);
+					nodes_ = PyChangedMembers::create(changes_, false);
 				}
-				if (!self->nodes_) return nullptr;
+				if (!nodes_) return nullptr;
 			}
-			return Python::newRef(self->nodes_);
+			return Python::newRef(nodes_);
 		}
 		Py_RETURN_NONE;
 	case ROLE:
 		Py_RETURN_NONE;
 	case TAGS:
-		if (self->loadTags(true) < 0) return nullptr;
-		return Python::newRef(self->tags_);
+		if (loadTags(true) < 0) return nullptr;
+		return Python::newRef(tags_);
 	case X:
-		if (type == NODE)
+		if (type_ == NODE)
 		{
-			return PyLong_FromLong(Mercator::xFromLon100nd(self->lon_));
+			return PyLong_FromLong(Mercator::xFromLon100nd(lon_));
 		}
 		Py_RETURN_NONE;
 	case Y:
-		if (type == NODE)
+		if (type_ == NODE)
 		{
-			return PyLong_FromLong(Mercator::yFromLat100nd(self->lat_));
+			return PyLong_FromLong(Mercator::yFromLat100nd(lat_));
 		}
 		Py_RETURN_NONE;
 	case COMBINE_METHOD:
@@ -226,20 +258,20 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 		// TODO: handle DELETE
 		Py_RETURN_NONE;
 	case ID:
-		return PyLong_FromLong(self->id_);
+		return PyLong_FromLong(id_);
 	case IS_DELETED:
-		return PyBool_FromLong(has(self->flags_, Flags::DELETED));
+		return PyBool_FromLong(has(flags_, Flags::DELETED));
 	case IS_NODE:
-		return PyBool_FromLong(type == NODE);
+		return PyBool_FromLong(type_ == NODE);
 	case IS_RELATION:
-		return PyBool_FromLong(type == RELATION);
+		return PyBool_FromLong(type_ == RELATION);
 	case IS_WAY:
-		return PyBool_FromLong(type == WAY);
+		return PyBool_FromLong(type_ == WAY);
 	case MODIFY_METHOD:
 		// TODO: handle MODIFY
 		Py_RETURN_NONE;
 	case ORIGINAL:
-		if (self->original_) return Python::newRef(self->original_);
+		if (original_) return Python::newRef(original_);
 		Py_RETURN_NONE;
 	case OSM_TYPE:
 		// TODO
@@ -267,7 +299,7 @@ bool PyChangedFeature::checkAttrType(int attr, Type type)
 }
 
 
-bool PyChangedFeature::setProperty(int attr, PyObject* value)
+bool PyChangedFeature::setAttribute(int attr, PyObject* value)
 {
 	switch (attr)
 	{
@@ -334,7 +366,7 @@ int PyChangedFeature::setattr(PyChangedFeature* self, PyObject* nameObj, PyObjec
 	{
 		return setitem(self, nameObj, value);
 	}
-	return self->setProperty(attr->index, value) ? 0 : -1;
+	return self->setAttribute(attr->index, value) ? 0 : -1;
 }
 
 bool PyChangedFeature::setMembers(PyObject* value)
