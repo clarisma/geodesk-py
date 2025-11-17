@@ -1,6 +1,8 @@
 // Copyright (c) 2024 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
+#include <execution>
+
 #include "Changeset.h"
 #include "FeatureBuilder.h"
 #include "PyChangedFeature.h"
@@ -60,6 +62,20 @@ bool PyChangedFeature::Parameters::parse(PyObject* args, int start, PyObject* kw
     		continue;
     	}
 
+    	if (PyNumber_Check(arg))
+    	{
+    		PyObject* first = arg;
+    		i++;
+    		if (i >= argCount)
+    		{
+    			PyErr_SetString(PyExc_TypeError, "Expected coordinate pair");
+    			return false;
+    		}
+    		PyObject* second = PyTuple_GET_ITEM(args, i); // borrowed ref
+    		if (!acceptCoordinate(first, second)) return false;
+    		continue;
+    	}
+
     	GEOSGeometry* geom;
     	if (Environment::get().getGeosGeometry(arg, &geom))
     	{
@@ -67,6 +83,10 @@ bool PyChangedFeature::Parameters::parse(PyObject* args, int start, PyObject* kw
     		geom_ = geom;
 			continue;
     	}
+
+    	PyErr_Format(PyExc_TypeError, "Invalid argument of type %s",
+    		Py_TYPE(arg)->tp_name);
+    	return false;
     }
 
 	// TODO: keyword args
@@ -202,7 +222,7 @@ bool PyChangedFeature::Parameters::acceptCoordinate(PyObject* first, PyObject* s
 	return acceptShapeType(COORDINATE);
 }
 
-PyChangedFeature* PyChangedFeature::Parameters::create() const
+PyChangedFeature* PyChangedFeature::Parameters::create()
 {
 	PyChangedFeature* feature;
 
@@ -217,6 +237,14 @@ PyChangedFeature* PyChangedFeature::Parameters::create() const
 	else if (received_ == COORDINATE)
 	{
 		feature = changes_->createNode(coordinate_);
+	}
+	else if (received_ == NODES)
+	{
+		feature = changes_->create(members_.release());
+	}
+	else if (received_ == MEMBERS)
+	{
+		feature = changes_->create(members_.release());
 	}
 	else
 	{

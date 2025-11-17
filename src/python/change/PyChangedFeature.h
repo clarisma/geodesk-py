@@ -105,8 +105,16 @@ public:
 
 	PyChangedMembers* members() const
 	{
-		assert(type_ == RELATION);
+		// assert(type_ == RELATION);		// TODO
 		return members_;
+	}
+
+	// TODO: unify nodes/members
+	void setMembers(PyChangedMembers* members)
+	{
+		assert((type_ == WAY && !members->containsRelationMembers()) ||
+			(type_ == RELATION && members->containsRelationMembers()));
+		members_ = members;
 	}
 
 	PyChangedFeature* member() const
@@ -158,7 +166,7 @@ public:
 			Py_XDECREF(members_);
 		}
 		bool parse(PyObject* args, int start, PyObject* kwargs);
-		PyChangedFeature* create() const;
+		PyChangedFeature* create();
 		bool modify(PyChangedFeature* feature) const;
 
 		enum

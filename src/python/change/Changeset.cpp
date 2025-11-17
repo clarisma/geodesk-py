@@ -79,6 +79,7 @@ PyChangedFeature* Changeset::createWay(PyObject* nodeList)	// steals ref
 		// steals ref to nodeList even if it fails
 	if (!nodes) return nullptr;
 	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
+	way->setMembers(nodes);
 	if (way) addCreated(way);
 	return way;
 }
@@ -89,8 +90,19 @@ PyChangedFeature* Changeset::createRelation(PyObject* memberList)
 	// steals ref to nodeList even if it fails
 	if (!members) return nullptr;
 	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
+	rel->setMembers(members);
 	if (rel) addCreated(rel);
 	return rel;
+}
+
+PyChangedFeature* Changeset::create(PyChangedMembers* members)
+{
+	PyChangedFeature* f =  PyChangedFeature::create(this,
+		members->containsRelationMembers() ?
+			PyChangedFeature::RELATION : PyChangedFeature::WAY);
+	f->setMembers(members);
+	if (f) addCreated(f);
+	return f;
 }
 
 PyChangedFeature* Changeset::modify(FeatureStore* store, uint64_t id, Coordinate xy)
@@ -105,7 +117,7 @@ PyChangedFeature* Changeset::modify(FeatureStore* store, uint64_t id, Coordinate
 	if (!node) return nullptr;
 	if (live_) [[likely]]
 	{
-		existingAnonNodes_[xy] = PyFeatureRef(node);
+		existingAnonNodes_[xy] = PyFeatureRef::makeNew(node);
 	}
 	return node;
 }
@@ -122,7 +134,7 @@ PyChangedFeature* Changeset::modify(PyAnonymousNode* node)
 	if (!changed) return nullptr;
 	if (live_) [[likely]]
 	{
-		existingAnonNodes_[xy] = PyFeatureRef(changed);
+		existingAnonNodes_[xy] = PyFeatureRef::makeNew(changed);
 	}
 	return changed;
 }
@@ -141,7 +153,7 @@ PyChangedFeature* Changeset::modify(PyFeature* feature)
 	if (!changed) return nullptr;
 	if (live_) [[likely]]
 	{
-		features[id] = PyFeatureRef(changed);
+		features[id] = PyFeatureRef::makeNew(changed);
 	}
 	return changed;
 }

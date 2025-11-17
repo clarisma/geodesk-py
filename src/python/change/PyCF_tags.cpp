@@ -26,6 +26,7 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 	PyObject* dict = PyDict_New();
 	if (!dict) return nullptr;
 
+	// TODO: Use TalkWalker, can get global keys as shared string objects
 	TagIterator iter(feature.tags(), store->strings());
 	for (;;)
 	{

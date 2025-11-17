@@ -35,4 +35,4 @@ def test_change():
     r1 = changes.create([n1,w1], "route", "bus")
     assert r1.is_relation
 
-    changes.save("d:\\geodesk\\tests\\changes")
+    # changes.save("d:\\geodesk\\tests\\changes")
