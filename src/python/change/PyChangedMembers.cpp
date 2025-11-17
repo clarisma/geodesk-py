@@ -5,18 +5,17 @@
 #include <geodesk/feature/WayNodeIterator.h>
 #include <python/feature/PyFeature.h>
 #include <python/query/PyFeatures.h>
-
 #include "PyChangedFeature.h"
-#include "PyChanges.h"
+#include "Changeset.h"
 
 // steals ref to list
-PyChangedMembers* PyChangedMembers::create(PyChanges* changes, PyObject* list, bool forRelation)
+PyChangedMembers* PyChangedMembers::create(Changeset* changes, PyObject* list, bool forRelation)
 {
 	PyChangedMembers* self = (PyChangedMembers*)TYPE.tp_alloc(&TYPE, 0);
 	if (self)	[[likely]]
 	{
-		self->changes = clarisma::TaggedPtr<ChangesWeakRef,1>(
-			changes->newRef(), forRelation);
+		changes->addref();
+		self->changes = clarisma::TaggedPtr<Changeset,1>(changes, forRelation);
 		self->list = list;
 	}
 	else
@@ -26,14 +25,14 @@ PyChangedMembers* PyChangedMembers::create(PyChanges* changes, PyObject* list, b
 	return self;
 }
 
-PyChangedMembers* PyChangedMembers::create(PyChanges* changes, bool forRelation)
+PyChangedMembers* PyChangedMembers::create(Changeset* changes, bool forRelation)
 {
 	PyObject* list = PyList_New(0);
 	if (!list) return nullptr;
 	return create(changes, list, forRelation);
 }
 
-PyChangedMembers* PyChangedMembers::create(PyChanges* changes, PyFeature* parent)
+PyChangedMembers* PyChangedMembers::create(Changeset* changes, PyFeature* parent)
 {
 	PyObject* list;
 	FeatureStore* store = parent->store;

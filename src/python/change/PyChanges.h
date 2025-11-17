@@ -79,6 +79,7 @@ public:
 
 	PyChangedFeature* createNode(FixedLonLat lonLat);
 	PyChangedFeature* createWay(PyObject* nodeList);
+	PyChangedFeature* createRelation(PyObject* memberList);
 	PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
 	PyChangedFeature* modify(PyFeature* feature);
 	PyChangedFeature* modify(PyAnonymousNode* feature);

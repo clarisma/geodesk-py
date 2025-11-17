@@ -16,6 +16,12 @@ class PythonRef
 public:
     PythonRef() noexcept : obj_(nullptr) {}
 
+    static PythonRef makeNew(T* obj)
+    {
+        Py_XINCREF(static_cast<PyObject*>(obj));
+        return PythonRef(obj);
+    }
+
     /// @brief Takes ownership of a new reference.
     /// @param obj New reference (will be DECREF'ed on destruction)
     ///

@@ -65,6 +65,8 @@ PyChangedFeature* PyChanges::createNode(FixedLonLat lonLat)
 	auto it = model_.createdAnonNodes.find(lonLat);
 	if (it != model_.createdAnonNodes.end())
 	{
+		// TODO: check if node has been moved or tagged,
+		//  in which case we create a new one
 		return Python::newRef(it->second.get());
 	}
 	PyChangedFeature* changed = PyChangedFeature::create(this, lonLat);
@@ -87,6 +89,22 @@ PyChangedFeature* PyChanges::createWay(PyObject* nodeList)	// steals ref
 	way->nodes = nodes;
 	// TODO: add to list of new features
 	return way;
+}
+
+PyChangedFeature* PyChanges::createRelation(PyObject* memberList)
+{
+	PyChangedMembers* members = PyChangedMembers::create(this, memberList, true);
+	// steals ref to nodeList even if it fails
+	if (!members) return nullptr;
+	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
+	if (!rel)
+	{
+		Py_DECREF(members);
+		return nullptr;
+	}
+	rel->members = members;
+	// TODO: add to list of new features
+	return rel;
 }
 
 PyChangedFeature* PyChanges::modify(FeatureStore* store, uint64_t id, Coordinate xy)
@@ -134,7 +152,13 @@ PyChangedFeature* PyChanges::modify(PyFeature* feature)
 
 PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
-	// Dummy implementation
+	PyChangedFeature::Parameters params(self,
+		PyChangedFeature::Parameters::GEOMETRY |
+		PyChangedFeature::Parameters::COORDINATE |
+		PyChangedFeature::Parameters::NODES |
+		PyChangedFeature::Parameters::MEMBERS);
+	if (!params.parse(args, 0, kwargs)) return nullptr;
+
 	Py_RETURN_NONE;
 }
 

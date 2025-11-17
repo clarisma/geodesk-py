@@ -7,11 +7,11 @@
 #include <geodesk/feature/FeaturePtr.h>
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
+#include "python/util/PythonRef.h"
 
 using namespace geodesk;
 namespace clarisma { class Buffer; }
-class ChangesWeakRef;
-class PyChanges;
+class Changeset;
 class PyChangedMembers;
 class PyAnonymousNode;
 class PyFeature;
@@ -25,35 +25,6 @@ public:
 		NODE_LOCATION_CHANGED = 1 << 1,
 	};
 
-	ChangesWeakRef* changes;
-    int64_t id;
-	uint32_t version;           // retrieved from Overpass
-	uint8_t type;               // node,way,relation,member
-	Flags flags;
-	union
-	{
-		struct	// if node, way or relation
-		{
-			PyObject* original;
-			PyObject* tags;			// dict
-			union
-			{
-				struct				// if node
-				{
-					int32_t lon;
-					int32_t lat;
-				};
-				PyChangedMembers* nodes;	// if way
-				PyChangedMembers* members;	// if relation
-			};
-		};
-		struct	// if member
-		{
-			PyChangedFeature* member;
-			PyObject* role;
-		};
-	};
-
 	enum Type { NODE,WAY,RELATION,MEMBER,UNASSIGNED };
 
 	enum Attr
@@ -63,7 +34,6 @@ public:
 		MEMBERS,
 		NODES,
 		ROLE,
-		SHAPE,
 		TAGS,
 		X,
 		Y,
@@ -83,25 +53,16 @@ public:
 		SPLIT_METHOD,
 	};
 
-	enum AttrGroup
-	{
-		GROUP_X = 1 << 0,			// lon, x, lonlat, xy
-		GROUP_Y = 1 << 1,			// lat, y, lonlat, xy
-		GROUP_SHAPE = 1 << 2,		// shape, nodes, members
-		GROUP_TAGS_ALL = 1 << 3,	// tags
-		GROUP_TAGS_INDIVIDUAL = 1 << 4,	// individual tags
-	};
-
 	static constexpr Attr LAST_MUTABLE_ATTR = Y;
 
 	static PyTypeObject TYPE;
 	static PyMappingMethods MAPPING_METHODS;
 
-	static PyChangedFeature* create(PyChanges* changes, Type type);
-	static PyChangedFeature* create(PyChanges* changes, FixedLonLat lonLat);
-	static PyChangedFeature* create(PyChanges* changes, PyAnonymousNode* node);
-	static PyChangedFeature* create(PyChanges* changes, PyFeature* feature);
-	static PyChangedFeature* create(PyChanges* changes, PyObject* args, PyObject* kwargs);
+	static PyChangedFeature* create(Changeset* changes, Type type);
+	static PyChangedFeature* create(Changeset* changes, FixedLonLat lonLat);
+	static PyChangedFeature* create(Changeset* changes, PyAnonymousNode* node);
+	static PyChangedFeature* create(Changeset* changes, PyFeature* feature);
+	static PyChangedFeature* create(Changeset* changes, PyObject* args, PyObject* kwargs);
 	static PyChangedFeature* createMember(PyChangedFeature* member, PyObject* role);
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattr(PyChangedFeature* self, PyObject *attr);
@@ -112,18 +73,71 @@ public:
 	// static PyObject* richcompare(PyChangedFeature* self, PyObject* other, int op);
 	static PyObject* str(PyChangedFeature* self);
 
+	void setId(int64_t id);
 	bool modify(PyObject* args, PyObject* kwargs);
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
 	void format(clarisma::Buffer& buf);
 	static bool isTagValue(PyObject* obj);
+	bool hasTags() const;
+
+	class Parameters
+	{
+	public:
+		Parameters(Changeset* changes, int accept) :
+			changes_(changes), accept_(accept) {}
+
+		~Parameters()
+		{
+			Py_XDECREF(members_);
+		}
+		bool parse(PyObject* args, int start, PyObject* kwargs);
+		PyChangedFeature* create();
+
+		enum
+		{
+			GEOMETRY = 1 << 0,
+			COORDINATE = 1 << 1,
+			NODES = 1 << 2,
+			MEMBERS = 1 << 3
+		};
+
+	private:
+		enum class Expect
+		{
+			ANYTHING = 0,
+			LATITUDE = 1,
+			TAG_VALUE = 2
+		};
+
+		struct Tag
+		{
+			PyObjectRef key;
+			PyObjectRef value;
+		};
+
+		bool acceptTag(PyObject* key, PyObject* value);
+
+		Changeset* changes_ = nullptr;
+		int accept_ = 0;
+		int received_ = 0;
+		Expect expect_ = Expect::ANYTHING;
+		bool receivedLon_ = false;
+		bool receivedLat_ = false;
+		bool receivedIndividualTags_ = false;
+		bool replaceTags_ = false;
+		FixedLonLat coordinate_;
+		PyChangedMembers* members_ = nullptr;
+		std::vector<Tag> modifiedTags_;
+		std::vector<PyObjectRef> deletedKeys_;
+		const GEOSGeometry* geom_ = nullptr;
+	};
 
 private:
-	void init(PyChanges* changes_, Type type_, int64_t id_);
+	void init(Changeset* changes_, Type type_, int64_t id_);
 	void createOrModify(PyObject* args, PyObject* kwargs, bool create);
-	int setProperty(int attr, PyObject* value);
-	void wrongAttrForType(int attr, Type only);
-	bool applyAttr(int attr, Type only);
+	bool setProperty(int attr, PyObject* value);
+	bool checkAttrType(int attr, Type type);
 	bool setMembers(PyObject* value);
 	bool setNodes(PyObject* value);
 
@@ -134,32 +148,33 @@ private:
 	bool setOrRemoveTags(PyObject* dict);
 	static bool isAtomicTagValue(PyObject* obj);
 
-	bool setShape(PyObject* value);
-
-	class Builder
+	Changeset* changes_;
+	int64_t id_;
+	uint32_t version_;           // retrieved from Overpass
+	uint8_t type_;               // node,way,relation,member
+	Flags flags_;
+	union
 	{
-	public:
-		Builder();
-		~Builder()
+		struct	// if node, way or relation
 		{
-			Py_XDECREF(list_);
-			// only the list is owned, all others are borrowed
-		}
-		bool build(PyChangedFeature* feature, PyObject* args, PyObject* kwargs);
-
-	private:
-		bool pushNode();
-		int tryCreateFeature(PyObject* value, PyChangedFeature** feature);
-
-		PyChanges* changes_ = nullptr;
-		PyChangedFeature* feature_ = nullptr;
-		PyObject* list_ = nullptr;		// This is owned by Builder
-		PyObject* key_ = nullptr;
-		double xOrLon_ = 0;
-		double yOrLat_ = 0;
-		int seenArgs_ = 0;
-		int coordValueCount_ = 0;		// 0, 1 (read x), 2 (read x/y)
-		bool isMemberList_ = false;
+			PyObject* original_;
+			PyObject* tags_;			// dict
+			union
+			{
+				struct				// if node
+				{
+					int32_t lon_;
+					int32_t lat_;
+				};
+				PyChangedMembers* nodes_;	// if way
+				PyChangedMembers* members_;	// if relation
+			};
+		};
+		struct	// if member
+		{
+			PyChangedFeature* member_;
+			PyObject* role_;
+		};
 	};
 };
 

@@ -17,7 +17,6 @@ nodes, PyChangedFeature::Attr::NODES
 original, PyChangedFeature::Attr::ORIGINAL
 osm_type, PyChangedFeature::Attr::OSM_TYPE
 role, PyChangedFeature::Attr::ROLE
-shape, PyChangedFeature::Attr::SHAPE
 tags, PyChangedFeature::Attr::TAGS
 x, PyChangedFeature::Attr::X
 y, PyChangedFeature::Attr::Y

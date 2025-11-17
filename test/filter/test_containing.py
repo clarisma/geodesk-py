@@ -1,5 +1,7 @@
-# Copyright (c) 2024 Clarisma / GeoDesk contributors
+# Copyright (c) 2025 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
+
+import pytest
 
 def name_set(features):
     return { f.str('name') for f in features }
@@ -31,3 +33,7 @@ def test_containing(features):
         count += 1
         if count == 10:
             break
+
+def test_containing_invalid(features):
+    with pytest.raises(TypeError):
+        features.containing("xxxx")

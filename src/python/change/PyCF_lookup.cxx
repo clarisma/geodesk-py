@@ -1,5 +1,5 @@
 /* C++ code produced by gperf version 3.1 */
-/* Command-line: 'C:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyChangedFeature_AttrHash --lookup-function-name=lookup PyChangedFeature_attr.txt  */
+/* Command-line: 'C:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyCF_AttrHash --lookup-function-name=lookup PyCF_attr.txt  */
 /* Computed positions: -k'2,$' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
@@ -29,22 +29,22 @@
 #error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
-#line 1 "PyChangedFeature_attr.txt"
+#line 1 "PyCF_attr.txt"
 
 // Keywords
 #include "PyChangedFeature.h"
 
-#line 6 "PyChangedFeature_attr.txt"
+#line 6 "PyCF_attr.txt"
 struct Attribute { const char *name; PyChangedFeature::Attr index; };
 
-#define TOTAL_KEYWORDS 21
+#define TOTAL_KEYWORDS 20
 #define MIN_WORD_LENGTH 1
 #define MAX_WORD_LENGTH 11
 #define MIN_HASH_VALUE 1
 #define MAX_HASH_VALUE 36
 /* maximum key range = 36, duplicates = 0 */
 
-class PyChangedFeature_AttrHash
+class PyCF_AttrHash
 {
 private:
   static inline unsigned int hash (const char *str, size_t len);
@@ -53,7 +53,7 @@ public:
 };
 
 inline unsigned int
-PyChangedFeature_AttrHash::hash (const char *str, size_t len)
+PyCF_AttrHash::hash (const char *str, size_t len)
 {
   static unsigned char asso_values[] =
     {
@@ -67,7 +67,7 @@ PyChangedFeature_AttrHash::hash (const char *str, size_t len)
       37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
       37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
       37, 37, 37, 37, 37, 37, 37, 37,  0, 37,
-      20, 10, 20, 37, 37,  0, 37, 37,  0, 37,
+      20, 10, 20, 37, 37, 37, 37, 37,  0, 37,
        5, 37,  5,  0, 37,  0,  0, 37, 37, 37,
       20,  0, 37, 37, 37, 37, 37, 37, 37, 37,
       37, 37, 37, 37, 37, 37, 37, 37, 37, 37,
@@ -98,61 +98,59 @@ PyChangedFeature_AttrHash::hash (const char *str, size_t len)
 }
 
 struct Attribute *
-PyChangedFeature_AttrHash::lookup (const char *str, size_t len)
+PyCF_AttrHash::lookup (const char *str, size_t len)
 {
   static struct Attribute wordlist[] =
     {
       {""},
-#line 16 "PyChangedFeature_attr.txt"
+#line 22 "PyCF_attr.txt"
       {"y", PyChangedFeature::Attr::Y},
       {""},
-#line 8 "PyChangedFeature_attr.txt"
+#line 13 "PyCF_attr.txt"
       {"lat", PyChangedFeature::Attr::LAT},
-#line 14 "PyChangedFeature_attr.txt"
+#line 20 "PyCF_attr.txt"
       {"tags", PyChangedFeature::Attr::TAGS},
-#line 28 "PyChangedFeature_attr.txt"
+#line 27 "PyCF_attr.txt"
       {"split", PyChangedFeature::Attr::SPLIT_METHOD},
-#line 24 "PyChangedFeature_attr.txt"
+#line 12 "PyCF_attr.txt"
       {"is_way", PyChangedFeature::Attr::IS_WAY},
       {""},
-#line 26 "PyChangedFeature_attr.txt"
+#line 17 "PyCF_attr.txt"
       {"original", PyChangedFeature::Attr::ORIGINAL},
       {""},
-#line 11 "PyChangedFeature_attr.txt"
+#line 16 "PyCF_attr.txt"
       {"nodes", PyChangedFeature::Attr::NODES},
-#line 25 "PyChangedFeature_attr.txt"
+#line 26 "PyCF_attr.txt"
       {"modify", PyChangedFeature::Attr::MODIFY_METHOD},
-#line 18 "PyChangedFeature_attr.txt"
+#line 24 "PyCF_attr.txt"
       {"connect", PyChangedFeature::Attr::CONNECT_METHOD},
-#line 9 "PyChangedFeature_attr.txt"
+#line 14 "PyCF_attr.txt"
       {"lon", PyChangedFeature::Attr::LON},
-      {""},
-#line 13 "PyChangedFeature_attr.txt"
-      {"shape", PyChangedFeature::Attr::SHAPE},
-#line 23 "PyChangedFeature_attr.txt"
+      {""}, {""},
+#line 11 "PyCF_attr.txt"
       {"is_relation", PyChangedFeature::Attr::IS_RELATION},
-#line 22 "PyChangedFeature_attr.txt"
+#line 10 "PyCF_attr.txt"
       {"is_node", PyChangedFeature::Attr::IS_NODE},
-#line 27 "PyChangedFeature_attr.txt"
+#line 18 "PyCF_attr.txt"
       {"osm_type", PyChangedFeature::Attr::OSM_TYPE},
-#line 12 "PyChangedFeature_attr.txt"
+#line 19 "PyCF_attr.txt"
       {"role", PyChangedFeature::Attr::ROLE},
       {""},
-#line 15 "PyChangedFeature_attr.txt"
+#line 21 "PyCF_attr.txt"
       {"x", PyChangedFeature::Attr::X},
-#line 17 "PyChangedFeature_attr.txt"
+#line 23 "PyCF_attr.txt"
       {"combine", PyChangedFeature::Attr::COMBINE_METHOD},
       {""}, {""}, {""}, {""},
-#line 10 "PyChangedFeature_attr.txt"
+#line 15 "PyCF_attr.txt"
       {"members", PyChangedFeature::Attr::MEMBERS},
       {""}, {""},
-#line 21 "PyChangedFeature_attr.txt"
+#line 9 "PyCF_attr.txt"
       {"is_deleted", PyChangedFeature::Attr::IS_DELETED},
       {""},
-#line 20 "PyChangedFeature_attr.txt"
+#line 8 "PyCF_attr.txt"
       {"id", PyChangedFeature::Attr::ID},
       {""}, {""}, {""},
-#line 19 "PyChangedFeature_attr.txt"
+#line 25 "PyCF_attr.txt"
       {"delete", PyChangedFeature::Attr::DELETE_METHOD}
     };
 
