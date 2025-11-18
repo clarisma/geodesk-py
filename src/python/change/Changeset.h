@@ -35,6 +35,7 @@ public:
     PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
     PyChangedFeature* modify(PyFeature* feature);
     PyChangedFeature* modify(PyAnonymousNode* feature);
+    PyChangedFeature* tryModify(PyObject* obj);
 
     PyObject* borrowOuter() const { return outerString_.get(); }
     PyObject* borrowInner() const { return innerString_.get(); }

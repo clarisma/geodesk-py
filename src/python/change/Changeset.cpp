@@ -5,6 +5,7 @@
 #include "PyChangedFeature.h"
 #include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
+#include "python/geom/PyCoordinate.h"
 #include "python/geom/PyMercator.h"
 #include "python/util/util.h"
 
@@ -176,3 +177,31 @@ PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kw
 }
 
 */
+
+PyChangedFeature* Changeset::tryModify(PyObject* obj)
+{
+	if (Py_TYPE(obj) == &PyChangedFeature::TYPE)
+	{
+		PyChangedFeature* changed = (PyChangedFeature*)obj;
+		if (changed->isMember())
+		{
+			changed = changed->member();
+		}
+		// TODO: check if it belongs to a different Changeset
+		//  If so, make a copy
+		return changed;
+	}
+	if (Py_TYPE(obj) == &PyFeature::TYPE)
+	{
+		return modify((PyFeature*)obj);
+	}
+	if (Py_TYPE(obj) == &PyAnonymousNode::TYPE)
+	{
+		return modify((PyAnonymousNode*)obj);
+	}
+	if (Py_TYPE(obj) == &PyCoordinate::TYPE)
+	{
+		return createNode(((PyCoordinate*)obj)->coordinate());
+	}
+	return nullptr;
+}

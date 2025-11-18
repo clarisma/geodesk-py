@@ -36,6 +36,7 @@ namespace Python
 	extern PyObject* checkType(PyObject* arg, PyTypeObject* type, const char* what);
 	extern PyObject* checkNumeric(PyObject* arg);
 
+	// TODO: fix
 	inline std::string_view getStringView(PyObject* arg)
 	{
 		if (checkType(arg, &PyUnicode_Type))

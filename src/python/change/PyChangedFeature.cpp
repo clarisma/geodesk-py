@@ -7,15 +7,12 @@
 #include <clarisma/util/DynamicStackBuffer.h>
 #include <geodesk/feature/FeatureUtils.h>
 #include <geodesk/feature/NodePtr.h>
-
 #include "Changeset.h"
 #include "python/Environment.h"
-#include "python/geom/PyMercator.h"
-
-#include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
+#include "python/geom/PyMercator.h"
+#include "python/feature/PyFeature.h"
 #include "PyChangedMembers.h"
-#include "PyChanges.h"
 
 #include "PyCF_attr.cxx"
 #include "PyCF_lookup.cxx"
@@ -437,8 +434,11 @@ void PyChangedFeature::format(clarisma::Buffer& buf) const
 	if (isMember())	[[unlikely]]
 	{
 		member_->format(buf);
-		buf << " as ";
-		buf << Python::getStringView(role_);
+		if(role_ != Py_None)
+		{
+			auto strRole = Python::getStringView(role_);
+			if(!strRole.empty()) buf << " as " << strRole;
+		}
 		return;
 	}
 	buf << typeName(featureType()) << '/' << id();
