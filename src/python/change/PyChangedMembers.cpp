@@ -163,7 +163,7 @@ PyChangedMembers* PyChangedMembers::fromSequence(Changeset* changes, PyObject* s
 						PyList_GET_ITEM(list, i2);
 					assert(prev->type() == PyChangedFeature::NODE);
 					PyList_SET_ITEM(list, i2,
-						PyChangedFeature::createMember(changed, Py_None));
+						PyChangedFeature::createMember(prev, Py_None));
 				}
 			}
 		}
