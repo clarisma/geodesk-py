@@ -156,6 +156,7 @@ void PyChangedChildren::dealloc(PyChangedChildren* self)
 {
 	self->changes()->release();
 	Py_DECREF(self->list_);
+	Py_TYPE(self)->tp_free(self);
 }
 
 
@@ -202,18 +203,82 @@ PyObject* PyChangedChildren::str(PyChangedChildren* self)
 	return PyObject_Str(self->list_);
 }
 
-/*
-PyMethodDef PyChangedMembers::METHODS[] =
+
+PyMethodDef PyChangedChildren::METHODS[] =
 {
-	{"save", (PyCFunction)save, METH_VARARGS, "Saves the file" },
-	{ NULL, NULL, 0, NULL },
+	{
+		"append",
+		reinterpret_cast<PyCFunction>(cc_append),
+		METH_O,
+		"Append a child, promoting to ChangedFeature."
+	},
+	{
+		"extend",
+		reinterpret_cast<PyCFunction>(cc_extend),
+		METH_O,
+		"Extend with children from an iterable."
+	},
+	{
+		"insert",
+		reinterpret_cast<PyCFunction>(cc_insert),
+		METH_VARARGS,
+		"Insert a child at a given index."
+	},
+	{
+		"remove",
+		reinterpret_cast<PyCFunction>(cc_remove),
+		METH_O,
+		"Remove all occurrences of the given child."
+	},
+	{
+		"pop",
+		reinterpret_cast<PyCFunction>(cc_pop),
+		METH_VARARGS,
+		"Remove and return child at index (default last)."
+	},
+	{
+		"clear",
+		reinterpret_cast<PyCFunction>(cc_clear),
+		METH_NOARGS,
+		"Remove all children."
+	},
+	{
+		"reverse",
+		reinterpret_cast<PyCFunction>(cc_reverse),
+		METH_NOARGS,
+		"Reverse the children in place."
+	},
+	{
+		"count",
+		reinterpret_cast<PyCFunction>(cc_count),
+		METH_O,
+		"Return the number of occurrences of a value."
+	},
+	{
+		"index",
+		reinterpret_cast<PyCFunction>(cc_index),
+		METH_VARARGS,
+		"Return first index of value."
+	},
+	{ nullptr, nullptr, 0, nullptr }
 };
-*/
+
 
 
 PySequenceMethods PyChangedChildren::SEQUENCE_METHODS =
 {
+	PyChangedChildren::length,         // sq_length
+	nullptr,                           // sq_concat
+	nullptr,                           // sq_repeat
+	PyChangedChildren::seqItem,        // sq_item
+	nullptr,                           // was_sq_slice
+	PyChangedChildren::seqAssItem,     // sq_ass_item
+	nullptr,                           // was_sq_ass_slice
+	PyChangedChildren::contains,       // sq_contains
+	nullptr,                           // sq_inplace_concat
+	nullptr                            // sq_inplace_repeat
 };
+
 
 PyMappingMethods PyChangedChildren::MAPPING_METHODS =
 {

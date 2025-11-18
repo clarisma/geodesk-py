@@ -152,6 +152,7 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 		}
 	}
 	self->changes_->release();
+	Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
