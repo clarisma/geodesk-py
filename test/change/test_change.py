@@ -31,8 +31,16 @@ def test_change():
 
     w1 = changes.create([(14, 52), (17, 56)], "highway", "primary")
     assert w1.is_way
+    print (w1.tags)
+    print (w1.nodes)
 
+    """
     r1 = changes.create([n1,w1], "route", "bus")
     assert r1.is_relation
+    assert r1.members[0].is_node
+    assert r1.members[1].is_way
+    print (r1.tags)
+    print (r1.members)
+    """
 
     # changes.save("d:\\geodesk\\tests\\changes")

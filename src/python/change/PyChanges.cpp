@@ -5,6 +5,7 @@
 #include <clarisma/data/HashMap.h>
 #include <clarisma/io/FilePath.h>
 #include "Changeset.h"
+#include "ChangeSpec.h"
 #include "ChangeWriter.h"
 #include "PyChangedFeature.h"
 #include "PyChangedMembers.h"
@@ -59,13 +60,13 @@ PyObject* PyChanges::str(PyChanges* self)
 
 PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
 {
-	PyChangedFeature::Parameters params(self->changes_,
-		PyChangedFeature::Parameters::GEOMETRY |
-		PyChangedFeature::Parameters::COORDINATE |
-		PyChangedFeature::Parameters::NODES |
-		PyChangedFeature::Parameters::MEMBERS);
-	if (!params.parse(args, 0, kwargs)) return nullptr;
-	return params.create();
+	ChangeSpec spec(self->changes_,
+		ChangeSpec::GEOMETRY |
+		ChangeSpec::COORDINATE |
+		ChangeSpec::NODES |
+		ChangeSpec::MEMBERS);
+	if (!spec.parse(args, 0, kwargs)) return nullptr;
+	return spec.create();
 }
 
 PyObject* PyChanges::modifyFeature(PyChanges* self, PyObject* args, PyObject* kwargs)
@@ -82,12 +83,12 @@ PyObject* PyChanges::modifyFeature(PyChanges* self, PyObject* args, PyObject* kw
 		(PyChangedFeature*)getitem(self, PyTuple_GET_ITEM(args, 0));
 	if (!changed) return nullptr;
 
-	PyChangedFeature::Parameters params(self->changes_,
-		PyChangedFeature::Parameters::COORDINATE |
-		PyChangedFeature::Parameters::NODES |
-		PyChangedFeature::Parameters::MEMBERS);
-	if (!params.parse(args, 1, kwargs)) return nullptr;
-	params.modify(changed);
+	ChangeSpec spec(self->changes_,
+		ChangeSpec::COORDINATE |
+		ChangeSpec::NODES |
+		ChangeSpec::MEMBERS);
+	if (!spec.parse(args, 1, kwargs)) return nullptr;
+	spec.modify(changed);
 	return changed;
 }
 

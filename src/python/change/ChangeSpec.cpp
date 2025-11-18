@@ -3,6 +3,7 @@
 
 #include <execution>
 
+#include "ChangeSpec.h"
 #include "Changeset.h"
 #include "FeatureBuilder.h"
 #include "PyChangedFeature.h"
@@ -12,9 +13,13 @@
 #include "python/geom/PyCoordinate.h"
 #include "python/geom/PyMercator.h"
 
+// TODO: use mapping protocol instead of PyDict_ functions
+//  so user can assign PyTags to tags
+//  but careful, PyFeature is also a map-like object
+
 // TODO: Ensure args stays referenced for lifetime of this object
 //  (we use borrowed refs for tag keys/values)
-bool PyChangedFeature::Parameters::parse(PyObject* args, int start, PyObject* kwargs)
+bool ChangeSpec::parse(PyObject* args, int start, PyObject* kwargs)
 {
 	assert(PyTuple_Check(args));
     Py_ssize_t argCount = PyTuple_Size(args);
@@ -95,12 +100,12 @@ bool PyChangedFeature::Parameters::parse(PyObject* args, int start, PyObject* kw
     return true;
 }
 
-void PyChangedFeature::Parameters::errorExpectedTag()
+void ChangeSpec::errorExpectedTag()
 {
 	PyErr_SetString(PyExc_TypeError, "Expected a key/value pair");
 }
 
-bool PyChangedFeature::Parameters::acceptSequenceArg(PyObject* seq)
+bool ChangeSpec::acceptSequenceArg(PyObject* seq)
 {
 	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
 	if (n > 0)
@@ -140,7 +145,7 @@ bool PyChangedFeature::Parameters::acceptSequenceArg(PyObject* seq)
 	return true;
 }
 
-bool PyChangedFeature::Parameters::acceptTag(PyObject* key, PyObject* value)
+bool ChangeSpec::acceptTag(PyObject* key, PyObject* value)
 {
 	if (!PyUnicode_Check(key))		// String (key of tag)
 	{
@@ -158,7 +163,7 @@ bool PyChangedFeature::Parameters::acceptTag(PyObject* key, PyObject* value)
 }
 
 
-bool PyChangedFeature::Parameters::acceptTagSequence(PyObject* seq)
+bool ChangeSpec::acceptTagSequence(PyObject* seq)
 {
 	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
 	PyObject **items = PySequence_Fast_ITEMS(seq);
@@ -200,7 +205,7 @@ bool PyChangedFeature::Parameters::acceptTagSequence(PyObject* seq)
 	return true;
 }
 
-bool PyChangedFeature::Parameters::acceptTagDict(PyObject* dict)
+bool ChangeSpec::acceptTagDict(PyObject* dict)
 {
 	PyObject* key;
 	PyObject* value;
@@ -213,7 +218,7 @@ bool PyChangedFeature::Parameters::acceptTagDict(PyObject* dict)
 	return true;
 }
 
-bool PyChangedFeature::Parameters::acceptCoordinate(PyObject* first, PyObject* second)
+bool ChangeSpec::acceptCoordinate(PyObject* first, PyObject* second)
 {
 	if (!PyMercator::getAgnosticLonLat(&coordinate_, first, second))
 	{
@@ -222,7 +227,7 @@ bool PyChangedFeature::Parameters::acceptCoordinate(PyObject* first, PyObject* s
 	return acceptShapeType(COORDINATE);
 }
 
-PyChangedFeature* PyChangedFeature::Parameters::create()
+PyChangedFeature* ChangeSpec::create()
 {
 	PyChangedFeature* feature;
 
@@ -262,7 +267,7 @@ PyChangedFeature* PyChangedFeature::Parameters::create()
 }
 
 
-bool PyChangedFeature::Parameters::modify(PyChangedFeature* feature) const
+bool ChangeSpec::modify(PyChangedFeature* feature) const
 {
 	// TODO: set coord, nodes, members
 
@@ -271,7 +276,7 @@ bool PyChangedFeature::Parameters::modify(PyChangedFeature* feature) const
 }
 
 
-bool PyChangedFeature::Parameters::changeTags(PyChangedFeature* feature) const
+bool ChangeSpec::changeTags(PyChangedFeature* feature) const
 {
 	if (!modifiedTags_.empty() || !deletedKeys_.empty())
 	{
@@ -292,7 +297,7 @@ bool PyChangedFeature::Parameters::changeTags(PyChangedFeature* feature) const
 	return true;
 }
 
-bool PyChangedFeature::Parameters::acceptShapeType(int shapeType)
+bool ChangeSpec::acceptShapeType(int shapeType)
 {
 	if ((accept_ & shapeType) == 0)
 	{
@@ -310,7 +315,7 @@ bool PyChangedFeature::Parameters::acceptShapeType(int shapeType)
 	return true;
 }
 
-const char* PyChangedFeature::Parameters::shapeTypeName(int shapeType)
+const char* ChangeSpec::shapeTypeName(int shapeType)
 {
 	switch (shapeType)
 	{
@@ -324,7 +329,7 @@ const char* PyChangedFeature::Parameters::shapeTypeName(int shapeType)
 	}
 }
 
-bool PyChangedFeature::Parameters::acceptMemberSequence(PyObject* seq)
+bool ChangeSpec::acceptMemberSequence(PyObject* seq)
 {
 	PyChangedMembers* members = PyChangedMembers::fromSequence(changes_, seq,
 		(accept_ & NODES) == 0);
