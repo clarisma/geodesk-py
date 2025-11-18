@@ -62,7 +62,7 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyFeature* featur
 		self->init(changes, static_cast<Type>(feature->feature.typeCode()), feature->feature.id());
 		self->original_ = Python::newRef(feature);
 		self->tags_ = nullptr;	// tags are lazy
-		switch (self->type_)
+		switch (self->type())
 		{
 		case NODE:
 		{
@@ -72,10 +72,8 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyFeature* featur
 			break;
 		}
 		case WAY:
-			self->nodes_ = nullptr;	// lazy
-			break;
 		case RELATION:
-			self->members_ = nullptr;	// lazy
+			self->children_ = nullptr;	// lazy
 			break;
 		default:
 			assert(false);
@@ -84,39 +82,27 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyFeature* featur
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::createWay(Changeset* changes, PyChangedMembers* nodes)
+PyChangedFeature* PyChangedFeature::createFeature2D(Changeset* changes, PyChangedMembers* children)
 {
-	PyChangedFeature* self = create(changes, WAY);
+	PyChangedFeature* self = create(changes,
+		children->containsRelationMembers() ? RELATION : WAY);
 	if (self)	[[likely]]
 	{
-		self->nodes_ = nodes;
+		self->children_ = children;
 	}
 	else
 	{
-		Py_DECREF(nodes);
+		Py_DECREF(children);
 	}
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::createRelation(Changeset* changes, PyChangedMembers* members)
-{
-	PyChangedFeature* self = create(changes, RELATION);
-	if (self)	[[likely]]
-	{
-		self->members_ = members;
-	}
-	else
-	{
-		Py_DECREF(members);
-	}
-	return self;
-}
 
 PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObject* role)
 {
 	// TODO: upgrade "None" to empty string ???
 
-	assert(member->type_ != MEMBER);
+	assert(!member->isMember());
 	PyChangedFeature* self = create(member->changes_, MEMBER);
 	if (self)
 	{
@@ -126,7 +112,7 @@ PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObj
 	return self;
 }
 
-
+/*
 PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyObject* args, PyObject* kwargs)
 {
 	PyChangedFeature* self = create(changes, UNASSIGNED);
@@ -140,21 +126,21 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyObject* args, P
 	}
 	return self;
 }
+*/
 
 void PyChangedFeature::init(Changeset* changes, Type type, int64_t id)
 {
 	changes->addref();
 	changes_ = changes;
-	id_ = id;
+	idAndFlags_ = (id << FLAG_COUNT) | type;
 	version_ = 0;
-	type_ = type;
-	flags_ = Flags();
+	usageCount_ = 0;
 }
 
 
 void PyChangedFeature::dealloc(PyChangedFeature* self)
 {
-	if (self->type_ == MEMBER)	[[unlikely]]
+	if (self->isMember())	[[unlikely]]
 	{
 		Py_XDECREF(self->member_);
 		Py_XDECREF(self->role_);
@@ -163,13 +149,9 @@ void PyChangedFeature::dealloc(PyChangedFeature* self)
 	{
 		Py_XDECREF(self->original_);
 		Py_XDECREF(self->tags_);
-		if (self->type_ == WAY)
+		if (self->type() != NODE)
 		{
-			Py_XDECREF(self->nodes_);
-		}
-		else if (self->type_ == RELATION)
-		{
-			Py_XDECREF(self->members_);
+			Py_XDECREF(self->children_);
 		}
 	}
 	self->changes_->release();
@@ -181,7 +163,7 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
 	if (!name) return NULL;
 
-	if (self->type_ == MEMBER)
+	if (self->isMember())
 	{
 		if (std::string_view(name, len) == "role")
 		{
@@ -203,35 +185,35 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 	switch (attr)
 	{
 	case LAT:
-		if (type_ == NODE) return PyFloat_FromDouble(lat());
+		if (type() == NODE) return PyFloat_FromDouble(lat());
 		Py_RETURN_NONE;
 	case LON:
-		if (type_ == NODE) return PyFloat_FromDouble(lon());
+		if (type() == NODE) return PyFloat_FromDouble(lon());
 		Py_RETURN_NONE;
 	case MEMBERS:
-		if (type_ == RELATION)
+		if (type() == RELATION)
 		{
 			// TODO: ensure members are loaded
-			return Python::newRef(members_);
+			return Python::newRef(children_);
 		}
 		Py_RETURN_NONE;
 	case NODES:
-		if (type_ == WAY)
+		if (type() == WAY)
 		{
-			if (!nodes_)
+			if (!children_)
 			{
 				if (original_)
 				{
-					nodes_ = PyChangedMembers::create(changes_,
+					children_ = PyChangedMembers::create(changes_,
 						(PyFeature*)original_);
 				}
 				else
 				{
-					nodes_ = PyChangedMembers::create(changes_, false);
+					children_ = PyChangedMembers::create(changes_, false);
 				}
-				if (!nodes_) return nullptr;
+				if (!children_) return nullptr;
 			}
-			return Python::newRef(nodes_);
+			return Python::newRef(children_);
 		}
 		Py_RETURN_NONE;
 	case ROLE:
@@ -240,13 +222,13 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 		if (loadTags(true) < 0) return nullptr;
 		return Python::newRef(tags_);
 	case X:
-		if (type_ == NODE)
+		if (type() == NODE)
 		{
 			return PyLong_FromLong(Mercator::xFromLon100nd(lon_));
 		}
 		Py_RETURN_NONE;
 	case Y:
-		if (type_ == NODE)
+		if (type() == NODE)
 		{
 			return PyLong_FromLong(Mercator::yFromLat100nd(lat_));
 		}
@@ -261,15 +243,15 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 		// TODO: handle DELETE
 		Py_RETURN_NONE;
 	case ID:
-		return PyLong_FromLong(id_);
+		return PyLong_FromLong(id());
 	case IS_DELETED:
-		return PyBool_FromLong(has(flags_, Flags::DELETED));
+		return PyBool_FromLong(idAndFlags_ & Flags::DELETED);
 	case IS_NODE:
-		return PyBool_FromLong(type_ == NODE);
+		return PyBool_FromLong(type() == NODE);
 	case IS_RELATION:
-		return PyBool_FromLong(type_ == RELATION);
+		return PyBool_FromLong(type() == RELATION);
 	case IS_WAY:
-		return PyBool_FromLong(type_ == WAY);
+		return PyBool_FromLong(type() == WAY);
 	case MODIFY_METHOD:
 		// TODO: handle MODIFY
 		Py_RETURN_NONE;
@@ -288,14 +270,14 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 	}
 }
 
-bool PyChangedFeature::checkAttrType(int attr, Type type)
+bool PyChangedFeature::checkAttrType(int attr, Type requiredType) const
 {
-	if (type_ != type)	[[unlikely]]
+	if (type() != requiredType)	[[unlikely]]
 	{
 		PyErr_Format(PyExc_TypeError,
 			"Attribute '%s' cannot be set for %s (only applies to %s)",
-			ATTR_NAMES[attr], typeName(static_cast<FeatureType>(type)),
-			typeName(static_cast<FeatureType>(type)));
+			ATTR_NAMES[attr], typeName(featureType()),
+			typeName(static_cast<FeatureType>(requiredType)));
 		return false;
 	}
 	return true;
@@ -352,7 +334,7 @@ int PyChangedFeature::setattr(PyChangedFeature* self, PyObject* nameObj, PyObjec
 	const char* name = PyUnicode_AsUTF8AndSize(nameObj, &len);
 	if (!name) return NULL;
 
-	if (self->type_ == MEMBER)
+	if (self->isMember())
 	{
 		if (std::string_view(name, len) == "role")
 		{
@@ -408,7 +390,7 @@ PyObject* PyChangedFeature::str(PyChangedFeature* self)
 
 PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
 {
-	if (self->type_ == MEMBER)	[[unlikely]]
+	if (self->isMember())	[[unlikely]]
 	{
 		self = self->member_;	// delegate to member
 	}
@@ -430,7 +412,7 @@ PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
 
 int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* value)
 {
-	if (self->type_ == MEMBER)	[[unlikely]]
+	if (self->isMember())	[[unlikely]]
 	{
 		self = self->member_;	// delegate to member
 	}
@@ -450,16 +432,16 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 }
 
 
-void PyChangedFeature::format(clarisma::Buffer& buf)
+void PyChangedFeature::format(clarisma::Buffer& buf) const
 {
-	if (type_ == MEMBER)	[[unlikely]]
+	if (isMember())	[[unlikely]]
 	{
 		member_->format(buf);
 		buf << " as ";
 		buf << Python::getStringView(role_);
 		return;
 	}
-	buf << typeName(static_cast<FeatureType>(type_)) << '/' << id_;
+	buf << typeName(featureType()) << '/' << id();
 	// TODO: new, anonymous
 }
 

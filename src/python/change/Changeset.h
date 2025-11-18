@@ -31,7 +31,7 @@ public:
     PyChangedFeature* createNode(PyObject* first, PyObject* second);
     PyChangedFeature* createWay(PyObject* nodeList);
     PyChangedFeature* createRelation(PyObject* memberList);
-    PyChangedFeature* create(PyChangedMembers* members);
+    PyChangedFeature* create(PyChangedMembers* children);
     PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
     PyChangedFeature* modify(PyFeature* feature);
     PyChangedFeature* modify(PyAnonymousNode* feature);

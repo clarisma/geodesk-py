@@ -70,7 +70,7 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 ///			-1 if dict could not be created
 int PyChangedFeature::loadTags(bool create)
 {
-	assert(type_ != MEMBER);
+	assert(!isMember());
 	if (tags_) return 1;
 	if (!original_ || Py_TYPE(original_) == &PyAnonymousNode::TYPE)
 	{
@@ -117,7 +117,7 @@ bool PyChangedFeature::isTagValue(PyObject* obj)
 
 bool PyChangedFeature::setOrRemoveTag(PyObject* key, PyObject* value)
 {
-	assert(type_ != MEMBER);
+	assert(!isMember());
 	if (loadTags(true) < 0) return false;
 	if (value == Py_None ||
 		(PyUnicode_Check(value) && PyUnicode_GetLength(value) == 0))

@@ -20,13 +20,15 @@ class PyFeature;
 class PyChangedFeature : public PyObject
 {
 public:
-	enum class Flags : uint16_t
+	struct Flags
 	{
-		DELETED = 1 << 0,
-		NODE_LOCATION_CHANGED = 1 << 1,
+		// first 2 bits are type
+		static constexpr int DELETED = 1 << 2;
 	};
 
-	enum Type { NODE,WAY,RELATION,MEMBER,UNASSIGNED };
+	static constexpr int FLAG_COUNT = 8;
+
+	enum Type { NODE,WAY,RELATION,MEMBER };
 
 	enum Attr
 	{
@@ -62,10 +64,8 @@ public:
 	static PyChangedFeature* create(Changeset* changes, Type type);
 	static PyChangedFeature* createNode(Changeset* changes, FixedLonLat lonLat);
 	static PyChangedFeature* createNode(Changeset* changes, PyAnonymousNode* node);
-	static PyChangedFeature* createWay(Changeset* changes, PyChangedMembers* nodes);
-	static PyChangedFeature* createRelation(Changeset* changes, PyChangedMembers* members);
+	static PyChangedFeature* createFeature2D(Changeset* changes, PyChangedMembers* children);
 	static PyChangedFeature* create(Changeset* changes, PyFeature* feature);
-	static PyChangedFeature* create(Changeset* changes, PyObject* args, PyObject* kwargs);
 	static PyChangedFeature* createMember(PyChangedFeature* member, PyObject* role);
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattr(PyChangedFeature* self, PyObject *attr);
@@ -76,62 +76,59 @@ public:
 	// static PyObject* richcompare(PyChangedFeature* self, PyObject* other, int op);
 	static PyObject* str(PyChangedFeature* self);
 
-	int type() const noexcept { return type_; }
-	FeatureType featureType() const { return static_cast<FeatureType>(type_); }
-	int64_t id() { return id_; }
-	void setId(int64_t id) { id_ = id; }
+	int type() const noexcept { return idAndFlags_ & 3; }
+	FeatureType featureType() const { return static_cast<FeatureType>(type()); }
+	bool isMember() const { return type() == MEMBER; }
+	int64_t id() const { return idAndFlags_ >> FLAG_COUNT; }
+	void setId(int64_t id)
+	{
+		idAndFlags_ = (idAndFlags_ & ((1 << FLAG_COUNT) - 1)) | (id << FLAG_COUNT);
+	}
 	FixedLonLat lonLat() const noexcept
 	{
-		assert(type_ == NODE);
+		assert(type() == NODE);
 		return FixedLonLat(lon_, lat_);
 	}
 	double lon() const
 	{
-		assert(type_ == NODE);
+		assert(type() == NODE);
 		return lon_ / 1e7;
 	}
 
 	double lat() const
 	{
-		assert(type_ == NODE);
+		assert(type() == NODE);
 		return lat_ / 1e7;
 	}
 
-	PyChangedMembers* nodes() const
+	PyChangedMembers* children() const
 	{
-		assert(type_ == WAY);
-		return nodes_;
+		assert(type() == WAY || type() == RELATION);
+		return children_;
 	}
 
-	PyChangedMembers* members() const
+	void setChildren(PyChangedMembers* children)
 	{
-		// assert(type_ == RELATION);		// TODO
-		return members_;
-	}
-
-	// TODO: unify nodes/members
-	void setMembers(PyChangedMembers* members)
-	{
-		assert((type_ == WAY && !members->containsRelationMembers()) ||
-			(type_ == RELATION && members->containsRelationMembers()));
-		members_ = members;
+		assert((type() == WAY && !children->containsRelationMembers()) ||
+			(type() == RELATION && children->containsRelationMembers()));
+		children_ = children;
 	}
 
 	PyChangedFeature* member() const
 	{
-		assert(type_ == MEMBER);
+		assert(type() == MEMBER);
 		return member_;
 	}
 
 	PyObject* role() const
 	{
-		assert(type_ == MEMBER);
+		assert(type() == MEMBER);
 		return role_;
 	}
 
 	PyObject* tags()
 	{
-		assert(type_ != MEMBER);
+		assert(type() != MEMBER);
 		loadTags(true);
 		// TODO: may raise, clear exception
 		return tags_;
@@ -143,7 +140,7 @@ public:
 	bool modify(PyObject* args, PyObject* kwargs);
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
-	void format(clarisma::Buffer& buf);
+	void format(clarisma::Buffer& buf) const;
 	static bool isTagValue(PyObject* obj);
 	bool hasTags()
 	{
@@ -157,7 +154,7 @@ private:
 	void createOrModify(PyObject* args, PyObject* kwargs, bool create);
 	PyObject* getAttribute(int attr);
 	bool setAttribute(int attr, PyObject* value);
-	bool checkAttrType(int attr, Type type);
+	bool checkAttrType(int attr, Type type) const;
 	bool setMembers(PyObject* value);
 	bool setNodes(PyObject* value);
 
@@ -169,10 +166,9 @@ private:
 	static bool isAtomicTagValue(PyObject* obj);
 
 	Changeset* changes_;
-	int64_t id_;
+	int64_t idAndFlags_;
 	uint32_t version_;           // retrieved from Overpass
-	uint8_t type_;               // node,way,relation,member
-	Flags flags_;
+	int32_t usageCount_;
 	union
 	{
 		struct	// if node, way or relation
@@ -186,8 +182,7 @@ private:
 					int32_t lon_;
 					int32_t lat_;
 				};
-				PyChangedMembers* nodes_;	// if way
-				PyChangedMembers* members_;	// if relation
+				PyChangedMembers* children_;	// if way or relation
 			};
 		};
 		struct	// if member
@@ -198,4 +193,3 @@ private:
 	};
 };
 
-CLARISMA_ENUM_FLAGS(PyChangedFeature::Flags)

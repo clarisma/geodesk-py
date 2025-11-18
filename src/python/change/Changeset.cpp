@@ -79,8 +79,11 @@ PyChangedFeature* Changeset::createWay(PyObject* nodeList)	// steals ref
 		// steals ref to nodeList even if it fails
 	if (!nodes) return nullptr;
 	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
-	way->setMembers(nodes);
-	if (way) addCreated(way);
+	if (way)
+	{
+		way->setChildren(nodes);
+		addCreated(way);
+	}
 	return way;
 }
 
@@ -90,17 +93,18 @@ PyChangedFeature* Changeset::createRelation(PyObject* memberList)
 	// steals ref to nodeList even if it fails
 	if (!members) return nullptr;
 	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
-	rel->setMembers(members);
-	if (rel) addCreated(rel);
+	if (rel)
+	{
+		rel->setChildren(members);
+		addCreated(rel);
+	}
 	return rel;
 }
 
-PyChangedFeature* Changeset::create(PyChangedMembers* members)
+PyChangedFeature* Changeset::create(PyChangedMembers* children)
 {
-	PyChangedFeature* f =  PyChangedFeature::create(this,
-		members->containsRelationMembers() ?
-			PyChangedFeature::RELATION : PyChangedFeature::WAY);
-	f->setMembers(members);
+	PyChangedFeature* f =
+		PyChangedFeature::createFeature2D(this, children);
 	if (f) addCreated(f);
 	return f;
 }

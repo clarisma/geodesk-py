@@ -52,7 +52,7 @@ void ChangeWriter::writeFeature(PyChangedFeature* feature)
     else
     {
         out_ << "\">\n";
-        PyObject* list = feature->members()->list;
+        PyObject* list = feature->children()->list;
         Py_ssize_t size = PyList_GET_SIZE(list);
         for (Py_ssize_t i = 0; i < size; ++i)
         {
