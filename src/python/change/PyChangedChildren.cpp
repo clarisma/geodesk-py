@@ -7,8 +7,6 @@
 #include <python/query/PyFeatures.h>
 #include "PyChangedFeature.h"
 #include "Changeset.h"
-#include "python/geom/PyCoordinate.h"
-#include "python/geom/PyMercator.h"
 
 
 PyChangedFeature* PyChangedChildren::promoteChild(Changeset* changes, PyObject *obj, bool withRole)
@@ -165,23 +163,161 @@ PyObject* PyChangedChildren::getitem(PyChangedChildren* self, PyObject* key)
 	return PyObject_GetItem(self->list_, key);
 }
 
-int PyChangedChildren::setitem(PyChangedChildren* self, PyObject* key, PyObject* value)
+
+int PyChangedChildren::setitem(PyChangedChildren* self,
+    PyObject* key, PyObject* value)
 {
-	// TODO
-	/*
-	if (value == nullptr)
-	{
-		// Handle deletion: del obj[key]
-		return PyObject_DelItem(self->items_, key);
-	}
-	else
-	{
-		// Handle assignment: obj[key] = value
-		return PyObject_SetItem(self->items_, key, value);
-	}
-	*/
-	return 0;
+    // Slice case: obj[start:stop:step] or del obj[start:stop:step]
+    if (PySlice_Check(key))
+    {
+        // Deletion: del obj[slice]
+        if (!value)
+        {
+            // Capture old items for callbacks
+            PyObject* old = PyObject_GetItem(self->list_, key);
+            if (!old) return -1;
+            if (PyObject_DelItem(self->list_, key) < 0)
+            {
+                Py_DECREF(old);
+                return -1;
+            }
+
+            // Call childRemoved() for each old element
+            PyObject* it = PyObject_GetIter(old);
+            if (!it)
+            {
+                Py_DECREF(old);
+                return -1;
+            }
+
+            PyObject* item = nullptr;
+            while ((item = PyIter_Next(it)))
+            {
+                childRemoved(
+                    reinterpret_cast<PyChangedFeature*>(item));
+                Py_DECREF(item);
+            }
+
+            Py_DECREF(it);
+            Py_DECREF(old);
+
+            return PyErr_Occurred() ? -1 : 0;
+        }
+
+        // Assignment: obj[slice] = value
+        // 1. Capture old items for callbacks
+        PyObject* old = PyObject_GetItem(self->list_, key);
+        if (!old) return -1;
+
+        // 2. Promote all new items first, using accept()
+        PyObject* it = PyObject_GetIter(value);
+        if (!it)
+        {
+            Py_DECREF(old);
+            return -1;
+        }
+
+        std::vector<PythonRef<PyChangedFeature>> accepted;
+        for (;;)
+        {
+            PyObject* elem = PyIter_Next(it); // new ref or nullptr
+            if (!elem) break;
+            PyChangedFeature* child = self->accept(elem);
+            Py_DECREF(elem);
+
+            if (!child)
+            {
+                Py_DECREF(it);
+                Py_DECREF(old);
+                // No changes to list yet; just return error
+                return -1;
+            }
+            accepted.emplace_back(PythonRef(child));
+        }
+        Py_DECREF(it);
+
+        if (PyErr_Occurred())
+        {
+            Py_DECREF(old);
+            return -1;
+        }
+
+        // 3. Build a new list from promoted children
+        Py_ssize_t n = accepted.size();
+        PyObject* new_list = PyList_New(n);
+        if (!new_list)
+        {
+            Py_DECREF(old);
+            return -1;
+        }
+
+        for (Py_ssize_t i = 0; i < n; ++i)
+        {
+            PyObject* child = accepted[i].release();
+            // PyList_SET_ITEM steals the reference
+            PyList_SET_ITEM(new_list, i, child);
+        }
+        // At this point, promoted vector elements are owned by new_list.
+
+        // 4. Perform the slice assignment
+        int rc = PyObject_SetItem(self->list_, key, new_list);
+        Py_DECREF(new_list);
+        if (rc < 0)
+        {
+            // Slice assignment failed; old list is unchanged.
+            Py_DECREF(old);
+            return -1;
+        }
+
+        // 5. Notify removed for old slice
+        PyObject* old_it = PyObject_GetIter(old);
+        if (!old_it)
+        {
+            Py_DECREF(old);
+            return -1;
+        }
+
+        PyObject* item = nullptr;
+        while ((item = PyIter_Next(old_it)))
+        {
+            childRemoved(
+                reinterpret_cast<PyChangedFeature*>(item));
+            Py_DECREF(item);
+        }
+        Py_DECREF(old_it);
+        Py_DECREF(old);
+
+        if (PyErr_Occurred()) return -1;
+
+    	/*
+
+    	 // TODO: we've released the refs at this point,
+    	 // so this won't work
+
+        // 6. Notify added for new slice
+        for (PyObject* child_obj : promoted)
+        {
+            PyChangedChildren::childAdded(
+                reinterpret_cast<PyChangedFeature*>(child_obj));
+            // Do NOT DECREF here; list now owns these refs.
+        }
+		*/
+
+        return 0;
+    }
+
+    // Non-slice: treat as an index (or raise IndexError)
+    Py_ssize_t index =
+        PyNumber_AsSsize_t(key, PyExc_IndexError);
+    if (index == -1 && PyErr_Occurred())
+    {
+        return -1;
+    }
+
+    // Delegate to sequence assignment logic (handles delete and assign)
+    return seqAssItem(self, index, value);
 }
+
 
 PyObject* PyChangedChildren::iter(PyChangedChildren* self)
 {
@@ -204,61 +340,404 @@ PyObject* PyChangedChildren::str(PyChangedChildren* self)
 }
 
 
+PyChangedFeature* PyChangedChildren::accept(PyObject* obj)
+{
+	bool forRelation = containsRelationMembers();
+	PyChangedFeature* changed = promoteChild(changes(), obj, forRelation);
+	if (!changed) return nullptr;
+	if (forRelation)
+	{
+		if (!changed->isMember())
+		{
+			changed = PyChangedFeature::createMember(changed, Py_None);
+		}
+	}
+	else
+	{
+		if (changed->type() != PyChangedFeature::NODE)
+		{
+			PyErr_SetString(PyExc_TypeError, "Expected node");
+			Py_DECREF(changed);
+			return nullptr;
+		}
+	}
+	return changed;
+}
+
+PyObject* PyChangedChildren::append(PyChangedChildren* self, PyObject* arg)
+{
+	PyChangedFeature* child = self->accept(arg);
+	if (!child) return nullptr;
+	if (PyList_Append(self->list_, child) < 0)
+	{
+		Py_DECREF(child);
+		return nullptr;
+	}
+	childAdded(child);
+	Py_DECREF(child);
+	Py_RETURN_NONE;
+}
+
+/// @brief Extend with children from an iterable.
+/// @details Promotes all items first; if any promotion fails,
+/// list is unchanged.
+///
+PyObject* PyChangedChildren::extend(PyChangedChildren* self, PyObject* arg)
+{
+    PyObject* it = PyObject_GetIter(arg);
+    if (!it) return nullptr;
+
+    std::vector<PythonRef<PyChangedFeature>> accepted;
+    for (;;)
+    {
+        PyObject* item = PyIter_Next(it); // new ref or nullptr
+        if (!item) break;
+
+        PyChangedFeature* child = self->accept(item);
+        Py_DECREF(item);
+        if (!child)
+        {
+            Py_DECREF(it);
+            return nullptr;
+        }
+        accepted.emplace_back(PythonRef(child));
+    }
+
+    Py_DECREF(it);
+    if (PyErr_Occurred()) return nullptr;
+
+    // All promotions succeeded; now append to list.
+    for (auto& childRef : accepted)
+    {
+    	PyChangedFeature* child = childRef.get();
+        if (PyList_Append(self->list_, child) < 0)
+        {
+            // At this point the list may be partially updated.
+            // Requirement only demands no change on promotion failure,
+            // so this is acceptable.
+            return nullptr;
+        }
+        childAdded(child);
+    	// childRef.release();		// TODO: check if needed???
+    }
+    Py_RETURN_NONE;
+}
+
+/// @brief Insert a child at a given index.
+///
+PyObject* PyChangedChildren::insert(PyChangedChildren* self, PyObject* args)
+{
+    Py_ssize_t index;
+    PyObject* obj = nullptr;
+
+    if (!PyArg_ParseTuple(args, "nO", &index, &obj))
+    {
+        return nullptr;
+    }
+
+    PyChangedFeature* child = self->accept(obj);
+    if (!child) return nullptr;
+    Py_ssize_t len = PyList_GET_SIZE(self->list_);
+    if (index < 0) index += len;
+    if (index < 0)
+    {
+        index = 0;
+    }
+    else if (index > len)
+    {
+        index = len;
+    }
+
+    if (PyList_Insert(self->list_, index, child) < 0)
+    {
+        Py_DECREF(child);
+        return nullptr;
+    }
+    childAdded(child);
+    Py_DECREF(child);
+    Py_RETURN_NONE;
+}
+
+/// @brief Remove all occurrences of the given object.
+/// @details Uses identity comparison (is), not equality.
+///
+PyObject* PyChangedChildren::remove(PyChangedChildren* self, PyObject* arg)
+{
+    PyObject* target = arg;
+    Py_ssize_t len = PyList_GET_SIZE(self->list_);
+    Py_ssize_t write = 0;
+    Py_ssize_t removed_count = 0;
+
+    for (Py_ssize_t read = 0; read < len; ++read)
+    {
+        PyChangedFeature* item = self->borrowAt(read);
+        if (item == target)		// TODO: decide on equality
+        {
+            childRemoved(item);
+            ++removed_count;
+        }
+        else
+        {
+            if (write != read)
+            {
+                PyList_SET_ITEM(self->list_, write, item);
+            }
+            ++write;
+        }
+    }
+
+	// TODO: review
+    if (PyList_SetSlice(self->list_, write, len, nullptr) < 0)
+    {
+        return nullptr;
+    }
+    Py_RETURN_NONE;
+}
+
+/// @brief Pop and return child at index (default last).
+///
+PyObject* PyChangedChildren::pop(PyChangedChildren* self, PyObject* args)
+{
+    Py_ssize_t index = -1;
+    if (!PyArg_ParseTuple(args, "|n", &index))
+    {
+        return nullptr;
+    }
+
+    Py_ssize_t len = PyList_GET_SIZE(self->list_);
+    if (len == 0)
+    {
+        PyErr_SetString(PyExc_IndexError, "pop from empty list");
+        return nullptr;
+    }
+
+    if (index < 0)
+    {
+        index += len;
+    }
+    if (index < 0 || index >= len)
+    {
+        PyErr_SetString(PyExc_IndexError,
+            "pop index out of range");
+        return nullptr;
+    }
+
+    PyChangedFeature* child = self->newAt(index);
+	if (PySequence_DelItem(self->list_, index) < 0)
+    {
+        Py_DECREF(child);
+        return nullptr;
+    }
+    childRemoved(child);
+    return child;
+}
+
+/// @brief Remove all children.
+///
+PyObject* PyChangedChildren::clear(PyChangedChildren* self, PyObject* /*ignored*/)
+{
+    Py_ssize_t len = PyList_GET_SIZE(self->list_);
+    for (Py_ssize_t i = 0; i < len; ++i)
+    {
+        PyChangedFeature* child = self->borrowAt(i);
+        childRemoved(child);
+    }
+
+    if (PyList_SetSlice(self->list_, 0, len, nullptr) < 0)
+    {
+        return nullptr;
+    }
+    Py_RETURN_NONE;
+}
+
+/// @brief Reverse the order of children in-place.
+PyObject* PyChangedChildren::reverse(PyChangedChildren* self, PyObject* /*ignored*/)
+{
+    if (PyList_Reverse(self->list_) < 0)
+    {
+        return nullptr;
+    }
+    Py_RETURN_NONE;
+}
+
+/// @brief Return number of occurrences of value.
+/// @details Delegates to the underlying list's count().
+///
+PyObject* PyChangedChildren::count(
+    PyChangedChildren* self,
+    PyObject* arg)
+{
+    PyObject* method =
+        PyObject_GetAttrString(self->list_, "count");
+    if (!method) return nullptr;
+
+    PyObject* result = PyObject_CallOneArg(method, arg);
+    Py_DECREF(method);
+    return result;
+}
+
+/// @brief Return first index of value; raise ValueError if not found.
+/// @details Delegates to the underlying list's index().
+///
+PyObject* PyChangedChildren::index(
+    PyChangedChildren* self, PyObject* args)
+{
+    PyObject* method =
+        PyObject_GetAttrString(self->list_, "index");
+	if (!method) return nullptr;
+
+    PyObject* result =
+        PyObject_Call(method, args, nullptr);
+    Py_DECREF(method);
+    return result;
+}
+
+Py_ssize_t PyChangedChildren::length(PyObject* self_obj)
+{
+	auto self = (PyChangedChildren*)self_obj;
+	return PyList_GET_SIZE(self->list_);
+}
+
+PyObject* PyChangedChildren::seqItem(
+	PyObject* self_obj,
+	Py_ssize_t index)
+{
+	auto self = (PyChangedChildren*)self_obj;
+	Py_ssize_t len = PyList_GET_SIZE(self->list_);
+
+	if (index < 0)
+	{
+		index += len;
+	}
+	if (index < 0 || index >= len)
+	{
+		PyErr_SetString(PyExc_IndexError, "index out of range");
+		return nullptr;
+	}
+	return self->newAt(index);
+}
+
+
+int PyChangedChildren::seqAssItem(
+	PyObject* self_obj,
+	Py_ssize_t index,
+	PyObject* value)
+{
+	auto self = (PyChangedChildren*)self_obj;
+	Py_ssize_t len = PyList_GET_SIZE(self->list_);
+	if (len == 0)
+	{
+		PyErr_SetString(PyExc_IndexError, "index out of range");
+		return -1;
+	}
+
+	if (index < 0)
+	{
+		index += len;
+	}
+	if (index < 0 || index >= len)
+	{
+		PyErr_SetString(PyExc_IndexError, "index out of range");
+		return -1;
+	}
+
+	if (!value)
+	{
+		// Deletion: del self[index]
+		PyChangedFeature* old = self->newAt(index);
+		if (PySequence_DelItem(self->list_, index) < 0)
+		{
+			Py_DECREF(old);
+			return -1;
+		}
+		childRemoved(old);
+		Py_DECREF(old);
+		return 0;
+	}
+
+	// Assignment: self[index] = value
+	PyChangedFeature* newChild = self->accept(value);
+	if (!newChild) return -1;
+	PyChangedFeature* old = self->newAt(index);
+	// PyList_SetItem steals reference to new_child on success.
+	if (PyList_SetItem(self->list_, index, newChild) < 0)
+	{
+		Py_DECREF(old);
+		Py_DECREF(newChild);
+		return -1;
+	}
+
+	childRemoved(old);
+	childAdded(newChild);
+
+	Py_DECREF(old);
+	// no DECREF(new_child); stolen by list
+	return 0;
+}
+
+
+int PyChangedChildren::contains(PyObject* self_obj, PyObject* value)
+{
+	auto self = (PyChangedChildren*)self_obj;
+	return PySequence_Contains(self->list_, value);
+}
+
+
 PyMethodDef PyChangedChildren::METHODS[] =
 {
 	{
 		"append",
-		reinterpret_cast<PyCFunction>(cc_append),
+		(PyCFunction)append,
 		METH_O,
-		"Append a child, promoting to ChangedFeature."
+		"Append a node/member."
 	},
 	{
 		"extend",
-		reinterpret_cast<PyCFunction>(cc_extend),
+		(PyCFunction)extend,
 		METH_O,
-		"Extend with children from an iterable."
+		"Extend with nodes/members from an iterable."
 	},
 	{
 		"insert",
-		reinterpret_cast<PyCFunction>(cc_insert),
+		(PyCFunction)insert,
 		METH_VARARGS,
 		"Insert a child at a given index."
 	},
 	{
 		"remove",
-		reinterpret_cast<PyCFunction>(cc_remove),
+		(PyCFunction)remove,
 		METH_O,
 		"Remove all occurrences of the given child."
 	},
 	{
 		"pop",
-		reinterpret_cast<PyCFunction>(cc_pop),
+		(PyCFunction)pop,
 		METH_VARARGS,
-		"Remove and return child at index (default last)."
+		"Remove and return node/member at index (default last)."
 	},
 	{
 		"clear",
-		reinterpret_cast<PyCFunction>(cc_clear),
+		(PyCFunction)clear,
 		METH_NOARGS,
-		"Remove all children."
+		"Remove all nodes/members."
 	},
 	{
 		"reverse",
-		reinterpret_cast<PyCFunction>(cc_reverse),
+		(PyCFunction)reverse,
 		METH_NOARGS,
-		"Reverse the children in place."
+		"Reverse the nodes/members in place."
 	},
 	{
 		"count",
-		reinterpret_cast<PyCFunction>(cc_count),
+		(PyCFunction)count,
 		METH_O,
-		"Return the number of occurrences of a value."
+		"Return the number of occurrences of a node/member."
 	},
 	{
 		"index",
-		reinterpret_cast<PyCFunction>(cc_index),
+		(PyCFunction)index,
 		METH_VARARGS,
-		"Return first index of value."
+		"Return first index of a node/member."
 	},
 	{ nullptr, nullptr, 0, nullptr }
 };
@@ -267,14 +746,14 @@ PyMethodDef PyChangedChildren::METHODS[] =
 
 PySequenceMethods PyChangedChildren::SEQUENCE_METHODS =
 {
-	PyChangedChildren::length,         // sq_length
+	length,         // sq_length
 	nullptr,                           // sq_concat
 	nullptr,                           // sq_repeat
-	PyChangedChildren::seqItem,        // sq_item
+	seqItem,        // sq_item
 	nullptr,                           // was_sq_slice
-	PyChangedChildren::seqAssItem,     // sq_ass_item
+	seqAssItem,     // sq_ass_item
 	nullptr,                           // was_sq_ass_slice
-	PyChangedChildren::contains,       // sq_contains
+	contains,       // sq_contains
 	nullptr,                           // sq_inplace_concat
 	nullptr                            // sq_inplace_repeat
 };
