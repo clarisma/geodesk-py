@@ -5,7 +5,6 @@
 #include <clarisma/util/Xml.h>
 #include "python/version.h"
 #include "Changeset.h"
-#include "PyChangedMembers.h"
 
 using namespace clarisma;
 
@@ -52,7 +51,7 @@ void ChangeWriter::writeFeature(PyChangedFeature* feature)
     else
     {
         out_ << "\">\n";
-        PyObject* list = feature->children()->list;
+        PyObject* list = feature->children();
         Py_ssize_t size = PyList_GET_SIZE(list);
         for (Py_ssize_t i = 0; i < size; ++i)
         {

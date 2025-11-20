@@ -3,16 +3,15 @@
 
 #pragma once
 #include <Python.h>
-#include <geodesk/feature/FeaturePtr.h>
+#include <geodesk/feature/RelationPtr.h>
+#include <geodesk/feature/WayPtr.h>
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
 #include "python/util/PyListProxy.h"
-#include "python/change/PyChangedMembers.h"
 
 using namespace geodesk;
 namespace clarisma { class Buffer; }
 class Changeset;
-// class PyChangedMembers;
 class PyAnonymousNode;
 class PyFeature;
 
@@ -58,14 +57,16 @@ public:
 	static constexpr Attr LAST_MUTABLE_ATTR = Y;
 
 	static PyTypeObject TYPE;
+	static PyMethodDef METHODS[];
 	static PyMappingMethods MAPPING_METHODS;
 
-	static PyChangedFeature* create(Changeset* changes, Type type);
+	static PyChangedFeature* create(Changeset* changes, int type);
 	static PyChangedFeature* createNode(Changeset* changes, FixedLonLat lonLat);
 	static PyChangedFeature* createNode(Changeset* changes, PyAnonymousNode* node);
-	static PyChangedFeature* createFeature2D(Changeset* changes, PyChangedMembers* children);
+	static PyChangedFeature* createFeature2D(Changeset* changes, int type, PyObject* children);
 	static PyChangedFeature* create(Changeset* changes, PyFeature* feature);
 	static PyChangedFeature* createMember(PyChangedFeature* member, PyObject* role);
+	static PyObject* createChildren(Changeset* changes, PyObject* seq, bool forRelation);
 	static void dealloc(PyChangedFeature* self);
 	static PyObject* getattr(PyChangedFeature* self, PyObject *attr);
 	static int setattr(PyChangedFeature* self, PyObject* nameObj, PyObject* value);
@@ -100,16 +101,15 @@ public:
 		return lat_ / 1e7;
 	}
 
-	PyChangedMembers* children() const
+	PyObject* children() const
 	{
 		assert(type() == WAY || type() == RELATION);
 		return children_;
 	}
 
-	void setChildren(PyChangedMembers* children)
+	void setChildren(PyObject* children)
 	{
-		assert((type() == WAY && !children->containsRelationMembers()) ||
-			(type() == RELATION && children->containsRelationMembers()));
+		assert(type() == WAY || type() == RELATION);
 		children_ = children;
 	}
 
@@ -148,6 +148,9 @@ public:
 		return tags_ != nullptr;
 	}
 
+	PyListProxy* getNodes();
+	PyListProxy* getMembers();
+
 	static PyChangedFeature* promoteChild(Changeset* changes,
 		PyObject *obj, bool withRole);
 
@@ -167,6 +170,10 @@ private:
 	bool setOrRemoveTags(PyObject* dict);
 	static bool isAtomicTagValue(PyObject* obj);
 
+	static PyObject* loadNodes(Changeset* changes, FeatureStore* store, WayPtr way);
+	static PyObject* loadMembers(Changeset* changes, FeatureStore* store, RelationPtr rel);
+
+	static PyChangedFeature* coerceChild(Changeset* changes, PyObject* item, bool forRelation);
 	static PyObject* coerceChild(PyObject* parent, PyObject* item);
 	static void childAdded(PyObject* parent, PyObject* list, PyObject* item);
 	static void childRemoved(PyObject* parent, PyObject* list, PyObject* item);
@@ -205,7 +212,7 @@ private:
 					int32_t lon_;
 					int32_t lat_;
 				};
-				PyChangedMembers* children_;	// if way or relation
+				PyObject* children_;	// if way or relation
 			};
 		};
 		struct	// if member

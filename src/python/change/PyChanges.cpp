@@ -8,7 +8,6 @@
 #include "ChangeSpec.h"
 #include "ChangeWriter.h"
 #include "PyChangedFeature.h"
-#include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
 #include "python/util/util.h"
 

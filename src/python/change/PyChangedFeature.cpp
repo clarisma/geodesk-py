@@ -7,20 +7,18 @@
 #include <clarisma/util/DynamicStackBuffer.h>
 #include <geodesk/feature/FeatureUtils.h>
 #include <geodesk/feature/NodePtr.h>
+#include <geodesk/feature/WayNodeIterator.h>
 #include "Changeset.h"
 #include "python/Environment.h"
 #include "python/geom/PyCoordinate.h"
-#include "python/geom/PyMercator.h"
 #include "python/feature/PyFeature.h"
-#include "PyChangedMembers.h"
-
 #include "PyCF_attr.cxx"
 #include "PyCF_lookup.cxx"
 
-PyChangedFeature* PyChangedFeature::create(Changeset* changes, Type type)
+PyChangedFeature* PyChangedFeature::create(Changeset* changes, int type)
 {
 	PyChangedFeature* self = (PyChangedFeature*)TYPE.tp_alloc(&TYPE, 0);
-	if (self) self->init(changes, type, 0);
+	if (self) self->init(changes, (Type)type, 0);
 	return self;
 }
 
@@ -79,10 +77,10 @@ PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyFeature* featur
 	return self;
 }
 
-PyChangedFeature* PyChangedFeature::createFeature2D(Changeset* changes, PyChangedMembers* children)
+PyChangedFeature* PyChangedFeature::createFeature2D(
+	Changeset* changes, int type, PyObject* children)
 {
-	PyChangedFeature* self = create(changes,
-		children->containsRelationMembers() ? RELATION : WAY);
+	PyChangedFeature* self = create(changes, type);
 	if (self)	[[likely]]
 	{
 		self->children_ = children;
@@ -93,6 +91,49 @@ PyChangedFeature* PyChangedFeature::createFeature2D(Changeset* changes, PyChange
 	}
 	return self;
 }
+
+
+PyObject* PyChangedFeature::createChildren(
+	Changeset* changes, PyObject* seq, bool forRelation)
+{
+	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
+	PyObject **items = PySequence_Fast_ITEMS(seq);
+	PyObject* list = PyList_New(n);
+
+	for (int i=0; i<n; i++)
+	{
+		PyChangedFeature* changed = coerceChild(
+			changes, items[i], forRelation);
+		if (!changed)
+		{
+			Py_DECREF(list);
+			return nullptr;
+		}
+		if (!forRelation)
+		{
+			if (changed->type() != NODE)
+			{
+				forRelation = true;
+				// Upgrade any preceding nodes to member
+				for (int i2=0; i2<i; i2++)
+				{
+					PyChangedFeature* prev = (PyChangedFeature*)
+						PyList_GET_ITEM(list, i2);
+					assert(prev->type() == PyChangedFeature::NODE);
+					PyList_SET_ITEM(list, i2,
+						PyChangedFeature::createMember(prev, Py_None));
+				}
+			}
+		}
+		if (forRelation && changed->type() != MEMBER)
+		{
+			changed = createMember(changed, Py_None);
+		}
+		PyList_SET_ITEM(list, i, changed);
+	}
+	return list;
+}
+
 
 
 PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObject* role)
@@ -178,6 +219,99 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	return self->getAttribute(attr->index);
 }
 
+PyObject* PyChangedFeature::loadNodes(Changeset* changes, FeatureStore* store, WayPtr way)
+{
+	WayNodeIterator iter(store, way, true, store->hasWaynodeIds());
+	int count = iter.remaining();
+	PyObject* list = PyList_New(count);
+	if (!list) return nullptr;
+	for (int i=0;i<count;i++)
+	{
+		PyChangedFeature* node = nullptr;
+		WayNodeIterator::WayNode wayNode = iter.next();
+		if (wayNode.feature.isNull())	[[likely]]
+		{
+			node = changes->modify(store, wayNode.id, wayNode.xy);
+		}
+		else
+		{
+			PyFeature* featureNode = PyFeature::create(store, wayNode.feature, Py_None);
+			if (featureNode)
+			{
+				node = changes->modify(featureNode);
+				Py_DECREF(featureNode);
+			}
+		}
+		if (!node)	[[unlikely]]
+		{
+			Py_DECREF(list);
+			return nullptr;
+		}
+		PyList_SET_ITEM(list, i, node);  // steals reference to node
+	}
+	return list;
+}
+
+PyObject* PyChangedFeature::loadMembers(Changeset* changes, FeatureStore* store, RelationPtr rel)
+{
+	PyObject* list = PyList_New(0);
+	if (!list) return nullptr;
+
+	MemberIterator iter(store, rel.bodyptr());
+	for (;;)
+	{
+		FeaturePtr feature = iter.next();
+		if (feature.isNull()) break;
+		PyObject* role = iter.borrowCurrentRole();
+		PyFeature* featureObj = PyFeature::create(store, feature, role);
+		if (featureObj)
+		{
+			PyChangedFeature* changed = changes->modify(featureObj);
+			Py_DECREF(featureObj);
+			if (changed)
+			{
+				PyChangedFeature* member = createMember(changed, role);
+				if (member)
+				{
+					if (PyList_Append(list, member) == 0) continue;
+				}
+			}
+		}
+		Py_DECREF(list);
+		return nullptr;
+	}
+	return list;
+}
+
+PyListProxy* PyChangedFeature::getNodes()
+{
+	assert(type() == WAY);
+	if (!children_)
+	{
+		assert(original_);
+		PyFeature* feature = (PyFeature*)original_;
+		children_ = loadNodes(changes_, feature->store,
+			WayPtr(feature->feature));
+		if (!children_) return nullptr;
+	}
+	return PyListProxy::create(children_, this, &CHILD_OPERATIONS);
+}
+
+PyListProxy* PyChangedFeature::getMembers()
+{
+	assert(type() == RELATION);
+	if (!children_)
+	{
+		assert(original_);
+		PyFeature* feature = (PyFeature*)original_;
+		children_ = loadMembers(changes_, feature->store,
+			RelationPtr(feature->feature));
+		if (!children_) return nullptr;
+	}
+	return PyListProxy::create(children_, this, &CHILD_OPERATIONS);
+}
+
+
 PyObject* PyChangedFeature::getAttribute(int attr)
 {
 	switch (attr)
@@ -189,30 +323,10 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 		if (type() == NODE) return PyFloat_FromDouble(lon());
 		Py_RETURN_NONE;
 	case MEMBERS:
-		if (type() == RELATION)
-		{
-			// TODO: ensure members are loaded
-			return Python::newRef(children_);
-		}
+		if (type() == RELATION) return getMembers();
 		Py_RETURN_NONE;
 	case NODES:
-		if (type() == WAY)
-		{
-			if (!children_)
-			{
-				if (original_)
-				{
-					children_ = PyChangedMembers::create(changes_,
-						(PyFeature*)original_);
-				}
-				else
-				{
-					children_ = PyChangedMembers::create(changes_, false);
-				}
-				if (!children_) return nullptr;
-			}
-			return Python::newRef(children_);
-		}
+		if (type() == WAY) return getNodes();
 		Py_RETURN_NONE;
 	case ROLE:
 		Py_RETURN_NONE;
@@ -570,13 +684,9 @@ PyChangedFeature* PyChangedFeature::promoteChild(Changeset* changes, PyObject *o
 }
 
 
-PyObject* PyChangedFeature::coerceChild(PyObject* parent, PyObject* item)
+PyChangedFeature* PyChangedFeature::coerceChild(Changeset* changes, PyObject* item, bool forRelation)
 {
-	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
-	assert(self->type() == WAY || self->type() == RELATION);
-	bool forRelation = self->type() == RELATION;
-	PyChangedFeature* changed = promoteChild(
-		self->changes_, item, forRelation);
+	PyChangedFeature* changed = promoteChild(changes, item, forRelation);
 	if (!changed) return nullptr;
 	if (forRelation)
 	{
@@ -595,6 +705,13 @@ PyObject* PyChangedFeature::coerceChild(PyObject* parent, PyObject* item)
 		}
 	}
 	return changed;
+}
+
+PyObject* PyChangedFeature::coerceChild(PyObject* parent, PyObject* item)
+{
+	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
+	assert(self->type() == WAY || self->type() == RELATION);
+	return coerceChild(self->changes_, item, self->type() == RELATION);
 }
 
 
@@ -653,6 +770,49 @@ const PyListProxy::Operations PyChangedFeature::CHILD_OPERATIONS =
 	childRemoved,
 	childrenReordered
 };
+
+PyMethodDef PyChangedFeature::METHODS[] =
+{
+	{
+		"append", append,	METH_O,
+		"Append node/member"
+	},
+	{
+		"extend", extend,	METH_O,
+		"Extend with nodes/members from an iterable"
+	},
+	{
+		"insert", insert,	METH_VARARGS,
+		"Insert node/member at index"
+	},
+	{
+		"remove", remove,	METH_O,
+		"Remove first occurrence of ndoe/member"
+	},
+	{
+		"pop", pop,METH_VARARGS,
+		"Remove and return node/member at index (default last)"
+	},
+	{
+		"clear", clear, METH_NOARGS,
+		"Remove all nodes/members"
+	},
+	{
+		"reverse",	reverse, METH_NOARGS,
+		"Reverse the nodes/members in place"
+	},
+	{
+		"count", count, METH_O,
+		"Count occurrences of a node/member"
+	},
+	{
+		"index", index,METH_VARARGS,
+		"Return first index of a node/member"
+	},
+	{ nullptr, nullptr, 0, nullptr }
+};
+
+
 
 PyMappingMethods PyChangedFeature::MAPPING_METHODS =
 {

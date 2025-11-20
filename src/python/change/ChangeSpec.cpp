@@ -7,7 +7,6 @@
 #include "Changeset.h"
 #include "FeatureBuilder.h"
 #include "PyChangedFeature.h"
-#include "PyChangedMembers.h"
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
@@ -140,7 +139,7 @@ bool ChangeSpec::acceptSequenceArg(PyObject* seq)
 			}
 			Py_DECREF(childSeq);
 		}
-		return acceptMemberSequence(seq);
+		return acceptChildSequence(seq);
 	}
 	return true;
 }
@@ -245,11 +244,13 @@ PyChangedFeature* ChangeSpec::create()
 	}
 	else if (received_ == NODES)
 	{
-		feature = changes_->create(members_.release());
+		feature = changes_->createFeature2D(
+			PyChangedFeature::Type::WAY, children_.release());
 	}
 	else if (received_ == MEMBERS)
 	{
-		feature = changes_->create(members_.release());
+		feature = changes_->createFeature2D(
+			PyChangedFeature::Type::RELATION, children_.release());
 	}
 	else
 	{
@@ -329,15 +330,21 @@ const char* ChangeSpec::shapeTypeName(int shapeType)
 	}
 }
 
-bool ChangeSpec::acceptMemberSequence(PyObject* seq)
+bool ChangeSpec::acceptChildSequence(PyObject* seq)
 {
-	PyChangedMembers* members = PyChangedMembers::fromSequence(changes_, seq,
-		(accept_ & NODES) == 0);
-	if (!members) return false;
-	if (!acceptShapeType(members->containsRelationMembers() ? MEMBERS : NODES))
+	PyObject* children = PyChangedFeature::createChildren(
+		changes_, seq, (accept_ & NODES) == 0);
+	if (!children) return false;
+	if (PyList_GET_SIZE(children) > 0)
 	{
-		return false;
+		bool containsMembers =
+			((PyChangedFeature*)PyList_GET_ITEM(
+				children, 0))->isMember();
+		if (!acceptShapeType(containsMembers ? MEMBERS : NODES))
+		{
+			return false;
+		}
+		children_.reset(children);
 	}
-	members_.reset(members);
 	return true;
 }

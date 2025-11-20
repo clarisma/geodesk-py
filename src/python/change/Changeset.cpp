@@ -3,7 +3,6 @@
 
 #include "Changeset.h"
 #include "PyChangedFeature.h"
-#include "PyChangedMembers.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
 #include "python/geom/PyMercator.h"
@@ -74,38 +73,10 @@ PyChangedFeature* Changeset::createNode(PyObject* first, PyObject* second)
 	return createNode(lonLat);
 }
 
-PyChangedFeature* Changeset::createWay(PyObject* nodeList)	// steals ref
+PyChangedFeature* Changeset::createFeature2D(int type, PyObject* children)
 {
-	PyChangedMembers* nodes = PyChangedMembers::create(this, nodeList, false);
-		// steals ref to nodeList even if it fails
-	if (!nodes) return nullptr;
-	PyChangedFeature* way =  PyChangedFeature::create(this, PyChangedFeature::WAY);
-	if (way)
-	{
-		way->setChildren(nodes);
-		addCreated(way);
-	}
-	return way;
-}
-
-PyChangedFeature* Changeset::createRelation(PyObject* memberList)
-{
-	PyChangedMembers* members = PyChangedMembers::create(this, memberList, true);
-	// steals ref to nodeList even if it fails
-	if (!members) return nullptr;
-	PyChangedFeature* rel =  PyChangedFeature::create(this, PyChangedFeature::RELATION);
-	if (rel)
-	{
-		rel->setChildren(members);
-		addCreated(rel);
-	}
-	return rel;
-}
-
-PyChangedFeature* Changeset::create(PyChangedMembers* children)
-{
-	PyChangedFeature* f =
-		PyChangedFeature::createFeature2D(this, children);
+	PyChangedFeature* f = PyChangedFeature::createFeature2D(
+		this, type, children);
 	if (f) addCreated(f);
 	return f;
 }
@@ -162,6 +133,13 @@ PyChangedFeature* Changeset::modify(PyFeature* feature)
 	}
 	return changed;
 }
+
+/*
+PyChangedFeature* Changeset::modify(FeatureStore* store, FeaturePtr feature)
+{
+	PyFeature* featureObj =
+}
+*/
 
 /*
 PyObject* PyChanges::createFeature(PyChanges* self, PyObject* args, PyObject* kwargs)

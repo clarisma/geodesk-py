@@ -5,7 +5,6 @@
 #include <iostream>
 #include "python/Environment.h"
 #include "python/change/PyChangedFeature.h"
-#include "python/change/PyChangedMembers.h"
 #include "python/change/PyChanges.h"
 #include "python/feature/PyFeature.h"
 #include "python/feature/PyTags.h"
@@ -20,6 +19,7 @@
 #include "python/query/PyTile.h"
 #include "python/util/PyBinder.h"
 #include "python/util/PyFastMethod.h"
+#include "python/util/PyListProxy.h"
 #include <clarisma/util/log.h>
 
 static PyMethodDef GEODESK_METHODS[] = 
@@ -106,10 +106,10 @@ extern "C" PyMODINIT_FUNC PyInit__geodesk()
     if (createPrivateType(module, &PyAnonymousNode::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFastMethod::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyBinder::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyListProxy::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFormatter::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyTile::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyChangedFeature::TYPE) < 0) return nullptr;
-    if (createPrivateType(module, &PyChangedMembers::TYPE) < 0) return nullptr;
     // if (createPrivateType(module, &PyRTreeQuery::TYPE) < 0) return nullptr;
 
     Python::createDirMethod(&PyFeatures::TYPE, (PyCFunctionWithKeywords)&PyFeatures::dir);

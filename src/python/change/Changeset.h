@@ -29,10 +29,17 @@ public:
 
     PyChangedFeature* createNode(FixedLonLat lonLat);
     PyChangedFeature* createNode(PyObject* first, PyObject* second);
-    PyChangedFeature* createWay(PyObject* nodeList);
-    PyChangedFeature* createRelation(PyObject* memberList);
-    PyChangedFeature* create(PyChangedMembers* children);
+    PyChangedFeature* createFeature2D(int type, PyObject* children);
+    PyChangedFeature* createWay(PyObject* children)
+    {
+        return createFeature2D(PyChangedFeature::Type::WAY, children);
+    }
+    PyChangedFeature* createRelation(PyObject* children)
+    {
+        return createFeature2D(PyChangedFeature::Type::RELATION, children);
+    }
     PyChangedFeature* modify(FeatureStore* store, uint64_t id, Coordinate xy);
+    PyChangedFeature* modify(FeatureStore* store, FeaturePtr feature);
     PyChangedFeature* modify(PyFeature* feature);
     PyChangedFeature* modify(PyAnonymousNode* feature);
     PyChangedFeature* tryModify(PyObject* obj);
