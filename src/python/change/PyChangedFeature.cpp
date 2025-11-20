@@ -102,7 +102,7 @@ PyObject* PyChangedFeature::createChildren(
 
 	for (int i=0; i<n; i++)
 	{
-		PyChangedFeature* changed = coerceChild(
+		PyChangedFeature* changed = promoteChild(
 			changes, items[i], forRelation);
 		if (!changed)
 		{
