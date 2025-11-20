@@ -455,6 +455,205 @@ bool PyChangedFeature::modify(PyObject* args, PyObject* kwargs)
 }
 
 
+PyObject* PyChangedFeature::append(PyObject* self_, PyObject* arg)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::append(self->children_, arg,
+        self, &coerceChild, &childAdded);
+}
+
+
+PyObject* PyChangedFeature::extend(PyObject* self_, PyObject* arg)
+{
+	auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+	return PyListProxy::extend(self->children_, arg,
+		self, &coerceChild, &childAdded);
+}
+
+PyObject* PyChangedFeature::insert(PyObject* self_, PyObject* args)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::insert(self->children_, args,
+		self, &coerceChild, &childAdded);
+}
+
+
+PyObject* PyChangedFeature::remove(PyObject* self_, PyObject* arg)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::remove(self->children_, arg,
+		self, &childEquals, &childRemoved);
+}
+
+
+PyObject* PyChangedFeature::remove_all(PyObject* self_, PyObject* arg)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+	return PyListProxy::removeAll(self->children_, arg,
+		self, &childEquals, &childRemoved);
+}
+
+
+PyObject* PyChangedFeature::pop(PyObject* self_, PyObject* args)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::pop(self->children_, args,
+        self, &childRemoved);
+}
+
+
+PyObject* PyChangedFeature::clear(PyObject* self_, PyObject* /*ignored*/)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::clear(self->children_, self, &childRemoved);
+}
+
+
+PyObject* PyChangedFeature::reverse(PyObject* self_, PyObject* /*ignored*/)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::reverse(self->children_, self, &childrenReordered);
+}
+
+
+PyObject* PyChangedFeature::count(PyObject* self_, PyObject* arg)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::count(self->children_, arg, &childEquals);
+}
+
+
+int PyChangedFeature::contains(PyObject* self_, PyObject* arg)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::contains(self->children_, arg, &childEquals);
+}
+
+
+PyObject* PyChangedFeature::index(PyObject* self_, PyObject* args)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyChangedFeature);
+    return PyListProxy::index(self->children_, args, &childEquals);
+}
+
+PyChangedFeature* PyChangedFeature::promoteChild(Changeset* changes, PyObject *obj, bool withRole)
+{
+	PyChangedFeature* child = changes->tryModify(obj);
+	if(child) return child;
+	if(PyErr_Occurred()) return nullptr;
+	PyObject *seq = PySequence_Fast(obj,
+		 withRole ?
+			"Expected feature, coordinate or member tuple" :
+			"Expected feature or coordinate");
+	if (!seq) return nullptr;
+	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
+	if (n != 2)
+	{
+		Py_DECREF(seq);
+		PyErr_SetString(PyExc_TypeError,
+			withRole ?
+				"Expected (feature,role) or coordinate" :
+				"Expected coordinate");
+		return nullptr;
+	}
+	PyObject* first = PySequence_Fast_GET_ITEM(seq, 0);
+	PyObject* second = PySequence_Fast_GET_ITEM(seq, 1);
+	Py_DECREF(seq); // TODO: safe ???
+	if (withRole && PyUnicode_Check(second))
+	{
+		// TODO: also allow (role,feature) ?
+		child = promoteChild(changes, first, false);
+		if(!child) return nullptr;
+		return createMember(child, second);
+	}
+	return changes->createNode(first, second);
+}
+
+
+PyObject* PyChangedFeature::coerceChild(PyObject* parent, PyObject* item)
+{
+	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
+	assert(self->type() == WAY || self->type() == RELATION);
+	bool forRelation = self->type() == RELATION;
+	PyChangedFeature* changed = promoteChild(
+		self->changes_, item, forRelation);
+	if (!changed) return nullptr;
+	if (forRelation)
+	{
+		if (!changed->isMember())
+		{
+			changed = createMember(changed, Py_None);
+		}
+	}
+	else
+	{
+		if (changed->type() != NODE)
+		{
+			PyErr_SetString(PyExc_TypeError, "Expected node");
+			Py_DECREF(changed);
+			return nullptr;
+		}
+	}
+	return changed;
+}
+
+
+void PyChangedFeature::childAdded(PyObject* parent,
+	PyObject* list, PyObject* item)
+{
+	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
+	(void)self;
+	(void)list;
+	(void)item;
+
+	// TODO: handle child added
+}
+
+
+void PyChangedFeature::childRemoved(PyObject* parent,
+	PyObject* list,	PyObject* item)
+{
+	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
+	(void)self;
+	(void)list;
+	(void)item;
+
+	// TODO: handle child removed
+}
+
+
+bool PyChangedFeature::childEquals(PyObject* item, PyObject* other)
+{
+	// Default: use Python == semantics
+	int rc = PyObject_RichCompareBool(item, other, Py_EQ);
+	if (rc < 0)
+	{
+		PyErr_Clear();
+		return false;
+	}
+	return rc != 0;
+}
+
+
+void PyChangedFeature::childrenReordered(PyObject* parent, PyObject* list)
+{
+	auto self = ASSERT_PYTHON_TYPE(parent, PyChangedFeature);
+	(void)self;
+	(void)list;
+
+	// TODO: handle children reordered
+}
+
+
+const PyListProxy::Operations PyChangedFeature::CHILD_OPERATIONS =
+{
+	coerceChild,
+	childEquals,
+	childAdded,
+	childRemoved,
+	childrenReordered
+};
+
 PyMappingMethods PyChangedFeature::MAPPING_METHODS =
 {
 	nullptr,         // mp_length (optional)

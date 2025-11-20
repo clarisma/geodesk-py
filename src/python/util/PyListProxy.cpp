@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyListProxy.h"
+#include <vector>
 #include "python/util/util.h"
 
 // Callback pointers are always assumed to be non-null

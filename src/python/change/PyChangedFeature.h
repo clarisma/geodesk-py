@@ -3,11 +3,10 @@
 
 #pragma once
 #include <Python.h>
-#include <clarisma/util/enum.h>
 #include <geodesk/feature/FeaturePtr.h>
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
-#include "python/util/PythonRef.h"
+#include "python/util/PyListProxy.h"
 #include "python/change/PyChangedMembers.h"
 
 using namespace geodesk;
@@ -149,6 +148,9 @@ public:
 		return tags_ != nullptr;
 	}
 
+	static PyChangedFeature* promoteChild(Changeset* changes,
+		PyObject *obj, bool withRole);
+
 private:
 	void init(Changeset* changes_, Type type_, int64_t id_);
 	void createOrModify(PyObject* args, PyObject* kwargs, bool create);
@@ -164,6 +166,27 @@ private:
 	bool setOrRemoveTag(PyObject* key, PyObject* value);
 	bool setOrRemoveTags(PyObject* dict);
 	static bool isAtomicTagValue(PyObject* obj);
+
+	static PyObject* coerceChild(PyObject* parent, PyObject* item);
+	static void childAdded(PyObject* parent, PyObject* list, PyObject* item);
+	static void childRemoved(PyObject* parent, PyObject* list, PyObject* item);
+	static bool childEquals(PyObject* item, PyObject* other);
+	static void childrenReordered(PyObject* parent, PyObject* list);
+
+	static PyObject* append(PyObject* self, PyObject* arg);
+	static PyObject* extend(PyObject* self, PyObject* arg);
+	static PyObject* insert(PyObject* self, PyObject* args);
+	static PyObject* remove(PyObject* self, PyObject* arg);
+	static PyObject* remove_all(PyObject* self, PyObject* arg);
+	static PyObject* pop(PyObject* self, PyObject* args);
+	static PyObject* clear(PyObject* self, PyObject* ignored);
+	static PyObject* reverse(PyObject* self, PyObject* ignored);
+	static PyObject* count(PyObject* self, PyObject* arg);
+	static PyObject* index(PyObject* self, PyObject* args);
+	static int contains(PyObject* list, PyObject* value);
+
+
+	static const PyListProxy::Operations CHILD_OPERATIONS;
 
 	Changeset* changes_;
 	int64_t idAndFlags_;
