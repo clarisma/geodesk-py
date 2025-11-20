@@ -214,3 +214,20 @@ namespace Python
 
 #define ATTR_PROPERTY(p) (Python::AttrRef::property((Python::Getter)&p))
 #define ATTR_METHOD(m) (Python::AttrRef::method((PyCFunctionWithKeywords)&m))
+
+#ifdef NDEBUG
+
+#define ASSERT_PYTHON_TYPE(obj, Type) \
+reinterpret_cast<Type*>((obj))
+
+#else
+
+#define ASSERT_PYTHON_TYPE(obj, Type)                                \
+([&]() -> Type*                                                      \
+{                                                                    \
+	assert((obj) != nullptr);                                        \
+	assert(Py_IS_TYPE((obj), &Type::TYPE));                          \
+	return reinterpret_cast<Type*>((obj));                           \
+}())
+
+#endif
