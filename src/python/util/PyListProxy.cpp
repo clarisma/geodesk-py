@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyListProxy.h"
-
-#include <execution>
-
 #include "python/util/util.h"
 
-
+// Callback pointers are always assumed to be non-null
 
 PyListProxy* PyListProxy::create(PyObject* list, PyObject* context, const Operations* ops)
 {
@@ -58,7 +55,6 @@ PyObject* PyListProxy::listFromIterable(
         PyObject* dst = coerce(context, src);
         if (!dst)
         {
-            Py_DECREF(dst);
             Py_DECREF(seq);
             Py_DECREF(list);
             return nullptr;
@@ -361,63 +357,59 @@ PyObject* PyListProxy::_extend(PyObject* self_,  PyObject* arg)
 PyObject* PyListProxy::_insert(PyObject* self_, PyObject* args)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return insert(
-        self,
-        args,
-        self->context_,
-        self->ops_ ? self->ops_->coerceItem : nullptr,
-        self->ops_ ? self->ops_->itemAdded : nullptr);
+    return insert(self->list_, args, self->context_,
+        self->ops_->coerceItem, self->ops_->itemAdded);
 }
 
 PyObject* PyListProxy::_remove(PyObject* self_, PyObject* arg)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return remove(self, arg, self->context_,
+    return remove(self->list_, arg, self->context_,
         self->ops_->itemEquals, self->ops_->itemRemoved);
 }
 
 PyObject* PyListProxy::_remove_all(PyObject* self_, PyObject* arg)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return removeAll(self, arg, self->context_,
+    return removeAll(self->list_, arg, self->context_,
         self->ops_->itemEquals, self->ops_->itemRemoved);
 }
 
 PyObject* PyListProxy::_pop(PyObject* self_, PyObject* args)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return pop(self, args, self->context_,
+    return pop(self->list_, args, self->context_,
         self->ops_->itemRemoved);
 }
 
 PyObject* PyListProxy::_clear(PyObject* self_, PyObject* /*ignored*/)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return clear(self, self->context_, self->ops_->itemRemoved);
+    return clear(self->list_, self->context_, self->ops_->itemRemoved);
 }
 
 PyObject* PyListProxy::_reverse(PyObject* self_, PyObject* /*ignored*/)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return reverse(self, self->context_, self->ops_->listReordered);
+    return reverse(self->list_, self->context_, self->ops_->listReordered);
 }
 
 PyObject* PyListProxy::_count(PyObject* self_, PyObject* arg)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return count(self, arg, self->ops_->itemEquals);
+    return count(self->list_, arg, self->ops_->itemEquals);
 }
 
 int PyListProxy::_contains(PyObject* self_, PyObject* arg)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return contains(self, arg, self->ops_->itemEquals);
+    return contains(self->list_, arg, self->ops_->itemEquals);
 }
 
 PyObject* PyListProxy::_index(PyObject* self_, PyObject* args)
 {
     auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-    return index(self, args, self->ops_->itemEquals);
+    return index(self->list_, args, self->ops_->itemEquals);
 }
 
 
@@ -431,6 +423,7 @@ PyObject* PyListProxy::getitem(PyObject* self_, PyObject* key)
 int PyListProxy::removeByKey(PyObject* list, PyObject* key,
     PyObject* context, ItemFunc removed)
 {
+    assert(removed);
     PyObject* old = PyObject_GetItem(list, key);
     if (!old) return -1;
 
@@ -734,9 +727,5 @@ PyTypeObject PyListProxy::TYPE =
 	.tp_doc = "ListProxy objects",
 	.tp_richcompare = richcompare,
 	.tp_iter = iter,
-	/*
 	.tp_methods = METHODS,
-	.tp_members = MEMBERS,
-	.tp_getset = GETSET,
-	*/
 };
