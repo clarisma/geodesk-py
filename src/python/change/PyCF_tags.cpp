@@ -62,30 +62,6 @@ PyObject* PyChangedFeature::createTags(FeatureStore* store, FeaturePtr feature)
 	return dict;
 }
 
-/// @brief Ensures the tags (as a Python dict) are loaded.
-/// @param create If `true`, creates an empty dict if tags is NULL
-/// @return 0 if tags remains NULL (new feature or anon node, and
-///			create was set to false)
-///			1 if tags is now a valid Python dict
-///			-1 if dict could not be created
-int PyChangedFeature::loadTags(bool create)
-{
-	assert(!isMember());
-	if (tags_) return 1;
-	if (!original_ || Py_TYPE(original_) == &PyAnonymousNode::TYPE)
-	{
-		if (!create) return 0;
-		tags_ = PyDict_New();
-	}
-	else
-	{
-		assert(Py_TYPE(original_) == &PyFeature::TYPE);
-		PyFeature* feature = (PyFeature*)original_;
-		tags_ = createTags(feature->store, feature->feature);
-	}
-	return tags_ ? 1 : -1;
-}
-
 bool PyChangedFeature::isAtomicTagValue(PyObject* obj)
 {
 	return PyUnicode_Check(obj) || PyLong_Check(obj) ||

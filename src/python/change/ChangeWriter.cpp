@@ -74,6 +74,8 @@ void ChangeWriter::writeFeature(PyChangedFeature* feature)
         }
     }
 
+    // TODO: check for tags first, avoids needless construction
+    //  of empty dicts (also no need for closing </node> for untagged nodes
     if (feature->tags()) [[likely]]
     {
         writeTags(feature->tags());

@@ -8,6 +8,7 @@
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/Environment.h"
 #include "python/util/PyListProxy.h"
+#include "ChangedTags.h"
 
 using namespace geodesk;
 namespace clarisma { class Buffer; }
@@ -22,6 +23,8 @@ public:
 	{
 		// first 2 bits are type
 		static constexpr int DELETED = 1 << 2;
+		static constexpr int DROPPED = 1 << 3;
+		static constexpr int EDITED  = 1 << 4;
 	};
 
 	static constexpr int FLAG_COUNT = 8;
@@ -128,8 +131,10 @@ public:
 	PyObject* tags()
 	{
 		assert(type() != MEMBER);
-		loadTags(true);
-		// TODO: may raise, clear exception
+		if (!tags_)
+		{
+			tags_ = ChangedTags::createTags(original_);
+		}
 		return tags_;
 	}
 
@@ -141,11 +146,10 @@ public:
 
 	void format(clarisma::Buffer& buf) const;
 	static bool isTagValue(PyObject* obj);
-	bool hasTags()
+	bool hasTags() const
 	{
-		loadTags(false);
-		// TODO: may raise, clear exception
-		return tags_ != nullptr;
+		if (tags_) return PyDict_Size(tags_) > 0;
+		return ChangedTags::hasTags(original_);
 	}
 
 	PyListProxy* getNodes();
@@ -165,7 +169,6 @@ private:
 
 	bool setTags(PyObject* value);
 	static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
-	int loadTags(bool create);
 	bool setOrRemoveTag(PyObject* key, PyObject* value);
 	bool setOrRemoveTags(PyObject* dict);
 	static bool isAtomicTagValue(PyObject* obj);

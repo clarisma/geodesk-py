@@ -14,6 +14,7 @@
 #include "python/feature/PyFeature.h"
 #include "PyCF_attr.cxx"
 #include "PyCF_lookup.cxx"
+#include "python/util/PyDictProxy.h"
 
 PyChangedFeature* PyChangedFeature::create(Changeset* changes, int type)
 {
@@ -219,6 +220,7 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	return self->getAttribute(attr->index);
 }
 
+
 PyObject* PyChangedFeature::loadNodes(Changeset* changes, FeatureStore* store, WayPtr way)
 {
 	WayNodeIterator iter(store, way, true, store->hasWaynodeIds());
@@ -331,8 +333,11 @@ PyObject* PyChangedFeature::getAttribute(int attr)
 	case ROLE:
 		Py_RETURN_NONE;
 	case TAGS:
-		if (loadTags(true) < 0) return nullptr;
-		return Python::newRef(tags_);
+	{
+		PyObject* dict = tags();
+		if (!dict) return nullptr;
+		return PyDictProxy::create(dict, this, &ChangedTags::setKeyValue);
+	}
 	case X:
 		if (type() == NODE)
 		{
@@ -506,14 +511,8 @@ PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
 	{
 		self = self->member_;	// delegate to member
 	}
-	int res = self->loadTags(false);
-	if (res <= 0)
-	{
-		if (res < 0) return nullptr;
-		Py_RETURN_NONE;
-	}
-
-	// TODO: need to materialize tags!
+	PyObject* dict = self->tags();
+	if (!dict) return nullptr;
 	PyObject* value = PyDict_GetItem(self->tags_, key);
 	if (!value)
 	{
@@ -529,18 +528,9 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 		self = self->member_;	// delegate to member
 	}
 
-	// TODO: need to materialize tags!
-	int res = self->loadTags(true);
-	if (res < 0) return -1;
-	assert(res > 0);
-
-	// value == nullptr => deletion
-	// TODO: setting to empty string should also delete
-	if (value == nullptr || value == Py_None)
-	{
-		return PyObject_DelItem(self->tags_, key);
-	}
-	return PyObject_SetItem(self->tags_, key, value);
+	PyObject* dict = self->tags();
+	if (!dict) return -1;
+	return ChangedTags::setKeyValue(self, dict, key, value);
 }
 
 
