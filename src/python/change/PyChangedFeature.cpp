@@ -541,9 +541,11 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 		self = self->member_;	// delegate to member
 	}
 
+	// TODO: modify children if key is not a string, and feature is node
+
 	PyObject* dict = self->tags();
 	if (!dict) return -1;
-	return ChangedTags::setKeyValue(self, dict, key, value);
+	return ChangedTags::setKeyValue(self, dict, key, value) ? 0 : -1;
 }
 
 
