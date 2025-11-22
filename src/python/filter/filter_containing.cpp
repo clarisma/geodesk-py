@@ -4,7 +4,7 @@
 #include "filters.h"
 #include <geodesk/filter/ContainsPointFilter.h>
 #include <geodesk/geom/Centroid.h>
-
+#include <geodesk/geom/geos/Geos.h>
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyCoordinate.h"
@@ -43,13 +43,12 @@ PyFeatures* filters::containing(PyFeatures* self, PyObject* args, PyObject* kwar
 	{
 		GEOSContextHandle_t context = Environment::get().getGeosContext();
 		if (!context) return NULL;
-		GEOSGeometry* c = GEOSGetCentroid_r(context, geom);
-		if (!c) return self->getEmpty();
-		double x;
-		double y;
-		GEOSGeomGetX_r(context, c, &x);
-		GEOSGeomGetY_r(context, c, &y);
-		return containingPoint(self, Coordinate(x, y));
+		Coordinate centroid;
+		if (!Geos::centroid(context, geom, &centroid))
+		{
+			return self->getEmpty();
+		}
+		return containingPoint(self, centroid);
 	}
 
 	PyErr_Format(PyExc_TypeError, "Expected geometric object instead of %s", type->tp_name);
