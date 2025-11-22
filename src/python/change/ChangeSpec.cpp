@@ -39,17 +39,17 @@ bool ChangeSpec::parse(PyObject* args, int start, PyObject* kwargs)
     		i++;
     		if (i >= argCount)
     		{
-    			errorExpectedTag();
+    			ChangedTags::errorExpectedTag();
     			return false;
     		}
     		PyObject* value = PyTuple_GET_ITEM(args, i); // borrowed ref
-			if (!acceptTag(key, value)) return false;
+			if (!tags_.addTag(key, value)) return false;
     		continue;
     	}
 
     	if (PyDict_Check(arg))  // dictionary of tags
     	{
-    		if (!acceptTagDict(arg)) return false;
+    		if (!tags_.addFromDict(arg)) return false;
     		continue;
     	}
 
@@ -57,7 +57,7 @@ bool ChangeSpec::parse(PyObject* args, int start, PyObject* kwargs)
     	{
     		PyObject *seq = PySequence_Fast(arg, "Expected a sequence");
     		if (!seq) return false;		// should never happen
-			if (!acceptSequenceArg(seq))
+    		if (!acceptSequenceArg(seq))
 			{
 				Py_DECREF(seq);
 				return false;
@@ -112,7 +112,7 @@ bool ChangeSpec::acceptSequenceArg(PyObject* seq)
 		PyObject* first = PySequence_Fast_GET_ITEM(seq, 0);
 		if (PyUnicode_Check(first))
 		{
-			return acceptTagSequence(seq);
+			return tags_.addFromSequence(seq);
 		}
 		if (PyNumber_Check(first))
 		{
@@ -135,7 +135,7 @@ bool ChangeSpec::acceptSequenceArg(PyObject* seq)
 				// TODO: should we allow (<role>,<feature>) ?
 				//  If so, must disambiguate from tag
 				Py_DECREF(childSeq);
-				return acceptTagSequence(seq);
+				return tags_.addFromSequence(seq);
 			}
 			Py_DECREF(childSeq);
 		}
@@ -144,78 +144,6 @@ bool ChangeSpec::acceptSequenceArg(PyObject* seq)
 	return true;
 }
 
-bool ChangeSpec::acceptTag(PyObject* key, PyObject* value)
-{
-	if (!PyUnicode_Check(key))		// String (key of tag)
-	{
-		// TODO: error: expected key string
-		return false;
-	}
-	if (value == Py_None ||
-		(PyUnicode_Check(value) && PyUnicode_GET_LENGTH(value) == 0))
-	{
-		deletedKeys_.emplace_back(key);
-		return true;
-	}
-	modifiedTags_.emplace_back(key, value);
-	return true;
-}
-
-
-bool ChangeSpec::acceptTagSequence(PyObject* seq)
-{
-	Py_ssize_t n = PySequence_Fast_GET_SIZE(seq);
-	PyObject **items = PySequence_Fast_ITEMS(seq);
-	for (int i = 0; i < n; i++)
-	{
-		PyObject* item = items[i];
-		PyObject* key;
-		PyObject* value;
-		if (PyUnicode_Check(item))		// coord pair or tag
-		{
-			if (i+1 >= n)
-			{
-				PyErr_SetString(PyExc_TypeError, "Expected tag value");
-				return false;
-			}
-			key = item;
-			i++;
-			value = items[i];
-		}
-		else
-		{
-			PyObject *childSeq = PySequence_Fast(item,
-				"Expected a key/value pair");
-			if (!childSeq) return false;
-			Py_ssize_t tupleSize = PySequence_Fast_GET_SIZE(childSeq);
-			if (tupleSize != 2)
-			{
-				Py_DECREF(childSeq);
-				errorExpectedTag();
-				return false;
-			}
-			key = PyTuple_GET_ITEM(childSeq, 0);
-			value = PyTuple_GET_ITEM(childSeq, 1);
-			Py_DECREF(childSeq);
-				// TODO: is this safe, or do we need to keep the ref???
-		}
-		if (!acceptTag(key, value)) return false;
-	}
-	return true;
-}
-
-bool ChangeSpec::acceptTagDict(PyObject* dict)
-{
-	PyObject* key;
-	PyObject* value;
-	Py_ssize_t pos = 0;
-
-	while (PyDict_Next(dict, &pos, &key, &value))
-	{
-		if (!acceptTag(key, value)) return false;
-	}
-	return true;
-}
 
 bool ChangeSpec::acceptCoordinate(PyObject* first, PyObject* second)
 {
@@ -279,21 +207,11 @@ bool ChangeSpec::modify(PyChangedFeature* feature) const
 
 bool ChangeSpec::changeTags(PyChangedFeature* feature) const
 {
-	if (!modifiedTags_.empty() || !deletedKeys_.empty())
+	if (!tags_.isEmpty())
 	{
 		PyObject* tags = feature->tags();
 		if (!tags) return false;
-		for (PyObject* key : deletedKeys_)
-		{
-			if (PyDict_DelItem(tags, key) < 0)
-			{
-				PyErr_Clear();
-			}
-		}
-		for (Tag tag : modifiedTags_)
-		{
-			PyDict_SetItem(tags, tag.key, tag.value);
-		}
+		return tags_.applyTo(tags);
 	}
 	return true;
 }

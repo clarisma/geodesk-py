@@ -26,8 +26,12 @@ public:
         }
     }
 
+    bool isEmpty() const { return tags_.empty(); }
     bool addTag(PyObject* key, PyObject* value);
     bool addFromSequence(PyObject* seq);
+    bool addFromDict(PyObject* dict);
+    bool addFrom(PyObject *obj);
+    bool applyTo(PyObject* dict) const;
 
     static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
     static PyObject* createTags(PyObject* original);
@@ -36,10 +40,10 @@ public:
     static bool setKeyValue(PyObject* parent, PyObject* tags,
         PyObject* key, PyObject* value);
     static bool hasTags(PyObject* original);
+    static void errorExpectedTag();
 
 private:
     static PyObject* coerceNonStringValue(PyObject* value, bool allowSequence);
-    static void errorExpectedTag();
 
     std::vector<Tag> tags_;
 };

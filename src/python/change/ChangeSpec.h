@@ -5,6 +5,7 @@
 #include <geos_c.h>
 #include <geodesk/geom/FixedLonLat.h>
 #include "python/util/PythonRef.h"
+#include "ChangedTags.h"
 
 using namespace geodesk;
 class Changeset;
@@ -42,11 +43,8 @@ private:
 	bool acceptShapeType(int shapeType);
 	bool acceptSequenceArg(PyObject* seq);
 	bool acceptCoordinate(PyObject* first, PyObject* second);
-	bool acceptTagSequence(PyObject* seq);
 	bool acceptChildSequence(PyObject* seq);
 	PyChangedFeature* acceptMember(PyObject* obj);
-	bool acceptTagDict(PyObject* dict);
-	bool acceptTag(PyObject* key, PyObject* value);
 	bool changeTags(PyChangedFeature* feature) const;
 
 	static void errorExpectedTag();
@@ -56,7 +54,6 @@ private:
 	int received_ = 0;
 	FixedLonLat coordinate_;
 	PythonRef<PyObject> children_;
-	std::vector<Tag> modifiedTags_;
-	std::vector<PyObject*> deletedKeys_;
+	ChangedTags tags_;
 	const GEOSGeometry* geom_ = nullptr;
 };

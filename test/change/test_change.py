@@ -41,4 +41,7 @@ def test_change():
     assert r1.members[0].is_node
     assert r1.members[1].is_way
 
+    w1.tags = { "cuisine": ["pizza","sushi"], "takeout": True }
+    print (w1.tags)
+
     # changes.save("d:\\geodesk\\tests\\changes")

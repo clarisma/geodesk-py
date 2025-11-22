@@ -5,7 +5,7 @@
 #include <geodesk/feature/TagIterator.h>
 #include "python/feature/PyFeature.h"
 
-
+/*
 bool PyChangedFeature::setTags(PyObject* value)
 {
 	if (!Python::checkType(value, &PyDict_Type)) return false;
@@ -131,3 +131,4 @@ bool PyChangedFeature::setOrRemoveTags(PyObject* dict)
 	return true;
 }
 
+*/

@@ -138,14 +138,14 @@ public:
 		return tags_;
 	}
 
-	int version() const { return version_; }
+	uint32_t version() const { return version_; }
 	void setVersion(int version) { version_ = version; }
 
 	bool modify(PyObject* args, PyObject* kwargs);
 	static PyObject* delete_(PyChangedFeature* self, PyObject* args, PyObject* kwargs);
 
 	void format(clarisma::Buffer& buf) const;
-	static bool isTagValue(PyObject* obj);
+	// static bool isTagValue(PyObject* obj);
 	bool hasTags() const
 	{
 		if (tags_) return PyDict_Size(tags_) > 0;
@@ -167,11 +167,11 @@ private:
 	bool setMembers(PyObject* value);
 	bool setNodes(PyObject* value);
 
-	bool setTags(PyObject* value);
-	static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
-	bool setOrRemoveTag(PyObject* key, PyObject* value);
-	bool setOrRemoveTags(PyObject* dict);
-	static bool isAtomicTagValue(PyObject* obj);
+	//bool setTags(PyObject* value);
+	//static PyObject* createTags(FeatureStore* store, FeaturePtr feature);
+	//bool setOrRemoveTag(PyObject* key, PyObject* value);
+	//bool setOrRemoveTags(PyObject* dict);
+	//static bool isAtomicTagValue(PyObject* obj);
 
 	static PyObject* loadNodes(Changeset* changes, FeatureStore* store, WayPtr way);
 	static PyObject* loadMembers(Changeset* changes, FeatureStore* store, RelationPtr rel);

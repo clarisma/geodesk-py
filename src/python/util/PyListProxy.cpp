@@ -242,6 +242,7 @@ PyObject* PyListProxy::clear(PyObject* list,
     Py_ssize_t size = PyList_GET_SIZE(list);
 
     // Collect items first (new refs), because removed() must see the list empty
+    // TODO: vector may throw badalloc
     std::vector<PyObject*> items;
     items.reserve(size);
 

@@ -14,9 +14,14 @@ bool ChangedTags::addTag(PyObject* key, PyObject* value)
     assert(key);
     assert(value);
     if (!checkKey(key)) return false;
-    PyObject* coerced = coerceValue(value);
+    PyObject* coerced = nullptr;
+    if (value != Py_None && (!PySequence_Check(value)
+            || PySequence_Size(value) > 0)) [[likely]]
+    {
+        coerced = coerceValue(value);
+    }
     if (!coerced) return false;
-    Py_INCREF(key);     // coerced is already a new ref
+    Py_INCREF(key);     // coerced is already a new ref (or null)
     tags_.emplace_back(key, coerced);
     return true;
 }
@@ -61,7 +66,55 @@ bool ChangedTags::addFromSequence(PyObject* seq)
         if (!addTag(key, value)) return false;
     }
     return true;
+}
 
+
+bool ChangedTags::addFrom(PyObject *obj)
+{
+    // TODO: Ideally, we want to be able to accept any iterable
+    if (PyDict_Check(obj)) return addFromDict(obj);
+    PyObject *seq = PySequence_Fast(obj, "Expected a sequence");
+    if (!seq) return false;		// should never happen
+    bool ok = addFromSequence(seq);
+    Py_DECREF(seq);
+    return ok;
+}
+
+bool ChangedTags::addFromDict(PyObject* dict)
+{
+    PyObject* key;
+    PyObject* value;
+    Py_ssize_t pos = 0;
+
+    while (PyDict_Next(dict, &pos, &key, &value))
+    {
+        if (!addTag(key, value)) return false;
+    }
+    return true;
+}
+
+bool ChangedTags::applyTo(PyObject* dict) const
+{
+    for (Tag tag : tags_)
+    {
+        if (tag.value)  [[likely]]
+        {
+            if (PyDict_SetItem(dict, tag.key, tag.value) < 0)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (PyDict_DelItem(dict, tag.key) < 0)
+            {
+                // Treat "missing key" as a no-op, not an error
+                if (!PyErr_ExceptionMatches(PyExc_KeyError)) return false;
+                PyErr_Clear();
+            }
+        }
+    }
+    return true;
 }
 
 
@@ -221,7 +274,7 @@ bool ChangedTags::setKeyValue(PyObject* parent, PyObject* tags,
     if (value)
     {
         if (value != Py_None && (!PySequence_Check(value)
-            || PySequence_Size(value) > 0))
+            || PySequence_Size(value) > 0)) [[likely]]
         {
             PyObject* coerced = coerceValue(value);
             if (!coerced) return false;

@@ -421,7 +421,20 @@ bool PyChangedFeature::setAttribute(int attr, PyObject* value)
 		PyErr_SetString(PyExc_RuntimeError, "Add feature to a relation before assigning a role");
 		return false;
 	case TAGS:
-		return setTags(value);
+	{
+		ChangedTags tags;
+		if (!tags.addFrom(value)) return false;
+		if (!tags_)
+		{
+			tags_ = PyDict_New();
+			if (!tags_) return false;
+		}
+		else
+		{
+			PyDict_Clear(tags_);
+		}
+		return tags.applyTo(tags_);
+	}
 	case X:
 	{
 		if (!checkAttrType(attr, NODE)) return false;

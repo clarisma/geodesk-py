@@ -19,6 +19,7 @@
 #include "python/query/PyTile.h"
 #include "python/util/PyBinder.h"
 #include "python/util/PyFastMethod.h"
+#include "python/util/PyDictProxy.h"
 #include "python/util/PyListProxy.h"
 #include <clarisma/util/log.h>
 
@@ -106,6 +107,7 @@ extern "C" PyMODINIT_FUNC PyInit__geodesk()
     if (createPrivateType(module, &PyAnonymousNode::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFastMethod::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyBinder::TYPE) < 0) return nullptr;
+    if (createPrivateType(module, &PyDictProxy::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyListProxy::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyFormatter::TYPE) < 0) return nullptr;
     if (createPrivateType(module, &PyTile::TYPE) < 0) return nullptr;
