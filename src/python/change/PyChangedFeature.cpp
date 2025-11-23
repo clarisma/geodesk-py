@@ -285,6 +285,28 @@ PyObject* PyChangedFeature::loadMembers(Changeset* changes, FeatureStore* store,
 	return list;
 }
 
+PyObject* PyChangedFeature::children()
+{
+	assert(type() == WAY || type() == RELATION);
+	if (!children_)
+	{
+		assert(original_);		// TODO: check!!!!!
+		PyFeature* feature = (PyFeature*)original_;
+		if (type() == WAY)
+		{
+			children_ = loadNodes(changes_, feature->store,
+				WayPtr(feature->feature));
+		}
+		else
+		{
+			assert(type() == RELATION);
+			children_ = loadMembers(changes_, feature->store,
+				RelationPtr(feature->feature));
+		}
+	}
+	return children_;
+}
+
 PyListProxy* PyChangedFeature::getNodes()
 {
 	assert(type() == WAY);
@@ -524,14 +546,25 @@ PyObject* PyChangedFeature::getitem(PyChangedFeature* self, PyObject* key)
 	{
 		self = self->member_;	// delegate to member
 	}
-	PyObject* dict = self->tags();
-	if (!dict) return nullptr;
-	PyObject* value = PyDict_GetItem(self->tags_, key);
-	if (!value)
+	if (PyUnicode_Check(key))
 	{
-		Py_RETURN_NONE;
+		PyObject* dict = self->tags();
+		if (!dict) return nullptr;
+		PyObject* value = PyDict_GetItem(self->tags_, key);
+		if (!value)
+		{
+			Py_RETURN_NONE;
+		}
+		return Python::newRef(value);
 	}
-	return Python::newRef(value);
+	if (self->type() == NODE)
+	{
+		PyErr_SetString(PyExc_TypeError, "expected string");
+		return nullptr;
+	}
+	PyObject* list = self->children();
+	if (!list) return nullptr;
+	return PyObject_GetItem(list, key);
 }
 
 int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* value)
@@ -541,11 +574,27 @@ int PyChangedFeature::setitem(PyChangedFeature* self, PyObject* key, PyObject* v
 		self = self->member_;	// delegate to member
 	}
 
-	// TODO: modify children if key is not a string, and feature is node
+	if (PyUnicode_Check(key))
+	{
+		// set tag
+		PyObject* dict = self->tags();
+		if (!dict) return -1;
+		return ChangedTags::setKeyValue(self, dict, key, value) ? 0 : -1;
+	}
+	if (self->type() == NODE)
+	{
+		PyErr_SetString(PyExc_TypeError, "expected string");
+		return -1;
+	}
 
-	PyObject* dict = self->tags();
-	if (!dict) return -1;
-	return ChangedTags::setKeyValue(self, dict, key, value) ? 0 : -1;
+	PyObject* children = self->children();
+	if (!children) return -1;
+	return PyListProxy::setItem(self->children_, key, value,
+		self, &CHILD_OPERATIONS);
+
+	// TODO: fix discrepancy: here setItem returns 0/-1, vs.
+	//	setKeyValue returns true/false
+
 }
 
 

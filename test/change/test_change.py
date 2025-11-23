@@ -43,5 +43,9 @@ def test_change():
 
     w1.tags = { "cuisine": ["pizza","sushi"], "takeout": True }
     print (w1.tags)
+    w1[1:1] = [n1,n1,n1,n1]
+    assert w1[2] == n1
+    assert w1[3] == n1
+    print(w1.nodes)
 
     # changes.save("d:\\geodesk\\tests\\changes")

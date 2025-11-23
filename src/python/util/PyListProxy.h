@@ -51,6 +51,8 @@ public:
 		PyObject* context, ItemFunc removed);
 	static PyObject* reverse(PyObject* list,
 		PyObject* context, ListFunc reordered);
+	static int setItem(PyObject* list, PyObject* key, PyObject* value,
+		PyObject* context, const Operations* ops);
 
 	static PyObject* count(PyObject* list, PyObject* arg, EqualsFunc equals);
 	static PyObject* index(PyObject* list, PyObject* args, EqualsFunc equals);

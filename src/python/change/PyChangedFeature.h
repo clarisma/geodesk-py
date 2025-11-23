@@ -152,6 +152,7 @@ public:
 		return ChangedTags::hasTags(original_);
 	}
 
+	PyObject* children();
 	PyListProxy* getNodes();
 	PyListProxy* getMembers();
 

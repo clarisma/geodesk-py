@@ -465,33 +465,31 @@ int PyListProxy::removeByKey(PyObject* list, PyObject* key,
 }
 
 
-int PyListProxy::setitem(PyObject* self_, PyObject* key, PyObject* value)
+int PyListProxy::setItem(PyObject* list, PyObject* key, PyObject* value,
+    PyObject* context, const Operations* ops)
 {
-    auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
-
     // Deletion (value == nullptr)
     if (!value)
     {
-        return removeByKey(self->list_, key,
-            self->context_, self->ops_->itemRemoved);
+        return removeByKey(list, key,context, ops->itemRemoved);
     }
 
     // Slice assignment: coerce all items via listFromIterable
     if (PySlice_Check(key))
     {
         // Capture old slice
-        PyObject* old = PyObject_GetItem(self->list_, key);
+        PyObject* old = PyObject_GetItem(list, key);
         if (!old) return -1;
 
         PyObject* newList = listFromIterable(value,
-            self->context_, self->ops_->coerceItem);
+            context, ops->coerceItem);
         if (!newList)
         {
             Py_DECREF(old);
             return -1;
         }
 
-        if (PyObject_SetItem(self->list_, key, newList) < 0)
+        if (PyObject_SetItem(list, key, newList) < 0)
         {
             Py_DECREF(old);
             Py_DECREF(newList);
@@ -507,8 +505,7 @@ int PyListProxy::setitem(PyObject* self_, PyObject* key, PyObject* value)
             for (Py_ssize_t i = 0; i < n; ++i)
             {
                 PyObject* item = items[i];
-                self->ops_->itemAdded(self->context_,
-                    self->list_, item);
+                ops->itemAdded(context, list, item);
             }
             Py_DECREF(seq);
         }
@@ -526,8 +523,7 @@ int PyListProxy::setitem(PyObject* self_, PyObject* key, PyObject* value)
             for (Py_ssize_t i = 0; i < n; ++i)
             {
                 PyObject* item = items[i];
-                self->ops_->itemRemoved(self->context_,
-                    self->list_, item);
+                ops->itemRemoved(context, list, item);
             }
             Py_DECREF(seq);
         }
@@ -542,28 +538,35 @@ int PyListProxy::setitem(PyObject* self_, PyObject* key, PyObject* value)
     }
 
     // Single index assignment
-    PyObject* old = PyObject_GetItem(self->list_, key);
+    PyObject* old = PyObject_GetItem(list, key);
     if (!old) return -1;
 
-    PyObject* coerced = self->ops_->coerceItem(self->context_, value);
+    PyObject* coerced = ops->coerceItem(context, value);
     if (!coerced)
     {
         Py_DECREF(old);
         return -1;
     }
 
-    if (PyObject_SetItem(self->list_, key, coerced) < 0)
+    if (PyObject_SetItem(list, key, coerced) < 0)
     {
         Py_DECREF(old);
         Py_DECREF(coerced);
         return -1;
     }
 
-    self->ops_->itemAdded(self->context_, self->list_, coerced);
-    self->ops_->itemRemoved(self->context_, self->list_, old);
+    ops->itemAdded(context, list, coerced);
+    ops->itemRemoved(context, list, old);
     Py_DECREF(old);
     Py_DECREF(coerced);
     return 0;
+}
+
+
+int PyListProxy::setitem(PyObject* self_, PyObject* key, PyObject* value)
+{
+    auto self = ASSERT_PYTHON_TYPE(self_, PyListProxy);
+    return setItem(self->list_, key, value, self->context_, self->ops_);
 }
 
 PyObject* PyListProxy::iter(PyObject* self_)
