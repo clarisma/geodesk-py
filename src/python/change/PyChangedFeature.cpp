@@ -207,7 +207,7 @@ PyObject* PyChangedFeature::getattr(PyChangedFeature* self, PyObject *nameObj)
 	{
 		if (std::string_view(name, len) == "role")
 		{
-			if (self->role_) Python::newRef(self->role_);
+			if (self->role_) return Python::newRef(self->role_);
 			Py_RETURN_NONE;
 		}
 		self = self->member_;
@@ -841,7 +841,7 @@ PyMethodDef PyChangedFeature::METHODS[] =
 	},
 	{
 		"remove", remove,	METH_O,
-		"Remove first occurrence of ndoe/member"
+		"Remove first occurrence of node/member"
 	},
 	{
 		"pop", pop,METH_VARARGS,

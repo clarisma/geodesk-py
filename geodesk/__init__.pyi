@@ -1,5 +1,5 @@
 from shapely import Geometry
-from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union, overload
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union, overload
 
 class Box:
     def __init__(self, /, minx: int, miny: int, maxx: int, maxy: int, *,
@@ -66,6 +66,7 @@ class Feature:
     wkt: 'Formatter'
     x: int
     y: int
+    def __getattr__(self, name: str) -> Union[str,int,float]: ...
     def __getitem__(self, key: str) -> Union[str,int,float]: ...
 
 class Features:
@@ -220,8 +221,10 @@ class ChangedFeature:
     tags: dict
     x: int
     y: int
-    def __getitem__(self, key: str) -> Union[str,int,float]: ...
-    def __setitem__(self, key: str, value: Union[str,int,float,bool,Sequence[Union[str,int,float,bool]]]) -> None: ...
+    def __getattr__(self, name: str) -> Any: ...
+    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __getitem__(self, key: Union[str,int,slice]) -> Union[str,int,float,ChangedFeature]: ...
+    def __setitem__(self, key: Union[str,int,slice], value: Union[str,int,float,bool,Sequence[Union[str,int,float,bool]]]) -> None: ...
 
 ChangeArgs = Union[int,float,str,Geometry,Sequence]
 
