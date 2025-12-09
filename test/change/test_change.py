@@ -71,6 +71,11 @@ def test_change_tags(monaco):
     assert cf.cuisine == "italian;french"
     cf.cuisine = ()
     assert "cuisine" not in cf.tags
+    cf.cuisine = 13.750
+    assert cf.tags["cuisine"] == "13.75"
+    del cf.cuisine
+    assert cf.cuisine is None
+
 
 def test_create_polygon(monaco):
     outer = [[7.423662508,43.7301414031],[7.4224608777,43.7305962266],[7.4228328106,43.7312288382],[7.4233764051,43.7314727852],[7.4243205417,43.7314521115],[7.4249156346,43.7306003613],[7.423662508,43.7301414031]]

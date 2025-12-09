@@ -151,21 +151,6 @@ PyChangedFeature* PyChangedFeature::createMember(PyChangedFeature* member, PyObj
 	return self;
 }
 
-/*
-PyChangedFeature* PyChangedFeature::create(Changeset* changes, PyObject* args, PyObject* kwargs)
-{
-	PyChangedFeature* self = create(changes, UNASSIGNED);
-	if (self)
-	{
-		if (!self->modify(args, kwargs))
-		{
-			Py_DECREF(self);
-			return nullptr;
-		}
-	}
-	return self;
-}
-*/
 
 void PyChangedFeature::init(Changeset* changes, Type type, int64_t id)
 {
