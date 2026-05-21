@@ -23,9 +23,11 @@ public:
 	static PyCoordinate* coordinateFromPair(CoordinateOrder order, PyObject* pair);
 	static PyObject* coordinatesToMercator(PyObject* arg, CoordinateOrder order);
 
+	/*
 	static double distance (
 		GEOSGeometry* geom1, Coordinate c1,
 		GEOSGeometry* geom2, Coordinate c2,
 		double unitScaleFactor);
+		*/
 };
 
