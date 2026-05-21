@@ -25,24 +25,10 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --recursive --force
 
-      - name: Enable MSVC
-        if: runner.os == 'Windows'
-        uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: x64
-
-      - name: Verify compiler
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |
-          where cl
-          cl
-          where ninja || echo Ninja not yet installed
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.0
+        uses: pypa/cibuildwheel@v3.4.1
         env:
-          CIBW_BUILD: 'cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*'
+          CIBW_BUILD: 'cp310-* cp311-* cp312-* cp313-* cp314-*'
           CIBW_PRERELEASE_PYTHONS: 1
           CIBW_SKIP: '*win32 *i686'   # Don't build for 32-bit
           CIBW_ARCHS_MACOS: x86_64 arm64
