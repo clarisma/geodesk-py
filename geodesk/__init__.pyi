@@ -1,13 +1,13 @@
-from shapely import Geometry
+from shapely import Geometry, Polygon
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union, overload
 
 class Box:
-    def __init__(self, /, minx: int, miny: int, maxx: int, maxy: int, *,
-        minlon: float, minlat: float, maxlon: float, maxlat: float,
-        left: int, right: int, top: int, bottom: int, 
-        west: float, south: float, east: float, north: float,  
-        w: float, s: float, e: float, n: float,
-        x: int, y: int, lon: float, lat: float) -> None: ...
+    def __init__(self, /, minx: float=..., miny: float=..., maxx: float=..., maxy: float=..., *,
+        minlon: float=..., minlat: float=..., maxlon: float=..., maxlat: float=...,
+        left: float=..., right: float=..., top: float=..., bottom: float=...,
+        west: float=..., south: float=..., east: float=..., north: float=...,
+        w: float=..., s: float=..., e: float=..., n: float=...,
+        x: int=..., y: int=..., lon: float=..., lat: float=...) -> None: ...
     minlon: float
     minlat: float
     maxlon: float
@@ -28,9 +28,13 @@ class Box:
     s: float
     e: float
     n: float
+    x: int
+    y: int
+    lon: float
+    lat: float
     centroid: 'Coordinate'
-    shape: Geometry
-    def buffer(self, *, meters: float, m: float, feet: float, ft: float, km: float, miles: float) -> 'Box': ...
+    shape: Polygon
+    def buffer(self, meters: float=..., *, m: float=..., feet: float=..., ft: float=..., km: float=..., miles: float=...) -> 'Box': ...
     def __and__(self, other: 'Box') -> 'Box': ...   
     
 class Coordinate:
@@ -71,7 +75,7 @@ class Features:
     def __init__(self, filename: str) -> None: ...
     area: float
     count: int
-    first: 'Feature' | None
+    first: Feature | None
     geojson: 'Formatter'
     geojsonl: 'Formatter'
     indexed_keys: List[str]
@@ -200,3 +204,12 @@ def latlon(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinat
 
 @overload
 def latlon(*coords: float) -> List['Coordinate']: ...
+
+def area(geom: Geometry | Feature | Box, units:str=...) -> float: ...
+
+def length(geom: Geometry | Feature, units:str=...) -> float: ...
+
+def distance(geom1: Geometry | Feature | Box | Coordinate,
+    geom2: Geometry | Feature | Box | Coordinate, units:str=...) -> float: ...
+
+def buffer(geom: Geometry | Feature, meters: float=..., *, m: float=..., feet: float=..., ft: float=..., km: float=..., miles: float=...) -> Geometry: ...

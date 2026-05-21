@@ -14,7 +14,8 @@
 #include <geos/geom/Geometry.h>
 #include <geos/geom/Envelope.h>
 
-#include "PyBox_attr.cxx"
+#include "PyBox_lookup.cxx"
+#include "geodesk/geom/GeometryBuilder.h"
 
 
 // define methods
@@ -243,6 +244,17 @@ PyObject* PyBox::repr(PyBox* self)
 }
 
 
+PyObject* PyBox::createCoordinateValue(int32_t coord, bool isLatOrY, bool isWgs84)
+{
+    if (isWgs84)
+    {
+        double wgs84value = isLatOrY ? Mercator::latFromY(coord) :
+            Mercator::lonFromX(coord);
+        return PyFloat_FromDouble(PyCoordinate::precision7(wgs84value));
+    }
+    return PyLong_FromLong(coord);
+}
+
 PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
 {
     Py_ssize_t len;
@@ -252,6 +264,11 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
     Attribute* attr = PyBox_AttrHash::lookup(name, len);
     if (attr)
     {
+        int index = attr->index;
+
+        // Bit 1 indicates whether this is a coordinate attribute (0)
+        // or a special attribute (2)
+
         // Bits 8 & 9 contain the coordinate:
         //   0 = minX/left/west
         //   1 = minY/bottom/south
@@ -259,26 +276,36 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
         //   3 = maxY/top/north
         // Bit 0 indicates whether to return coordinate 
         //   as GeoDesk Mercator (0) or WGS-84 (1)
-        int index = attr->index;
-        int coordIndex = index >> 8;
-        int32_t coordValue = self->box[coordIndex];
-        if (index & 1)
-        {
-            double wgs84value = (coordIndex & 1) ? Mercator::latFromY(coordValue) :
-                Mercator::lonFromX(coordValue);
-            return PyFloat_FromDouble(PyCoordinate::precision7(wgs84value));
-        }
-        return PyLong_FromLong(coordValue);
-    }
 
-    if (strcmp(name, "buffer") == 0)
-    {
-        return PyFastMethod::create(self, (PyCFunctionWithKeywords)&buffer);
-    }
-    if (strcmp(name, "centroid") == 0)
-    {
-        Coordinate c = self->box.center();
-        return PyCoordinate::create(c.x, c.y);
+        if ((index & 2) == 0)  [[likely]]
+        {
+            int coordIndex = index >> 8;
+            int32_t coordValue = self->box[coordIndex];
+            return createCoordinateValue(coordValue,
+                coordIndex & 1, index & 1);
+        }
+        switch (index >> 8)
+        {
+        case 0:     // lon/x
+        case 1:     // lat/y
+        {
+            int coordIndex = index >> 8;
+            assert(coordIndex == 0 || coordIndex == 1);
+            Coordinate c = self->box.center();
+            int32_t coordValue = coordIndex ? c.y : c.x;
+            return createCoordinateValue(coordValue,
+                coordIndex, index & 1);
+        }
+        case 2:     // buffer
+            return PyFastMethod::create(self, (PyCFunctionWithKeywords)&buffer);
+        case 3:     // centroid
+        {
+            Coordinate c = self->box.center();
+            return PyCoordinate::create(c.x, c.y);
+        }
+        case 4:
+            return self->toShape();
+        }
     }
     PyErr_SetString(PyExc_AttributeError, "Attribute not found");
     return nullptr;
@@ -522,6 +549,16 @@ PyBox* PyBox::buffer(PyBox* self, PyObject* args, PyObject* kwargs)
 valid_distance:
     self->box.buffer(static_cast<int32_t>(round(distance)));
     return Python::newRef(self);
+}
+
+
+PyObject* PyBox::toShape() const
+{
+    Environment& env = Environment::get();
+    GEOSContextHandle_t geosContext = env.getGeosContext();
+    if (!geosContext) return NULL;
+    GEOSGeometry* geom = GeometryBuilder::buildBoxGeometry(box, geosContext);
+    return env.buildShapelyGeometry(geom);
 }
 
 

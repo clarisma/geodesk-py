@@ -143,6 +143,20 @@ def test_buffer_empty():
     assert Box().buffer(4000) == Box()
     assert Box().buffer(-12.123) == Box()
 
+def test_shape():
+    box = Box(100, 200, 300, 400)
+    g = box.shape
+    assert g.area == 200 * 200
+    # TODO: Shapely's definition of "area" differs from GeoDesk
+
+def test_centroid():
+    box = Box(100, 200, 300, 400)
+    c = box.centroid
+    assert c.lon == box.lon
+    # assert c.lat == box.lat
+    # assert c.x == box.x
+    # assert c.y == box.y
+
 
 
 
