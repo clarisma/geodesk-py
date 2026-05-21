@@ -19,10 +19,18 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           submodules: 'recursive'
+
       - name: Force update submodules
         run: |
           git submodule sync --recursive
           git submodule update --init --recursive --force
+
+      - name: Enable MSVC
+        if: runner.os == 'Windows'
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.0
         env:
