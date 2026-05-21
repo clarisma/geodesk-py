@@ -1,8 +1,9 @@
-// Copyright (c) 2024 Clarisma / GeoDesk contributors
+// Copyright (c) 2026 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyCoordinate.h"
 #include "python/Environment.h"
+#include "python/geom/PyMercator.h"
 
 // TODO: Since coordinates can be compared to simple tuples, 
 // should be hash(coord) == hash(tuple) if coord == tuple
@@ -239,6 +240,8 @@ PyObject* PyCoordinate::richcompare(PyCoordinate* self, PyObject* other, int op)
 PyMethodDef PyCoordinate::METHODS[] =
 {
     {"__dir__", (PyCFunction)dir, METH_NOARGS, NULL },
+    { "distance", (PyCFunction)PyMercator::distance, METH_VARARGS | METH_KEYWORDS,
+    "Computes the distance between this Coordinate and another geometric object"},
     { NULL, NULL, 0, NULL },
 };
 
@@ -264,6 +267,7 @@ PyTypeObject PyCoordinate::TYPE =
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_doc = "Coordinate objects",
     .tp_richcompare = (richcmpfunc)richcompare,
+    .tp_methods = METHODS,
     .tp_init = (initproc)init,
     .tp_new = PyType_GenericNew,
 };

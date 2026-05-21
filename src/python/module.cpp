@@ -29,6 +29,8 @@ static PyMethodDef GEODESK_METHODS[] =
      "Converts coordinates or measurements from WGS-84 to Mercator projection"},
     { "from_mercator", (PyCFunction)PyMercator::from_mercator, METH_VARARGS | METH_KEYWORDS,
      "Converts coordinates or measurements from Mercator projection to WGS-84"},
+    { "distance", (PyCFunction)PyMercator::distance, METH_VARARGS | METH_KEYWORDS,
+    "Computes the distance between two geometric objects"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

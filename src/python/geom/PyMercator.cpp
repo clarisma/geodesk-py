@@ -331,7 +331,7 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 	static const char* KEYWORDS[] = { "geom", "unit", "lat", "y", NULL };
 	static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 	PyObject* arg;
-	const char* units;
+	const char* units = "meters";
 	double lat = DOUBLE_MIN;
 	long long y = LLONG_MIN;
 

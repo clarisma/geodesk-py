@@ -22,5 +22,7 @@ public:
 	static PyCoordinate* coordinateFromLonLat(CoordinateOrder order, PyObject* first, PyObject* second);
 	static PyCoordinate* coordinateFromPair(CoordinateOrder order, PyObject* pair);
 	static PyObject* coordinatesToMercator(PyObject* arg, CoordinateOrder order);
+
+	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
 };
 

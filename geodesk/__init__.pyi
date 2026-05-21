@@ -43,6 +43,8 @@ class Coordinate:
     y: int
     lon: float
     lat: float
+    def distance(self, geom: Geometry | Feature | Box | Coordinate,
+        units:str=...) -> float: ...
 
 class Feature:
     area: float
@@ -194,10 +196,16 @@ def from_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry, int],
     units: str, lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...
 
 @overload
+def lonlat(lon:float,lat:float) -> Coordinate: ...
+
+@overload
 def lonlat(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
 
 @overload
 def lonlat(*coords: float) -> List['Coordinate']: ...
+
+@overload
+def latlon(lat:float,lon:float) -> Coordinate: ...
 
 @overload
 def latlon(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
