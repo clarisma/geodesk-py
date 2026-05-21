@@ -31,6 +31,14 @@ jobs:
         with:
           arch: x64
 
+      - name: Verify compiler
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          where cl
+          cl
+          where ninja || echo Ninja not yet installed
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.0
         env:
