@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # pytest.main(["test_coordinate.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_format.py::test_numeric_custom_ids", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_build.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["geom/test_distance.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["geom/test_buffer.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["geom/test_mercator.py::test_issue_64", "-rA", "-s", "--durations=9999"])
     # pytest.main(["feature/test_waynodes.py::test_waynodes", "-rA", "-s", "--durations=9999"])
     # pytest.main(["feature/test_query_by_id.py", "-rA", "-s", "--durations=9999"])

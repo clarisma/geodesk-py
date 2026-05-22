@@ -24,5 +24,7 @@ public:
 	static PyObject* coordinatesToMercator(PyObject* arg, CoordinateOrder order);
 
 	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* buffer (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* bufferArgsError(bool isMethod);
 };
 

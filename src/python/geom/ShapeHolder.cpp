@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "ShapeHolder.h"
+#include <geodesk/geom/geos/Geos.h>
 #include "python/Environment.h"
 #include "python/feature/PyFeature.h"
 #include "python/geom/PyBox.h"
@@ -18,6 +19,7 @@ bool ShapeHolder::setFromObject(PyObject* obj, GEOSContextHandle_t ctx)
         geom_ = TaggedPtr<GEOSGeometry,1>();
     }
     context_ = ctx;
+    coord_ = Coordinate();
 
     GEOSGeometry* geom = nullptr;
     PyTypeObject* type = Py_TYPE(obj);
@@ -32,6 +34,8 @@ bool ShapeHolder::setFromObject(PyObject* obj, GEOSContextHandle_t ctx)
     {
         PyFeature* f = static_cast<PyFeature*>(obj);
         FeaturePtr feature = f->feature;
+        coord_.x = Math::avg(feature.minX(),feature.maxX());
+        coord_.y = Math::avg(feature.minY(),feature.maxY());
         if (feature.isNode())
         {
             NodePtr node(feature);
@@ -58,6 +62,7 @@ bool ShapeHolder::setFromObject(PyObject* obj, GEOSContextHandle_t ctx)
     else if (type == &PyBox::TYPE)
     {
         PyBox* b = static_cast<PyBox*>(obj);
+        coord_ = b->box.center();
         geom = GeometryBuilder::buildBoxGeometry(b->box, ctx);
     }
     else if (Environment::get().getGeosGeometry(obj, &geom))
@@ -91,4 +96,14 @@ GEOSGeometry* ShapeHolder::asGeometry()
         geom_ = TaggedPtr<GEOSGeometry,1>(geom, geom != nullptr);
     }
     return geom_.ptr();
+}
+
+
+Coordinate ShapeHolder::asCoordinate()
+{
+    if (coord_.isNull())
+    {
+        coord_ = Geos::getEnvelope(context_, geom_.ptr()).center();
+    }
+    return coord_;
 }

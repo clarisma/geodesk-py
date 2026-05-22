@@ -8,6 +8,8 @@
 #include <clarisma/util/TaggedPtr.h>
 #include <geodesk/geom/GeometryBuilder.h>
 
+using namespace geodesk;
+
 class ShapeHolder
 {
 public:
@@ -19,16 +21,17 @@ public:
     GEOSContextHandle_t context() const { return context_; }
     GEOSGeometry* geometry() const { return geom_.ptr(); }
     bool isCoordinate() const { return geom_.rawPtr() == nullptr; }
-    geodesk::Coordinate coordinate() const
+    Coordinate coordinate() const
     {
         assert(isCoordinate());
         return coord_;
     }
 
     GEOSGeometry* asGeometry();
+    Coordinate asCoordinate();
 
 private:
     GEOSContextHandle_t context_ = nullptr;
     clarisma::TaggedPtr<GEOSGeometry,1> geom_;
-    geodesk::Coordinate coord_;
+    Coordinate coord_;
 };
