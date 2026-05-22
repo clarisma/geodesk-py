@@ -1,9 +1,11 @@
-static const int ATTR_COUNT = 26;
+static const int ATTR_COUNT = 28;
 static const char* ATTR_NAMES[] =
 {
     "area",
     "bounds",
+    "buffer",
     "centroid",
+    "distance",
     "geojson",
     "id",
     "is_area",

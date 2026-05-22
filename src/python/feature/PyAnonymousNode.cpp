@@ -194,7 +194,9 @@ AttrFunctionPtr const PyAnonymousNode::FEATURE_METHODS[] =
 {
     PyFeature::return_zero,        // area
     (AttrFunctionPtr)bounds,       // bounds
+    PyFeature::buffer_method,      // buffer
     (AttrFunctionPtr)centroid,     // centroid
+    PyFeature::distance_method,    // distance
     (AttrFunctionPtr)PyFormatter::geojson,          // geojson -- TODO
     (AttrFunctionPtr)id,           // id
     PyFeature::return_false,       // is_area

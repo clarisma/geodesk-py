@@ -3,17 +3,15 @@
 
 #include "PyFeature.h"
 #include <clarisma/math/Math.h>
-#include <clarisma/util/log.h>
-#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
+#include "python/geom/PyMercator.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
 #include "PyTags.h"
-
 
 #include "PyFeature_lookup.cxx"
 
@@ -262,6 +260,16 @@ PyObject* PyFeature::numTagValue(PyFeature* self, PyObject* args, PyObject* kwar
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsNumber(value, strings);
+}
+
+PyObject* PyFeature::buffer_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, &PyMercator::buffer);
+}
+
+PyObject* PyFeature::distance_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, &PyMercator::distance);
 }
 
 

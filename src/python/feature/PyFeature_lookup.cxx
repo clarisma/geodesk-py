@@ -37,12 +37,12 @@
 #line 6 "PyFeature_attr.txt"
 struct Attribute { const char *name; int index; };
 
-#define TOTAL_KEYWORDS 26
+#define TOTAL_KEYWORDS 28
 #define MIN_WORD_LENGTH 1
 #define MAX_WORD_LENGTH 14
 #define MIN_HASH_VALUE 1
-#define MAX_HASH_VALUE 38
-/* maximum key range = 38, duplicates = 0 */
+#define MAX_HASH_VALUE 43
+/* maximum key range = 43, duplicates = 0 */
 
 class PyFeature_AttrHash
 {
@@ -57,32 +57,32 @@ PyFeature_AttrHash::hash (const char *str, size_t len)
 {
   static unsigned char asso_values[] =
     {
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 10, 20, 30,
-       0,  0, 39, 15, 15,  0, 39, 39,  0,  5,
-       5, 25, 15, 39,  0,  0, 15, 39, 39, 10,
-       5,  0, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-      39, 39, 39, 39, 39, 39
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 10, 15,  5,
+      30,  0, 44, 15,  0,  0, 44, 44, 25,  5,
+       5, 10, 15, 44,  5,  0,  0, 44, 44,  0,
+       5,  0, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44, 44, 44, 44, 44,
+      44, 44, 44, 44, 44, 44
     };
   return len + asso_values[static_cast<unsigned char>(str[len - 1])] + asso_values[static_cast<unsigned char>(str[0])];
 }
@@ -93,64 +93,69 @@ PyFeature_AttrHash::lookup (const char *str, size_t len)
   static struct Attribute wordlist[] =
     {
       {""},
+#line 35 "PyFeature_attr.txt"
+      {"y", 27},
+      {""},
 #line 33 "PyFeature_attr.txt"
-      {"y", 25},
-#line 12 "PyFeature_attr.txt"
-      {"id", 4},
-#line 29 "PyFeature_attr.txt"
-      {"str", 21},
-#line 27 "PyFeature_attr.txt"
-      {"role", 19},
-#line 28 "PyFeature_attr.txt"
-      {"shape", 20},
-#line 17 "PyFeature_attr.txt"
-      {"is_way", 9},
-#line 14 "PyFeature_attr.txt"
-      {"is_node", 6},
-#line 20 "PyFeature_attr.txt"
-      {"lon", 12},
-      {""},
-#line 23 "PyFeature_attr.txt"
-      {"nodes", 15},
+      {"wkt", 25},
 #line 32 "PyFeature_attr.txt"
-      {"x", 24},
-#line 22 "PyFeature_attr.txt"
-      {"members", 14},
-#line 24 "PyFeature_attr.txt"
-      {"num", 16},
-#line 15 "PyFeature_attr.txt"
-      {"is_placeholder", 7},
-      {""},
-#line 16 "PyFeature_attr.txt"
-      {"is_relation", 8},
-#line 13 "PyFeature_attr.txt"
-      {"is_area", 5},
-#line 18 "PyFeature_attr.txt"
-      {"lat", 10},
+      {"tags", 24},
 #line 30 "PyFeature_attr.txt"
-      {"tags", 22},
-      {""},
+      {"shape", 22},
 #line 19 "PyFeature_attr.txt"
-      {"length", 11},
+      {"is_way", 11},
+#line 16 "PyFeature_attr.txt"
+      {"is_node", 8},
+#line 31 "PyFeature_attr.txt"
+      {"str", 23},
+#line 29 "PyFeature_attr.txt"
+      {"role", 21},
+#line 25 "PyFeature_attr.txt"
+      {"nodes", 17},
+#line 34 "PyFeature_attr.txt"
+      {"x", 26},
+#line 24 "PyFeature_attr.txt"
+      {"members", 16},
 #line 26 "PyFeature_attr.txt"
-      {"parents", 18},
-#line 21 "PyFeature_attr.txt"
-      {"map", 13},
-#line 8 "PyFeature_attr.txt"
-      {"area", 0},
+      {"num", 18},
+      {""}, {""},
+#line 18 "PyFeature_attr.txt"
+      {"is_relation", 10},
+#line 15 "PyFeature_attr.txt"
+      {"is_area", 7},
+#line 27 "PyFeature_attr.txt"
+      {"osm_type", 19},
+#line 17 "PyFeature_attr.txt"
+      {"is_placeholder", 9},
       {""},
 #line 9 "PyFeature_attr.txt"
       {"bounds", 1},
-#line 11 "PyFeature_attr.txt"
-      {"geojson", 3},
-#line 31 "PyFeature_attr.txt"
-      {"wkt", 23},
-      {""}, {""}, {""}, {""},
-#line 25 "PyFeature_attr.txt"
-      {"osm_type", 17},
-      {""}, {""}, {""}, {""},
+#line 28 "PyFeature_attr.txt"
+      {"parents", 20},
+#line 23 "PyFeature_attr.txt"
+      {"map", 15},
+#line 8 "PyFeature_attr.txt"
+      {"area", 0},
+      {""},
 #line 10 "PyFeature_attr.txt"
-      {"centroid", 2}
+      {"buffer", 2},
+#line 13 "PyFeature_attr.txt"
+      {"geojson", 5},
+#line 20 "PyFeature_attr.txt"
+      {"lat", 12},
+      {""}, {""},
+#line 21 "PyFeature_attr.txt"
+      {"length", 13},
+#line 14 "PyFeature_attr.txt"
+      {"id", 6},
+#line 22 "PyFeature_attr.txt"
+      {"lon", 14},
+      {""}, {""}, {""}, {""},
+#line 12 "PyFeature_attr.txt"
+      {"distance", 4},
+      {""}, {""}, {""}, {""},
+#line 11 "PyFeature_attr.txt"
+      {"centroid", 3}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
