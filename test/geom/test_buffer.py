@@ -12,7 +12,9 @@ def test_buffer(monaco):
     park_buffered = geodesk.buffer(park_shape, 50)
     d = to_mercator(meters=50, y=park.y)
     park_buffered2 = shapely.buffer(park_shape, d)
+    park_buffered3 = park.buffer(50)
     assert park_buffered.area == pytest.approx(park_buffered2.area)
+    assert park_buffered3.area == pytest.approx(park_buffered.area)
 
     node = park.nodes.first
     circle = geodesk.buffer(node, 100)

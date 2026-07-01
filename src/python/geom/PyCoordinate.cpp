@@ -4,6 +4,7 @@
 #include "PyCoordinate.h"
 #include "python/Environment.h"
 #include "python/geom/PyMercator.h"
+#include "python/util/PyFastMethod.h"
 
 // TODO: Since coordinates can be compared to simple tuples, 
 // should be hash(coord) == hash(tuple) if coord == tuple
@@ -138,6 +139,10 @@ PyObject* PyCoordinate::getattr(PyCoordinate* self, PyObject* name)
     if (strcmp(attr, "lat") == 0) 
     {
         return niceLatFromY(self->y);
+    }
+    if (strcmp(attr, "distance") == 0)
+    {
+        return PyFastMethod::create(self, &PyMercator::distance);
     }
     return PyObject_GenericGetAttr((PyObject*)self, name);
 }

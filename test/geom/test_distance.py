@@ -28,6 +28,8 @@ def test_feature_distances(monaco):
         assert d1 == pytest.approx(d_shapely, abs=0.5)
         assert d2 == pytest.approx(d_shapely, abs=0.5)
         assert d1 == pytest.approx(d2)
+        d3 = park.distance(street)
+        assert d1 == d3
 
 def test_coordinate_distance_method():
     c1 = lonlat(8, 46)
