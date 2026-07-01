@@ -74,4 +74,3 @@ PyObject* PyMercator::distance (PyObject* self, PyObject* args, PyObject* kwargs
     return PyFloat_FromDouble(d);
 }
 
-
