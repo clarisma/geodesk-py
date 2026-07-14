@@ -932,8 +932,7 @@ PyObject* PyFeatures::relations(PyFeatures* self)
 
 PyObject* PyFeatures::revision(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    return PyLong_FromUnsignedLong(self->store->revision());
 }
 
 PyObject* PyFeatures::shape(PyFeatures* self)

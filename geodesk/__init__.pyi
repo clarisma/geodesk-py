@@ -63,11 +63,11 @@ class Feature:
     members: 'Features'
     nodes: 'Features'
     parents: 'Features'
-    def num(self, key: str) -> float: ...
-    osm_type: str
-    role: str
+    def num(self, key: 'str') -> float: ...
+    osm_type: 'str'
+    role: 'str'
     shape: Geometry
-    def str(self, key: str) -> str: ...
+    def str(self, key: 'str') -> 'str': ...
     tags: 'Tags'
     wkt: 'Formatter'
     x: int
