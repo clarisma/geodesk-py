@@ -73,13 +73,6 @@ PyFeatures* filters::touching(PyFeatures* self, PyObject* args, PyObject* kwargs
 	return NULL;
 }
 
-PyFeatures* filters::with_role(PyFeatures* self, PyObject* args, PyObject* kwargs)
-{
-	PyErr_SetString(PyExc_NotImplementedError,
-		"with_role has not been implemented yet");
-	return NULL;
-}
-
 
 PyFeatures* filters::filter(PyFeatures* self, PyObject* args, PyObject* kwargs, PreparedFilterFactory& factory)
 {
