@@ -12,7 +12,7 @@ PyFeatures* filters::connected_to(PyFeatures* self, PyObject* args, PyObject* kw
 	PyObject* arg = Python::checkSingleArg(args, kwargs, "feature");
 	if (arg == NULL) return NULL;
 	arg = Python::checkType(arg, &PyFeature::TYPE);
-	if (arg == NULL) return NULL;
+	if (arg == NULL) return NULL;		// TODO: accept anon nodes as well!
 	PyFeature* feature = (PyFeature*)arg;
 	return self->withFilter(new ConnectedFilter(feature->store, feature->feature));
 }
