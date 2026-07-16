@@ -349,7 +349,9 @@ int PyFeatures::forEach(FeatureFunction func)
         PyFeature* feature = (PyFeature*)PyIter_Next(iter);
         if (feature == NULL) break;
         func(feature);
+        Py_DECREF(feature);
     }
+    Py_DECREF(iter);
     return PyErr_Occurred() ? -1 : 0;
 }
 
@@ -747,16 +749,17 @@ int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
 {
     PyObject* iter = self->selectionType->iter(self);
     if (iter == NULL) return -1;
-    
+
+    int res = 0;
     PyObject* candidate;
     while ((candidate = PyIter_Next(iter)) != NULL)
     {
-        int isEqual = PyObject_RichCompareBool(candidate, feature, Py_EQ);
-        if (isEqual != 0)  return isEqual;
-            // Either 1 (TRUE) or -1 (ERROR)
+        res = PyObject_RichCompareBool(candidate, feature, Py_EQ);
+        Py_DecRef(candidate);
+        if (res != 0) break;     // Either 1 (TRUE) or -1 (ERROR)
     }
     Py_DECREF(iter);
-    return 0;
+    return res;
 }
 
 /**

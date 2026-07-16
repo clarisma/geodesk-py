@@ -345,7 +345,8 @@ void PyFormatter::writeIdViaCallable(FeatureWriter* writer,
 		}
 		char quoteChar = writer->quoteChar();
 		if (quoteChar) writer->writeByte(quoteChar);
-		writer->writeString(value);
+		writer->writeString(str);
+		Py_DECREF(str);
 		if (quoteChar) writer->writeByte(quoteChar);
 	}
 	Py_DECREF(featureObj);

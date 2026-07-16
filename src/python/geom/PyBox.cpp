@@ -351,6 +351,8 @@ int PyBox::contains(PyBox* self, PyObject* other)
     if (!item) return -1;
     if (PySequence_Check(item))
     {
+        // TODO: check this
+        
         // We've got a sequence of sequences, e.g. [(x,y), (x,y)]
         Py_DECREF(item);
         for (int i = 0; i < count; i++)
