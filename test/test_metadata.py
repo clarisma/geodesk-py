@@ -1,8 +1,6 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
-from geodesk import *
-
 def test_strings(features):
     # print(features.strings)
     strings = features.strings
@@ -28,4 +26,18 @@ def notest_tile_size(features):
         print(f"{tile}: {size} bytes")
         total_size += size
         tile_count += 1
-    print(f"{tile_count} tiles with {total_size} bytes total")        
+    print(f"{tile_count} tiles with {total_size} bytes total")
+
+def test_revision(world):
+    assert world.revision > 0
+
+def test_tiles(world):
+    tiles = world.tiles
+    str_tiles = [str(t) for t in tiles]
+    assert "0/0/0" in str_tiles
+    assert "4/8/5" in str_tiles
+    total_size = 0
+    for tile in tiles:
+        total_size += tile.size
+    assert len(tiles) > 25000
+    assert total_size > 90 * 1024 * 1024 * 1024     # world should be > 90 GB
