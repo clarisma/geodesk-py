@@ -13,7 +13,7 @@ if __name__ == '__main__':
             print(f"- {member} as {member.role}")
     """
     
-    # pytest.main(["-rA", "-s", "--durations=9999"])
+    pytest.main(["-rA", "-s", "--durations=9999"])
     # pytest.main(["test_features.py::test_query_parser", "-rA", "--durations=9999"])
     # pytest.main(["test_rtree.py::test_rtree", "-rA", "--durations=9999"])
     # pytest.main(["test_polygonizer.py::test_polygonizer", "-rA", "-s", "--durations=9999"])
@@ -41,4 +41,4 @@ if __name__ == '__main__':
     # pytest.main(["filter/test_with_role.py::test_with_role_and_min_and_max_area", "-rA", "-s", "--durations=9999"])
     # pytest.main(["geom/test_area.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["geom/test_length.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["filter/test_intersecting.py::test_intersecting_contains_mp", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["filter/test_intersecting.py::test_intersecting_contains_mp", "-rA", "-s", "--durations=9999"])

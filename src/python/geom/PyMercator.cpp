@@ -265,7 +265,7 @@ PyObject* PyMercator::coordinatesToMercator(PyObject* seq, CoordinateOrder order
 		{
 			// Flat sequence of coordinate pairs
 
-			if (len % 1)
+			if (len & 1)	// odd number of coords
 			{
 				PyErr_SetString(PyExc_TypeError, "Expected a sequence of coordinate pairs");
 				Py_DECREF(seq);
