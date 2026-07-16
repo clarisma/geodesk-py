@@ -13,8 +13,8 @@ class PyTile : public PyObject
 {
 public:
 	FeatureStore* store;
-	Tile tile;
-	Tip tip;
+	Tile tile_;
+	Tip tip_;
 
 	static PyTypeObject TYPE;
 	static PyMethodDef METHODS[];
@@ -35,10 +35,20 @@ public:
 	static PyObject* str(PyTile* self);
 
 	static PyObject* bounds(PyTile* self);
+	static PyObject* children(PyTile* self);
 	static PyObject* column(PyTile* self);
+	static PyObject* exports(PyTile* self);
+	static PyObject* features(PyTile* self);
 	static PyObject* id(PyTile* self);
+	static PyObject* indexes(PyTile* self);
+	static PyObject* is_active(PyTile* self);
+	static PyObject* is_current(PyTile* self);
+	static PyObject* is_loaded(PyTile* self);
+	static PyObject* parent(PyTile* self);
 	static PyObject* revision(PyTile* self);
 	static PyObject* row(PyTile* self);
+	static PyObject* shape(PyTile* self);
 	static PyObject* size(PyTile* self);
+	static PyObject* tip(PyTile* self);
 	static PyObject* zoom(PyTile* self);
 };

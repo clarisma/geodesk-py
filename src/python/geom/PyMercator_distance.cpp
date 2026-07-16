@@ -3,8 +3,23 @@
 
 #include "PyMercator.h"
 #include <geodesk/geom/Distance.h>
+#include <geodesk/geom/SpatialUnit.h>
 #include "ShapeHolder.h"
 #include "python/Environment.h"
+
+
+int PyMercator::unitsFromArg(const char* arg, bool forArea)
+{
+    if (!arg) return SpatialUnit::METERS;
+    int units = SpatialUnit::unitFromString(arg, false);
+    if (units < 0)  [[unlikely]]
+    {
+        PyErr_Format(PyExc_TypeError, "Units must be %s", forArea ?
+            SpatialUnit::AREA_UNITS : SpatialUnit::LENGTH_UNITS);
+        return -1;
+    }
+    return units;
+}
 
 PyObject* PyMercator::distance (PyObject* self, PyObject* args, PyObject* kwargs)
 {
@@ -17,23 +32,25 @@ PyObject* PyMercator::distance (PyObject* self, PyObject* args, PyObject* kwargs
 
     PyObject* obj1;
     PyObject* obj2;
-    PyObject* units;
+    const char* unitsArg = nullptr;
 
     int res;
     if (!PyModule_CheckExact(self))
     {
         obj1 = self;
         res = PyArg_ParseTupleAndKeywords(
-            args, kwargs, "O|O:distance",
-            const_cast<char **>(&KEYWORDS[1]), &obj2);
+            args, kwargs, "O|s:distance",
+            const_cast<char **>(&KEYWORDS[1]), &obj2, &unitsArg);
     }
     else
     {
         res = PyArg_ParseTupleAndKeywords(
-            args, kwargs, "OO|O:distance",
-            const_cast<char **>(KEYWORDS), &obj1, &obj2);
+            args, kwargs, "OO|s:distance",
+            const_cast<char **>(KEYWORDS), &obj1, &obj2, &unitsArg);
     }
     if (res == 0) return NULL;
+    int units = unitsFromArg(unitsArg, false);
+    if (units < 0) return NULL;
     if (!g1.setFromObject(obj1, ctx)) return NULL;
     if (!g2.setFromObject(obj2, ctx)) return NULL;
 
@@ -70,7 +87,7 @@ PyObject* PyMercator::distance (PyObject* self, PyObject* args, PyObject* kwargs
     }
 
     double d = Distance::metersBetween(x1,y1,x2,y2);
-    // TODO: Adjust to requested units
+    d = SpatialUnit::fromMeters(d, units);
     return PyFloat_FromDouble(d);
 }
 

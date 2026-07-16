@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyMercator.h"
-#include <geodesk/geom/Distance.h>
+#include <geodesk/geom/SpatialUnit.h>
 #include "ShapeHolder.h"
 #include "python/Environment.h"
 
@@ -48,14 +48,38 @@ PyObject* PyMercator::buffer (PyObject* self, PyObject* args, PyObject* kwargs)
 
     ShapeHolder geom;
     if (!geom.setFromObject(geomObj, ctx)) return NULL;
+    int units = SpatialUnit::METERS;
+    if (kwargs)
+    {
+        PyObject *key = nullptr;
+        PyObject *value = nullptr;
+        Py_ssize_t position = 0;
 
+        while (PyDict_Next(
+            kwargs,
+            &position,
+            &key,
+            &value))
+        {
+            Py_ssize_t keyLen;
+            const char* keyStr = PyUnicode_AsUTF8AndSize(key, &keyLen);
+            if (!keyStr) return NULL;
+            int possibleUnits = SpatialUnit::unitFromString(
+                {keyStr,static_cast<size_t>(keyLen)}, false);
+            if (possibleUnits >= 0)
+            {
+                // check if distance already specified
+                if (distanceObj) return bufferArgsError(isMethod);
+                distanceObj = value;
+                units = possibleUnits;
+            }
+        }
+    }
     if (!distanceObj) return bufferArgsError(isMethod);
-
-    // TODO: units
 
     double d = PyFloat_AsDouble(distanceObj);
     if (d == -1.0 && PyErr_Occurred()) return NULL;
-
+    d = SpatialUnit::toMeters(d, units);
     int32_t y = geom.asCoordinate().y;
     d = Mercator::unitsFromMeters(d, y);
 

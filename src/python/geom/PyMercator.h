@@ -3,6 +3,7 @@
 
 #pragma once
 #include <Python.h>
+#include <string_view>
 
 class PyCoordinate;
 
@@ -26,5 +27,6 @@ public:
 	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
 	static PyObject* buffer (PyObject* self, PyObject* args, PyObject* kwargs);
 	static PyObject* bufferArgsError(bool isMethod);
+	static int unitsFromArg(const char* arg, bool forArea);
 };
 

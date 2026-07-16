@@ -7,6 +7,16 @@ from itertools import pairwise
 import pytest
 import shapely
 import geodesk
+import units
+
+def check_distance(o1,o2):
+    d = geodesk.distance(o1, o2)
+    for unit, factor in units.LENGTH_UNITS:
+        # print(f"Testing distance in {unit} (factor = {factor})")
+        d_unit = geodesk.distance(o1, o2, unit)
+        assert d_unit == d * factor
+    return d
+
 
 def test_way_distance_vs_length(monaco):
     for street in monaco("w[highway=primary]"):
@@ -21,7 +31,7 @@ def test_feature_distances(monaco):
     park = monaco.way(157719659)    # Petite Afrique
     park_shape = park.shape
     for street in monaco("w[highway]"):
-        d1 = geodesk.distance(park, street)
+        d1 = check_distance(park, street)
         street_shape = street.shape
         d2 = geodesk.distance(park_shape, street_shape)
         d_shapely = from_mercator(park_shape.distance(street_shape), y=park.y)
