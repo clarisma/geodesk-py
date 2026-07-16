@@ -64,7 +64,8 @@ PyObject* PyFeature::richcompare(PyFeature* self, PyObject* other, int op)
         switch (op) 
         {
         case Py_EQ:
-            if (self->feature.id() == otherFeature->feature.id() &&
+            // idBits() contains ID & type
+            if (self->feature.idBits() == otherFeature->feature.idBits() &&
                 self->store == otherFeature->store)
             {
                 Py_RETURN_TRUE;
