@@ -36,17 +36,17 @@ def benchmark(desc, fun):
     print_timing("Worst  ", worst_time, count)
     
 
-def test_performance_intersects(features):
-    germany = features(
+def test_performance_intersects(world):
+    germany = world(
         "a[boundary=administrative]"
         "[admin_level=2][name:en=Germany]").one
-    bavaria = features(
+    bavaria = world(
         "a[boundary=administrative]"
         "[admin_level=4][name:en=Bavaria]").one
-    usa = features(
+    usa = world(
         "a[boundary=administrative]"
         "[admin_level=2][name='United States']").one
-    buildings = features("a[building=yes]")
+    buildings = world("a[building=yes]")
     
     benchmark("Filter construction", 
         lambda: buildings.intersecting(bavaria))
@@ -73,7 +73,7 @@ def test_performance_intersects(features):
         lambda: buildings.within(usa).count)
     
     benchmark("All post boxes", 
-        lambda: features("na[amenity=post_box]").count)
+        lambda: world("na[amenity=post_box]").count)
     
 def test_performance_basic(features):
     benchmark("All post boxes", 

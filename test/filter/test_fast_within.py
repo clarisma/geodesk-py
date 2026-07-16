@@ -1,8 +1,8 @@
-def test_performance_intersects(features):
-    usa = features(
+def test_performance_intersects(world):
+    usa = world(
         "a[boundary=administrative]"
         "[admin_level=2][name='United States']").one
-    buildings = features("a[building]")
+    buildings = world("a[building]")
 
     with open("c:\\geodesk\\debug\\fast-rels.txt", 'w') as file:
         for rel in buildings.relations.within(usa):

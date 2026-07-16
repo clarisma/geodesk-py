@@ -19,8 +19,7 @@ Measure the time to fetch and assemble the shapes of various countries.
 We'll use this to study the impact of the proposed foreign-feature export tables.
 """
 
-def notest_area_performance():
-    world = Features('c:\\geodesk\\tests\\w.gol')
+def notest_area_performance(world):
     for _ in range(1,10):
         start_time = time.perf_counter()
         for country_name, lat, lon in countries:
@@ -32,8 +31,7 @@ def notest_area_performance():
         elapsed_time = end_time - start_time
         print(f"Retrieved {len(countries)} country borders in {elapsed_time:.3f} seconds")
 
-def test_area_tiles():
-    world = Features('c:\\geodesk\\tests\\w.gol')
+def test_area_tiles(world):
     tiles = set();
     member_count = 0
     for country_name, lat, lon in countries:

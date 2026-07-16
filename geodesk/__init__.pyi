@@ -1,4 +1,5 @@
 from shapely import Geometry, Polygon, MultiPolygon
+from shapely.geometry.base import BaseGeometry
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union, overload
 
 class Box:
@@ -196,7 +197,7 @@ def to_mercator(
     lat: float=..., y: int=...) -> float: ...
 
 @overload
-def to_mercator(geom: Geometry) -> Geometry: ...
+def to_mercator(geom: Geometry|BaseGeometry) -> Geometry: ...
 
 def from_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry, int],
     units: str=..., lat: float=..., y: int=...) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...

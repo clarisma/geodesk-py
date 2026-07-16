@@ -170,11 +170,13 @@ PyObject* PyMercator::to_mercator(PyObject* self, PyObject* args, PyObject* kwar
 			ToMercatorCoordinateFilter filter;
 			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
+			geom->geometryChanged();
 			return Python::newRef(arg);
 			#else			
 			geos::geom::Geometry* copy = geom->clone().release();
 			// TODO: error check (e.g. out of memory)
 			copy->apply_rw(&filter);
+			copy->geometryChanged();
 			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
 			#endif			
 			// Creating a copy first, unsurprisingly, more than doubles runtime
@@ -378,11 +380,13 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 			FromMercatorCoordinateFilter filter;
 			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
+			geom->geometryChanged();
 			return Python::newRef(arg);
 			#else			
 			geos::geom::Geometry* copy = geom->clone().release();
 				// TODO: error check (e.g. out of memory)
 			copy->apply_rw(&filter);
+			copy->geometryChanged();
 			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
 			#endif		
 			//  Creating a copy first, unsurprisingly, more than doubles runtime
