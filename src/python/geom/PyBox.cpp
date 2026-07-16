@@ -296,14 +296,16 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
             return createCoordinateValue(coordValue,
                 coordIndex, index & 1);
         }
-        case 2:     // buffer
+        case 2:     // area
+            return area(self);
+        case 3:     // buffer
             return PyFastMethod::create(self, (PyCFunctionWithKeywords)&buffer);
-        case 3:     // centroid
+        case 4:     // centroid
         {
             Coordinate c = self->box.center();
             return PyCoordinate::create(c.x, c.y);
         }
-        case 4:
+        case 5:
             return self->toShape();
         }
     }
@@ -521,7 +523,7 @@ PyBox* PyBox::buffer(PyBox* self, PyObject* args, PyObject* kwargs)
             if (distance == -1.0 && PyErr_Occurred()) return NULL;
             distance = Mercator::unitsFromMeters(
                 LengthUnit::toMeters(distance, units),
-                (self->box.minY() + self->box.maxY()) / 2);
+                self->box.y());
             if (PyDict_Next(kwargs, &pos, &key, &value))
             {
                 // There should only be 1 keyword argument
@@ -551,6 +553,17 @@ valid_distance:
     return Python::newRef(self);
 }
 
+
+double PyBox::area() const
+{
+    double scale = Mercator::metersPerUnitAtY(box.y());
+    return box.area() * scale * scale;
+}
+
+PyObject* PyBox::area(PyBox* self)
+{
+    return PyFloat_FromDouble(self->area());
+}
 
 PyObject* PyBox::toShape() const
 {

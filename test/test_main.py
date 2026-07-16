@@ -39,4 +39,4 @@ if __name__ == '__main__':
     # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["geom/test_buffer.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_with_role.py::test_with_role_and_min_and_max_area", "-rA", "-s", "--durations=9999"])
-    pytest.main(["geom/test_distance.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["geom/test_buffer.py", "-rA", "-s", "--durations=9999"])

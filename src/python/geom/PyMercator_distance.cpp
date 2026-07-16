@@ -70,19 +70,15 @@ PyObject* PyMercator::distance (PyObject* self, PyObject* args, PyObject* kwargs
             (ctx, g1.asGeometry(), g2.asGeometry());
         if (!nearestPoints) [[unlikely]]
         {
-            PyErr_SetString(PyExc_RuntimeError,
-                "Distance calculation failed");
-            return NULL;
+            return Python::geosError("distance");
         }
         bool success =
             GEOSCoordSeq_getXY_r(ctx, nearestPoints, 0, &x1, &y1) &&
             GEOSCoordSeq_getXY_r(ctx, nearestPoints, 1, &x2, &y2);
         GEOSCoordSeq_destroy(nearestPoints);
-        if (!success)
+        if (!success)  [[unlikely]]
         {
-            PyErr_SetString(PyExc_RuntimeError,
-                "Distance calculation failed");
-            return NULL;
+            return Python::geosError("distance");
         }
     }
 

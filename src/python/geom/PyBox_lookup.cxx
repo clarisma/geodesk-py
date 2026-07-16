@@ -1,5 +1,5 @@
 /* C++ code produced by gperf version 3.1 */
-/* Command-line: 'C:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyBox_AttrHash --lookup-function-name=lookup PyBox_attr.txt  */
+/* Command-line: 'c:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyBox_AttrHash --lookup-function-name=lookup PyBox_attr.txt  */
 /* Computed positions: -k'1,3,$' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
@@ -41,7 +41,7 @@
 #line 10 "PyBox_attr.txt"
 struct Attribute { const char *name; int index; };
 
-#define TOTAL_KEYWORDS 27
+#define TOTAL_KEYWORDS 28
 #define MIN_WORD_LENGTH 1
 #define MAX_WORD_LENGTH 8
 #define MIN_HASH_VALUE 1
@@ -70,7 +70,7 @@ PyBox_AttrHash::hash (const char *str, size_t len)
       75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
       75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
       75, 75, 75, 75, 75, 75, 75, 75, 75, 75,
-      75, 75, 75, 75, 75, 75, 75,  0, 10,  5,
+      75, 75, 75, 75, 75, 75, 75,  5, 10,  5,
        5,  3, 20,  0,  0, 75, 75, 75,  0, 15,
        5, 75,  0, 75, 20, 30, 15,  0, 75, 25,
        0, 10, 75, 75, 75, 75, 75, 75, 75, 75,
@@ -120,7 +120,9 @@ PyBox_AttrHash::lookup (const char *str, size_t len)
       {""},
 #line 32 "PyBox_attr.txt"
       {"lon", (0 << 8) | 3},
-      {""}, {""}, {""}, {""},
+      {""}, {""}, {""},
+#line 36 "PyBox_attr.txt"
+      {"area", (2 << 8) | 2},
 #line 29 "PyBox_attr.txt"
       {"top", (3 << 8) | 0},
 #line 18 "PyBox_attr.txt"
@@ -129,8 +131,8 @@ PyBox_AttrHash::lookup (const char *str, size_t len)
 #line 35 "PyBox_attr.txt"
       {"y", (1 << 8) | 2},
       {""},
-#line 37 "PyBox_attr.txt"
-      {"centroid", (3 << 8) | 2},
+#line 38 "PyBox_attr.txt"
+      {"centroid", (4 << 8) | 2},
 #line 22 "PyBox_attr.txt"
       {"minx", (0 << 8) | 0},
       {""},
@@ -152,16 +154,17 @@ PyBox_AttrHash::lookup (const char *str, size_t len)
       {"south", (1 << 8) | 1},
 #line 16 "PyBox_attr.txt"
       {"maxlat", (3 << 8) | 1},
-      {""},
-#line 38 "PyBox_attr.txt"
-      {"shape", (4 << 8) | 2},
+      {""}, {""},
 #line 15 "PyBox_attr.txt"
       {"left", (0 << 8) | 0},
 #line 26 "PyBox_attr.txt"
       {"right", (2 << 8) | 0},
 #line 20 "PyBox_attr.txt"
       {"minlat", (1 << 8) | 1},
-      {""}, {""}, {""}, {""},
+      {""},
+#line 39 "PyBox_attr.txt"
+      {"shape", (5 << 8) | 2},
+      {""}, {""},
 #line 12 "PyBox_attr.txt"
       {"bottom", (1 << 8) | 0},
       {""}, {""}, {""}, {""},
@@ -170,8 +173,8 @@ PyBox_AttrHash::lookup (const char *str, size_t len)
 #line 14 "PyBox_attr.txt"
       {"east", (2 << 8) | 1},
       {""}, {""}, {""},
-#line 36 "PyBox_attr.txt"
-      {"buffer", (2 << 8) | 2},
+#line 37 "PyBox_attr.txt"
+      {"buffer", (3 << 8) | 2},
       {""}, {""}, {""}, {""},
 #line 27 "PyBox_attr.txt"
       {"s", (1 << 8) | 1},

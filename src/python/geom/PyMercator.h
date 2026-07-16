@@ -24,9 +24,10 @@ public:
 	static PyCoordinate* coordinateFromPair(CoordinateOrder order, PyObject* pair);
 	static PyObject* coordinatesToMercator(PyObject* arg, CoordinateOrder order);
 
-	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* area (PyObject* self, PyObject* args, PyObject* kwargs);
 	static PyObject* buffer (PyObject* self, PyObject* args, PyObject* kwargs);
-	static PyObject* bufferArgsError(bool isMethod);
+	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* length (PyObject* self, PyObject* args, PyObject* kwargs);
 	static int unitsFromArg(const char* arg, bool forArea);
 };
 

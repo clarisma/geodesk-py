@@ -5,11 +5,23 @@ from geodesk import *
 import pytest
 import shapely
 import geodesk
+import units
+
+def check_buffer(g, d):
+    buf = geodesk.buffer(g, d)
+    a = buf.area
+    for unit, factor in units.LENGTH_UNITS:
+        # print(f"Testing distance in {unit} (factor = {factor})")
+        d_unit = d * factor
+        buf_unit = geodesk.buffer(g, d_unit, units=unit)
+        assert a == buf_unit.area
+    return buf
+
 
 def test_buffer(monaco):
     park = monaco.way(157719659)    # Petite Afrique
     park_shape = park.shape
-    park_buffered = geodesk.buffer(park_shape, 50)
+    park_buffered = check_buffer(park_shape, 50)
     d = to_mercator(meters=50, y=park.y)
     park_buffered2 = shapely.buffer(park_shape, d)
     park_buffered3 = park.buffer(50)

@@ -209,6 +209,12 @@ namespace Python
 			return reinterpret_cast<PyCFunctionWithKeywords>(taggedPtr_ >> 1);
 		}
 	};
+
+	inline PyObject* geosError(const char* method)
+	{
+		PyErr_Format(PyExc_RuntimeError, "%s: GEOS operation failed", method);
+		return NULL;
+	}
 }
 
 #define ATTR_PROPERTY(p) (Python::AttrRef::property((Python::Getter)&p))

@@ -7,6 +7,8 @@
 #include "python/Environment.h"
 
 
+/*
+
 PyObject* PyMercator::bufferArgsError(bool isMethod)
 {
     PyErr_SetString(PyExc_TypeError,
@@ -48,7 +50,7 @@ PyObject* PyMercator::buffer (PyObject* self, PyObject* args, PyObject* kwargs)
 
     ShapeHolder geom;
     if (!geom.setFromObject(geomObj, ctx)) return NULL;
-    int units = SpatialUnit::METERS;
+    int units = -1;
     if (kwargs)
     {
         PyObject *key = nullptr;
@@ -64,17 +66,27 @@ PyObject* PyMercator::buffer (PyObject* self, PyObject* args, PyObject* kwargs)
             Py_ssize_t keyLen;
             const char* keyStr = PyUnicode_AsUTF8AndSize(key, &keyLen);
             if (!keyStr) return NULL;
+            std::string_view keyStrView(keyStr, keyLen);
             int possibleUnits = SpatialUnit::unitFromString(
-                {keyStr,static_cast<size_t>(keyLen)}, false);
+                keyStrView, false);
             if (possibleUnits >= 0)
             {
                 // check if distance already specified
-                if (distanceObj) return bufferArgsError(isMethod);
+                if (distanceObj || units >= 0) return bufferArgsError(isMethod);
                 distanceObj = value;
                 units = possibleUnits;
             }
+            else if (keyStrView == "units")
+            {
+                Py_ssize_t valLen;
+                const char* valStr = PyUnicode_AsUTF8(value);
+                if (!valStr) return NULL;
+                units = unitsFromArg(valStr, false);
+                if (units < 0) return NULL;
+            }
         }
     }
+    units = units < 0 ? SpatialUnit::METERS : units;
     if (!distanceObj) return bufferArgsError(isMethod);
 
     double d = PyFloat_AsDouble(distanceObj);
@@ -95,4 +107,51 @@ PyObject* PyMercator::buffer (PyObject* self, PyObject* args, PyObject* kwargs)
     return env.buildShapelyGeometry(buffered);
 }
 
+*/
 
+
+PyObject* PyMercator::buffer (PyObject* self, PyObject* args, PyObject* kwargs)
+{
+    static const char ARGS[] = "Od|s:buffer";
+    static const char *const KEYWORDS[] = { "", "", "units", nullptr};
+
+    Environment& env = Environment::get();
+    GEOSContextHandle_t ctx = env.getGeosContext();
+    if (!ctx) return NULL;
+
+    PyObject* obj;
+    double distance;
+    const char* unitsArg = nullptr;
+
+    int res;
+    if (!PyModule_CheckExact(self))
+    {
+        obj = self;
+        res = PyArg_ParseTupleAndKeywords(
+            args, kwargs, &ARGS[1],
+            const_cast<char **>(&KEYWORDS[1]), &distance, &unitsArg);
+    }
+    else
+    {
+        res = PyArg_ParseTupleAndKeywords(
+            args, kwargs, ARGS,
+            const_cast<char **>(KEYWORDS), &obj, &distance, &unitsArg);
+    }
+    if (res == 0) return NULL;
+
+    int units = unitsFromArg(unitsArg, false);
+    if (units < 0) return NULL;
+
+    ShapeHolder geom;
+    if (!geom.setFromObject(obj, ctx)) return NULL;
+
+    distance = SpatialUnit::toMeters(distance, units);
+    int32_t y = geom.asCoordinate().y;
+    distance = Mercator::unitsFromMeters(distance, y);
+
+    GEOSGeometry* buffered =
+        GEOSBuffer_r(ctx, geom.asGeometry(), distance, 8);
+        // 8 quadsegs by default
+    if (!buffered) return Python::geosError("buffer");
+    return env.buildShapelyGeometry(buffered);
+}
