@@ -139,15 +139,15 @@ namespace Python
 	inline int setLong(PyObject* obj, int64_t* pv, int64_t min, int64_t max)
 	{
 		if (!Python::checkNumeric(obj)) return -1;
-		int64_t value = PyLong_AsLong(obj);
+		int64_t value = PyLong_AsLongLong(obj);
 		if (value < min)
 		{
-			PyErr_Format(PyExc_ValueError, "Must be at least %d", min);
+			PyErr_Format(PyExc_ValueError, "Must be at least %lld", min);
 			return -1;
 		}
 		if (value > max)
 		{
-			PyErr_Format(PyExc_ValueError, "Must not exceed %d", max);
+			PyErr_Format(PyExc_ValueError, "Must not exceed %lld", max);
 			return -1;
 		}
 		*pv = value;
