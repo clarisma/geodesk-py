@@ -10,6 +10,7 @@
 #include "python/geom/PyCoordinate.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
+#include "python/util/PyHash.h"
 
 
 PyObject* PyAnonymousNode::create(FeatureStore* store, uint64_t id, int32_t x, int32_t y)
@@ -134,7 +135,7 @@ PyObject* PyAnonymousNode::getattr(PyAnonymousNode* self, PyObject* nameObj)
 
 Py_hash_t PyAnonymousNode::hash(PyAnonymousNode* self)
 {
-    return (int64_t)self->x_ | ((int64_t)self->y_ << 32);
+    return PyHash::asPyHash(PyHash::packCoords(self->x_, self->y_));
 }
 
 PyObject* PyAnonymousNode::richcompare(PyAnonymousNode* self, PyObject* other, int op)

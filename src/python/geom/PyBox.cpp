@@ -6,6 +6,7 @@
 #include "python/Environment.h"
 #include "python/util/util.h"
 #include "python/util/PyFastMethod.h"
+#include "python/util/PyHash.h"
 #include "PyCoordinate.h"
 #include <geodesk/geom/Coordinate.h>
 #include <geodesk/geom/LengthUnit.h>
@@ -315,8 +316,9 @@ PyObject* PyBox::getattr(PyBox* self, PyObject* nameObj)
 
 Py_hash_t PyBox::hash(PyBox* self)
 {
-    return ((((Py_hash_t)self->box.minY()) << 32) | self->box.minX()) |
-        ((((Py_hash_t)self->box.maxY()) << 32) | self->box.maxX());
+    uint64_t h1 = PyHash::packCoords(self->box.minY(), self->box.minX());
+    uint64_t h2 = PyHash::packCoords(self->box.maxY(), self->box.maxX());
+    return PyHash::asPyHash(PyHash::mix64(h1 ^ PyHash::mix64(h2)));
 }
 
 int PyBox::contains(PyBox* self, PyObject* other)
@@ -352,7 +354,7 @@ int PyBox::contains(PyBox* self, PyObject* other)
     if (PySequence_Check(item))
     {
         // TODO: check this
-        
+
         // We've got a sequence of sequences, e.g. [(x,y), (x,y)]
         Py_DECREF(item);
         for (int i = 0; i < count; i++)

@@ -5,10 +5,12 @@
 #include "python/Environment.h"
 #include "python/geom/PyMercator.h"
 #include "python/util/PyFastMethod.h"
+#include "python/util/PyHash.h"
 
 // TODO: Since coordinates can be compared to simple tuples, 
 // should be hash(coord) == hash(tuple) if coord == tuple
 // Right now, this is not the case!
+// 7/17/26: fixed, but requires test
 
 // TODO: PySequence_Fast crashes if called on PyCoordinate
 //  PyCoordinate cannot conform to the protocol (it does not contain a list of items), 
@@ -187,7 +189,10 @@ PyObject* PyCoordinate::item(PyCoordinate* self, Py_ssize_t index)
 
 Py_hash_t PyCoordinate::hash(PyCoordinate* self)
 {
-    return (((Py_hash_t)self->y) << 32) | self->x;
+     // Must match CPython's hash of the tuple (x, y): Coordinate compares
+    // equal to 2-element sequences (see richcompare), and equal objects
+    // must hash equally for dicts/sets to work correctly.
+    return PyHash::tupleHash2(PyHash::intHash(self->x), PyHash::intHash(self->y));
 }
 
 PyObject* PyCoordinate::richcompare(PyCoordinate* self, PyObject* other, int op)

@@ -14,6 +14,7 @@
 #include "PyTags.h"
 
 #include "PyFeature_lookup.cxx"
+#include "python/util/PyHash.h"
 
 using namespace clarisma;
 
@@ -104,7 +105,7 @@ PyObject* PyFeature::richcompare(PyFeature* self, PyObject* other, int op)
 
 Py_hash_t PyFeature::hash(PyFeature* self)
 {
-    return self->feature.hash();
+    return PyHash::asPyHash(self->feature.hash());
 }
 
 PyObject* PyFeature::str(PyFeature* self)
