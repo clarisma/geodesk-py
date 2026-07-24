@@ -4,18 +4,21 @@
 import time
 from geodesk import *
 
-def print_timing(title, secs, count):
+def print_timing(title, nanosecs, count):
+    if nanosecs < 1:
+        nanosecs = 1
+    secs = nanosecs / 1_000_000_000
     if isinstance(count,int):
-        print(f"  {title}: {secs:.6f} s ({count / secs / 1000000:.3f}M features/s)")
+        print(f"  {title}: {secs:.6f} s ({count / secs / 1_000_000:.3f}M features/s)")
     else:
         print(f"  {title}: {secs:.6f} s")
     
 def benchmark(desc, fun):
     timings = []
     for _ in range(10):
-        start_time = time.time()
+        start_time = time.perf_counter_ns()
         count = fun()
-        end_time = time.time()
+        end_time = time.perf_counter_ns()
         timings.append(end_time - start_time)
 
     timings.sort()

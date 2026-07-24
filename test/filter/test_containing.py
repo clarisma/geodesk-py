@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Clarisma / GeoDesk contributors
 # SPDX-License-Identifier: LGPL-3.0-only
 
+from geodesk import *
+
 def name_set(features):
     return { f.str('name') for f in features }
 
@@ -31,3 +33,8 @@ def test_containing(features):
         count += 1
         if count == 10:
             break
+
+def notest_containing_partial():
+    features = Features('d:\\geodesk\\tests\\bavaria-from-world.gol')
+    c = latlon(48.13739,11.57543)
+    print([f.name for f in features("a[boundary=administrative]").containing(c)])

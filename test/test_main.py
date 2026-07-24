@@ -45,3 +45,5 @@ if __name__ == '__main__':
     # pytest.main(["feature/test_bounds.py", "-rA", "--durations=9999"])
     # pytest.main(["filter/test_around.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["filter/test_around.py::test_around_lon_lat", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])

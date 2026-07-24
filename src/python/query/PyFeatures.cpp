@@ -879,16 +879,15 @@ PyObject* PyFeatures::length(PyFeatures* self)
         {
             PyFeature* feature = (PyFeature*)item;
             FeaturePtr f = feature->feature;
-            double length;
             if (f.isWay())
             {
-                length = Length::ofWay(WayPtr(f));
+                totalLength += Length::ofWay(WayPtr(f));
             }
             else if (f.isRelation())
             {
-                length = Length::ofRelation(feature->store, RelationPtr(f));
+                totalLength += Length::ofRelation(feature->store, RelationPtr(f));
             }
-            totalLength += length;
+            // ignore nodes because their length is zero
         }
         // ignore anonymous nodes because their length is zero
     });
