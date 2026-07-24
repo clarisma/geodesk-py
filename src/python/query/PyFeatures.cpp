@@ -102,7 +102,7 @@ PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selection
         self->selectionType = selectionType;
         self->acceptedTypes = acceptedTypes;
         self->store = base->store;
-        self->flags = base->flags &= ~(SelectionFlags::USES_BOUNDS | SelectionFlags::BOUNDS_ACTIVE);
+        self->flags = base->flags & ~(SelectionFlags::USES_BOUNDS | SelectionFlags::BOUNDS_ACTIVE);
         self->matcher = base->matcher;
         self->filter = base->filter;
         self->relatedFeature = relatedFeature;
@@ -763,7 +763,7 @@ int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
 }
 
 /**
- * For world queries, we use a much more efficient apporach: We check if the 
+ * For world queries, we use a much more efficient approach: We check if the
  * feature comes from the same GOL and matches the query criteria.
  */
 int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)

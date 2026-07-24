@@ -29,7 +29,7 @@ def notest_tile_size(features):
     print(f"{tile_count} tiles with {total_size} bytes total")
 
 def test_revision(world):
-    assert world.revision > 0
+    assert world.revision > 0      # 0 is a valid Revision Number, but not for world
 
 def test_tiles(world):
     tiles = world.tiles

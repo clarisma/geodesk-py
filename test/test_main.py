@@ -42,4 +42,6 @@ if __name__ == '__main__':
     # pytest.main(["geom/test_area.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["geom/test_length.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_intersecting.py::test_intersecting_contains_mp", "-rA", "-s", "--durations=9999"])
-    # pytest.main(["test_metadata.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["feature/test_bounds.py", "-rA", "--durations=9999"])
+    # pytest.main(["filter/test_around.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])

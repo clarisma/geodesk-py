@@ -30,7 +30,7 @@ Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](
 
 ### Requirements
 
-- Python 3.9 or above
+- Python 3.10 or above
 - [GOL Tool 2.0](https://github.com/clarisma/geodesk-gol)
  
 ### Download

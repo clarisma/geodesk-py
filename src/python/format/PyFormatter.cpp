@@ -227,6 +227,9 @@ PyObject* PyFormatter::save(PyFormatter* self, PyObject* args, PyObject* kwargs)
 		PyErr_Format(PyExc_IOError, "Failed to open %s for writing", fileName);
 		return NULL;
 	}
+
+	// TODO: switch to FileBuffer2
+
 	FileBuffer buf(file, 64 * 1024);
 	self->writeFunc(self, &buf);
 	// no need to close file, ~FileBuffer does this
