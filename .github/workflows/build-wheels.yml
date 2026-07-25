@@ -3,11 +3,54 @@ name: Build Wheels
 on:
   push:
     tags:
-      - 'v*'
+      # Release candidates only, e.g. v1.2.3-rc1. The final tag (v1.2.3)
+      # is created by the publish_release job and deliberately does not
+      # match this pattern, so it cannot re-trigger this workflow.
+      - 'v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+'
 
 jobs:
+  check_tag:
+    name: Validate tag and release notes
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse release version from tag
+        id: parse
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc[0-9]+$ ]]; then
+            echo "::error::'$tag' is not a release candidate tag (expected vMAJOR.MINOR.PATCH-rcN)"
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Release candidate $tag will publish version $version"
+
+      - name: Check that the release notes exist
+        env:
+          VERSION: ${{ steps.parse.outputs.version }}
+        run: |
+          notes="doc/releases/v$VERSION.md"
+          if [[ ! -f "$notes" ]]; then
+            echo "::error::Missing release notes: $notes"
+            exit 1
+          fi
+
+      - name: Check that the release tag does not already exist
+        env:
+          VERSION: ${{ steps.parse.outputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag v$VERSION already exists"
+            exit 1
+          fi
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
+    needs: check_tag
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -97,3 +140,32 @@ jobs:
         run: |
           python -m pip install twine
           twine upload --skip-existing --non-interactive -u __token__ -p ${{ secrets.PYPI_TOKEN_GLOBAL }} wheelhouse/*.whl
+
+  publish_release:
+    name: Tag and publish release
+    needs: [check_tag, upload_wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.check_tag.outputs.version }}
+    steps:
+      # Checks out the commit the release candidate tag points to, so the
+      # final tag ends up on exactly the code that was built and uploaded.
+      - uses: actions/checkout@v4
+
+      - name: Create and push tag v${{ needs.check_tag.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v$VERSION" \
+            --verify-tag \
+            --title "Version $VERSION" \
+            --notes-file "doc/releases/v$VERSION.md"
