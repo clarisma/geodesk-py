@@ -1,11 +1,11 @@
 GeoDesk for Python
 ==================
 
-Copyright 2023 Clarisma / GeoDesk contributors
+Copyright 2025 Clarisma / GeoDesk contributors
 
 Licensed under GNU Lesser General Public License v3.0
 
-GeoDesk contains the following third-party contributions:
+The following third-party components are included under their respective licenses:
 
 -----------------------------------------------------------------------------------
 Catch2
@@ -41,6 +41,11 @@ THIS SOFTWARE.
 GEOS by the GEOS contributors
 Licensed under LGPL 2.1
 https://github.com/libgeos/geos/blob/main/COPYING
+
+-----------------------------------------------------------------------------------
+GTL (Greg's Template Library) by Gregory Popovitch
+Licensed under Apache 2.0 (see license text below)
+https://github.com/greg7mdp/gtl
 
 -----------------------------------------------------------------------------------
 QuickSelect by Volodymyr Agafonkin

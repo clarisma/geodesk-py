@@ -227,6 +227,9 @@ PyObject* PyFormatter::save(PyFormatter* self, PyObject* args, PyObject* kwargs)
 		PyErr_Format(PyExc_IOError, "Failed to open %s for writing", fileName);
 		return NULL;
 	}
+
+	// TODO: switch to FileBuffer2
+
 	FileBuffer buf(file, 64 * 1024);
 	self->writeFunc(self, &buf);
 	// no need to close file, ~FileBuffer does this
@@ -345,7 +348,8 @@ void PyFormatter::writeIdViaCallable(FeatureWriter* writer,
 		}
 		char quoteChar = writer->quoteChar();
 		if (quoteChar) writer->writeByte(quoteChar);
-		writer->writeString(value);
+		writer->writeString(str);
+		Py_DECREF(str);
 		if (quoteChar) writer->writeByte(quoteChar);
 	}
 	Py_DECREF(featureObj);

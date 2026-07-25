@@ -102,7 +102,7 @@ PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selection
         self->selectionType = selectionType;
         self->acceptedTypes = acceptedTypes;
         self->store = base->store;
-        self->flags = base->flags &= ~(SelectionFlags::USES_BOUNDS | SelectionFlags::BOUNDS_ACTIVE);
+        self->flags = base->flags & ~(SelectionFlags::USES_BOUNDS | SelectionFlags::BOUNDS_ACTIVE);
         self->matcher = base->matcher;
         self->filter = base->filter;
         self->relatedFeature = relatedFeature;
@@ -349,7 +349,9 @@ int PyFeatures::forEach(FeatureFunction func)
         PyFeature* feature = (PyFeature*)PyIter_Next(iter);
         if (feature == NULL) break;
         func(feature);
+        Py_DECREF(feature);
     }
+    Py_DECREF(iter);
     return PyErr_Occurred() ? -1 : 0;
 }
 
@@ -747,20 +749,21 @@ int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
 {
     PyObject* iter = self->selectionType->iter(self);
     if (iter == NULL) return -1;
-    
+
+    int res = 0;
     PyObject* candidate;
     while ((candidate = PyIter_Next(iter)) != NULL)
     {
-        int isEqual = PyObject_RichCompareBool(candidate, feature, Py_EQ);
-        if (isEqual != 0)  return isEqual;
-            // Either 1 (TRUE) or -1 (ERROR)
+        res = PyObject_RichCompareBool(candidate, feature, Py_EQ);
+        Py_DecRef(candidate);
+        if (res != 0) break;     // Either 1 (TRUE) or -1 (ERROR)
     }
     Py_DECREF(iter);
-    return 0;
+    return res;
 }
 
 /**
- * For world queries, we use a much more efficient apporach: We check if the 
+ * For world queries, we use a much more efficient approach: We check if the
  * feature comes from the same GOL and matches the query criteria.
  */
 int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
@@ -876,16 +879,15 @@ PyObject* PyFeatures::length(PyFeatures* self)
         {
             PyFeature* feature = (PyFeature*)item;
             FeaturePtr f = feature->feature;
-            double length;
             if (f.isWay())
             {
-                length = Length::ofWay(WayPtr(f));
+                totalLength += Length::ofWay(WayPtr(f));
             }
             else if (f.isRelation())
             {
-                length = Length::ofRelation(feature->store, RelationPtr(f));
+                totalLength += Length::ofRelation(feature->store, RelationPtr(f));
             }
-            totalLength += length;
+            // ignore nodes because their length is zero
         }
         // ignore anonymous nodes because their length is zero
     });
@@ -932,8 +934,7 @@ PyObject* PyFeatures::relations(PyFeatures* self)
 
 PyObject* PyFeatures::revision(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    return PyLong_FromUnsignedLong(self->store->revision());
 }
 
 PyObject* PyFeatures::shape(PyFeatures* self)

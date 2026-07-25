@@ -54,6 +54,8 @@ public:
     // Properties
 
     static PyObject* bounds(PyFeature* self);
+    static PyObject* buffer_method(PyFeature* self);
+    static PyObject* distance_method(PyFeature* self);
     static PyObject* id(PyFeature* self);
     static PyObject* is_area(PyFeature* self);
     static PyObject* lat(PyFeature* self);
@@ -63,6 +65,7 @@ public:
     static PyObject* osm_type(PyFeature* self);
     static PyObject* parents(PyFeature* self);
     static PyObject* role(PyFeature* self);
+    static PyObject* simplify_method(PyFeature* self);
     static PyObject* str_method(PyFeature* self);
     static PyObject* tags(PyFeature* self);
     static PyObject* x(PyFeature* self);

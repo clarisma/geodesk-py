@@ -1,12 +1,16 @@
-// Copyright (c) 2024 Clarisma / GeoDesk contributors
+// Copyright (c) 2026 Clarisma / GeoDesk contributors
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyCoordinate.h"
 #include "python/Environment.h"
+#include "python/geom/PyMercator.h"
+#include "python/util/PyFastMethod.h"
+#include "python/util/PyHash.h"
 
 // TODO: Since coordinates can be compared to simple tuples, 
 // should be hash(coord) == hash(tuple) if coord == tuple
 // Right now, this is not the case!
+// 7/17/26: fixed, but requires test
 
 // TODO: PySequence_Fast crashes if called on PyCoordinate
 //  PyCoordinate cannot conform to the protocol (it does not contain a list of items), 
@@ -138,6 +142,10 @@ PyObject* PyCoordinate::getattr(PyCoordinate* self, PyObject* name)
     {
         return niceLatFromY(self->y);
     }
+    if (strcmp(attr, "distance") == 0)
+    {
+        return PyFastMethod::create(self, &PyMercator::distance);
+    }
     return PyObject_GenericGetAttr((PyObject*)self, name);
 }
 
@@ -181,7 +189,10 @@ PyObject* PyCoordinate::item(PyCoordinate* self, Py_ssize_t index)
 
 Py_hash_t PyCoordinate::hash(PyCoordinate* self)
 {
-    return (((Py_hash_t)self->y) << 32) | self->x;
+     // Must match CPython's hash of the tuple (x, y): Coordinate compares
+    // equal to 2-element sequences (see richcompare), and equal objects
+    // must hash equally for dicts/sets to work correctly.
+    return PyHash::tupleHash2(PyHash::intHash(self->x), PyHash::intHash(self->y));
 }
 
 PyObject* PyCoordinate::richcompare(PyCoordinate* self, PyObject* other, int op)
@@ -239,6 +250,8 @@ PyObject* PyCoordinate::richcompare(PyCoordinate* self, PyObject* other, int op)
 PyMethodDef PyCoordinate::METHODS[] =
 {
     {"__dir__", (PyCFunction)dir, METH_NOARGS, NULL },
+    { "distance", (PyCFunction)PyMercator::distance, METH_VARARGS | METH_KEYWORDS,
+    "Computes the distance between this Coordinate and another geometric object"},
     { NULL, NULL, 0, NULL },
 };
 
@@ -264,6 +277,7 @@ PyTypeObject PyCoordinate::TYPE =
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_doc = "Coordinate objects",
     .tp_richcompare = (richcmpfunc)richcompare,
+    .tp_methods = METHODS,
     .tp_init = (initproc)init,
     .tp_new = PyType_GenericNew,
 };

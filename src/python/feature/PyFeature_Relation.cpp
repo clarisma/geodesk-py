@@ -74,7 +74,9 @@ AttrFunctionPtr const PyFeature::Relation::FEATURE_METHODS[] =
 {
     area,               // area
     bounds,             // bounds
+    buffer_method,      // buffer
     centroid,           // centroid
+    distance_method,    // distance
     (AttrFunctionPtr)PyFormatter::geojson,   // geojson
     id,                 // id
     is_area,            // is_area

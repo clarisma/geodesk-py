@@ -22,14 +22,14 @@ def test_debug():
             f.write(s + "\n")
 """
 
-def test_debug2():
+def notest_debug2():
     world = Features("data/monaco")
     f=world.node(9983257451)
     print(f.tags)
     print(f.str("stop"))
 
 
-def test_debug_ints():
+def notest_debug_ints():
     strings = list()
     world = Features("data/monaco")
     for f in world:

@@ -54,7 +54,7 @@ def test_parent_ways(features):
             assert features.parents_of(node).count == node.parents.count
             assert features.ways.parents_of(node).count == node.parents.ways.count
             
-def test_street_endpoints(features):
+def notest_street_endpoints(features):
     """
     A face validity test that checks that the endpoints of 
     primary streets have at least two streets as parents

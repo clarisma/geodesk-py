@@ -45,6 +45,10 @@ public:
     // Other methods
 
     static PyBox* buffer(PyBox* self, PyObject* args, PyObject* kwargs);
+    static PyObject* createCoordinateValue(int32_t coord, bool isLatOrY, bool isWgs84);
+    double area() const;
+    static PyObject* area(PyBox* self);
+    PyObject* toShape() const;
 };
 
 

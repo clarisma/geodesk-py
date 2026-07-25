@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <geodesk/geom/Coordinate.h>
 #include <geodesk/geom/FixedLonLat.h>
+#include <string_view>
 
 using namespace geodesk;
 class PyCoordinate;
@@ -31,5 +32,11 @@ public:
 	static Coordinate getAgnosticCoordinate(double xOrLon, double yOrLat);
 	static FixedLonLat getAgnosticLonLat(double xOrLon, double yOrLat);
 	static bool getAgnosticLonLat(FixedLonLat* lonLat, PyObject* first, PyObject* second);
+
+	static PyObject* area (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* buffer (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* distance (PyObject* self, PyObject* args, PyObject* kwargs);
+	static PyObject* length (PyObject* self, PyObject* args, PyObject* kwargs);
+	static int unitsFromArg(const char* arg, bool forArea);
 };
 

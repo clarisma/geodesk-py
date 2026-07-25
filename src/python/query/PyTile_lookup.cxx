@@ -1,9 +1,6 @@
-// Copyright (c) 2024 Clarisma / GeoDesk contributors
-// SPDX-License-Identifier: LGPL-3.0-only
-
 /* C++ code produced by gperf version 3.1 */
-/* Command-line: 'C:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyTile_AttrHash --lookup-function-name=lookup PyTile_attr.txt  */
-/* Computed positions: -k'1' */
+/* Command-line: 'c:\\dev\\geodesk-py\\tools\\gperf' -L C++ -t --class-name=PyTile_AttrHash --lookup-function-name=lookup PyTile_attr.txt  */
+/* Computed positions: -k'1,4' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
       && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
@@ -42,12 +39,12 @@
 #line 8 "PyTile_attr.txt"
 struct PyTileAttribute { const char *name; Python::AttrRef attr; };
 
-#define TOTAL_KEYWORDS 7
+#define TOTAL_KEYWORDS 18
 #define MIN_WORD_LENGTH 2
-#define MAX_WORD_LENGTH 8
+#define MAX_WORD_LENGTH 10
 #define MIN_HASH_VALUE 2
-#define MAX_HASH_VALUE 11
-/* maximum key range = 10, duplicates = 0 */
+#define MAX_HASH_VALUE 28
+/* maximum key range = 27, duplicates = 0 */
 
 class PyTile_AttrHash
 {
@@ -62,34 +59,47 @@ PyTile_AttrHash::hash (const char *str, size_t len)
 {
   static unsigned char asso_values[] =
     {
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12,  5,  0,
-      12, 12, 12, 12, 12,  0, 12, 12, 12, 12,
-      12, 12, 12, 12,  0,  5, 12, 12, 12, 12,
-      12, 12,  0, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-      12, 12, 12, 12, 12, 12
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29,  5,  5,  0,
+      29,  0,  0, 29, 29,  0, 29, 29, 10,  5,
+       5,  5,  0, 29,  5,  0, 20,  5, 29, 29,
+      29, 29,  0, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+      29, 29, 29, 29, 29, 29
     };
-  return len + asso_values[static_cast<unsigned char>(str[0])];
+  unsigned int hval = len;
+
+  switch (hval)
+    {
+      default:
+        hval += asso_values[static_cast<unsigned char>(str[3])];
+      /*FALLTHROUGH*/
+      case 3:
+      case 2:
+      case 1:
+        hval += asso_values[static_cast<unsigned char>(str[0])];
+        break;
+    }
+  return hval;
 }
 
 struct PyTileAttribute *
@@ -98,23 +108,46 @@ PyTile_AttrHash::lookup (const char *str, size_t len)
   static struct PyTileAttribute wordlist[] =
     {
       {""}, {""},
-#line 12 "PyTile_attr.txt"
-      {"id", ATTR_PROPERTY(PyTile::id)},
-#line 14 "PyTile_attr.txt"
-      {"row", ATTR_PROPERTY(PyTile::row)},
 #line 16 "PyTile_attr.txt"
-      {"zoom", ATTR_PROPERTY(PyTile::zoom)},
-      {""},
-#line 11 "PyTile_attr.txt"
-      {"column", ATTR_PROPERTY(PyTile::column)},
-      {""},
-#line 13 "PyTile_attr.txt"
-      {"revision", ATTR_PROPERTY(PyTile::revision)},
-#line 15 "PyTile_attr.txt"
+      {"id", ATTR_PROPERTY(PyTile::id)},
+#line 12 "PyTile_attr.txt"
+      {"col", ATTR_PROPERTY(PyTile::column)},
+#line 25 "PyTile_attr.txt"
       {"size", ATTR_PROPERTY(PyTile::size)},
+#line 24 "PyTile_attr.txt"
+      {"shape", ATTR_PROPERTY(PyTile::shape)},
+#line 21 "PyTile_attr.txt"
+      {"parent", ATTR_PROPERTY(PyTile::parent)},
+#line 17 "PyTile_attr.txt"
+      {"indexes", ATTR_PROPERTY(PyTile::indexes)},
+#line 23 "PyTile_attr.txt"
+      {"row", ATTR_PROPERTY(PyTile::row)},
+#line 27 "PyTile_attr.txt"
+      {"zoom", ATTR_PROPERTY(PyTile::zoom)},
+#line 19 "PyTile_attr.txt"
+      {"is_current", ATTR_PROPERTY(PyTile::id)},
+#line 13 "PyTile_attr.txt"
+      {"column", ATTR_PROPERTY(PyTile::column)},
+#line 14 "PyTile_attr.txt"
+      {"exports", ATTR_PROPERTY(PyTile::exports)},
+#line 22 "PyTile_attr.txt"
+      {"revision", ATTR_PROPERTY(PyTile::revision)},
+#line 18 "PyTile_attr.txt"
+      {"is_active", ATTR_PROPERTY(PyTile::id)},
       {""},
 #line 10 "PyTile_attr.txt"
-      {"bounds", ATTR_PROPERTY(PyTile::bounds)}
+      {"bounds", ATTR_PROPERTY(PyTile::bounds)},
+      {""},
+#line 11 "PyTile_attr.txt"
+      {"children", ATTR_PROPERTY(PyTile::children)},
+#line 20 "PyTile_attr.txt"
+      {"is_loaded", ATTR_PROPERTY(PyTile::id)},
+      {""}, {""}, {""},
+#line 26 "PyTile_attr.txt"
+      {"tip", ATTR_PROPERTY(PyTile::tip)},
+      {""}, {""}, {""}, {""},
+#line 15 "PyTile_attr.txt"
+      {"features", ATTR_PROPERTY(PyTile::features)}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

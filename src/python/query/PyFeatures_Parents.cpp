@@ -60,7 +60,7 @@ PyFeatures* PyFeatures::Parents::create(PyFeatures* base, PyAnonymousNode* relat
         self->selectionType = &SUBTYPE;
         self->acceptedTypes = acceptedTypes;
         self->store = base->store;
-        self->flags = base->flags |= SelectionFlags::USES_BOUNDS;
+        self->flags = base->flags | SelectionFlags::USES_BOUNDS;
             // TODO: Fix! We set USES_BOUNDS to signal that the related feature
             // is an anonymous node (coordinates only) instead of a real Feature
             // But if bounding box is already in use, we have to convert it

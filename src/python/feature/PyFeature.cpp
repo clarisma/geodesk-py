@@ -3,19 +3,18 @@
 
 #include "PyFeature.h"
 #include <clarisma/math/Math.h>
-#include <clarisma/util/log.h>
-#include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
 #include "python/format/PyMap.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
+#include "python/geom/PyMercator.h"
 #include "python/query/PyFeatures.h"
 #include "python/util/PyFastMethod.h"
 #include "python/util/util.h"
 #include "PyTags.h"
 
-
 #include "PyFeature_lookup.cxx"
+#include "python/util/PyHash.h"
 
 using namespace clarisma;
 
@@ -66,7 +65,8 @@ PyObject* PyFeature::richcompare(PyFeature* self, PyObject* other, int op)
         switch (op) 
         {
         case Py_EQ:
-            if (self->feature.id() == otherFeature->feature.id() &&
+            // idBits() contains ID & type
+            if (self->feature.idBits() == otherFeature->feature.idBits() &&
                 self->store == otherFeature->store)
             {
                 Py_RETURN_TRUE;
@@ -105,7 +105,7 @@ PyObject* PyFeature::richcompare(PyFeature* self, PyObject* other, int op)
 
 Py_hash_t PyFeature::hash(PyFeature* self)
 {
-    return self->feature.hash();
+    return PyHash::asPyHash(self->feature.hash());
 }
 
 PyObject* PyFeature::str(PyFeature* self)
@@ -262,6 +262,16 @@ PyObject* PyFeature::numTagValue(PyFeature* self, PyObject* args, PyObject* kwar
     StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsNumber(value, strings);
+}
+
+PyObject* PyFeature::buffer_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, &PyMercator::buffer);
+}
+
+PyObject* PyFeature::distance_method(PyFeature* self)
+{
+    return PyFastMethod::create(self, &PyMercator::distance);
 }
 
 

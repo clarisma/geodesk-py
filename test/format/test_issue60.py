@@ -3,8 +3,8 @@
 
 from geodesk import *
 
-def test_format_wide_num(features):
-    f = features("n[place][name=Sjømannsbyen]").one
+def test_format_wide_num(world):
+    f = world("n[place][name=Sjømannsbyen]").one
     assert f["ssr:stedsnr"] == 118031
     assert f.num("ssr:stedsnr") == 118031
     assert f.str("ssr:stedsnr") == '118031'

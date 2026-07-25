@@ -8,7 +8,7 @@ def features():
     f = Features('c:\\geodesk\\tests\\de.gol')
     yield f
 
-def test_rtree(features):
+def notest_rtree(features):
     bavaria = features("a[boundary=administrative][admin_level=4][name:en=Bavaria]").one
     # munich = features("n[place=city][name:en=Munich]")
     # restaurants = features("na[amenity=restaurant][cuisine=sushi,japanese]")

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 
 import pytest
+from geodesk import *
 
 def name_set(features):
     return { f.str('name') for f in features }
@@ -37,3 +38,8 @@ def test_containing(features):
 def test_containing_invalid(features):
     with pytest.raises(TypeError):
         features.containing("xxxx")
+
+def notest_containing_partial():
+    features = Features('d:\\geodesk\\tests\\bavaria-from-world.gol')
+    c = latlon(48.13739,11.57543)
+    print([f.name for f in features("a[boundary=administrative]").containing(c)])

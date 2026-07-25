@@ -170,11 +170,13 @@ PyObject* PyMercator::to_mercator(PyObject* self, PyObject* args, PyObject* kwar
 			ToMercatorCoordinateFilter filter;
 			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
+			geom->geometryChanged();
 			return Python::newRef(arg);
 			#else			
 			geos::geom::Geometry* copy = geom->clone().release();
 			// TODO: error check (e.g. out of memory)
 			copy->apply_rw(&filter);
+			copy->geometryChanged();
 			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
 			#endif			
 			// Creating a copy first, unsurprisingly, more than doubles runtime
@@ -263,7 +265,7 @@ PyObject* PyMercator::coordinatesToMercator(PyObject* seq, CoordinateOrder order
 		{
 			// Flat sequence of coordinate pairs
 
-			if (len % 1)
+			if (len & 1)	// odd number of coords
 			{
 				PyErr_SetString(PyExc_TypeError, "Expected a sequence of coordinate pairs");
 				Py_DECREF(seq);
@@ -331,7 +333,7 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 	static const char* KEYWORDS[] = { "geom", "unit", "lat", "y", NULL };
 	static constexpr double DOUBLE_MIN = std::numeric_limits<double>::lowest();
 	PyObject* arg;
-	const char* units;
+	const char* units = "meters";
 	double lat = DOUBLE_MIN;
 	long long y = LLONG_MIN;
 
@@ -378,11 +380,13 @@ PyObject* PyMercator::from_mercator(PyObject* self, PyObject* args, PyObject* kw
 			FromMercatorCoordinateFilter filter;
 			#ifdef GEODESK_MERCATOR_TRANSFORM_INPLACE
 			geom->apply_rw(&filter);
+			geom->geometryChanged();
 			return Python::newRef(arg);
 			#else			
 			geos::geom::Geometry* copy = geom->clone().release();
 				// TODO: error check (e.g. out of memory)
 			copy->apply_rw(&filter);
+			copy->geometryChanged();
 			return Environment::get().buildShapelyGeometry((GEOSGeometry*)copy);
 			#endif		
 			//  Creating a copy first, unsurprisingly, more than doubles runtime

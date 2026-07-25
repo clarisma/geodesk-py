@@ -83,7 +83,9 @@ AttrFunctionPtr const PyFeature::Node::FEATURE_METHODS[] =
 {
     return_zero,        // area
     bounds,             // bounds
+    buffer_method,      // buffer
     centroid,           // centroid
+    distance_method,    // distance
     (AttrFunctionPtr)PyFormatter::geojson,   // geojson
     id,                 // id
     return_false,       // is_area

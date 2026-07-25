@@ -12,6 +12,10 @@ def features():
     yield f
 
 @pytest.fixture(scope="session")
+def world():
+    yield Features('d:\\geodesk\\tests\\w2.gol')
+
+@pytest.fixture(scope="session")
 def monaco():
     yield Features("data/monaco")
 

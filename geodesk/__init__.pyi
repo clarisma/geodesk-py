@@ -1,13 +1,14 @@
-from shapely import Geometry
+from shapely import Geometry, Polygon, MultiPolygon
+from shapely.geometry.base import BaseGeometry
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union, overload
 
 class Box:
-    def __init__(self, /, minx: int, miny: int, maxx: int, maxy: int, *,
-        minlon: float, minlat: float, maxlon: float, maxlat: float,
-        left: int, right: int, top: int, bottom: int, 
-        west: float, south: float, east: float, north: float,  
-        w: float, s: float, e: float, n: float,
-        x: int, y: int, lon: float, lat: float) -> None: ...
+    def __init__(self, /, minx: float=..., miny: float=..., maxx: float=..., maxy: float=..., *,
+        minlon: float=..., minlat: float=..., maxlon: float=..., maxlat: float=...,
+        left: float=..., right: float=..., top: float=..., bottom: float=...,
+        west: float=..., south: float=..., east: float=..., north: float=...,
+        w: float=..., s: float=..., e: float=..., n: float=...,
+        x: int=..., y: int=..., lon: float=..., lat: float=...) -> None: ...
     minlon: float
     minlat: float
     maxlon: float
@@ -28,9 +29,13 @@ class Box:
     s: float
     e: float
     n: float
+    x: int
+    y: int
+    lon: float
+    lat: float
     centroid: 'Coordinate'
-    shape: Geometry
-    def buffer(self, *, meters: float, m: float, feet: float, ft: float, km: float, miles: float) -> 'Box': ...
+    shape: Polygon
+    def buffer(self, meters: float=..., *, m: float=..., feet: float=..., ft: float=..., km: float=..., miles: float=...) -> 'Box': ...
     def __and__(self, other: 'Box') -> 'Box': ...   
     
 class Coordinate:
@@ -39,6 +44,8 @@ class Coordinate:
     y: int
     lon: float
     lat: float
+    def distance(self, geom: Geometry | Feature | Box | Coordinate,
+        units:str=...) -> float: ...
 
 class Feature:
     area: float
@@ -57,23 +64,25 @@ class Feature:
     members: 'Features'
     nodes: 'Features'
     parents: 'Features'
-    def num(self, key: str) -> float: ...
-    osm_type: str
-    role: str
+    osm_type: 'str'
+    role: 'str'
     shape: Geometry
-    def str(self, key: str) -> str: ...
     tags: 'Tags'
     wkt: 'Formatter'
     x: int
     y: int
     def __getattr__(self, name: str) -> Union[str,int,float]: ...
     def __getitem__(self, key: str) -> Union[str,int,float]: ...
+    def buffer(self, distance: float, units:'str' = 'meters') -> Polygon|MultiPolygon: ...
+    def distance(geom: Geometry | Feature | Box | Coordinate, units:'str'='meters') -> float: ...
+    def num(self, key: 'str') -> float: ...
+    def str(self, key: 'str') -> 'str': ...
 
 class Features:
     def __init__(self, filename: str) -> None: ...
     area: float
     count: int
-    first: Optional['Feature']
+    first: Feature | None
     geojson: 'Formatter'
     geojsonl: 'Formatter'
     indexed_keys: List[str]
@@ -184,18 +193,28 @@ class Tile:
     size: int
     zoom: int
 
-def to_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry]=None, *,
-    meters: float, m: float, feet: float, ft: float, km: float, miles: float,                
-    lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, int]: ...
+@overload
+def to_mercator(
+    meters: float=..., m: float=..., feet: float=..., ft: float=..., km: float=..., miles: float=...,
+    lat: float=..., y: int=...) -> float: ...
+
+@overload
+def to_mercator(geom: Geometry|BaseGeometry) -> Geometry: ...
 
 def from_mercator(geom: Union['Box', 'Coordinate', 'Feature', Geometry, int],
-    units: str, lat: float, y: int) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...
+    units: str=..., lat: float=..., y: int=...) -> Union['Box', 'Coordinate', 'Feature', Geometry, float]: ...
+
+@overload
+def lonlat(lon:float,lat:float) -> Coordinate: ...
 
 @overload
 def lonlat(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
 
 @overload
 def lonlat(*coords: float) -> List['Coordinate']: ...
+
+@overload
+def latlon(lat:float,lon:float) -> Coordinate: ...
 
 @overload
 def latlon(coords: Union[List[float], List[Sequence[float]]]) -> List['Coordinate']: ...
@@ -233,3 +252,13 @@ class Changes:
     def __getitem__(self, key: Union['Feature','ChangedFeature']) -> 'ChangedFeature': ...
     def create(self, *args: ChangeArgs) -> ChangedFeature: ...   # TODO
     def save(self, filename: str) -> None: ...
+
+def area(geom: Geometry | Feature | Box, units:str=...) -> float: ...
+
+def length(geom: Geometry | Feature, units:str=...) -> float: ...
+
+def distance(geom1: Geometry | Feature | Box | Coordinate,
+    geom2: Geometry | Feature | Box | Coordinate, units:str=...) -> float: ...
+
+def buffer(geom: Geometry | Feature, distance: float, units : str = 'meters') -> Polygon|MultiPolygon: ...
+
