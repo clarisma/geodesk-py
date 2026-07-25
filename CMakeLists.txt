@@ -98,7 +98,6 @@ set(LIBRARIES
 	${Python_LIBRARIES}
 	geos_c
 	geos
-	gtl
 )
 
 if(NOT BUILD_WHEELS)
@@ -134,7 +133,7 @@ target_compile_definitions(_geodesk PRIVATE GEODESK_PYTHON)
 
 if(BUILD_WHEELS)
 	install(TARGETS _geodesk
-		LIBRARY DESTINATION geodesk2)
+		LIBRARY DESTINATION geodesk)
 else()
 	install(TARGETS _geodesk
 			LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}

@@ -7,6 +7,8 @@
 
 /// @brief Owning reference to a PyObject* (RAII, shared semantics)
 ///
+/// TODO: use PythonPTr instead (added later)
+///
 template<typename T>
 class PythonRef
 {
