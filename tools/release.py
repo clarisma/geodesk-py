@@ -65,7 +65,7 @@ def replace_all(file: str, regex: str, new_string: str):
     with open(file, "r", encoding="utf-8") as f:
         contents = f.read()
 
-    replaced = re.sub(regex, new_string, contents)
+    replaced = re.sub(regex, rf'\g<prefix>{new_string}\g<suffix>', contents)
     if replaced == contents:
         return
 
@@ -179,13 +179,15 @@ def _current_branch():
         )
     return branch
 
-SEMVER_MATCH = r'(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)'
+SEMVER_MATCH = r'(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))'
 
 version_arg = sys.argv[1]
 version = canonical_version(version_arg)
 replace_all("pyproject.toml",
-    r'(?m)^[ \t]*version = "' + SEMVER_MATCH + '"[ \t]*$', version)
+    r'(?m)^(?P<prefix>[ \t]*version = ")' +
+    SEMVER_MATCH + '(?P<suffix>"[ \t]*)$', version)
 replace_all("src/version.h",
-    r'(?m)^[ \t]*#define GEODESK_PY_VERSION "' + SEMVER_MATCH + '"[ \t]*$', version)
+    r'(?m)^(?P<prefix>[ \t]*#define GEODESK_PY_VERSION ")' +
+    SEMVER_MATCH + '(?P<suffix>"[ \t]*)$', version)
 release_candidate(version_arg)
 
