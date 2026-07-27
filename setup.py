@@ -15,6 +15,7 @@ setup(
     author="Clarisma / GeoDesk contributors",
     license="LGPL-3.0-only",  
     packages=["geodesk"],  # If you have Python packages as well
+    package_data={"geodesk": ["_geodesk.pyi", "py.typed"]},
     cmake_args=['-DCMAKE_BUILD_TYPE=Release', '-DBUILD_WHEELS:BOOL=ON'],  # or Debug, or any other args you need
     # install_requires=[  # If you have Python dependencies
     #     "somepythonpackage>=1.0",
@@ -23,7 +24,7 @@ setup(
     # include_package_data=True,
     # exclude_package_data={ "": ["*h.", "*.a", "*.lib"]},
     cmake_process_manifest_hook = \
-        lambda fl: [f for f in fl if f.endswith('.pyd') or f.endswith('.so')]
+        lambda fl: [f for f in fl if f.endswith('.pyd') or f.endswith('.so') or f.endswith('.pyi')]
         # This gets rid of the headers and libraries built by GEOS as
         # a sub-project, and only includes the actual GeoDesk Python module
 )
