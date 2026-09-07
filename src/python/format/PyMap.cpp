@@ -14,15 +14,17 @@
 #include "python/feature/PyFeature.h"
 #include <geodesk/geom/polygon/Polygonizer.h>
 #include <geodesk/feature/FastMemberIterator.h>
-#include <clarisma/io/File.h>
 #include <clarisma/io/FilePath.h>
 #include <clarisma/util/BufferWriter.h>
 #include <clarisma/util/BitIterator.h>
+#include <clarisma/util/Json.h>
 #include "python/util/util.h"
 #include "python/Environment.h"
 #include <geos/geom/Geometry.h>
+#include "version.h"
 
 #include "PyMap_attr.cxx"
+#include "clarisma/util/Json.h"
 
 using namespace clarisma;
 
@@ -611,7 +613,9 @@ const char* PyMap::writeToFile()
 	s = stringAttribute(LEAFLET_URL);
 	out.writeReplacedString(s, "{leaflet_version}", leafletVersionStr);
 	out.writeConstString(
-		"\"></script>\n<style>\n#map {height: 100%;}\nbody {margin:0;}\n</style>\n" 
+		"\"></script>\n"
+		"<script src=\"https://unpkg.com/leaflet-wms-header@1.0.13/index.js\"></script>\n"
+		"<style>\n#map {height: 100%;}\nbody {margin:0;}\n</style>\n"
 		"</head>\n<body>\n<div id=\"map\"> </div>\n"
 		"<script>");
 	out.writeScript();
@@ -667,16 +671,18 @@ void MapWriter::writeScript()
 		"var map = L.map('map');\n"
 		"var tilesUrl='");
 	writeString(map_.stringAttribute(PyMap::BASEMAP));
-	writeConstString("';\nvar tilesAttrib='");
-	writeString(map_.stringAttribute(PyMap::ATTRIBUTION));
+	writeConstString("';\nvar tilesAttrib=\"");
+	Json::writeEscaped(*this, map_.stringAttribute(PyMap::ATTRIBUTION));
 	writeConstString(
-		"';\nvar tileLayer = new L.TileLayer("
+		"\";\nvar tileLayer = new L.TileLayer("
 		"tilesUrl, {minZoom: ");
 	formatInt(0);		// TODO: MIN_ZOOM
 	writeConstString(", maxZoom: ");
 	formatInt(19);		// TODO: MAX_ZOOM
 	writeConstString(
-		", attribution: tilesAttrib});\n"
+		", attribution: tilesAttrib},"
+		"[{header: 'X-Requested-With', "
+		"value: 'geodesk-py/" GEODESK_PY_VERSION "'}], null);\n"
 		"map.setView([51.505, -0.09], 13);\n"      // TODO
 		"map.addLayer(tileLayer);\n"
 		"L.control.scale().addTo(map);\n");

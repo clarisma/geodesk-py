@@ -96,4 +96,10 @@ def test_waynodes(features):
         m.add(street)
         for node in street:
             m.add(node, color="red")
-    m.show()        
+    m.show()
+
+
+def test_attribution():
+    m = Map()
+    m.attribution = '"Real attribution goes here"'
+    m.show()

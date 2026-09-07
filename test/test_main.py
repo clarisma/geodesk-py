@@ -13,7 +13,7 @@ if __name__ == '__main__':
             print(f"- {member} as {member.role}")
     """
     
-    pytest.main(["-rA", "-s", "--durations=9999"])
+    # pytest.main(["-rA", "-s", "--durations=9999"])
     # pytest.main(["test_features.py::test_query_parser", "-rA", "--durations=9999"])
     # pytest.main(["test_rtree.py::test_rtree", "-rA", "--durations=9999"])
     # pytest.main(["test_polygonizer.py::test_polygonizer", "-rA", "-s", "--durations=9999"])
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # pytest.main(["test_ways.py::test_waynode_match", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_box.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_area.py", "-rA", "-s", "--durations=9999"])
-    # pytest.main(["test_map.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["format/test_map.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_match.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_crosses.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_map.py", "-rA", "-s", "--durations=9999"])
