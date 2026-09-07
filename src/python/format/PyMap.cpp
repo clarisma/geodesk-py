@@ -614,7 +614,7 @@ const char* PyMap::writeToFile()
 	out.writeReplacedString(s, "{leaflet_version}", leafletVersionStr);
 	out.writeConstString(
 		"\"></script>\n"
-		"<script src=\"https://unpkg.com/leaflet-header/index.js\"></script>\n"
+		"<script src=\"https://unpkg.com/leaflet-wms-header@1.0.13/index.js\"></script>\n"
 		"<style>\n#map {height: 100%;}\nbody {margin:0;}\n</style>\n"
 		"</head>\n<body>\n<div id=\"map\"> </div>\n"
 		"<script>");
