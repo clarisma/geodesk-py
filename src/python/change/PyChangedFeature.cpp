@@ -30,8 +30,8 @@ PyChangedFeature* PyChangedFeature::createNode(Changeset* changes, FixedLonLat l
 	{
 		self->original_ = nullptr;
 		self->tags_ = nullptr;
-		self->lon_ = lonLat.lon();
-		self->lat_ = lonLat.lat();
+		self->lon_ = lonLat.lon100nd();
+		self->lat_ = lonLat.lat100nd();
 	}
 	return self;
 }

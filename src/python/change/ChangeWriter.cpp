@@ -12,6 +12,16 @@ void ChangeWriter::write(Changeset* changes)
 {
     out_ << "<osmChange version=\"0.6\" generator=\"geodesk-py/" GEODESK_PY_VERSION "\">\n";
 
+    out_ << "  <create>\n";
+    for (int i=0; i<3; i++)
+    {
+        for (auto& entry : changes->created_[i])
+        {
+            writeFeature(entry.get());
+        }
+    }
+    out_ << "  </create>\n";
+
     out_ << "  <modify>\n";
     for (int i=0; i<3; i++)
     {

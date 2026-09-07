@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # pytest.main(["test_ways.py::test_waynode_match", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_box.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_area.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["format/test_map.py", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["format/test_map.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_match.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_crosses.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_map.py", "-rA", "-s", "--durations=9999"])
@@ -46,3 +46,4 @@ if __name__ == '__main__':
     # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_around.py::test_around_lon_lat", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])
+    pytest.main(["change/test_change.py", "-rA", "-s", "--durations=9999"])

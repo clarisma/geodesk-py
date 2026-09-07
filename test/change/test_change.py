@@ -49,6 +49,8 @@ def test_change():
 
     # changes.save("d:\\geodesk\\tests\\changes")
 
+
+# noinspection unreachable-code
 def test_change_tags(monaco):
     f = monaco("na[amenity=restaurant]").first
     changes = Changes()
@@ -57,6 +59,7 @@ def test_change_tags(monaco):
     assert cf["cuisine"] == "pizza;sushi"
     assert cf["takeout"] == "yes"
     cf["cuisine"] = "french"
+    assert cf["cuisine"] == "french"
     assert cf.cuisine == "french"
     cf.takeout = False
     assert cf["takeout"] == "no"
@@ -88,3 +91,11 @@ def test_create_polygon(monaco):
     assert cf[0].role == "outer"
     assert cf[1].role == "inner"
 
+def test_create(monaco):
+    changes = Changes()
+    changes.create(lonlat(-120,45,120,45))
+
+    f = changes[monaco("na[amenity=restaurant]").first]
+    f.some_invented_tag = "banana"
+
+    changes.save("d:\\geodesk\\tests\\test1")
