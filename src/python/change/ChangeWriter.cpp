@@ -8,31 +8,35 @@
 
 using namespace clarisma;
 
-void ChangeWriter::write(Changeset* changes)
+void ChangeWriter::write(Changeset* changes, bool asOsc)
 {
-    out_ << "<osmChange version=\"0.6\" generator=\"geodesk-py/" GEODESK_PY_VERSION "\">\n";
+    out_ << (asOsc ? "<osmChange" : "<osm");
+    out_ << " version=\"0.6\" generator=\"geodesk-py/" GEODESK_PY_VERSION "\">\n";
 
-    out_ << "  <create>\n";
-    for (int i=0; i<3; i++)
+    if (asOsc)
     {
-        for (auto& entry : changes->created_[i])
+        out_ << "  <create>\n";
+        for (int i=0; i<3; i++)
         {
-            writeFeature(entry.get());
+            for (auto& entry : changes->created_[i])
+            {
+                writeFeature(entry.get());
+            }
         }
-    }
-    out_ << "  </create>\n";
+        out_ << "  </create>\n";
 
-    out_ << "  <modify>\n";
-    for (int i=0; i<3; i++)
-    {
-        for (auto& entry : changes->existing_[i])
+        out_ << "  <modify>\n";
+        for (int i=0; i<3; i++)
         {
-            writeFeature(entry.second.get());
+            for (auto& entry : changes->existing_[i])
+            {
+                writeFeature(entry.second.get());
+            }
         }
+        out_ << "  </modify>\n";
     }
-    out_ << "  </modify>\n";
 
-    out_ << "</osmChange>\n";
+    out_ << (asOsc ? "</osmChange>\n" : "</osm>\n");
 }
 
 void ChangeWriter::writeFeature(PyChangedFeature* feature)

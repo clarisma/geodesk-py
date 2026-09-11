@@ -183,3 +183,20 @@ PyChangedFeature* Changeset::tryModify(PyObject* obj)
 	}
 	return nullptr;
 }
+
+
+PyObject* Changeset::getTag(PyObject* key) const
+{
+	PyObject* value = PyDict_GetItemWithError(tags_.get(), key);
+	if (!value)
+	{
+		if (PyErr_Occurred()) return nullptr;
+		Py_RETURN_NONE;
+	}
+	return Python::newRef(value);
+}
+
+int Changeset::setTag(PyObject* key, PyObject* value)
+{
+	return PyDict_SetItem(tags_.get(), key, value);
+}

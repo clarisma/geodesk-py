@@ -44,6 +44,8 @@ public:
     PyChangedFeature* modify(PyAnonymousNode* feature);
     PyChangedFeature* tryModify(PyObject* obj);
 
+    PyObject* getTag(PyObject* key) const;
+    int setTag(PyObject* key, PyObject* value);
     PyObject* borrowOuter() const { return outerString_.get(); }
     PyObject* borrowInner() const { return innerString_.get(); }
 

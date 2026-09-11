@@ -109,8 +109,9 @@ PyObject* PyChanges::save(PyChanges* self, PyObject* args, PyObject* kwargs)
 	if (!fileNameObj) return nullptr;
 	std::string_view fileName = Python::stringAsStringView(fileNameObj);
 	std::string fileNameWithExt = FilePath::withDefaultExtension(fileName, ".osc");
+	std::string_view ext = FilePath::extension(fileNameWithExt);
 	ChangeWriter writer(fileNameWithExt.c_str());
-	writer.write(self->changes_);
+	writer.write(self->changes_, (ext != ".osm" && ext != ".xml"));
 	Py_RETURN_NONE;
 }
 
@@ -124,16 +125,32 @@ PyObject* PyChanges::getitem(PyChanges* self, PyObject* key)
 	{
 		return self->changes_->modify((PyAnonymousNode*)key);
 	}
-	PyErr_SetString(PyExc_TypeError, "Expected Feature or AnonymousNode");
+	if (Py_TYPE(key) == &PyUnicode_Type)
+	{
+		return self->changes_->getTag(key);
+	}
+	PyErr_SetString(PyExc_TypeError, "Expected Feature or string");
 	return nullptr;
 }
+
+
+int PyChanges::setitem(PyChanges* self, PyObject* key, PyObject* value)
+{
+	if (PyUnicode_Check(key))
+	{
+		return self->changes_->setTag(key, value);
+	}
+	PyErr_SetString(PyExc_TypeError, "key: Expected string");
+	return -1;
+}
+
 
 
 PyMappingMethods PyChanges::MAPPING_METHODS =
 {
 	nullptr,         // mp_length (optional)
 	(binaryfunc)getitem,         // mp_subscript
-	nullptr       // mp_ass_subscript
+	(objobjargproc)setitem       // mp_ass_subscript
 };
 
 PyMethodDef PyChanges::METHODS[] =

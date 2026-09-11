@@ -24,6 +24,7 @@ public:
 	static void dealloc(PyChanges* self);
 	static PyObject* getattro(PyChanges* self, PyObject *attr);
 	static PyObject* getitem(PyChanges* self, PyObject* key);
+	static int setitem(PyChanges* self, PyObject* key, PyObject* value);
 	// static PyObject* richcompare(PyChanges* self, PyObject* other, int op);
 
 	static PyObject* createFeature(PyChanges* self, PyObject* args, PyObject* kwargs);
