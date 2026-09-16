@@ -86,7 +86,7 @@ def notest_map_french_departments():
 def test_basemap_performance():
     m1 = Map(basemap="https://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png")
     m1.show()
-    m2 = Map(basemap="https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+    m2 = Map() # basemap="https://tile.openstreetmap.org/{z}/{x}/{y}.png")
     m2.show()
     
 def test_waynodes(features):

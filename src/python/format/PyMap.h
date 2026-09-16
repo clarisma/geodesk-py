@@ -146,7 +146,7 @@ public:
 	{
 		Py_XDECREF(binder_);
 	}
-	void writeScript();
+	void writeScript(bool useRequestedWithHeader);
 
 private:
 	class Schema

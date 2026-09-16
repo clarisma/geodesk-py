@@ -603,6 +603,8 @@ const char* PyMap::writeToFile()
 	FileBuffer buf(file, 64 * 1024);
 	MapWriter out(&buf, *this);
 
+	bool useRequestedWithHeader = attributes[BASEMAP] == nullptr;
+		// For the default OSM map, send X-Requested-With header
 	out.writeConstString(
 		"<html><head><meta charset=\"utf-8\">"
 		"<link rel=\"stylesheet\" href=\"");
@@ -612,13 +614,18 @@ const char* PyMap::writeToFile()
 	out.writeConstString("\">\n<script src=\"");
 	s = stringAttribute(LEAFLET_URL);
 	out.writeReplacedString(s, "{leaflet_version}", leafletVersionStr);
+	out.writeConstString("\"></script>\n");
+	if (useRequestedWithHeader)
+	{
+		out.writeConstString(
+			"<script src=\"https://unpkg.com/leaflet-wms-header@1.0.13/index.js\">"
+			"</script>\n");
+	}
 	out.writeConstString(
-		"\"></script>\n"
-		"<script src=\"https://unpkg.com/leaflet-wms-header@1.0.13/index.js\"></script>\n"
 		"<style>\n#map {height: 100%;}\nbody {margin:0;}\n</style>\n"
 		"</head>\n<body>\n<div id=\"map\"> </div>\n"
 		"<script>");
-	out.writeScript();
+	out.writeScript(useRequestedWithHeader);
 	out.writeConstString("</script></body></html>");
 	out.flush();
 	// no need to close file, ~FileBuffer does this
@@ -665,24 +672,37 @@ PyTypeObject PyMap::TYPE =
 };
 
 
-void MapWriter::writeScript()
+void MapWriter::writeScript(bool useRequestedWithHeader)
 {
 	writeConstString(
 		"var map = L.map('map');\n"
 		"var tilesUrl='");
-	writeString(map_.stringAttribute(PyMap::BASEMAP));
+	const char* basemap = map_.stringAttribute(PyMap::BASEMAP);
+	bool customMap = (basemap != PyMap::ATTR_DEFAULTS[PyMap::BASEMAP]);
+	writeString(basemap);
 	writeConstString("';\nvar tilesAttrib=\"");
 	Json::writeEscaped(*this, map_.stringAttribute(PyMap::ATTRIBUTION));
-	writeConstString(
-		"\";\nvar tileLayer = new L.TileLayer("
-		"tilesUrl, {minZoom: ");
+	writeConstString("\";\nvar tileLayer = ");
+	if (useRequestedWithHeader)
+	{
+		writeConstString("L.TileLayer.wmsHeader(");
+	}
+	else
+	{
+		writeConstString("new L.TileLayer(");
+	}
+	writeConstString("tilesUrl, {minZoom: ");
 	formatInt(0);		// TODO: MIN_ZOOM
 	writeConstString(", maxZoom: ");
 	formatInt(19);		// TODO: MAX_ZOOM
-	writeConstString(
-		", attribution: tilesAttrib},"
-		"[{header: 'X-Requested-With', "
-		"value: 'geodesk-py/" GEODESK_PY_VERSION "'}], null);\n"
+	writeConstString(", attribution: tilesAttrib}");
+	if (useRequestedWithHeader)
+	{
+		writeConstString(
+			",[{header: 'X-Requested-With', "
+			"value: 'geodesk-py/" GEODESK_PY_VERSION "'}], null");
+	}
+	writeConstString(");\n"
 		"map.setView([51.505, -0.09], 13);\n"      // TODO
 		"map.addLayer(tileLayer);\n"
 		"L.control.scale().addTo(map);\n");
