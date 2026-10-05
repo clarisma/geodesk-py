@@ -32,9 +32,9 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -U NDEBUG"
 
 include(FetchContent)
 
-# Fetch GEOS 3.11.3
+# Fetch GEOS (version must match Shapely!)
 FetchContent_Declare(geos
-    URL https://download.osgeo.org/geos/geos-3.13.1.tar.bz2
+    URL https://download.osgeo.org/geos/geos-3.14.1.tar.bz2
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(geos)
 
