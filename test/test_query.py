@@ -79,6 +79,17 @@ def test_issue_53(features):
     assert(c1 > 100)
     assert(c2 > 100)
     assert(c1 == c2)
-    
+
+
+def test_issue_libgeodesk_48(monaco):
+    manual_count = 0
+    for f in monaco.nodes:
+        highway = f["highway"]
+        access = f["access"]
+        if highway is not None and highway != "no" or \
+            access is not None and access != "no":
+            manual_count += 1
+    count = monaco("n[highway],n[access]").count
+    assert count == manual_count
 
     
