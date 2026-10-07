@@ -13,7 +13,7 @@ if __name__ == '__main__':
             print(f"- {member} as {member.role}")
     """
     
-    # pytest.main(["-rA", "-s", "--durations=9999"])
+    pytest.main(["-rA", "-s", "--durations=9999"])
     # pytest.main(["test_features.py::test_query_parser", "-rA", "--durations=9999"])
     # pytest.main(["test_rtree.py::test_rtree", "-rA", "--durations=9999"])
     # pytest.main(["test_polygonizer.py::test_polygonizer", "-rA", "-s", "--durations=9999"])
@@ -47,4 +47,4 @@ if __name__ == '__main__':
     # pytest.main(["filter/test_containing.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_around.py::test_around_lon_lat", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])
-    pytest.main(["test_query.py::test_issue_libgeodesk_48", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["test_query.py::test_issue_libgeodesk_48", "-rA", "-s", "--durations=9999"])
