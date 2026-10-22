@@ -5,11 +5,6 @@
 GeoDesk is a fast and storage-efficient geospatial database for OpenStreetMap data. 
 Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](http://www.github.com/clarisma/geodesk).
 
-> [!IMPORTANT]
-> For Version 2.0, you will need to build GOLs with [GOL Tool 2.0](https://github.com/clarisma/geodesk-gol).
->
-> To read GOLs built with [GOL Tool 1.x](https://github.com/clarisma/gol-tool), use [Version 1.3.0](https://github.com/clarisma/geodesk-py/releases/tag/v1.3.0) of this toolkit.
-
 ## Why GeoDesk?
 
 - **Small storage footprint** &mdash; GeoDesk's GOL files are only 20% to 50% larger than the original OSM data in PBF format &mdash; that's less than a tenth of the storage consumed by a traditional SQL-based database.
@@ -17,6 +12,8 @@ Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](
 - **Fast queries** &mdash; typically 50 times faster than SQL. 
 
 - **Fast to get started** &mdash; Converting `.osm.pbf` data to a GOL is 20 times faster than an import into an SQL database. Alternatively, download pre-made data tiles for just the regions you need and automatically assemble them into a GOL.
+
+- **Incremental updates** &mdash; Keep GOLs up to date with daily, hourly, or minute-by-minute OpenStreetMap changes.
 
 - **Intuitive API** &mdash; No need for object-relational mapping; GeoDesk queries return Python objects. Quickly discover tags, way-nodes and relation members. Get a feature's geometry, measure its length/area. 
  
@@ -31,7 +28,7 @@ Also available [for C++](https://github.com/clarisma/libgeodesk) and [for Java](
 ### Requirements
 
 - Python 3.10 or above
-- [GOL Tool 2.0](https://github.com/clarisma/geodesk-gol)
+- [GeoDesk GOL Tool](https://github.com/clarisma/geodesk-gol) 2.0 or above
  
 ### Download
 
@@ -41,7 +38,7 @@ pip install geodesk
 
 ### Create a GOL
 
-Create a Geographic Object Library based on any `.osm.pbf` file, using the [GOL Tool](https://www.geodesk.com/download).
+Create a Geo-Object Library based on any `.osm.pbf` file, using the [GOL Tool](https://www.geodesk.com/download).
 
 For example:
 
@@ -104,4 +101,3 @@ number_of_entrances = building.nodes("[entrance]").count
 - [geodesk](http://www.github.com/clarisma/geodesk) &mdash; GeoDesk for Java
 - [libgeodesk](https://github.com/clarisma/libgeodesk) &mdash; GeoDesk for C++
 - [geodesk-gol](http://www.github.com/clarisma/geodesk-gol) &mdash; command-line utility for building, maintaining and querying GOL files
-- [gol-tool](http://www.github.com/clarisma/gol-tool) &mdash; legacy GOL Tool (supports GOL 1.0 files)
