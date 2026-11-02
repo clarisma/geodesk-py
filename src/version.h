@@ -3,4 +3,4 @@
 
 #pragma once
 
-#define GEODESK_PY_VERSION "2.3.0"
+#define GEODESK_PY_VERSION "2.3.1"

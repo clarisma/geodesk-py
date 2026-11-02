@@ -31,6 +31,8 @@ def test_intersecting_contains_mp(features):
     even if the candidate only contains one of the test MP's polygons.
     (Issue #31)
     """
+    assert shapely.__version__ == '2.2.0'
+    assert shapely.geos_version_string == '3.14.1'
     geojson_string = '{"type": "MultiPolygon", "coordinates": [[[[1.130858, 47.665071], [0.0761706, 46.9955999], [1.4824205, 46.2265974], [2.7568345, 46.5445679], [2.9326157, 47.2196999], [2.2294907, 48.0333352], [1.130858, 47.665071]]], [[[11.5492744, 48.1454669], [11.5410347, 48.1408897], [11.553566, 48.1373421], [11.5492744, 48.1454669]]]]}'
     geojson_dict = json.loads(geojson_string)
     geom_wgs84 = shape(geojson_dict)
