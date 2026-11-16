@@ -861,8 +861,9 @@ PyObject* PyFeatures::first(PyFeatures* self)
 
 PyObject* PyFeatures::guid(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    char buf[64];
+    self->store->guid().format(buf);
+    return Python::toStringObject(buf, UUID::FORMATTED_LENGTH);
 }
 
 
