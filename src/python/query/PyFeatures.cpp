@@ -151,16 +151,21 @@ PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* 
             return NULL;
         }
         PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-        if (self)
+        if (self)   [[likely]]
         {
             self->selectionType = &World::SUBTYPE;
-            store->addref();
+            // No need to addref store, we already have a new ref
             self->store = store;
             self->flags = SelectionFlags::USES_BOUNDS;
             self->acceptedTypes = FeatureTypes::ALL;
             self->matcher = store->getAllMatcher();
             self->filter = NULL;
             self->bounds = Box::ofWorld();
+        }
+        else
+        {
+            // Release store if we can't create the Python object
+            store->release();
         }
         return self;
     }
@@ -1029,8 +1034,7 @@ PyObject* PyFeatures::tiles(PyFeatures* self)
 
 PyObject* PyFeatures::timestamp(PyFeatures* self)
 {
-    // TODO
-    Py_RETURN_NONE;
+    return Environment::get().datetime(self->store->revisionTimestamp());
 }
 
 PyObject* PyFeatures::ways(PyFeatures* self)
