@@ -114,6 +114,51 @@ bool Environment::getGeosGeometry(PyObject* obj, GEOSGeometry** pGeom)
     return ((ShapelyGetGEOSGeometryFunc)shapelyFunctions[1])(obj, pGeom);
 }
 
+PyObject* Environment::createDatetimeModule()
+{
+    return PyImport_ImportModule("datetime");
+}
+
+PyObject* Environment::createDatetimeType()
+{
+    PyObject* module = datetimeModule();
+    if (!module) return nullptr;
+    return PyObject_GetAttrString(module, "datetime");
+}
+
+PyObject* Environment::createFromtimestampMethod()
+{
+    PyObject* datetime = datetimeType();
+    if (!datetime) return nullptr;
+    return PyObject_GetAttrString(datetime, "fromtimestamp");
+}
+
+PyObject* Environment::createUtcTimezone()
+{
+    PyObject* module = datetimeModule();
+    if (!module) return nullptr;
+
+    PyObject* timezone = PyObject_GetAttrString(module, "timezone");
+    if (!timezone) return nullptr;
+
+    PyObject* utc = PyObject_GetAttrString(timezone, "utc");
+    Py_DECREF(timezone);
+    return utc;
+}
+
+PyObject* Environment::datetime(DateTime timestamp)
+{
+    PyObject* method = fromtimestampMethod();
+    if (!method) return nullptr;
+
+    PyObject* utc = utcTimezone();
+    if (!utc) return nullptr;
+
+    double seconds = static_cast<double>(timestamp) / 1000.0;
+    return PyObject_CallFunction(method, "dO", seconds, utc);
+}
+
+
 Environment Environment::ENV;
 
 

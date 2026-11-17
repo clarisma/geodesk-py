@@ -5,8 +5,11 @@
 
 #include <geos_c.h>
 #include <Python.h>
+#include <clarisma/util/DateTime.h>
 #include <geodesk/match/Matcher.h>
+#include "python/util/CachedPythonRef.h"
 #include "python/util/util.h"
+
 
 using namespace geodesk;
 class PyFeatures;
@@ -103,6 +106,31 @@ public:
 		return Python::newRef(stringConstants_[code]);
 	}
 
+	PyObject* datetimeModule()
+	{
+		return datetimeModule_.getOrCreate(&createDatetimeModule);
+	}
+
+	PyObject* datetimeType()
+	{
+		return datetimeType_.getOrCreate(this,
+			&Environment::createDatetimeType);
+	}
+
+	PyObject* fromtimestampMethod()
+	{
+		return fromtimestampMethod_.getOrCreate(this,
+			&Environment::createFromtimestampMethod);
+	}
+
+	PyObject* utcTimezone()
+	{
+		return utcTimezone_.getOrCreate(this,
+			&Environment::createUtcTimezone);
+	}
+
+	PyObject* datetime(clarisma::DateTime timestamp);
+
 	static void clearAndLogException();
 
 	// PyFeatures* getEmptyFeatures();
@@ -120,7 +148,17 @@ private:
 	// TODO: Decide where to keep this: here of in FeatureStore
 	// (should not be tied to FeatureStore)
 	PyObject* stringConstants_[STRING_CONSTANT_COUNT];
+	CachedPythonRef datetimeModule_;
+	CachedPythonRef datetimeType_;
+	CachedPythonRef utcTimezone_;
+	CachedPythonRef fromtimestampMethod_;
+
 	static const char* STRING_CONSTANTS[STRING_CONSTANT_COUNT];
+
+	static PyObject* createDatetimeModule();
+	PyObject* createDatetimeType();
+	PyObject* createFromtimestampMethod();
+	PyObject* createUtcTimezone();
 
 	friend PyObject* PyInit__geodesk();
 };

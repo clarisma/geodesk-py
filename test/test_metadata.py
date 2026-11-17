@@ -31,6 +31,12 @@ def notest_tile_size(features):
 def test_revision(world):
     assert world.revision > 0      # 0 is a valid Revision Number, but not for world
 
+def test_guid(world):
+    assert len(world.guid) == 36
+
+def test_timestamp(world):
+    assert len(str(world.timestamp)) > 16
+
 def test_tiles(world):
     tiles = world.tiles
     str_tiles = [str(t) for t in tiles]
