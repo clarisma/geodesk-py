@@ -1002,7 +1002,7 @@ PyObject* PyFeatures::strings(PyFeatures* self)
 PyObject* PyFeatures::indexed_keys(PyFeatures* self)
 {
     const StringTable& strings = self->store->strings();
-    const Snapshot::IndexedKeyMap& keysToCategories =
+    const IndexedKeyMap& keysToCategories =
         self->store->snapshot()->keysToCategories();
     PyObject* list = PyList_New(keysToCategories.size());
     if (!list) return NULL;

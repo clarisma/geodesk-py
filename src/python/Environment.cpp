@@ -109,9 +109,16 @@ PyObject* Environment::buildShapelyGeometry(GEOSGeometry* geom)
 
 bool Environment::getGeosGeometry(PyObject* obj, GEOSGeometry** pGeom)
 {
+    // Shapely returns nullptr instead of a valid GEOSGeometry
+    // (while returning true) if handed `None` (cause for #93 and #78)
+
     void** shapelyFunctions = getShapelyFunctions();
     if (!shapelyFunctions) return false;
-    return ((ShapelyGetGEOSGeometryFunc)shapelyFunctions[1])(obj, pGeom);
+    if (!((ShapelyGetGEOSGeometryFunc)shapelyFunctions[1])(obj, pGeom)) [[unlikely]]
+    {
+        return false;
+    }
+    return *pGeom != nullptr;   // Treat null geometry is a failure
 }
 
 PyObject* Environment::createDatetimeModule()

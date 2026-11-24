@@ -89,6 +89,13 @@ public:
 	 */
 	PyObject* buildShapelyGeometry(GEOSGeometry* geom);
 
+	/**
+	 * Obtains the GEOS geometry wrapped by a Shapely object.
+	 *
+	 * @returns true if `obj` is a Shapely geometry (`*pGeom` is then
+	 *   guaranteed to be non-null); false if `obj` is not a Shapely
+	 *   geometry, or is `None`
+	 */
 	bool getGeosGeometry(PyObject* obj, GEOSGeometry** pGeom);
 	
 	static void reportGeosError(const char* format, ...)

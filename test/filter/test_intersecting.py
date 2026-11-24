@@ -90,4 +90,7 @@ def test_intersecting_waynode(features):
             assert street in intersecting_streets
             for parent in parent_ways:
                 assert parent in intersecting_features
-                                
+
+def test_intersecting_empty_polygon(monaco):
+    cafes = monaco("n[amenity=cafe]")
+    assert cafes.intersecting(shapely.Polygon()).count == 0

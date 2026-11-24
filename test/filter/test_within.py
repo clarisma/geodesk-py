@@ -53,4 +53,7 @@ def test_within_polygon(features):
     polygon = Polygon(to_mercator(coords))
     Map().add(features("n[amenity]")(polygon)).show()
 
+def test_within_empty_polygon(monaco):
+    cafes = monaco("n[amenity=cafe]")
+    assert cafes.within(Polygon()).count == 0
 

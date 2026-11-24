@@ -71,4 +71,4 @@ def notest_within_geometry(features):
     s = state.shape
     print("Obtained shape")
     print(f"{hotels.within(s).count} hotels in {state.name} (shape)")
-    
+

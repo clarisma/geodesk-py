@@ -103,3 +103,9 @@ def test_attribution():
     m = Map()
     m.attribution = '"Real attribution goes here"'
     m.show()
+
+# Issue #78
+def test_add_none_to_map():
+    m = Map()
+    m.add(None)
+    m.show()

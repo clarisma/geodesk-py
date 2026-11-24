@@ -902,6 +902,10 @@ void MapWriter::writeGeometryCollection(GEOSContextHandle_t context, const GEOSG
 
 void MapWriter::writeObject(PyObject* obj)
 {
+	// Skip missing items (e.g. `.first` of an empty query)
+	// to avoid #78
+	if (obj == Py_None) [[unlikely]] return;
+
 	PyTypeObject* type = Py_TYPE(obj);
 	geos::geom::Geometry* geom;
 
