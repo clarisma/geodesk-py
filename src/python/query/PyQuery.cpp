@@ -43,10 +43,12 @@ PyQuery* PyQuery::create(PyFeatures* features,
 
 void PyQuery::dealloc(PyQuery* self)
 {
-    // TODO: cancel pending query
-    Py_DECREF(self->target);
+    // First, wait for the pending query to complete
     // ~Query() will block until all pending tile shave been processed
     self->query.~Query();           // call destructor explicitly
+    // Only then can we safely release the associated PyFeatures
+    // (fixes #94)
+    Py_DECREF(self->target);
     Py_TYPE(self)->tp_free(self);
 }
 
