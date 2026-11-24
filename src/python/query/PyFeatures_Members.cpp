@@ -7,6 +7,7 @@
 #include "python/feature/PyFeature.h"
 #include "PyTile.h"
 
+using namespace clarisma;
 
 PyObject* PyFeatures::Members::iterFeatures(PyFeatures* features)
 {

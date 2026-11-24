@@ -13,6 +13,7 @@
 #include "python/query/PyFeatures.h"
 #include "python/util/util.h"
 
+using namespace clarisma;
 
 PyObject* PyFeature::Relation::area(PyFeature* self)
 {

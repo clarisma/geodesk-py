@@ -5,6 +5,8 @@
 #include <clarisma/util/log.h>
 #include "python/feature/PyFeature.h"
 
+using namespace clarisma;
+
 PyFeatures* PyFeatures::WayNodes::createRelated(PyFeatures* base, WayPtr way)
 {
     // TODO: verify feature

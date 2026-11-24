@@ -248,7 +248,7 @@ PyObject* PyFeature::strTagValue(PyFeature* self, PyObject* args, PyObject* kwar
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
     if(!keyObj) return NULL;
     TagTablePtr tags = self->feature.tags();
-    StringTable& strings = self->store->strings();
+    const StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsString(value, strings);
 }
@@ -259,7 +259,7 @@ PyObject* PyFeature::numTagValue(PyFeature* self, PyObject* args, PyObject* kwar
     PyObject* keyObj = Python::checkSingleArg(args, kwargs, &PyUnicode_Type);
     if(!keyObj) return NULL;
     TagTablePtr tags = self->feature.tags();
-    StringTable& strings = self->store->strings();
+    const StringTable& strings = self->store->strings();
     int64_t value = tags.getKeyValue(keyObj, strings);
     return tags.valueAsNumber(value, strings);
 }

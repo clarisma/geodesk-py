@@ -146,7 +146,7 @@ PyObject* Environment::createUtcTimezone()
     return utc;
 }
 
-PyObject* Environment::datetime(DateTime timestamp)
+PyObject* Environment::datetime(clarisma::DateTime timestamp)
 {
     PyObject* method = fromtimestampMethod();
     if (!method) return nullptr;

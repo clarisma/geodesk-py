@@ -21,7 +21,7 @@
 //   - relations
 //   -none
  
-
+using namespace clarisma;
 
 PyFeatures* PyFeatures::Parents::create(PyAnonymousNode* relatedNode)
 {

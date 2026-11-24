@@ -982,7 +982,7 @@ PyObject* PyFeatures::shape(PyFeatures* self)
 
 PyObject* PyFeatures::strings(PyFeatures* self)
 {
-    StringTable& strings = self->store->strings();
+    const StringTable& strings = self->store->strings();
     uint32_t count = strings.stringCount();
     PyObject* list = PyList_New(count);
     if (!list) return NULL;
@@ -1001,9 +1001,9 @@ PyObject* PyFeatures::strings(PyFeatures* self)
 
 PyObject* PyFeatures::indexed_keys(PyFeatures* self)
 {
-    StringTable& strings = self->store->strings();
-    const FeatureStore::IndexedKeyMap& keysToCategories = 
-        self->store->keysToCategories();
+    const StringTable& strings = self->store->strings();
+    const Snapshot::IndexedKeyMap& keysToCategories =
+        self->store->snapshot()->keysToCategories();
     PyObject* list = PyList_New(keysToCategories.size());
     if (!list) return NULL;
     int i = 0;

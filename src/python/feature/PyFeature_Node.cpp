@@ -12,6 +12,7 @@
 #include "python/query/PyFeatures.h"
 #include "python/util/util.h"
 
+using namespace clarisma;
 
 PyObject* PyFeature::Node::bounds(PyFeature* self)
 {

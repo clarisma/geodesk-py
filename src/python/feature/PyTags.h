@@ -35,7 +35,7 @@ public:
     PyObject_HEAD
     FeatureStore* store;
     TagTablePtr tags;
-    DataPtr current;
+    clarisma::DataPtr current;
     NextTagFunc func;
 
     static PyTypeObject TYPE;

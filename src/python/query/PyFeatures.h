@@ -307,7 +307,7 @@ public:
 
     static PyTypeObject TYPE;
 
-    static PyObject* create(PyFeatures* features, DataPtr pRelTable);
+    static PyObject* create(PyFeatures* features, clarisma::DataPtr pRelTable);
     static void dealloc(PyParentRelationIterator* self);
     static PyObject* next(PyParentRelationIterator* self);
 };
