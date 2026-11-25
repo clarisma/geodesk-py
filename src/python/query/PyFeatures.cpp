@@ -1039,7 +1039,7 @@ PyObject* PyFeatures::timestamp(PyFeatures* self)
 
 PyObject* PyFeatures::ways(PyFeatures* self)
 {
-    return (PyObject*)self->withTypes(FeatureTypes::WAYS);
+    return self->withTypes(FeatureTypes::WAYS);
 }
 
 

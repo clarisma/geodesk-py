@@ -71,20 +71,16 @@ PyObject* PyFeature::richcompare(PyFeature* self, PyObject* other, int op)
             {
                 Py_RETURN_TRUE;
             }
-            else 
-            {
-                Py_RETURN_FALSE;
-            }
+            Py_RETURN_FALSE;
+
         case Py_NE:
-            if (self->feature.id() != otherFeature->feature.id() ||
+            if (self->feature.idBits() != otherFeature->feature.idBits() ||
                 self->store != otherFeature->store)
             {
                 Py_RETURN_TRUE;
             }
-            else 
-            {
-                Py_RETURN_FALSE;
-            }
+            Py_RETURN_FALSE;
+
         default:
             Py_RETURN_NOTIMPLEMENTED;
         }
