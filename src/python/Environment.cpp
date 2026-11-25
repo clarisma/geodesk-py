@@ -37,6 +37,7 @@ Environment::~Environment()
     Py_XDECREF(shapelyModule_);
     if (geosContext_) GEOS_finish_r(geosContext_);
     Py_XDECREF(emptyFeatures_);
+    Py_XDECREF(emptyTags_);
     // don't dispose of queryException_, it is tracked by the module itself
 }
 
