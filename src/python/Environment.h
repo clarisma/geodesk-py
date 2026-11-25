@@ -11,6 +11,7 @@
 #include "python/util/util.h"
 
 
+class PyTags;
 using namespace geodesk;
 class PyFeatures;
 
@@ -140,21 +141,20 @@ public:
 
 	static void clearAndLogException();
 
-	// PyFeatures* getEmptyFeatures();
+	PyFeatures* getEmptyFeatures();
+	PyTags* getEmptyTags();
 	PyObject* raiseQueryException(const char* format, ...);
 
 private:
 	static Environment ENV;
 
-	GEOSContextHandle_t geosContext_;
-	PyObject* shapelyModule_;
-	void** shapelyApiFunctions_;
-	// PyFeatures* emptyFeatures_;
-	PyObject* queryException_;		// not owned, don't refcount
-	// MatcherHolder allMatcher_;
-	// TODO: Decide where to keep this: here of in FeatureStore
-	// (should not be tied to FeatureStore)
-	PyObject* stringConstants_[STRING_CONSTANT_COUNT];
+	GEOSContextHandle_t geosContext_ = nullptr;
+	PyObject* shapelyModule_ = nullptr;
+	void** shapelyApiFunctions_ = nullptr;
+	PyFeatures* emptyFeatures_ = nullptr;
+	PyTags* emptyTags_ = nullptr;
+	PyObject* queryException_ = nullptr;		// not owned, don't refcount
+	PyObject* stringConstants_[STRING_CONSTANT_COUNT] = {};
 	CachedPythonRef datetimeModule_;
 	CachedPythonRef datetimeType_;
 	CachedPythonRef utcTimezone_;

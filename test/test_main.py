@@ -48,4 +48,4 @@ if __name__ == '__main__':
     # pytest.main(["filter/test_around.py::test_around_lon_lat", "-rA", "-s", "--durations=9999"])
     # pytest.main(["test_performance.py", "-rA", "-s", "--durations=9999"])
     # pytest.main(["filter/test_intersecting.py::test_intersecting_contains_mp", "-rA", "-s", "--durations=9999"])
-    # pytest.main(["test_metadata.py::test_timestamp", "-rA", "-s", "--durations=9999"])
+    # pytest.main(["feature/test_tags.py::test_empty_tags", "-rA", "-s", "--durations=9999"])

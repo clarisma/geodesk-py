@@ -24,10 +24,6 @@
 
 using namespace clarisma;
 
-// TODO: Looks like an empty view is not properly refcounted; if a PyFeatures
-// object that holds an empty view survives all other refs to the FeatureStore,
-// it may become invalid. 
-
 // steals the refs to matcher and filter
 PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
     FeatureTypes acceptedTypes, const Box* bounds,
@@ -56,16 +52,16 @@ PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
     return self;
 }
 
-PyFeatures* PyFeatures::createEmpty(FeatureStore* store, const MatcherHolder* matcher)
+PyFeatures* PyFeatures::createEmpty()
 {
     PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
         self->selectionType = &Empty::SUBTYPE;
-        self->store = store;
+        self->store = nullptr;
         self->flags = 0;
         self->acceptedTypes = 0;
-        self->matcher = matcher;
+        self->matcher = nullptr;
         self->filter = nullptr;
         self->relatedFeature = FeaturePtr(nullptr);
     }
@@ -178,9 +174,17 @@ PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* 
 
 void PyFeatures::dealloc(PyFeatures* self)
 {
-    self->matcher->release();
-    if(self->filter) (self->filter->release());
-    if(self->store) self->store->release();
+    if(self->store)
+    {
+        self->store->release();
+        self->matcher->release();
+        if(self->filter) (self->filter->release());
+    }
+    else
+    {
+        assert(self->matcher == nullptr);
+        assert(self->filter == nullptr);
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -705,36 +709,6 @@ PyObject* PyFeatures::next(PyFeatures* self)
 }
 
 
-/*
-PyFeatures* PyFeatures::copy(PyFeatures* base)
-{
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = base->selectionType;
-        FeatureStore* store = base->store;
-        store->addref();
-        self->store = store;
-        self->acceptedTypes = base->acceptedTypes;
-        const MatcherHolder* matcher = base->matcher;
-        matcher->addref();  
-        self->matcher = matcher;
-        PyFilter* filter = base->filter;
-        Py_XINCREF(filter);
-        self->filter = filter;
-        self->bounds = base->bounds;  // Copies the entire union
-    }
-    return self;
-}
-
-PyFeatures* PyFeatures::world_newWithBox(PyFeatures* base, const Box& box)
-{
-    PyFeatures* self = copy(base);
-    if (self) self->bounds = box;
-    return self;
-}
-*/
-
 SelectionType PyFeatures::World::SUBTYPE =
 {
     iterFeatures,
@@ -743,7 +717,6 @@ SelectionType PyFeatures::World::SUBTYPE =
     containsFeature,
     getTiles
 };
-
 
 
 /**
@@ -867,8 +840,13 @@ PyObject* PyFeatures::first(PyFeatures* self)
 PyObject* PyFeatures::guid(PyFeatures* self)
 {
     char buf[64];
-    self->store->guid().format(buf);
-    return Python::toStringObject(buf, UUID::FORMATTED_LENGTH);
+    size_t len = 0;
+    if (self->store)  [[likely]]
+    {
+        self->store->guid().format(buf);
+        len = UUID::FORMATTED_LENGTH;
+    }
+    return Python::toStringObject(buf, len);
 }
 
 
@@ -913,7 +891,7 @@ PyObject* PyFeatures::map(PyFeatures* self)
 
 PyObject* PyFeatures::nodes(PyFeatures* self)
 {
-    return (PyObject*)self->withTypes(FeatureTypes::NODES);
+    return self->withTypes(FeatureTypes::NODES);
 }
 
 PyObject* PyFeatures::one(PyFeatures* self)
@@ -935,12 +913,17 @@ PyObject* PyFeatures::refcount(PyFeatures* self)
 
 PyObject* PyFeatures::relations(PyFeatures* self)
 {
-    return (PyObject*)self->withTypes(FeatureTypes::RELATIONS);
+    return self->withTypes(FeatureTypes::RELATIONS);
 }
 
 PyObject* PyFeatures::revision(PyFeatures* self)
 {
-    return PyLong_FromUnsignedLong(self->store->revision());
+    uint32_t revision = 0;
+    if (self->store)  [[likely]]
+    {
+        revision = self->store->revision();
+    }
+    return PyLong_FromUnsignedLong(revision);
 }
 
 PyObject* PyFeatures::shape(PyFeatures* self)
@@ -982,6 +965,10 @@ PyObject* PyFeatures::shape(PyFeatures* self)
 
 PyObject* PyFeatures::strings(PyFeatures* self)
 {
+    if (!self->store) [[unlikely]]
+    {
+        return PyList_New(0);
+    }
     const StringTable& strings = self->store->strings();
     uint32_t count = strings.stringCount();
     PyObject* list = PyList_New(count);
@@ -1001,6 +988,10 @@ PyObject* PyFeatures::strings(PyFeatures* self)
 
 PyObject* PyFeatures::indexed_keys(PyFeatures* self)
 {
+    if (!self->store) [[unlikely]]
+    {
+        return PyList_New(0);
+    }
     const StringTable& strings = self->store->strings();
     const IndexedKeyMap& keysToCategories =
         self->store->snapshot()->keysToCategories();
@@ -1034,7 +1025,12 @@ PyObject* PyFeatures::tiles(PyFeatures* self)
 
 PyObject* PyFeatures::timestamp(PyFeatures* self)
 {
-    return Environment::get().datetime(self->store->revisionTimestamp());
+    DateTime ts;
+    if (self->store) [[likely]]
+    {
+        ts = self->store->revisionTimestamp();
+    }
+    return Environment::get().datetime(ts);
 }
 
 PyObject* PyFeatures::ways(PyFeatures* self)

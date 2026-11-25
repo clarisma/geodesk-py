@@ -40,10 +40,9 @@ PyObject* PyFeature::Relation::length(PyFeature* self)
 PyObject* PyFeature::Relation::members(PyFeature* self)
 {
     DataPtr pBody = self->feature.bodyptr();
-    if (pBody.getInt() == 0)        // TODO: unaligned!!!
+    if (pBody.getIntUnaligned() == 0)        // TODO: unaligned!!!
     {
-        // return (PyObject*)Environment::get().getEmptyFeatures();
-        return self->store->getEmptyFeatures();
+        return Environment::get().getEmptyFeatures();
     }
     return PyFeatures::create(&PyFeatures::Members::SUBTYPE, 
         self->store, self->feature, FeatureTypes::RELATION_MEMBERS);
