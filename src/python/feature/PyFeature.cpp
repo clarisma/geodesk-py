@@ -137,8 +137,7 @@ PyObject* PyFeature::return_blank(PyFeature* self)
 
 PyObject* PyFeature::return_empty(PyFeature* self)
 {
-    // return (PyObject*)Environment::get().getEmptyFeatures();
-    return self->store->getEmptyFeatures();
+    return Environment::get().getEmptyFeatures();
 }
 
 

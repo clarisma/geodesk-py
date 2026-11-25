@@ -14,6 +14,7 @@
 #include <geodesk/filter/FeatureNodeFilter.h>
 #include <geodesk/filter/WayNodeFilter.h>
 #include <geodesk/geom/Box.h>
+#include "python/Environment.h"
 
 using namespace geodesk;
 namespace geodesk {
@@ -97,7 +98,7 @@ public:
         FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
     static PyFeatures* createRelated(PyFeatures* base, SelectionType* selectionType, 
         FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
-    static PyFeatures* createEmpty(FeatureStore* store, const MatcherHolder* matcher);
+    static PyFeatures* createEmpty();
 
     /**
      * Creates a new PyFeatures instance based on an existing one.
@@ -114,10 +115,9 @@ public:
         FeatureTypes acceptedTypes,  const Box* bounds, 
         const MatcherHolder* matcher, const Filter* filter);
 
-    /* static */ PyFeatures* getEmpty() const
+    static PyFeatures* getEmpty()
     {
-        return store->getEmptyFeatures();
-        // return Environment::get().getEmptyFeatures();
+        return Environment::get().getEmptyFeatures();
     }
 
     static PyFeatures* build(PyObject* args, PyObject* kwds);

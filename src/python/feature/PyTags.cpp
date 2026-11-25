@@ -8,7 +8,7 @@
 
 using namespace clarisma;
 
-PyObject* PyTags::create(FeatureStore* store, TagTablePtr tags)
+PyTags* PyTags::create(FeatureStore* store, TagTablePtr tags)
 {
     PyTags* self = (PyTags*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)
@@ -17,19 +17,37 @@ PyObject* PyTags::create(FeatureStore* store, TagTablePtr tags)
         self->store = store;
         self->tags = tags;
     }
-    return (PyObject*)self;
+    return self;
 }
+
+PyTags* PyTags::createEmpty()
+{
+    PyTags* self = (PyTags*)TYPE.tp_alloc(&TYPE, 0);
+    if (self != nullptr)
+    {
+        self->store = nullptr;
+        self->tags = TagTablePtr::empty();
+    }
+    return self;
+}
+
+
 
 void PyTags::dealloc(PyTags* self)
 {
-    self->store->release();
+    if (self->store)    [[likely]]
+    {
+        self->store->release();
+    }
     Py_TYPE(self)->tp_free(self);
 }
 
 PyObject* PyTags::str(PyTags* self)
 {
+    StringTable emptyStrings;
+
     DynamicBuffer buf(1024);
-    TagIterator iter(self->tags, self->store->strings());
+    TagIterator iter(self->tags, self->store ? self->store->strings() : emptyStrings);
     GeoJsonWriter writer(&buf);
     writer.pretty(false);
     writer.writeTags(iter);
@@ -39,9 +57,17 @@ PyObject* PyTags::str(PyTags* self)
 
 PyObject* PyTags::iter(PyTags* self)
 {
-    return PyTagIterator::create(self->store, self->tags);
+    if (self->store) [[likely]]
+    {
+        return PyTagIterator::create(self->store, self->tags);
+    }
+    return Python::newRef(self);
 }
 
+PyObject* PyTags::return_null(PyObject*)
+{
+    return nullptr;
+}
 
 Py_ssize_t PyTags::len(PyTags* self)
 {
@@ -50,12 +76,16 @@ Py_ssize_t PyTags::len(PyTags* self)
 
 PyObject* PyTags::subscript(PyTags* self, PyObject* keyObj)
 {
-    if (!PyUnicode_Check(keyObj))
+    if (!PyUnicode_Check(keyObj))   [[unlikely]]
     {
         PyErr_SetString(PyExc_TypeError, "Key must be a string");
-        return NULL;
+        return nullptr;
     }
-    return self->tags.getValue(keyObj, self->store->strings());
+    if (self->store)    [[likely]]
+    {
+        return self->tags.getValue(keyObj, self->store->strings());
+    }
+    Py_RETURN_NONE;
 }
 
 PyMappingMethods PyTags::MAPPING_METHODS =
@@ -76,6 +106,7 @@ PyTypeObject PyTags::TYPE =
     .tp_str = (reprfunc)str,
     .tp_flags = Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_DISALLOW_INSTANTIATION,
     .tp_iter = (getiterfunc)iter,
+    .tp_iternext = return_null,
 };
 
 
@@ -207,7 +238,7 @@ PyObject* PyTagIterator::create(FeatureStore* store, TagTablePtr tags)
             self->func = tags.hasLocalKeys() ? &firstLocal : &done;
         }
     }
-    return (PyObject*)self;
+    return self;
 }
 
 PyTypeObject PyTagIterator::TYPE =

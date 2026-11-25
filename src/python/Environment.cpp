@@ -4,16 +4,11 @@
 #include "Environment.h"
 #include <geos_c.h>
 #include "python/query/PyFeatures.h"
+#include "python/feature/PyTags.h"
 #include <clarisma/util/log.h>
 
-Environment::Environment() :
-    geosContext_(nullptr),
-    shapelyModule_(nullptr),
-    shapelyApiFunctions_(nullptr),
-    // emptyFeatures_(nullptr),
-    queryException_(nullptr)
+Environment::Environment()
 {
-    memset(stringConstants_, 0, sizeof(stringConstants_));
 }
 
 int Environment::init()
@@ -41,22 +36,28 @@ Environment::~Environment()
 {
     Py_XDECREF(shapelyModule_);
     if (geosContext_) GEOS_finish_r(geosContext_);
-    // Py_XDECREF(emptyFeatures_);
+    Py_XDECREF(emptyFeatures_);
     // don't dispose of queryException_, it is tracked by the module itself
 }
 
-/*
 PyFeatures* Environment::getEmptyFeatures()
 {
-    if (!emptyFeatures_)
+    if (!emptyFeatures_)    [[unlikely]]
     {
-        allMatcher_.addref();
-        emptyFeatures_ = PyFeatures::createEmpty(&allMatcher_);
+        emptyFeatures_ = PyFeatures::createEmpty();
     }
-    Py_INCREF(emptyFeatures_);
-    return emptyFeatures_;
+    return Python::newRef(emptyFeatures_);
 }
-*/
+
+
+PyTags* Environment::getEmptyTags()
+{
+    if (!emptyTags_)    [[unlikely]]
+    {
+        emptyTags_ = PyTags::createEmpty();
+    }
+    return Python::newRef(emptyTags_);
+}
 
 
 void Environment::clearAndLogException()

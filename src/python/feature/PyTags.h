@@ -8,31 +8,31 @@
 
 using namespace geodesk;
 
-class PyTags
+class PyTags : public PyObject
 {
 public:
-    PyObject_HEAD
     FeatureStore* store;
     TagTablePtr tags;
 
     static PyTypeObject TYPE;
     static PyMappingMethods MAPPING_METHODS;
 
-    static PyObject* create(FeatureStore* store, TagTablePtr tags);
+    static PyTags* create(FeatureStore* store, TagTablePtr tags);
+    static PyTags* createEmpty();
     static void dealloc(PyTags* self);
     static Py_ssize_t len(PyTags* self);
     static PyObject* str(PyTags* self);
     static PyObject* iter(PyTags* self);
     static PyObject* subscript(PyTags* self, PyObject* keyObj);
+    static PyObject* return_null(PyObject* self);
 };
 
 
-class PyTagIterator
+class PyTagIterator : public PyObject
 {
 public:
     typedef PyObject* (*NextTagFunc)(PyTagIterator*);
 
-    PyObject_HEAD
     FeatureStore* store;
     TagTablePtr tags;
     clarisma::DataPtr current;

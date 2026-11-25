@@ -36,4 +36,5 @@ def test_empty_tags(features):
                 assert node.str("highway") == ""
                 assert node.num("whatever") == 0
                 assert node.highway is None
+                assert str(tags) == "{}"
                 break

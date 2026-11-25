@@ -5,6 +5,7 @@
 #include <geodesk/geom/GeometryBuilder.h>
 #include <geodesk/geom/Mercator.h>
 #include "python/Environment.h"
+#include "python/feature/PyTags.h"
 #include "python/format/PyFormatter.h"
 #include "python/geom/PyBox.h"
 #include "python/geom/PyCoordinate.h"
@@ -111,7 +112,7 @@ PyObject* PyAnonymousNode::str_method(PyFeature* self)
 
 PyObject* PyAnonymousNode::tags(PyAnonymousNode* self)
 {
-    return self->store->getEmptyTags();
+    return Environment::get().getEmptyTags();
 }
 
 PyObject* PyAnonymousNode::x(PyAnonymousNode* self)
