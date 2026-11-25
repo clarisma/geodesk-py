@@ -19,6 +19,11 @@
 #include "python/util/PyFastMethod.h"
 #include <clarisma/util/log.h>
 
+static void freeModule(void*)
+{
+    Environment::get().destroy();
+}
+
 static PyMethodDef GEODESK_METHODS[] = 
 {
     { "lonlat", (PyCFunction)PyCoordinate::createLonLat, METH_VARARGS,
@@ -47,7 +52,7 @@ static PyModuleDef GEODESK_MODULE =
     "GeoDesk Query Engine",
     -1,                         // TODO: use this for size of module state
     GEODESK_METHODS,
-    nullptr, nullptr, nullptr, nullptr
+    nullptr, nullptr, nullptr, freeModule
 };
 
 int createPrivateType(PyObject* module, PyTypeObject* type)

@@ -63,6 +63,12 @@ enum SelectionFlags
 // a Matcher is applied. Could simply check this corner case direcly, but would be 
 // cleaner if we decoupled the logic
 
+// TODO: We could drop selectionType, which brings object size down to 64 bytes
+//  (currently, because of allocator padding, size is 80 bytes)
+
+// TODO: We could cache the results of queries for member and nodes
+//  (There's room in the union), which allows random access via subscript
+
 class PyFeatures : public PyObject
 {
 public:

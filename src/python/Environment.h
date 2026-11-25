@@ -24,6 +24,7 @@ public:
 	Environment();
 	~Environment();
 	int init();
+	void destroy();
 
 	enum Strings
 	{

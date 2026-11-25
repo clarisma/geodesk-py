@@ -13,6 +13,9 @@ class PyFeatures;
 
 typedef PyObject* (*AttrFunctionPtr)(PyFeature* self);
 
+// TODO: The CPython allocator rounds the size up to 48 bytes,
+//  so we could store an extra field (maybe typedID?)
+
 class PyFeature : public PyObject
 {
 public:

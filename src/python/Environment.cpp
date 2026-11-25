@@ -34,8 +34,21 @@ const char* Environment::STRING_CONSTANTS[STRING_CONSTANT_COUNT] =
 
 Environment::~Environment()
 {
+    // Py_XDECREF(shapelyModule_);
+    // if (geosContext_) GEOS_finish_r(geosContext_);
+    // Py_XDECREF(emptyFeatures_);
+    // Py_XDECREF(emptyTags_);
+    // don't dispose of queryException_, it is tracked by the module itself
+}
+
+void Environment::destroy()
+{
     Py_XDECREF(shapelyModule_);
-    if (geosContext_) GEOS_finish_r(geosContext_);
+    if (geosContext_)
+    {
+        GEOS_finish_r(geosContext_);
+        geosContext_ = nullptr;
+    }
     Py_XDECREF(emptyFeatures_);
     Py_XDECREF(emptyTags_);
     // don't dispose of queryException_, it is tracked by the module itself
