@@ -7,74 +7,21 @@
 
 using namespace clarisma;
 
-PyFeatures* PyFeatures::WayNodes::createRelated(PyFeatures* base, WayPtr way)
-{
-    // TODO: verify feature
-    return PyFeatures::createRelated(base, &PyFeatures::WayNodes::SUBTYPE, 
-        way, FeatureTypes::NODES);
-}
-
-// TODO: if matcher is present but way does not have feature nodes,
-// result is an empty set
-// --> need to override withQuery()
-
-PyObject* PyFeatures::WayNodes::iterFeatures(PyFeatures* features)
-{
-    return PyWayNodeIterator::create(features);
-}
-
-PyObject* PyFeatures::WayNodes::countFeatures(PyFeatures* self)
-{
-    // TODO: fix and re-enable
-    /*
-    if (self->acceptsAny())
-    {
-        WayRef way(self->relatedFeature);
-        return way.nodeCount();
-    }
-    */
-    return PyFeatures::countFeatures(self);
-}
-
-int PyFeatures::WayNodes::isEmpty(PyFeatures* self)
-{
-    // If a way's set of nodes is unconstrained, it cannot be empty,
-    // since a way by definition always has at least 2 nodes.
-    // (This is true even for ways that are placeholders)
-    if (self->acceptsAny())
-    {
-        return 0;
-    }
-    return PyFeatures::isEmpty(self);
-}
-
-SelectionType PyFeatures::WayNodes::SUBTYPE =
-{
-    iterFeatures,
-    countFeatures,
-    isEmpty,
-    containsFeature,
-    getTiles
-};
-
-// TODO: containsFeature should check for type ndoe and way-node flag to rule out given feature
 
 PyObject* PyWayNodeIterator::create(PyFeatures* features)
 {
-    WayPtr way(features->relatedFeature);
-    int flags = way.flags();
-    DataPtr pBody = way.bodyptr();
+    WayPtr way(features->relatedFeature());
     PyWayNodeIterator* self = (PyWayNodeIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
-        self->featureNodesOnly = features->flags & SelectionFlags::USES_MATCHER;
+        self->featureNodesOnly = features->usesMatcher();
         self->target = Python::newRef(features);
-        new(&self->nodeCursor)WayNodeCursor(way, features->store->hasWaynodeIds());
-        new(&self->featureIter)FeatureNodeIterator(features->store, way,
-            features->matcher, features->filter);
+        new(&self->nodeCursor)WayNodeCursor(way, features->store()->hasWaynodeIds());
+        new(&self->featureIter)FeatureNodeIterator(features->store(), way,
+            features->matcher(), features->filter());
         self->nextNode = self->featureIter.next();
     }
-    return (PyObject*)self;
+    return self;
 }
 
 // TODO: consolidate this code?
@@ -83,9 +30,6 @@ PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
 {
     WayPtr way(wayObj->feature);
     bool wayNodeIds = wayObj->store->hasWaynodeIds();
-    // LOG("Iterating way/%ld", way.id());
-    int flags = way.flags();
-    DataPtr pBody = way.bodyptr();
     PyWayNodeIterator* self = (PyWayNodeIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
@@ -95,7 +39,7 @@ PyObject* PyWayNodeIterator::create(PyFeature* wayObj)
         new(&self->featureIter)FeatureNodeIterator(wayObj->store, way);
         self->nextNode = self->featureIter.next();
     }
-    return (PyObject*)self;
+    return self;
 }
 
 void PyWayNodeIterator::dealloc(PyWayNodeIterator* self)

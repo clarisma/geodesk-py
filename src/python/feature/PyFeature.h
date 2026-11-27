@@ -6,6 +6,7 @@
 #include <Python.h>
 #include <geodesk/feature/FeatureStore.h>
 #include <geodesk/feature/MemberIterator.h>
+#include <geodesk/feature/FeatureBase.h>
 
 using namespace geodesk;
 class PyFeature;
@@ -29,6 +30,7 @@ public:
     static const AttrFunctionPtr* SUBTYPE_FEATURE_METHODS[];
 
     static PyFeature* create(FeatureStore* store, FeaturePtr feature, PyObject* role);
+    static PyObject* create(FeatureStore* store, uint64_t id, Coordinate xy);
     static void dealloc(PyFeature* self);
     static PyObject* getattr(PyFeature* self, PyObject* name);
     static PyObject* getattr0(PyFeature* self, PyObject* nameObj, const AttrFunctionPtr* const table);

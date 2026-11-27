@@ -7,12 +7,12 @@
 #include <Python.h>
 #include <geodesk/feature/FeatureNodeIterator.h>
 #include <geodesk/feature/WayNodeCursor.h>
-#include <geodesk/feature/WayPtr.h>
 #include <geodesk/feature/MemberIterator.h>
 #include <geodesk/feature/ParentRelationIterator.h>
 #include <geodesk/feature/TypedFeatureId.h>
 #include <geodesk/filter/FeatureNodeFilter.h>
 #include <geodesk/filter/WayNodeFilter.h>
+#include <geodesk/query/ViewBase.h>
 #include <geodesk/geom/Box.h>
 #include "python/Environment.h"
 
@@ -30,32 +30,6 @@ class PyQuery;
 // Must bePyObject to support both PyFeature and PyAnonymousNode
 typedef const std::function<void(PyObject* feature)>& FeatureFunction;
 
-struct SelectionType
-{
-    PyObject* (*iter)(PyFeatures*);
-    PyObject* (*count)(PyFeatures*);      
-    int (*isEmpty)(PyFeatures*);    
-    int (*containsFeature)(PyFeatures*, PyObject*);
-    PyObject* (*getTiles)(PyFeatures*);
-};
-
-enum SelectionFlags
-{
-    /**
-     * The PyFeatures instance uses `bounds` (instead of `relatedFeature` in
-     * the same union). Only used by WORLD selection.
-     */
-    USES_BOUNDS = 1,
-    /**
-     * `bounds` has bounds tighter than `Box::ofWorld`. `USES_BOUNDS` must be set.
-     */
-    BOUNDS_ACTIVE = 2,
-    USES_MATCHER = 4,
-    USES_FILTER = 8,
-
-    // TODO: need flag to indicate if relatedFeature is in use
-    // or does NOT USES_BOUNDS imply use of relatedFeature?
-};
 
 // TODO: Unresolved issue: Need to distinguish between way.nodes and way.members:
 // The latter uses a NodeIterator (all nodes, including anonymous), the latter 
@@ -69,24 +43,9 @@ enum SelectionFlags
 // TODO: We could cache the results of queries for member and nodes
 //  (There's room in the union), which allows random access via subscript
 
-class PyFeatures : public PyObject
+class PyFeatures : public PyObject, public ViewBase<PyFeatures>
 {
 public:
-    // PyObject_HEAD
-    SelectionType* selectionType;
-    FeatureStore* store;
-    FeatureTypes acceptedTypes;
-    uint32_t flags;
-    const MatcherHolder* matcher;
-    const Filter* filter;
-    union
-    {
-        Box bounds;                 // If used, USES_BOUNDS flag must be set 
-                                    // If it contains a value other than Box::ofWorld(),
-                                    // ACTIVE_BOUNDS must be set
-        FeaturePtr relatedFeature;  // If used, USES_BOUNDS flag must be clear
-    };
-
     static PyTypeObject TYPE;
     static PyMappingMethods MAPPING_METHODS;
     static PyNumberMethods NUMBER_METHODS;
@@ -96,30 +55,8 @@ public:
      * The user-callable constructor: Creates a WORLD Selection for the given GOL.
      */
     static PyFeatures* createNew(PyTypeObject* type, PyObject* args, PyObject* kwds);
-    /**
-     * Creates an unconstrained selection for Features related to the given Feature:
-     * MEMBERS, NODES, FEATURE_NODES, PARENTS, PARENT_WAYS, PARENT_RELATIONS
-     */
-    static PyFeatures* create(SelectionType* selectionType, FeatureStore* store,
-        FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
-    static PyFeatures* createRelated(PyFeatures* base, SelectionType* selectionType, 
-        FeaturePtr relatedFeature, FeatureTypes acceptedTypes);
-    static PyFeatures* createEmpty();
 
-    /**
-     * Creates a new PyFeatures instance based on an existing one.
-     * 
-     * @param base          the PyFeatures to use as a basis
-     * @param flags         the new flags
-     * @param acceptedTypes the new types
-     * @param bounds        pointer to new bounds, or existing (cannot be NULL,
-     *                      even if USES_BOUNDS is not set)
-     * @param matcher       the MatcherHolder (cannot be NULL)
-     * @param filter        the Filter (may be NULL)
-     */
-    static PyFeatures* createWith(PyFeatures* base, uint32_t flags,
-        FeatureTypes acceptedTypes,  const Box* bounds, 
-        const MatcherHolder* matcher, const Filter* filter);
+    static PyFeatures* createEmpty();
 
     static PyFeatures* getEmpty()
     {
@@ -128,12 +65,23 @@ public:
 
     static PyFeatures* build(PyObject* args, PyObject* kwds);
 
-    /*
-    bool hasMatcher() const
+    static PyFeatures* create(int kind, int flags, FeatureTypes types, FeatureStore* store,
+        Context context, const MatcherHolder* matcher, const Filter* filter)
     {
-        return matcher != store->borrowAllMatcher();
+        auto self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
+        if (self) [[likely]]
+        {
+            ::new (static_cast<Selection*>(self)) Selection(
+                kind, flags, types, store, context, matcher, filter);
+        }
+        else
+        {
+            matcher->release();
+            if (filter) filter->release();
+            store->release();
+        }
+        return self;
     }
-    */
 
     static void dealloc(PyFeatures* self);
     static PyObject* dir(PyFeatures* self, PyObject* args, PyObject* kwargs);
@@ -141,16 +89,6 @@ public:
     static PyObject* getattr(PyFeatures* self, PyObject* name);
     static PyObject* iter(PyFeatures* self);
     static PyObject* next(PyFeatures* self);
-
-    PyFeatures* withQuery(const char* query);
-    PyFeatures* withFilter(const Filter* filter);
-    PyFeatures* withTypes(FeatureTypes newTypes);
-    PyFeatures* withOther(PyFeatures* other);
-
-    // Selection Methods
-
-    static PyObject* countFeatures(PyFeatures*);
-    static int       isEmpty(PyFeatures*);
 
     // Mapping Methods
 
@@ -201,7 +139,8 @@ public:
     PyObject* findById(FeatureType type, PyObject* args, PyObject* kwargs) const;
 
     int forEach(FeatureFunction func);
-    PyObject* getFirst(bool mustHaveOne, bool mayHaveMore);
+    PyObject* getFirst(bool mustHaveOne, bool mayHaveMore) const;
+    PyObject* getIter();
     PyObject* getList(Py_ssize_t maxLen);
     static int isTrue(PyFeatures* self);
     static int containsFeature(PyFeatures* self, PyObject* object);
@@ -223,53 +162,6 @@ public:
     class Parents;
 };
 
-class PyFeatures::Empty : public PyFeatures
-{
-public:
-    static SelectionType SUBTYPE;
-    static PyObject* iterFeatures(PyFeatures*);
-    static PyObject* countFeatures(PyFeatures*);
-    static int       isEmpty(PyFeatures*);
-};
-
-class PyFeatures::World : public PyFeatures
-{
-public:
-    static SelectionType SUBTYPE;
-    static PyObject* iterFeatures(PyFeatures*);
-    static PyObject* countFeatures(PyFeatures*);
-    static int containsFeature(PyFeatures* self, PyObject* feature);
-    static PyObject* getTiles(PyFeatures*);
-};
-
-class PyFeatures::WayNodes : public PyFeatures
-{
-public:
-    static SelectionType SUBTYPE;
-    PyFeatures* createRelated(PyFeatures* base, WayPtr way);
-    static PyObject* iterFeatures(PyFeatures*);
-    static PyObject* countFeatures(PyFeatures*);
-    static int       isEmpty(PyFeatures*);
-};
-
-class PyFeatures::Members : public PyFeatures
-{
-public:
-    static SelectionType SUBTYPE;
-    static PyObject* iterFeatures(PyFeatures*);
-    static int       isEmpty(PyFeatures*);
-    static PyObject* getTiles(PyFeatures*);
-};
-
-class PyFeatures::Parents : public PyFeatures
-{
-public:
-    static SelectionType SUBTYPE;
-    static PyFeatures* create(PyAnonymousNode* relatedNode);
-    static PyFeatures* create(PyFeatures* base, PyAnonymousNode* relatedNode);
-    static PyObject* iterFeatures(PyFeatures*);
-    static int       isEmpty(PyFeatures*);
-};
 
 class PyWayNodeIterator : public PyObject
 {

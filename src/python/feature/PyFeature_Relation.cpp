@@ -39,13 +39,7 @@ PyObject* PyFeature::Relation::length(PyFeature* self)
 
 PyObject* PyFeature::Relation::members(PyFeature* self)
 {
-    DataPtr pBody = self->feature.bodyptr();
-    if (pBody.getIntUnaligned() == 0)        // TODO: unaligned!!!
-    {
-        return Environment::get().getEmptyFeatures();
-    }
-    return PyFeatures::create(&PyFeatures::Members::SUBTYPE, 
-        self->store, self->feature, FeatureTypes::RELATION_MEMBERS);
+    return PyFeatures::membersOf(self->store, self->feature);
 }
 
 PyObject* PyFeature::Relation::shape(PyFeature* self)
@@ -53,21 +47,8 @@ PyObject* PyFeature::Relation::shape(PyFeature* self)
     Environment& env = Environment::get();
     GEOSContextHandle_t geosContext = env.getGeosContext();
     if (!geosContext) return NULL;
-
-    RelationPtr rel(self->feature);
-    /*
-    if (rel.isArea())
-    {
-        Polygonizer polygonizer;
-        polygonizer.createRings(self->store, rel);
-        polygonizer.assignAndMergeHoles();
-        return env.buildShapelyGeometry(polygonizer.createPolygonal(geosContext));
-    }
-    // TODO: other geometry collections
-    */
-
     return env.buildShapelyGeometry(GeometryBuilder::buildRelationGeometry(
-        self->store, rel, geosContext));
+        self->store, RelationPtr(self->feature), geosContext));
 }
 
 AttrFunctionPtr const PyFeature::Relation::FEATURE_METHODS[] =

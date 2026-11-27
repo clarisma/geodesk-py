@@ -44,17 +44,12 @@ PyObject* PyFeature::Node::lon(PyFeature* self)
 
 PyObject* PyFeature::Node::parents(PyFeature* self)
 {
-    int featureFlags = self->feature.flags();
-    uint32_t acceptedTypes = (featureFlags & FeatureFlags::RELATION_MEMBER) ?
+    FeatureTypes types = self->feature.isRelationMember() ?
         FeatureTypes::RELATIONS : 0;
-    acceptedTypes |= (featureFlags & FeatureFlags::WAYNODE) ?
+    types |= (self->feature.flags() & FeatureFlags::WAYNODE) ?
         (FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED) : 0;
-    if (acceptedTypes == 0)
-    {
-        return return_empty(self);
-    }
-    return PyFeatures::create(&PyFeatures::Parents::SUBTYPE,
-        self->store, self->feature, acceptedTypes);
+    if (types == 0) return PyFeatures::getEmpty();
+    return PyFeatures::parentsOf(self->store, self->feature, types);
 }
 
 PyObject* PyFeature::Node::shape(PyFeature* self)

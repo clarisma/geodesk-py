@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 #include "PyFeatures.h"
+#include <geodesk/feature/FeatureIterator.h>
 #include <geodesk/filter/ComboFilter.h>
 #include <geodesk/filter/IntersectsFilter.h>
 // #include "match/MatcherDecoder.h"       // TODO: remove (only needed for explain)
@@ -23,95 +24,6 @@
 #include "PyFeatures_lookup.cxx"
 
 using namespace clarisma;
-
-// steals the refs to matcher and filter
-PyFeatures* PyFeatures::createWith(PyFeatures* base, uint32_t flags,
-    FeatureTypes acceptedTypes, const Box* bounds,
-    const MatcherHolder* matcher, const Filter* filter)
-{
-    assert(bounds != nullptr);
-    PyTypeObject* type = Py_TYPE(base);
-    PyFeatures* self = (PyFeatures*)type->tp_alloc(type, 0);
-    if (self)
-    {
-        self->selectionType = base->selectionType;
-        FeatureStore* store = base->store;
-        store->addref();
-        self->store = store;
-        self->flags = flags;
-        self->acceptedTypes = acceptedTypes;
-        self->matcher = matcher;
-        self->filter = filter;
-        self->bounds = *bounds;      
-        // If base does not use bounds, this copies relatedFeature from the union
-        // as long as base->bounds is passed as bounds
-
-        // TODO: what happens to relatedFeature??
-        // Need to inc refcount!!! no, has no refcount
-    }
-    return self;
-}
-
-PyFeatures* PyFeatures::createEmpty()
-{
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = &Empty::SUBTYPE;
-        self->store = nullptr;
-        self->flags = 0;
-        self->acceptedTypes = 0;
-        self->matcher = nullptr;
-        self->filter = nullptr;
-        self->relatedFeature = FeaturePtr(nullptr);
-    }
-    return self;
-}
-
-
-PyFeatures* PyFeatures::create(SelectionType* selectionType, FeatureStore* store,
-    FeaturePtr relatedFeature, FeatureTypes acceptedTypes)
-{
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = selectionType;
-        store->addref();
-        self->store = store;
-        self->flags = 0;
-        self->acceptedTypes = acceptedTypes;
-        self->matcher = store->getAllMatcher();
-        self->filter = nullptr;
-        self->relatedFeature = relatedFeature;
-    }
-    return self;
-}
-
-PyFeatures* PyFeatures::createRelated(PyFeatures* base, SelectionType* selectionType,
-    FeaturePtr relatedFeature, FeatureTypes acceptedTypes)
-{
-    acceptedTypes &= base->acceptedTypes;
-    if (!acceptedTypes) return base->getEmpty();
-    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-    if (self)
-    {
-        self->selectionType = selectionType;
-        self->acceptedTypes = acceptedTypes;
-        self->store = base->store;
-        self->flags = base->flags & ~(SelectionFlags::USES_BOUNDS | SelectionFlags::BOUNDS_ACTIVE);
-        self->matcher = base->matcher;
-        self->filter = base->filter;
-        self->relatedFeature = relatedFeature;
-        self->store->addref();
-        self->matcher->addref();
-        if(self->filter) self->filter->addref();
-
-        // TODO: if bbox-constrained, create a bbox filter
-    }
-    return self;
-}
-
-
 
 PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
@@ -146,24 +58,8 @@ PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* 
             PyErr_SetString(PyExc_RuntimeError, ex.what());
             return NULL;
         }
-        PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
-        if (self)   [[likely]]
-        {
-            self->selectionType = &World::SUBTYPE;
-            // No need to addref store, we already have a new ref
-            self->store = store;
-            self->flags = SelectionFlags::USES_BOUNDS;
-            self->acceptedTypes = FeatureTypes::ALL;
-            self->matcher = store->getAllMatcher();
-            self->filter = NULL;
-            self->bounds = Box::ofWorld();
-        }
-        else
-        {
-            // Release store if we can't create the Python object
-            store->release();
-        }
-        return self;
+        return create(WORLD, USES_BOUNDS, FeatureTypes::ALL, store,
+            Box::ofWorld(), store->getAllMatcher(), nullptr);
     }
     PyErr_SetString(PyExc_TypeError, "Expected single argument (name of GOL file)");
     return NULL;
@@ -171,19 +67,27 @@ PyFeatures* PyFeatures::createNew(PyTypeObject* type, PyObject* args, PyObject* 
     // return build(args, kwds); // TODO
 }
 
+PyFeatures* PyFeatures::createEmpty()
+{
+    PyFeatures* self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
+    if (self) [[likely]]
+    {
+        ::new (self) Selection(EMPTY, 0, 0, nullptr,
+    {}, nullptr, nullptr);
+    }
+    return self;
+}
 
 void PyFeatures::dealloc(PyFeatures* self)
 {
-    if(self->store)
+    if(self->store())
     {
-        self->store->release();
-        self->matcher->release();
-        if(self->filter) (self->filter->release());
+        self->release();
     }
     else
     {
-        assert(self->matcher == nullptr);
-        assert(self->filter == nullptr);
+        assert(self->matcher() == nullptr);
+        assert(self->filter() == nullptr);
     }
     Py_TYPE(self)->tp_free(self);
 }
@@ -193,23 +97,33 @@ PyObject* PyFeatures::dir(PyFeatures* self, PyObject* args, PyObject* kwargs)
     return Python::createList(ATTR_NAMES, ATTR_COUNT);
 }
 
-PyObject* PyFeatures::iter(PyFeatures* self)
+PyObject* PyFeatures::getIter()
 {
-    return self->selectionType->iter(self);
+    switch (kind_)
+    {
+    case WORLD:
+        return PyQuery::create(this);
+    case WAY_NODES:
+        return PyWayNodeIterator::create(this);
+    case MEMBERS:
+        return PyMemberIterator::create(this);
+    }
+    // TODO
 }
 
-PyObject* PyFeatures::World::iterFeatures(PyFeatures* self)
+PyObject* PyFeatures::iter(PyFeatures* self)
 {
-    return PyQuery::create(self);
+    return self->getIter();
 }
+
 
 PyObject* PyFeatures::World::getTiles(PyFeatures* self)
 {
     PyObject* list = PyList_New(0);
     if (list)
     {
-        FeatureStore* store = self->store;
-        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds, self->filter);
+        FeatureStore* store = self->store();
+        TileIndexWalker tiw(store->tileIndex(), store->zoomLevels(), self->bounds(), self->filter());
         do
         {
             PyTile* tile = PyTile::create(store, tiw.currentTile(), tiw.currentTip());
@@ -242,36 +156,17 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         PyTypeObject* type = Py_TYPE(arg);
         if (type == &PyBox::TYPE)
         {
-            Box box = ((PyBox*)arg)->box;
-            if (box.isEmpty()) return self->getEmpty();
-            if (self->flags & SelectionFlags::USES_BOUNDS)
-            {
-                if (self->flags & SelectionFlags::BOUNDS_ACTIVE)
-                {
-                    box = Box::simpleIntersection(box, self->bounds);
-                    if(box.isEmpty()) return self->getEmpty();
-                }
-                self->matcher->addref();
-                if(self->filter) self->filter->addref();
-                return (PyObject*)createWith(self, self->flags | SelectionFlags::BOUNDS_ACTIVE,
-                    self->acceptedTypes, &box, self->matcher, self->filter);
-            }
-            else
-            {
-                PyErr_SetString(PyExc_NotImplementedError, "Not yet implemented.");
-                return NULL;
-            }
+            return self->withBounds(((PyBox*)arg)->box);
         }
         if (type == &PyUnicode_Type)
         {
-            Py_ssize_t len;
-            const char* query = PyUnicode_AsUTF8AndSize(arg, &len);
-            if (!query) return NULL;
+            const char* query = PyUnicode_AsUTF8(arg);
+            if (!query) return nullptr;
             return self->withQuery(query);
         }
         if (type == &TYPE)
         {
-            return (PyObject*)self->withOther((PyFeatures*)arg);
+            return self->withOther(*(PyFeatures*)arg);
         }
         if (type == &PyFeature::TYPE)
         {
@@ -302,12 +197,12 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
         
         // TODO: if (type == &PyCoordinate::TYPE)
         
-        if (arg == (PyObject*)Py_None) return self->getEmpty();
+        if (arg == Py_None) return getEmpty();
 
         PyErr_Format(PyExc_TypeError, "%s is not a valid argument", type->tp_name);
         return NULL;
     }
-    else if (argCount == 0)
+    if (argCount == 0)
     {
         // TODO: check kwargs!
         return Python::newRef(self);
@@ -316,42 +211,11 @@ PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
     return NULL;
 }
 
-// TODO: use negative value to signal error
-/*
-uint64_t PyFeatures::getCount()
-{
-    return selectionType->count(this);
-}
-*/
 
-PyObject* PyFeatures::World::countFeatures(PyFeatures* self) 
-{
-    int64_t count = 0;
-    Query query(self->store, self->bounds, self->acceptedTypes, self->matcher, self->filter);
-    while (!query.next().isNull()) count++;
-    // TODO: error handling
-    return PyLong_FromLongLong(count);
-}
-
-PyObject* PyFeatures::countFeatures(PyFeatures* self)
-{
-    int64_t count = 0;
-    PyObject* iter = self->selectionType->iter(self);
-    if (!iter) return 0;
-    for (;;)
-    {
-        PyObject* feature = PyIter_Next(iter);
-        if (!feature) break;
-        Py_DECREF(feature);
-        count++;
-    }
-    Py_DECREF(iter);
-    return PyLong_FromLongLong(count);
-}
 
 int PyFeatures::forEach(FeatureFunction func)
 {
-    PyObject* iter = selectionType->iter(this);
+    PyObject* iter = getIter();
     if (!iter) return -1;
     for (;;)
     {
@@ -365,56 +229,47 @@ int PyFeatures::forEach(FeatureFunction func)
 }
 
 
-PyObject* PyFeatures::getFirst(bool mustHaveOne, bool mayHaveMore)
+PyObject* PyFeatures::getFirst(bool mustHaveOne, bool mayHaveMore) const
 {
-    PyObject* iter = selectionType->iter(this);
-    if (!iter) return NULL;
-    PyObject* result = PyIter_Next(iter);
-    if (PyErr_Occurred())
+    FeatureIterator<Feature> iter(*this);
+    if (iter != nullptr)
     {
-        result = NULL;
-    }
-    else
-    {
-        if (!result)
+        PyObject* result;
+        if (iter.current().isAnonymousNode())
         {
-            if (mustHaveOne)
-            {
-                Environment::get().raiseQueryException("No feature found.");
-                result = NULL;
-            }
-            else
-            {
-                result = Python::newRef(Py_None);
-            }
+            result = PyFeature::create(store(), iter.current().id(),
+                iter.current().xy());
         }
         else
         {
-            if (!mayHaveMore)
+            result = PyFeature::create(store(), iter.current().ptr(),
+                iter.currentRole());
+        }
+        if (!mayHaveMore)
+        {
+            ++iter;
+            if (iter != nullptr)
             {
-                PyObject* more = PyIter_Next(iter);
-                if (PyErr_Occurred())
-                {
-                    result = NULL;
-                }
-                else if(more)
-                {
-                    Environment::get().raiseQueryException(
-                        "Expected only one feature, but found multiple.");
-                        // TODO: list them
-                    result = NULL;
-                }
+                Py_DECREF(result);
+                Environment::get().raiseQueryException(
+                    "Expected only one feature, but found multiple.");
+                // TODO: list them
+                return nullptr;
             }
         }
+        return result;
     }
-    Py_DECREF(iter);
-    return result;
+    if (mustHaveOne)
+    {
+        Environment::get().raiseQueryException("No feature found.");
+        return nullptr;
+    }
+    Py_RETURN_NONE;
 }
 
 int PyFeatures::isTrue(PyFeatures* self) 
 {
-    int empty = self->selectionType->isEmpty(self);
-    return empty < 0 ? -1 : (empty ? 0 : 1);
+    return self->isEmpty() ? 0 : 1;
 }
 
 PyObject* PyFeatures::getattr(PyFeatures* self, PyObject* nameObj)
@@ -431,10 +286,7 @@ PyObject* PyFeatures::getattr(PyFeatures* self, PyObject* nameObj)
         {
             return PyFastMethod::create(self, ref.method());
         }
-        else
-        {
-            return ref.getter()(self);
-        }
+        return ref.getter()(self);
     }
     return PyObject_GenericGetAttr(self, nameObj);
     /*
@@ -493,7 +345,7 @@ PyObject* PyFeatures::getList(Py_ssize_t maxLen)
 
     // TODO: use negative value to signal error
     Py_ssize_t count = 0;
-    PyObject* iter = selectionType->iter(this);
+    PyObject* iter = getIter();
     if (!iter)
     {
         Py_DECREF(list);
@@ -532,7 +384,7 @@ PyObject* PyFeatures::op_and(PyFeatures* self, PyObject* other)
     {
         Py_RETURN_NOTIMPLEMENTED;
     }
-    return self->withOther((PyFeatures*)other);
+    return self->withOther(*(PyFeatures*)other);
 }
 
 
@@ -571,136 +423,6 @@ PyTypeObject PyFeatures::TYPE =
     .tp_new = (newfunc)createNew
 };
 
-PyFeatures* PyFeatures::withQuery(const char* query)
-{
-    try
-    {
-        const MatcherHolder* newMatcher = store->getMatcher(query);
-        uint32_t newTypes = acceptedTypes & newMatcher->acceptedTypes();
-        if (newTypes == 0)
-        {
-            newMatcher->release();
-            return getEmpty();
-        }
-        if (flags & USES_MATCHER)
-        {
-            matcher->addref();
-            newMatcher = MatcherHolder::combine(matcher, newMatcher);
-                // combine() steals references
-        }
-
-        // TODO: combine newMatcher with any existing matcher
-        if(filter) filter->addref();     // need to addref filter because createWith steals the ref
-        return createWith(this, flags | USES_MATCHER, newTypes, &bounds, newMatcher, filter);
-    }
-    catch (const ParseException& ex)
-    {
-        // Environment::get().raiseQueryException("Bad query: %s", ex.what());
-        Environment::get().raiseQueryException(ex.what());
-        return NULL;
-    }
-}
-
-
-PyFeatures* PyFeatures::withFilter(const Filter* newFilter)
-{
-    if (filter)
-    {
-        const ComboFilter* combo = new ComboFilter(filter, newFilter);
-        newFilter->release();
-            // Need to release because this function is expected to consume the
-            // reference (ComboFilter adds its own ref)
-        newFilter = combo;
-    }
-    FeatureTypes newTypes = acceptedTypes & newFilter->acceptedTypes();
-    if (newTypes == 0)
-    {
-        newFilter->release();
-        return getEmpty();
-    }
-
-    // TODO: apply bounds!!!
-    // 
-    // TODO: fix
-    Box b = newFilter->getBounds();
-    // Box b = Box::simpleIntersection(bounds, newFilter->getBounds());
-
-    matcher->addref();      // createWith consumes ref to matcher
-    return createWith(this, flags | USES_FILTER, newTypes, 
-        (flags & USES_BOUNDS) ? &b : &bounds, 
-            matcher, newFilter);
-}
-
-
-PyFeatures* PyFeatures::withOther(PyFeatures* other)
-{
-    FeatureTypes newTypes = acceptedTypes & other->acceptedTypes;
-    if (newTypes == 0) return getEmpty();
-    
-    // TODO: only allow intersecting World queries for now
-    // Others will require special handling, rarely used
-
-    // TODO: merge matcher
-    // TODO: merge bounding boxes (need to consider world vs. related query)
-    // TODO: enforce same-store rule
-
-    const MatcherHolder* newMatcher;
-    if (flags & USES_MATCHER)
-    {
-        if (other->flags & USES_MATCHER)
-        {
-            matcher->addref();
-            other->matcher->addref();
-            newMatcher = MatcherHolder::combine(matcher, other->matcher);
-                // combine() steals the references
-        }
-        else
-        {
-            newMatcher = matcher;
-            newMatcher->addref();
-        }
-    }
-    else
-    {
-        newMatcher = other->matcher;
-        newMatcher->addref();
-    }
-
-    const Filter* newFilter = other->filter;
-    if (newFilter)
-    {
-        if (filter)
-        {
-            newFilter = new ComboFilter(filter, newFilter);
-        }
-        else
-        {
-            newFilter->addref();
-        }
-    }
-    else if (filter)
-    {
-        newFilter = filter;
-        newFilter->addref();
-    }
-    else
-    {
-        newFilter = nullptr;
-    }
-
-    return createWith(this, flags | other->flags, newTypes,
-        &bounds, newMatcher, newFilter);
-}
-
-
-PyFeatures* PyFeatures::withTypes(FeatureTypes newTypes)
-{
-    newTypes &= acceptedTypes;
-    if (newTypes == 0) return getEmpty();
-    matcher->addref();              // matcher can never be null
-    if(filter) filter->addref();    // however, filter is allowed to be null
-    return createWith(this, flags, newTypes, &bounds, matcher, filter);
-}
 
 // PyFeatures itself is an empty iterator, makes it easy for EMPTY Selection
 PyObject* PyFeatures::next(PyFeatures* self)
@@ -709,23 +431,13 @@ PyObject* PyFeatures::next(PyFeatures* self)
 }
 
 
-SelectionType PyFeatures::World::SUBTYPE =
-{
-    iterFeatures,
-    countFeatures,
-    isEmpty,
-    containsFeature,
-    getTiles
-};
-
-
 /**
  * Simple (but inefficent) default implementation that checks the given
  * feature against all features in the set.
  */
 int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
 {
-    PyObject* iter = self->selectionType->iter(self);
+    PyObject* iter = self->getIter();
     if (iter == NULL) return -1;
 
     int res = 0;
@@ -775,16 +487,7 @@ int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
     return self->filter->accept(self->store, feature, FastFilterHint());
 }
 
-// TODO: This is broken !!!!!
-int PyFeatures::isEmpty(PyFeatures* self)
-{
-    PyObject* iter = self->selectionType->iter(self);
-    if (iter == NULL) return -1;
-    bool isEmpty = PyIter_Next(iter) == NULL;
-    if (PyErr_Occurred()) PyErr_Clear();
-    Py_DECREF(iter);
-    return isEmpty;
-}
+
 
 bool PyFeatures::acceptsAny(FeatureTypes types)
 {
@@ -829,7 +532,7 @@ PyObject* PyFeatures::area(PyFeatures* self)
 
 PyObject* PyFeatures::count(PyFeatures* self)
 {
-    return self->selectionType->count(self);
+    return PyLong_FromUnsignedLongLong(self->Selection::count());
 }
 
 PyObject* PyFeatures::first(PyFeatures* self)
@@ -841,9 +544,9 @@ PyObject* PyFeatures::guid(PyFeatures* self)
 {
     char buf[64];
     size_t len = 0;
-    if (self->store)  [[likely]]
+    if (self->store())  [[likely]]
     {
-        self->store->guid().format(buf);
+        self->store()->guid().format(buf);
         len = UUID::FORMATTED_LENGTH;
     }
     return Python::toStringObject(buf, len);
@@ -919,9 +622,9 @@ PyObject* PyFeatures::relations(PyFeatures* self)
 PyObject* PyFeatures::revision(PyFeatures* self)
 {
     uint32_t revision = 0;
-    if (self->store)  [[likely]]
+    if (self->store())  [[likely]]
     {
-        revision = self->store->revision();
+        revision = self->store()->revision();
     }
     return PyLong_FromUnsignedLong(revision);
 }
@@ -965,11 +668,11 @@ PyObject* PyFeatures::shape(PyFeatures* self)
 
 PyObject* PyFeatures::strings(PyFeatures* self)
 {
-    if (!self->store) [[unlikely]]
+    if (!self->store()) [[unlikely]]
     {
         return PyList_New(0);
     }
-    const StringTable& strings = self->store->strings();
+    const StringTable& strings = self->store()->strings();
     uint32_t count = strings.stringCount();
     PyObject* list = PyList_New(count);
     if (!list) return NULL;
@@ -988,13 +691,13 @@ PyObject* PyFeatures::strings(PyFeatures* self)
 
 PyObject* PyFeatures::indexed_keys(PyFeatures* self)
 {
-    if (!self->store) [[unlikely]]
+    if (!self->store()) [[unlikely]]
     {
         return PyList_New(0);
     }
-    const StringTable& strings = self->store->strings();
+    const StringTable& strings = self->store()->strings();
     const IndexedKeyMap& keysToCategories =
-        self->store->snapshot()->keysToCategories();
+        self->store()->snapshot()->keysToCategories();
     PyObject* list = PyList_New(keysToCategories.size());
     if (!list) return NULL;
     int i = 0;
@@ -1026,9 +729,9 @@ PyObject* PyFeatures::tiles(PyFeatures* self)
 PyObject* PyFeatures::timestamp(PyFeatures* self)
 {
     DateTime ts;
-    if (self->store) [[likely]]
+    if (self->store()) [[likely]]
     {
-        ts = self->store->revisionTimestamp();
+        ts = self->store()->revisionTimestamp();
     }
     return Environment::get().datetime(ts);
 }
@@ -1162,23 +865,23 @@ PyObject* PyFeatures::findById(FeatureType type, PyObject* args, PyObject* kwarg
         FeatureTypes::RELATIONS
     };
 
-    FeatureTypes types = TYPES[static_cast<int>(type)] & acceptedTypes;
+    FeatureTypes types = TYPES[static_cast<int>(type)] & types_;
     if (types == 0)
     {
         Py_RETURN_NONE;
     }
 
     TypedFeatureId typedId = TypedFeatureId::ofTypeAndId(type, id);
-    if (selectionType == &World::SUBTYPE)
+    if (kind() == WORLD)
     {
-        FeatureIdFilter idFilter(typedId, filter);
-        Query query(store, bounds, types, matcher, &idFilter);
+        FeatureIdFilter idFilter(typedId, filter());
+        Query query(store(), bounds(), types, matcher(), &idFilter);
         FeaturePtr feature = query.next();
         if (feature.isNull())
         {
             Py_RETURN_NONE;
         }
-        return PyFeature::create(store, feature, Py_None);
+        return PyFeature::create(store(), feature, Py_None);
     }
     // TODO: Other views (iterate over PyQuery)
 

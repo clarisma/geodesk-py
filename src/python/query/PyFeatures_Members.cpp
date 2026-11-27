@@ -9,17 +9,7 @@
 
 using namespace clarisma;
 
-PyObject* PyFeatures::Members::iterFeatures(PyFeatures* features)
-{
-    return PyMemberIterator::create(features);
-}
-
-int PyFeatures::Members::isEmpty(PyFeatures* features)
-{
-    // TODO: can shortcut if non-filtered
-    return PyFeatures::isEmpty(features);
-}
-
+/*
 PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
 {
     std::unordered_set<uint32_t> tips;
@@ -67,23 +57,11 @@ PyObject* PyFeatures::Members::getTiles(PyFeatures* self)
     }
     return list;
 }
-
-
-SelectionType PyFeatures::Members::SUBTYPE =
-{
-    iterFeatures,
-    countFeatures,
-    isEmpty,
-    containsFeature,
-    getTiles
-};
-
-
-// TODO: containsFeature should check for member flag to rule out given feature
+*/
 
 PyObject* PyMemberIterator::create(PyFeatures* features)
 {
-    DataPtr pBody = features->relatedFeature.bodyptr();
+    DataPtr pBody = features->relatedFeature().bodyptr();
     PyMemberIterator* self = (PyMemberIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
@@ -91,10 +69,10 @@ PyObject* PyMemberIterator::create(PyFeatures* features)
         // By holding a reference to the PyFeatures, we ensure that the
         // FeatureStore, the matcher and the filter stay alive as long as
         // the PyMemberIterator is alive
-        new(&self->iter)MemberIterator(features->store, pBody,
-            features->acceptedTypes, features->matcher, features->filter);
+        new(&self->iter)MemberIterator(features->store(), pBody,
+            features->types(), features->matcher(), features->filter());
     }
-    return (PyObject*)self;
+    return self;
 }
 
 PyObject* PyMemberIterator::create(PyFeature* rel)
@@ -109,9 +87,9 @@ PyObject* PyMemberIterator::create(PyFeature* rel)
         // FeatureStore (and it's all-matcher) stay alive as long as
         // the PyMemberIterator is alive
         new(&self->iter)MemberIterator(store, pBody, FeatureTypes::ALL,
-            store->borrowAllMatcher(), NULL);
+            store->borrowAllMatcher(), nullptr);
     }
-    return (PyObject*)self;
+    return self;
 }
 
 void PyMemberIterator::dealloc(PyMemberIterator* self)

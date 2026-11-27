@@ -21,7 +21,8 @@ using namespace clarisma;
 // TODO: adding feature IDs to a set is 3x faster than adding the actual feature to a set!
 //  Try storing ID (and type bits) in PyFeature object itself
 
-PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* role)
+/*
+static PyFeature* create(const Feature& feature)
 {
     PyFeature* self = (PyFeature*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -34,6 +35,26 @@ PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* 
     }
     return self;
 }
+*/
+
+PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* role)
+{
+    PyFeature* self = (PyFeature*)TYPE.tp_alloc(&TYPE, 0);
+    if (self)
+    {
+        store->addref();
+        self->store = store;
+        self->feature = feature;
+        self->roleString = Python::newRef(role);
+    }
+    return self;
+}
+
+PyObject* PyFeature::create(FeatureStore* store, uint64_t id, Coordinate xy)
+{
+    return PyAnonymousNode::create(store, id, xy.x, xy.y);
+}
+
 
 void PyFeature::dealloc(PyFeature* self)
 {
@@ -179,16 +200,8 @@ PyObject* PyFeature::map(PyFeature* self)
 
 PyObject* PyFeature::parents(PyFeature* self)
 {
-    // Default implementation, valid only for ways and relations
-    if ((self->feature.flags() & FeatureFlags::RELATION_MEMBER) == 0)
-    {
-        return return_empty(self);
-    }
-    // TODO: not needed here
-    // For ways and relations, the reltable pointer is placed 
-    // just ahead of the body anchor
-    return PyFeatures::create(&PyFeatures::Parents::SUBTYPE,
-        self->store, self->feature, FeatureTypes::RELATIONS);
+    if (!self->feature.isRelationMember()) return PyFeatures::getEmpty();
+    return PyFeatures::parentsOf(self->store, self->feature, FeatureTypes::RELATIONS);
 }
 
 PyObject* PyFeature::num_method(PyFeature* self)

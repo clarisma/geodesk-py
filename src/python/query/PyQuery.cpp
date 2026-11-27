@@ -15,11 +15,11 @@ PyQuery* PyQuery::create(PyFeatures* features)
         self->target = features;
         // initialize Query in-place
         new(&self->query)Query(
-            features->store,
-            features->bounds,
-            features->acceptedTypes,
-            features->matcher,
-            features->filter);
+            features->store(),
+            features->bounds(),
+            features->types(),
+            features->matcher(),
+            features->filter());
     }
     return self;
 }

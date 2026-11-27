@@ -40,8 +40,7 @@ PyObject* PyFeature::Way::length(PyFeature* self)
 
 PyObject* PyFeature::Way::nodes(PyFeature* self)
 {
-    return PyFeatures::create(&PyFeatures::WayNodes::SUBTYPE,
-        self->store, self->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
+    return PyFeatures::nodesOf(self->store, self->feature);
 }
 
 PyObject* PyFeature::Way::shape(PyFeature* self)
