@@ -10,9 +10,9 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 	PyObject* arg = (PyFeature*)Python::checkSingleArg(args, kwargs, "Feature");
 	if (arg == NULL) return NULL;
 
-	if (self->selectionType != &PyFeatures::World::SUBTYPE)
+	if (self->kind() != Selection::WORLD)
 	{
-		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		if (self->kind() == Selection::EMPTY)
 		{
 			return Python::newRef(self);
 		}
@@ -23,20 +23,13 @@ PyFeatures* filters::parents_of(PyFeatures* self, PyObject* args, PyObject* kwar
 
 	if (arg->ob_type == &PyFeature::TYPE)
 	{
-		PyFeature* featureObj = (PyFeature*)arg;
-		FeaturePtr feature = featureObj->feature;
-		FeatureTypes acceptedTypes = feature.isRelationMember() ?
-			FeatureTypes::RELATIONS : 0;
-		acceptedTypes |= 
-			(FeatureTypes(FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED).
-				acceptFlags(feature.flags())) ? 
-				(FeatureTypes::WAYS & FeatureTypes::WAYNODE_FLAGGED) : 0;
-		return PyFeatures::createRelated(self, &PyFeatures::Parents::SUBTYPE,
-			feature, acceptedTypes);
+		PyFeature* feature = (PyFeature*)arg;
+		return self->withParentsOf(feature->feature);
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{
-		return PyFeatures::Parents::create(self, (PyAnonymousNode*)arg);
+		Coordinate xy(((PyAnonymousNode*)arg)->x_, ((PyAnonymousNode*)arg)->y_);
+		return self->withParentWaysOf(xy);
 		// Returns an empty set if this feature set does not include any ways
 	}
 

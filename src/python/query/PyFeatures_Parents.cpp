@@ -24,56 +24,6 @@
 using namespace clarisma;
 
 
-
-PyObject* PyFeatures::Parents::iterFeatures(PyFeatures* features)
-{
-    if (features->flags & SelectionFlags::USES_BOUNDS)
-    {
-        // for anonymous nodes, we use bounds (a single-pixel bbox
-        // that describes the nodes location) rather than relatedFeature
-        // (because they don't exist as a feature)
-        // We only iterate their ways, because by definition they
-        // can never be relation members
-        return PyNodeParentIterator::create(features, features->bounds.bottomLeft());
-    }
-    else
-    {
-        FeatureTypes acceptedTypes = features->acceptedTypes;
-        FeaturePtr feature = features->relatedFeature;
-        if ((acceptedTypes & FeatureTypes::WAYS) == 0)
-        {
-            // only parent relations accepted
-
-            return PyParentRelationIterator::create(features, feature.relationTableFast());
-        }
-        else
-        {
-            assert(feature.isNode());
-            NodePtr node(feature);
-            return (PyObject*)PyNodeParentIterator::create(features, node, 
-                (acceptedTypes & FeatureTypes::RELATIONS) == 0 ?
-                PyNodeParentIterator::IterationStatus::WAYS :
-                PyNodeParentIterator::IterationStatus::RELATIONS);
-        }
-    }
-}
-
-int PyFeatures::Parents::isEmpty(PyFeatures* features)
-{
-    // TODO: can shortcut if non-filtered
-    return PyFeatures::isEmpty(features);
-}
-
-SelectionType PyFeatures::Parents::SUBTYPE =
-{
-    iterFeatures,
-    countFeatures,
-    isEmpty,
-    containsFeature,
-    getTiles
-};
-
-
 PyObject* PyParentRelationIterator::create(PyFeatures* features, DataPtr pRelTable)
 {
     PyParentRelationIterator* self = (PyParentRelationIterator*)TYPE.tp_alloc(&TYPE, 0);
@@ -83,8 +33,8 @@ PyObject* PyParentRelationIterator::create(PyFeatures* features, DataPtr pRelTab
         // By holding a reference to the PyFeatures, we ensure that the
         // FeatureStore, the matcher and the filter stay alive as long as
         // the PyMemberIterator is alive
-        new(&self->iter)ParentRelationIterator(features->store, pRelTable,
-            features->matcher, features->filter);
+        new(&self->iter)ParentRelationIterator(features->store(), pRelTable,
+            features->matcher(), features->filter());
     }
     return (PyObject*)self;
 }
@@ -210,7 +160,7 @@ PyObject* PyNodeParentIterator::next(PyNodeParentIterator* self)
     FeaturePtr pFeature = self->wayQuery->query.next();
     if (!pFeature.isNull())
     {
-        return PyFeature::create(self->target->store, pFeature, Py_None);
+        return PyFeature::create(self->target->store(), pFeature, Py_None);
     }
     // Exhausted all relations and ways, iteration is done
     self->status = IterationStatus::DONE;

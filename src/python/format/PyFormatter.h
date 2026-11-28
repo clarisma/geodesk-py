@@ -79,7 +79,7 @@ public:
 	void write(FeatureWriter* writer);
 	
 	static void writeIdViaCallable(FeatureWriter* writer,
-		FeatureStore* store, FeaturePtr feature, /* PyObject */ void* closure);
+		const FeatureStore* store, FeaturePtr feature, /* PyObject */ void* closure);
 
 	static void writeGeoJson(PyFormatter* self, clarisma::Buffer* buf);
 	static void writeWkt(PyFormatter* self, clarisma::Buffer* buf);

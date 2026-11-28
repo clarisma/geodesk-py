@@ -116,7 +116,7 @@ PyObject* PyFeatures::iter(PyFeatures* self)
     return self->getIter();
 }
 
-
+/*
 PyObject* PyFeatures::World::getTiles(PyFeatures* self)
 {
     PyObject* list = PyList_New(0);
@@ -143,7 +143,7 @@ PyObject* PyFeatures::World::getTiles(PyFeatures* self)
     }
     return list;
 }
-
+*/
 
 
 PyObject* PyFeatures::call(PyFeatures* self, PyObject* args, PyObject* kwargs)
@@ -295,9 +295,17 @@ PyObject* PyFeatures::getattr(PyFeatures* self, PyObject* nameObj)
     */
 }
 
-int PyFeatures::contains(PyFeatures* self, PyObject* feature)
+int PyFeatures::contains(PyFeatures* self, PyObject* obj)
 {
-    return self->selectionType->containsFeature(self, feature);
+    if (obj->ob_type == &PyFeature::TYPE)   [[likely]]
+    {
+        return self->containsFeature((PyFeature*)obj);
+    }
+    if (obj->ob_type == &PyAnonymousNode::TYPE)
+    {
+        return self->containsAnonNode((PyAnonymousNode*)obj);
+    }
+    return 0;
 }
 
 PyObject* PyFeatures::subscript(PyFeatures* self, PyObject* key)
@@ -431,72 +439,16 @@ PyObject* PyFeatures::next(PyFeatures* self)
 }
 
 
-/**
- * Simple (but inefficent) default implementation that checks the given
- * feature against all features in the set.
- */
-int PyFeatures::containsFeature(PyFeatures* self, PyObject* feature)
+bool PyFeatures::containsFeature(PyFeature* feature) const
 {
-    PyObject* iter = self->getIter();
-    if (iter == NULL) return -1;
-
-    int res = 0;
-    PyObject* candidate;
-    while ((candidate = PyIter_Next(iter)) != NULL)
-    {
-        res = PyObject_RichCompareBool(candidate, feature, Py_EQ);
-        Py_DecRef(candidate);
-        if (res != 0) break;     // Either 1 (TRUE) or -1 (ERROR)
-    }
-    Py_DECREF(iter);
-    return res;
+    if (feature->store != store()) [[unlikely]] return false;
+    return Selection::contains(feature->feature);
 }
 
-/**
- * For world queries, we use a much more efficient approach: We check if the
- * feature comes from the same GOL and matches the query criteria.
- */
-int PyFeatures::World::containsFeature(PyFeatures* self, PyObject* object)
+bool PyFeatures::containsAnonNode(PyAnonymousNode* node) const
 {
-    // Accept only "real" Feature; AnonymousNode is never returned by a world query
-    if (object->ob_type != &PyFeature::TYPE) return 0;
-    PyFeature* featureObj = (PyFeature*)object;
-
-    // Check if feature originates from the same GOL
-    if (featureObj->store != self->store) return 0;
-    FeaturePtr feature = featureObj->feature;
-
-    // Check if the type is accepted
-    if(!self->acceptedTypes.acceptFlags(feature.flags())) return 0;
-
-    // Check if feature lies within the query's bbox
-    if (feature.isNode())
-    {
-        if (!NodePtr(feature).intersects(self->bounds)) return 0;
-    }
-    else
-    {
-        assert (feature.bounds().intersects(self->bounds) ==
-            feature.intersects(self->bounds));
-        if (!feature.intersects(self->bounds)) return 0;
-    }
-
-    // Apply matcher (always present) and filter (optional)
-    if (!self->matcher->mainMatcher().accept(feature)) return 0;
-    if (self->filter == NULL) return 1;
-    return self->filter->accept(self->store, feature, FastFilterHint());
-}
-
-
-
-bool PyFeatures::acceptsAny(FeatureTypes types)
-{
-    // TODO: can't use this to check if set is unconstrained: needs to test
-    // if *all* requested types are accepted (acceptedTypes & types) == types
-
-    return (acceptedTypes & types) != 0 && filter == nullptr &&
-        matcher == store->borrowAllMatcher();
-    // TODO: all-matcher should really be stored in the Environment
+    if (node->store != store()) [[unlikely]] return false;
+    return Selection::containsAnonNode(node->xy());
 }
 
 // === Properties ===
@@ -722,7 +674,8 @@ PyObject* PyFeatures::getTiles(PyFeatures* self)
 
 PyObject* PyFeatures::tiles(PyFeatures* self)
 {
-    return (*self->selectionType->getTiles)(self);
+    // TODO
+    Py_RETURN_NONE;
 }
 
 
@@ -837,7 +790,7 @@ public:
 
     const Filter* secondaryFilter() const { return secondaryFilter_; }
 
-    bool accept(FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
+    bool accept(const FeatureStore* store, FeaturePtr feature, FastFilterHint fast) const override
     {
         if (feature.typedId() != typedId_) return false;
         return !secondaryFilter_ || secondaryFilter_->accept(store, feature, fast);

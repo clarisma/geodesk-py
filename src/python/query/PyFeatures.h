@@ -65,8 +65,9 @@ public:
 
     static PyFeatures* build(PyObject* args, PyObject* kwds);
 
-    static PyFeatures* create(int kind, int flags, FeatureTypes types, FeatureStore* store,
-        Context context, const MatcherHolder* matcher, const Filter* filter)
+    static PyFeatures* create(int kind, int flags, FeatureTypes types,
+        const FeatureStore* store, Context context,
+        const MatcherHolder* matcher, const Filter* filter)
     {
         auto self = (PyFeatures*)TYPE.tp_alloc(&TYPE, 0);
         if (self) [[likely]]
@@ -143,17 +144,9 @@ public:
     PyObject* getIter();
     PyObject* getList(Py_ssize_t maxLen);
     static int isTrue(PyFeatures* self);
-    static int containsFeature(PyFeatures* self, PyObject* object);
+    bool containsFeature(PyFeature* feature) const;
+    bool containsAnonNode(PyAnonymousNode* node) const;
     static PyObject* getTiles(PyFeatures*);
-
-    /**
-     * Checks whether this feature set is only constrained by type (i.e. it
-     * does not select based on matcher and/or filter).
-     * For Nodes/Members and Parents, it is possible to shortcut countFeatures()
-     * and isEmpty() in that case.
-     */
-    bool acceptsAny(FeatureTypes types);
-    bool acceptsAny() { return acceptsAny(FeatureTypes::ALL); }
 
     class Empty;
     class World;

@@ -9,9 +9,9 @@ PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs
 	PyObject* arg = Python::checkSingleArg(args, kwargs, "Feature");
 	if (!arg) return NULL;
 
-	if (self->selectionType != &PyFeatures::World::SUBTYPE)
+	if (self->kind() != Selection::WORLD)
 	{
-		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		if (self->kind() == Selection::EMPTY)
 		{
 			return Python::newRef(self);
 		}
@@ -26,14 +26,13 @@ PyFeatures* filters::nodes_of(PyFeatures* self, PyObject* args, PyObject* kwargs
 		// TODO: What does "nodes" return for a relation? (Right now, an empty set)
 		if (feature->feature.isWay())
 		{
-			return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
-				feature->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
+			return self->withNodesOf(WayPtr(feature->feature));
 		}
-		return self->getEmpty();
+		return PyFeatures::getEmpty();
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{
-		return self->getEmpty();
+		return PyFeatures::getEmpty();
 	}
 
 	PyErr_Format(PyExc_TypeError, "Expected Feature (instead of %s)", arg->ob_type->tp_name);

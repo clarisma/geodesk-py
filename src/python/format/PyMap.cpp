@@ -758,7 +758,7 @@ void MapWriter::writeWay(WayPtr way)
 }
 
 // TODO: don't allow placeholders/empty rels
-void MapWriter::writeRelation(FeatureStore* store, RelationPtr relation)
+void MapWriter::writeRelation(const FeatureStore* store, RelationPtr relation)
 {
 	if (relation.isArea())
 	{
@@ -785,7 +785,7 @@ void MapWriter::writeRelation(FeatureStore* store, RelationPtr relation)
 	
 }
 
-void MapWriter::writeRelationMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
+void MapWriter::writeRelationMembers(const FeatureStore* store, RelationPtr relation, RecursionGuard& guard)
 {
 	bool first = true;
 	FastMemberIterator iter(store, relation);

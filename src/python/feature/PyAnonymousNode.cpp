@@ -14,7 +14,7 @@
 #include "python/util/PyHash.h"
 
 
-PyObject* PyAnonymousNode::create(FeatureStore* store, uint64_t id, int32_t x, int32_t y)
+PyObject* PyAnonymousNode::create(const FeatureStore* store, uint64_t id, int32_t x, int32_t y)
 {
     PyAnonymousNode* self = (PyAnonymousNode*)
         PyAnonymousNode::TYPE.tp_alloc(&PyAnonymousNode::TYPE, 0);
@@ -89,7 +89,7 @@ PyObject* PyAnonymousNode::osm_type(PyFeature* self)
 
 PyObject* PyAnonymousNode::parents(PyAnonymousNode* self)
 {
-    return PyFeatures::Parents::create(self);
+    return PyFeatures::parentWaysOf(self->store, self->xy());
 }
 
 PyObject* PyAnonymousNode::shape(PyAnonymousNode* self)

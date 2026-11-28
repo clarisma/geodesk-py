@@ -37,7 +37,7 @@ static PyFeature* create(const Feature& feature)
 }
 */
 
-PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* role)
+PyFeature* PyFeature::create(const FeatureStore* store, FeaturePtr feature, PyObject* role)
 {
     PyFeature* self = (PyFeature*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
@@ -50,7 +50,7 @@ PyFeature* PyFeature::create(FeatureStore* store, FeaturePtr feature, PyObject* 
     return self;
 }
 
-PyObject* PyFeature::create(FeatureStore* store, uint64_t id, Coordinate xy)
+PyObject* PyFeature::create(const FeatureStore* store, uint64_t id, Coordinate xy)
 {
     return PyAnonymousNode::create(store, id, xy.x, xy.y);
 }

@@ -35,7 +35,7 @@ PyQuery* PyQuery::create(PyFeatures* features,
         Py_INCREF(features);
         self->target = features;
         // initialize Query in-place
-        new(&self->query)Query(features->store, box, types, matcher, filter);
+        new(&self->query)Query(features->store(), box, types, matcher, filter);
     }
     return self;
 }

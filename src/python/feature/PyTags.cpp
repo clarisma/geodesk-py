@@ -8,7 +8,7 @@
 
 using namespace clarisma;
 
-PyTags* PyTags::create(FeatureStore* store, TagTablePtr tags)
+PyTags* PyTags::create(const FeatureStore* store, TagTablePtr tags)
 {
     PyTags* self = (PyTags*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)
@@ -219,7 +219,7 @@ PyObject* PyTagIterator::next(PyTagIterator* self)
     return self->func(self);
 }
 
-PyObject* PyTagIterator::create(FeatureStore* store, TagTablePtr tags)
+PyObject* PyTagIterator::create(const FeatureStore* store, TagTablePtr tags)
 {
     PyTagIterator* self = (PyTagIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self != nullptr)

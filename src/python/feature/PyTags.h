@@ -11,13 +11,13 @@ using namespace geodesk;
 class PyTags : public PyObject
 {
 public:
-    FeatureStore* store;
+    const FeatureStore* store;
     TagTablePtr tags;
 
     static PyTypeObject TYPE;
     static PyMappingMethods MAPPING_METHODS;
 
-    static PyTags* create(FeatureStore* store, TagTablePtr tags);
+    static PyTags* create(const FeatureStore* store, TagTablePtr tags);
     static PyTags* createEmpty();
     static void dealloc(PyTags* self);
     static Py_ssize_t len(PyTags* self);
@@ -33,14 +33,14 @@ class PyTagIterator : public PyObject
 public:
     typedef PyObject* (*NextTagFunc)(PyTagIterator*);
 
-    FeatureStore* store;
+    const FeatureStore* store;
     TagTablePtr tags;
     clarisma::DataPtr current;
     NextTagFunc func;
 
     static PyTypeObject TYPE;
 
-    static PyObject* create(FeatureStore* store, TagTablePtr tags);
+    static PyObject* create(const FeatureStore* store, TagTablePtr tags);
 
 private:
     static void dealloc(PyTagIterator* self);

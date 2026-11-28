@@ -20,7 +20,7 @@ typedef PyObject* (*AttrFunctionPtr)(PyFeature* self);
 class PyFeature : public PyObject
 {
 public:
-    FeatureStore* store;
+    const FeatureStore* store;
     FeaturePtr feature;
     PyObject* roleString;
 
@@ -29,8 +29,8 @@ public:
     static PyMappingMethods MAPPING_METHODS;
     static const AttrFunctionPtr* SUBTYPE_FEATURE_METHODS[];
 
-    static PyFeature* create(FeatureStore* store, FeaturePtr feature, PyObject* role);
-    static PyObject* create(FeatureStore* store, uint64_t id, Coordinate xy);
+    static PyFeature* create(const FeatureStore* store, FeaturePtr feature, PyObject* role);
+    static PyObject* create(const FeatureStore* store, uint64_t id, Coordinate xy);
     static void dealloc(PyFeature* self);
     static PyObject* getattr(PyFeature* self, PyObject* name);
     static PyObject* getattr0(PyFeature* self, PyObject* nameObj, const AttrFunctionPtr* const table);
@@ -126,7 +126,7 @@ public:
 class PyAnonymousNode : public PyObject
 {
 public:
-    FeatureStore* store;
+    const FeatureStore* store;
     int32_t x_;
     int32_t y_;
     uint64_t id_;
@@ -135,7 +135,9 @@ public:
     static PyMappingMethods MAPPING_METHODS;
     static const AttrFunctionPtr FEATURE_METHODS[];
 
-    static PyObject* create(FeatureStore* store, uint64_t id, int32_t x, int32_t y);
+    Coordinate xy() const { return {x_, y_}; }
+
+    static PyObject* create(const FeatureStore* store, uint64_t id, int32_t x, int32_t y);
     static void dealloc(PyAnonymousNode* self);
     static PyObject* getattr(PyAnonymousNode* self, PyObject* name);
     static Py_hash_t hash(PyAnonymousNode* self);

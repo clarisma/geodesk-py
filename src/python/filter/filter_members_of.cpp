@@ -10,9 +10,9 @@ PyFeatures* filters::members_of(PyFeatures* self, PyObject* args, PyObject* kwar
 	PyObject* arg = (PyFeature*)Python::checkSingleArg(args, kwargs, "Feature");
 	if (arg == NULL) return NULL;
 
-	if (self->selectionType != &PyFeatures::World::SUBTYPE)
+	if (self->kind() != Selection::WORLD)
 	{
-		if (self->selectionType == &PyFeatures::Empty::SUBTYPE)
+		if (self->kind() == Selection::EMPTY)
 		{
 			return Python::newRef(self);
 		}
@@ -26,20 +26,18 @@ PyFeatures* filters::members_of(PyFeatures* self, PyObject* args, PyObject* kwar
 		PyFeature* feature = (PyFeature*)arg;
 		if (feature->feature.isRelation())
 		{
-			return PyFeatures::createRelated(self, &PyFeatures::Members::SUBTYPE,
-				feature->feature, FeatureTypes::ALL & FeatureTypes::RELATION_MEMBERS);
+			return self->withMembersOf(RelationPtr(feature->feature));
 		}
 		if (feature->feature.isWay())
 		{
 			// TODO: Should this only return feature nodes?
-			return PyFeatures::createRelated(self, &PyFeatures::WayNodes::SUBTYPE,
-				feature->feature, FeatureTypes::NODES & FeatureTypes::WAYNODE_FLAGGED);
+			return self->withNodesOf(WayPtr(feature->feature));
 		}
-		return self->getEmpty();
+		return PyFeatures::getEmpty();
 	}
 	if (arg->ob_type == &PyAnonymousNode::TYPE)
 	{
-		return self->getEmpty();
+		return PyFeatures::getEmpty();
 	}
 
 	PyErr_Format(PyExc_TypeError, "Expected Feature (instead of %s)", arg->ob_type->tp_name);

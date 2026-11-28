@@ -81,7 +81,7 @@ PyObject* PyMemberIterator::create(PyFeature* rel)
     PyMemberIterator* self = (PyMemberIterator*)TYPE.tp_alloc(&TYPE, 0);
     if (self)
     {
-        FeatureStore* store = rel->store;
+        const FeatureStore* store = rel->store;
         self->target = Python::newRef(rel);
         // By holding a reference to the relation, we ensure that the
         // FeatureStore (and it's all-matcher) stay alive as long as

@@ -170,8 +170,8 @@ private:
 	void writeBox(const Box& box);
 	void writePolygonOrPolyline(bool polygon);
 	void writeWay(WayPtr way);
-	void writeRelation(FeatureStore* store, RelationPtr relation);
-	void writeRelationMembers(FeatureStore* store, RelationPtr relation, RecursionGuard& guard);
+	void writeRelation(const FeatureStore* store, RelationPtr relation);
+	void writeRelationMembers(const FeatureStore* store, RelationPtr relation, RecursionGuard& guard);
 	bool writeFeature(PyFeature* feature);
 	void writeGeometry(GEOSContextHandle_t context, const GEOSGeometry* geom);
 	void writeGeometryCollection(GEOSContextHandle_t context, const GEOSGeometry* multi);

@@ -46,7 +46,7 @@ PyFeatures* filters::with_role(PyFeatures* self, PyObject* args, PyObject* kwarg
 	// Passing an empty iterable is not an error; it just means
 	// that the RoleFilter will not accept any members
 
-	const RoleFilter* filter = new RoleFilter(roles, self->store->strings());
+	const RoleFilter* filter = new RoleFilter(roles, self->store()->strings());
 	Py_DECREF(seq);
 		// Only release sequence after RoleFilter has copied the strings
 		// (If the sequence is generated, the temporary string objects

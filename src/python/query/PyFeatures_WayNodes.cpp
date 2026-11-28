@@ -64,7 +64,7 @@ PyObject* PyWayNodeIterator::next(PyWayNodeIterator* self)
     uint64_t nodeId = self->nodeCursor.id();
     (void)self->nodeCursor.next();
     NodePtr nextNode = self->nextNode;
-    FeatureStore* store = self->featureIter.store();
+    const FeatureStore* store = self->featureIter.store();
     if (!nextNode.isNull() && nextNode.xy() == c)
     {
         self->nextNode = self->featureIter.next();
